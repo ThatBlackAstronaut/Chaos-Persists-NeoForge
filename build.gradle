@@ -1,0 +1,80 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = "https://maven.minecraftforge.net/" }
+        maven { url = "https://repo.spongepowered.org/maven/" }
+    }
+    dependencies {
+        classpath group: "net.minecraftforge.gradle", name: "ForgeGradle", version: "5.1.+"
+        classpath "org.spongepowered:mixingradle:0.7-SNAPSHOT"
+    }
+}
+apply plugin: "java"
+apply plugin: "net.minecraftforge.gradle"
+apply plugin: "org.spongepowered.mixin"
+
+group = "com.astryxion.chaospersists"
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(8)
+compileJava {
+    sourceCompatibility = "8"
+    targetCompatibility = "8"
+}
+
+repositories {
+    mavenCentral()
+    maven { url = "https://maven.minecraftforge.net/" }
+    maven { url = "https://repo.spongepowered.org/maven/" }
+}
+
+configurations {
+    embed
+    implementation.extendsFrom(embed)
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:1.12.2-14.23.5.2859"
+    embed("org.spongepowered:mixin:0.8.3-SNAPSHOT") {
+        exclude module: "guava"
+        exclude module: "commons-io"
+        exclude module: "gson"
+    }
+}
+
+mixin {
+    config "chaospersists.mixin.json"
+    disableAnnotationProcessorCheck()
+}
+
+minecraft {
+    mappings channel: "stable", version: "39-1.12"
+    runs {
+        client {
+            workingDirectory file("./run")
+            arg "-tweakClass"
+            arg "org.spongepowered.asm.launch.MixinTweaker"
+            property "mixin.env.disableRefMap", "true"
+            mods { ChaosPersists { source sourceSets.main } }
+        }
+        server {
+            workingDirectory file("./run/server")
+            arg "-tweakClass"
+            arg "org.spongepowered.asm.launch.MixinTweaker"
+            property "mixin.env.disableRefMap", "true"
+            mods { ChaosPersists { source sourceSets.main } }
+        }
+    }
+}
+
+archivesBaseName = "ChaosPersists"
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "mcversion", "1.12.2"
+    filesMatching("mcmod.info") {
+        expand "version": project.version, "mcversion": "1.12.2"
+    }
+}
+
+// When Forge 1.12 loads mods from classpath, resources must be alongside classes
+sourceSets.all { it.output.resourcesDir = it.output.classesDirs.getFiles().iterator().next() }
