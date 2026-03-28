@@ -25,6 +25,9 @@ repositories {
     mavenCentral()
     maven { url = "https://maven.minecraftforge.net/" }
     maven { url = "https://repo.spongepowered.org/maven/" }
+    maven { url = "https://dvs1.progwml6.com/files/maven/" }
+    maven { url = "https://maven.blamejared.com/" }
+    maven { url = "https://modmaven.dev/" }
 }
 
 configurations {
@@ -34,6 +37,9 @@ configurations {
 
 dependencies {
     minecraft "net.minecraftforge:forge:1.12.2-14.23.5.2859"
+    compileOnly("mezz.jei:jei_1.12.2:4.16.1.302:api") {
+        transitive = false
+    }
     embed("org.spongepowered:mixin:0.8.3-SNAPSHOT") {
         exclude module: "guava"
         exclude module: "commons-io"
@@ -73,6 +79,16 @@ processResources {
     inputs.property "mcversion", "1.12.2"
     filesMatching("mcmod.info") {
         expand "version": project.version, "mcversion": "1.12.2"
+    }
+    // Some 1.12 language loading paths still expect en_US-style names.
+    // Keep both lowercase and legacy-cased locale files to ensure translations load.
+    from("src/main/resources/assets/chaospersists/lang") {
+        include "en_us.lang"
+        include "en_us.json"
+        rename { String fileName ->
+            fileName.replace("en_us", "en_US")
+        }
+        into "assets/chaospersists/lang"
     }
 }
 
