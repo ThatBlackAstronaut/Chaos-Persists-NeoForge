@@ -1,0 +1,9 @@
+{
+  "parent": "chaospersists:block/antblock_parent",
+  "textures": {
+    "particle": "chaospersists:blocks/antnest_side",
+    "bottom": "chaospersists:blocks/antnest_bottom",
+    "top": "chaospersists:blocks/antnest_top",
+    "side": "chaospersists:blocks/antnest_side"
+  }
+}

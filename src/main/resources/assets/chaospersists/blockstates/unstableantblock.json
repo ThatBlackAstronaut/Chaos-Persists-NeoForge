@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "normal": { "model": "chaospersists:unstableantblock" },
+    "snowy=false": { "model": "chaospersists:unstableantblock" },
+    "snowy=true": { "model": "chaospersists:unstableantblock" }
+  }
+}

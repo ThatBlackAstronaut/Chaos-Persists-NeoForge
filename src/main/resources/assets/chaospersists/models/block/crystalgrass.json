@@ -1,0 +1,8 @@
+{
+  "parent": "block/cube_bottom_top",
+  "textures": {
+    "top": "chaospersists:blocks/crystalgrass_top",
+    "bottom": "chaospersists:blocks/crystalgrass_bottom",
+    "side": "chaospersists:blocks/crystalgrass_side"
+  }
+}

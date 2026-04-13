@@ -1,0 +1,1 @@
+{"required":true,"minVersion":"0.8","package":"com.astryxion.chaospersists.mixin","compatibilityLevel":"JAVA_8","refmap":"chaospersists.mixin.refmap.json","mixins":["MixinNetworkRegistry"],"client":[],"server":[]}

@@ -1,0 +1,8 @@
+{
+  "parent": "block/orientable",
+  "textures": {
+    "front": "chaospersists:blocks/crystalfurnace_front_off",
+    "side": "chaospersists:blocks/crystalfurnace_side",
+    "top": "chaospersists:blocks/crystalfurnace_top"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "": { "model": "chaospersists:crystalsapling" },
+    "normal": { "model": "chaospersists:crystalsapling" }
+  }
+}
