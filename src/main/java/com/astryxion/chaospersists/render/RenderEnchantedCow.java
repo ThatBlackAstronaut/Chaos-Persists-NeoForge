@@ -24,6 +24,9 @@ import com.astryxion.chaospersists.entity.GoldCow;
 import com.astryxion.chaospersists.entity.RedCow;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelCow;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.GlStateManager.DestFactor;
+import net.minecraft.client.renderer.GlStateManager.SourceFactor;
 import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
@@ -45,25 +48,43 @@ extends RenderLiving<RedCow> {
         this.addLayer(new LayerRenderer<RedCow>() {
             @Override
             public void doRenderLayer(RedCow entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
-                if (!(entity instanceof EnchantedCow)) return;
+                if (!(entity instanceof EnchantedCow)) {
+                    return;
+                }
+                // Match vanilla item enchant glint: GlStateManager + depth equality so the glint only sits on
+                // surfaces already drawn for this entity (avoids solid purple "shell"). Always restore state so
+                // other mobs in the same frame are not tinted by leaked blend/color (raw GL11 breaks 1.12 tracking).
                 RenderEnchantedCow.this.bindTexture(RenderEnchantedCow.ENCHANTED_GLINT);
-                GL11.glMatrixMode(GL11.GL_TEXTURE);
-                GL11.glPushMatrix();
-                float t = (entity.ticksExisted + partialTicks) * 0.01f;
-                GL11.glTranslatef(t, t * 0.5f, 0.0f);
-                GL11.glMatrixMode(GL11.GL_MODELVIEW);
-                GL11.glEnable(GL11.GL_BLEND);
-                GL11.glDisable(GL11.GL_LIGHTING);
-                GL11.glBlendFunc(GL11.GL_SRC_COLOR, GL11.GL_ONE);
-                GL11.glColor4f(0.5f, 0.25f, 0.8f, 1.0f);
-                GL11.glDepthMask(false);
+
+                GlStateManager.enableBlend();
+                GlStateManager.depthMask(false);
+                GlStateManager.depthFunc(GL11.GL_EQUAL);
+                GlStateManager.disableLighting();
+                GlStateManager.tryBlendFuncSeparate(
+                        SourceFactor.SRC_COLOR, DestFactor.ONE,
+                        SourceFactor.ONE, DestFactor.ZERO);
+                GlStateManager.color(0.38F, 0.19F, 0.608F, 1.0F);
+
+                GlStateManager.matrixMode(GL11.GL_TEXTURE);
+                GlStateManager.pushMatrix();
+                float scroll = (entity.ticksExisted + partialTicks) * 0.01F;
+                GlStateManager.translate(scroll, scroll * 0.5F, 0.0F);
+                GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+
                 RenderEnchantedCow.this.getMainModel().render(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
-                GL11.glDepthMask(true);
-                GL11.glEnable(GL11.GL_LIGHTING);
-                GL11.glDisable(GL11.GL_BLEND);
-                GL11.glMatrixMode(GL11.GL_TEXTURE);
-                GL11.glPopMatrix();
-                GL11.glMatrixMode(GL11.GL_MODELVIEW);
+
+                GlStateManager.matrixMode(GL11.GL_TEXTURE);
+                GlStateManager.popMatrix();
+                GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+
+                GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+                GlStateManager.tryBlendFuncSeparate(
+                        SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA,
+                        SourceFactor.ONE, DestFactor.ZERO);
+                GlStateManager.enableLighting();
+                GlStateManager.depthMask(true);
+                GlStateManager.depthFunc(GL11.GL_LEQUAL);
+                GlStateManager.disableBlend();
             }
             @Override
             public boolean shouldCombineTextures() {

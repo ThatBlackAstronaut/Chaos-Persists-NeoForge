@@ -1,7 +1,6 @@
 package com.astryxion.chaospersists.item;
 
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -11,6 +10,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class ItemRayGun extends Item {
@@ -47,24 +47,18 @@ public class ItemRayGun extends Item {
         }
 
         if (!world.isRemote) {
-            double xzoff = 1.0;
-            double yoff = 1.55;
-
-            LaserBall lb = new LaserBall(world, (EntityLivingBase) player);
+            LaserBall lb = new LaserBall(world, player);
             lb.setSpecial();
-
-            lb.setLocationAndAngles(
-                    player.posX - xzoff * Math.sin(Math.toRadians(player.rotationYawHead + 45.0f)),
-                    player.posY + yoff,
-                    player.posZ + xzoff * Math.cos(Math.toRadians(player.rotationYawHead + 45.0f)),
-                    player.rotationYawHead,
-                    player.rotationPitch
-            );
-
-            lb.motionX *= 3.0;
-            lb.motionY *= 3.0;
-            lb.motionZ *= 3.0;
-
+            Vec3d look = player.getLookVec();
+            double spawnDist = 0.65;
+            double px = player.posX + look.x * spawnDist;
+            double py = player.posY + player.getEyeHeight() + look.y * spawnDist;
+            double pz = player.posZ + look.z * spawnDist;
+            lb.setPosition(px, py, pz);
+            double speed = 1.85;
+            lb.motionX = look.x * speed;
+            lb.motionY = look.y * speed;
+            lb.motionZ = look.z * speed;
             world.spawnEntity(lb);
         }
 
@@ -73,9 +67,9 @@ public class ItemRayGun extends Item {
 
         // Strong recoil boost (same math)
         player.addVelocity(
-                Math.cos(Math.toRadians(player.rotationYawHead - 90.0f)) * 1.5,
+                Math.cos(Math.toRadians(player.rotationYaw - 90.0f)) * 1.5,
                 0.3,
-                Math.sin(Math.toRadians(player.rotationYawHead - 90.0f)) * 1.5
+                Math.sin(Math.toRadians(player.rotationYaw - 90.0f)) * 1.5
         );
 
         // Damage item

@@ -16,19 +16,24 @@
  */
 package com.astryxion.chaospersists.world.ore;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import com.astryxion.chaospersists.core.ChaosPersists;
 import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class OreRuby
-extends Block {
-    public OreRuby() { this(0); }
+public class OreRuby extends Block {
+
+    public OreRuby() {
+        this(0);
+    }
+
     public OreRuby(int i) {
         super(Material.ROCK);
         this.setHardness(10.0f);
@@ -36,21 +41,32 @@ extends Block {
         this.setCreativeTab(CreativeTabs.BUILDING_BLOCKS);
     }
 
-    public void dropBlockAsItemWithChance(World par1World, net.minecraft.util.math.BlockPos pos, net.minecraft.block.state.IBlockState state, float par6, int par7) {
-        super.dropBlockAsItemWithChance(par1World, pos, state, par6, par7);
-        int j1 = 5 + par1World.rand.nextInt(5) + par1World.rand.nextInt(5);
-        this.dropXpOnBlockBreak(par1World, pos, j1);
-    }
-
-    public Item getItemDropped(int par1, Random par2Random, int par3) {
+    @Override
+    public Item getItemDropped(IBlockState state, Random rand, int fortune) {
         return ChaosPersists.MyRuby;
     }
 
-    public int quantityDroppedWithBonus(int par1, Random par2Random) {
-        return 1 + par2Random.nextInt(2);
+    @Override
+    public int quantityDropped(IBlockState state, int fortune, Random random) {
+        int count = 1 + random.nextInt(2);
+        if (fortune > 0) {
+            count += random.nextInt(fortune + 1);
+        }
+        return Math.max(1, count);
     }
 
-    public int quantityDropped(Random par1Random) {
-        return 1;
-    }}
+    @Override
+    public int getExpDrop(IBlockState state, IBlockAccess world, BlockPos pos, int fortune) {
+        if (world instanceof World) {
+            Random r = ((World) world).rand;
+            return 5 + r.nextInt(5) + r.nextInt(5);
+        }
+        return 5;
+    }
+
+    @Override
+    public boolean canSilkHarvest(World world, BlockPos pos, IBlockState state, EntityPlayer player) {
+        return true;
+    }
+}
 

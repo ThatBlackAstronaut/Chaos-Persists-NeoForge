@@ -16,6 +16,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -431,6 +432,9 @@ public class ChaosPersists
   public static int BaseItemID = 9000;
   public static int BaseBiomeID = 120;
   public static int BaseDimensionID = 80;
+
+  /** When true, logs resolved dimension numeric IDs at startup (see chaospersistsIDS). */
+  public static boolean LogRegisteredDimensionIds = true;
 
   public static int BiomeUtopiaID = 0;
   public static int BiomeIslandsID = 0;
@@ -1596,10 +1600,17 @@ public class ChaosPersists
 
     config.load();
 
+    config.setCategoryComment(ids,
+        "Block / item / biome / dimension numeric IDs. Dimension conflicts: each mod needs a unique world ID. Vanilla uses Overworld 0, Nether -1, End 1. "
+            + "Examples that often collide: AE2 spatial (2), Overworld Mirror (83), The Betweenlands (85). "
+            + "Set BaseDimensionID to a free range, or set DimensionId_* entries explicitly (see each key). "
+            + "Changing IDs after a world was created will strand dimension saves; backup before changing.");
+
     BaseBlockID = config.get(ids, "BaseBlockID", 2700).getInt();
     BaseItemID = config.get(ids, "BaseItemID", 9000).getInt();
     BaseBiomeID = config.get(ids, "BaseBiomeID", 120).getInt();
-    BaseDimensionID = config.get(ids, "BaseDimensionID", 80).getInt();
+
+    configureDimensionIds(config, ids);
 
     getMobs(config, mobs);
 
@@ -1624,7 +1635,8 @@ public class ChaosPersists
     DisableOverworldDungeons = config.get(tweaks, "DisableOverworldDungeons", 0).getInt();
     FullPowerKingEnable = config.get(tweaks, "FullPowerKingEnable", 0).getInt();
 
-    Amethyst_armorstats = get_armorstats(config, "Amethyst", 100, 4, 8, 7, 3, 40, 0, 0, 0, 0, 0, 0, 0, 0);
+    // 1.12.2 diamond armor is 3/6/8/3 with toughness 2; keep OreSpawn durability 100, match diamond protection + enchant tier.
+    Amethyst_armorstats = get_armorstats(config, "Amethyst", 100, 3, 6, 8, 3, 10, 0, 0, 0, 0, 0, 0, 0, 0);
     Emerald_armorstats = get_armorstats(config, "Emerald", 60, 3, 8, 6, 3, 40, 0, 0, 0, 0, 0, 0, 0, 0);
     Experience_armorstats = get_armorstats(config, "Experience", 70, 5, 9, 7, 4, 50, 0, 0, 2, 0, 1, 0, 0, 1);
     MothScale_armorstats = get_armorstats(config, "MothScale", 50, 2, 7, 5, 2, 50, 0, 0, 3, 3, 3, 0, 0, 5);
@@ -1708,14 +1720,8 @@ public class ChaosPersists
     BiomeVillageID = BaseBiomeID + 3;
     BiomeChaosID = BaseBiomeID + 4;
     BiomeMiningID = BaseBiomeID + 5;
-    DimensionID = BaseDimensionID;
     MinecraftForge.EVENT_BUS.register(instance);
     MinecraftForge.EVENT_BUS.register(chaospersistsGen);
-    DimensionID2 = BaseDimensionID + 1;
-    DimensionID3 = BaseDimensionID + 2;
-    DimensionID4 = BaseDimensionID + 3;
-    DimensionID5 = BaseDimensionID + 4;
-    DimensionID6 = BaseDimensionID + 5;
 
     proxy.registerSoundThings();
 
@@ -1914,7 +1920,7 @@ public class ChaosPersists
 
     armorULTIMATE = EnumHelper.addArmorMaterial("ULTIMATE", "chaospersists", Ultimate_armorstats.durability, new int[] { Ultimate_armorstats.head_protection, Ultimate_armorstats.chest_protection, Ultimate_armorstats.leg_protection, Ultimate_armorstats.boot_protection }, Ultimate_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorMOBZILLA = EnumHelper.addArmorMaterial("MOBZILLA", "chaospersists", Mobzilla_armorstats.durability, new int[] { Mobzilla_armorstats.head_protection, Mobzilla_armorstats.chest_protection, Mobzilla_armorstats.leg_protection, Mobzilla_armorstats.boot_protection }, Mobzilla_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorMOBZILLA = EnumHelper.addArmorMaterial("MOBZILLA", "chaospersists", Mobzilla_armorstats.durability, new int[] { Mobzilla_armorstats.head_protection, Mobzilla_armorstats.chest_protection, Mobzilla_armorstats.leg_protection, Mobzilla_armorstats.boot_protection }, Mobzilla_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 4.0f);
 
     armorLAVAEEL = EnumHelper.addArmorMaterial("LAVAEEL", "chaospersists", LavaEel_armorstats.durability, new int[] { LavaEel_armorstats.head_protection, LavaEel_armorstats.chest_protection, LavaEel_armorstats.leg_protection, LavaEel_armorstats.boot_protection }, LavaEel_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
 
@@ -1924,9 +1930,9 @@ public class ChaosPersists
 
     armorEXPERIENCE = EnumHelper.addArmorMaterial("EXPERIENCE", "chaospersists", Experience_armorstats.durability, new int[] { Experience_armorstats.head_protection, Experience_armorstats.chest_protection, Experience_armorstats.leg_protection, Experience_armorstats.boot_protection }, Experience_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorRUBY = EnumHelper.addArmorMaterial("RUBY", "chaospersists", Ruby_armorstats.durability, new int[] { Ruby_armorstats.head_protection, Ruby_armorstats.chest_protection, Ruby_armorstats.leg_protection, Ruby_armorstats.boot_protection }, Ruby_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorRUBY = EnumHelper.addArmorMaterial("RUBY", "chaospersists", Ruby_armorstats.durability, new int[] { Ruby_armorstats.head_protection, Ruby_armorstats.chest_protection, Ruby_armorstats.leg_protection, Ruby_armorstats.boot_protection }, Ruby_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 2.5f);
 
-    armorAMETHYST = EnumHelper.addArmorMaterial("AMETHYST", "chaospersists", Amethyst_armorstats.durability, new int[] { Amethyst_armorstats.head_protection, Amethyst_armorstats.chest_protection, Amethyst_armorstats.leg_protection, Amethyst_armorstats.boot_protection }, Amethyst_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorAMETHYST = EnumHelper.addArmorMaterial("AMETHYST", "chaospersists", Amethyst_armorstats.durability, new int[] { Amethyst_armorstats.head_protection, Amethyst_armorstats.chest_protection, Amethyst_armorstats.leg_protection, Amethyst_armorstats.boot_protection }, Amethyst_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 2.0f);
 
     armorPINK = EnumHelper.addArmorMaterial("PINK", "chaospersists", Pink_armorstats.durability, new int[] { Pink_armorstats.head_protection, Pink_armorstats.chest_protection, Pink_armorstats.leg_protection, Pink_armorstats.boot_protection }, Pink_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
 
@@ -1934,7 +1940,7 @@ public class ChaosPersists
 
     armorPEACOCK = EnumHelper.addArmorMaterial("PEACOCK", "chaospersists", Peacock_armorstats.durability, new int[] { Peacock_armorstats.head_protection, Peacock_armorstats.chest_protection, Peacock_armorstats.leg_protection, Peacock_armorstats.boot_protection }, Peacock_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorROYAL = EnumHelper.addArmorMaterial("ROYAL", "chaospersists", Royal_armorstats.durability, new int[] { Royal_armorstats.head_protection, Royal_armorstats.chest_protection, Royal_armorstats.leg_protection, Royal_armorstats.boot_protection }, Royal_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorROYAL = EnumHelper.addArmorMaterial("ROYAL", "chaospersists", Royal_armorstats.durability, new int[] { Royal_armorstats.head_protection, Royal_armorstats.chest_protection, Royal_armorstats.leg_protection, Royal_armorstats.boot_protection }, Royal_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 5.0f);
 
     armorLAPIS = EnumHelper.addArmorMaterial("LAPIS", "chaospersists", Lapis_armorstats.durability, new int[] { Lapis_armorstats.head_protection, Lapis_armorstats.chest_protection, Lapis_armorstats.leg_protection, Lapis_armorstats.boot_protection }, Lapis_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
 
@@ -3262,6 +3268,8 @@ public class ChaosPersists
 
     GameRegistry.addSmelting(MyOreUraniumBlock, new ItemStack(UraniumNugget), 0.3F);
     GameRegistry.addSmelting(MyOreTitaniumBlock, new ItemStack(TitaniumNugget), 0.3F);
+    GameRegistry.addSmelting(MyOreRubyBlock, new ItemStack(MyRuby, 1), 1.0F);
+    GameRegistry.addSmelting(MyOreAmethystBlock, new ItemStack(MyAmethyst, 1), 1.0F);
     GameRegistry.addSmelting(MyOreSaltBlock, new ItemStack(MySalt, 8), 0.1F);
     GameRegistry.addSmelting(MyCornCob, new ItemStack(MyPopcorn), 0.1F);
     GameRegistry.addSmelting(MyRawCornDog, new ItemStack(MyCornDog), 0.4F);
@@ -5780,6 +5788,78 @@ public class ChaosPersists
           return true;
       }
       return false;
+  }
+
+  /**
+   * Reads BaseDimensionID, optional per-world DimensionId_* overrides (-1 = BaseDimensionID + offset),
+   * validates uniqueness, assigns DimensionID..DimensionID6, and optionally logs resolved IDs.
+   */
+  private static void configureDimensionIds(Configuration config, String ids) {
+    Property logProp = config.get(ids, "LogRegisteredDimensionIds", true);
+    logProp.setComment(
+        "If true, logs every Chaos Persists dimension numeric ID at startup (INFO) so you can compare with other mods and fix collisions.");
+    LogRegisteredDimensionIds = logProp.getBoolean();
+
+    Property baseProp = config.get(ids, "BaseDimensionID", 80);
+    baseProp.setComment(
+        "First ID of the default contiguous block when a DimensionId_* entry is -1. Offsets: +0 Utopia, +1 Mining, +2 Village Mania, +3 Islands (danger), +4 Crystal, +5 Chaos. "
+            + "Default 80 gives 80-85. If another mod already uses one of these numbers, raise BaseDimensionID (e.g. 100) or set explicit DimensionId_* below.");
+    BaseDimensionID = baseProp.getInt();
+
+    final String[] dimKeys = new String[] {
+        "DimensionId_Utopia",
+        "DimensionId_Mining",
+        "DimensionId_VillageMania",
+        "DimensionId_Islands",
+        "DimensionId_Crystal",
+        "DimensionId_Chaos"
+    };
+    final String[] dimLabels = new String[] {
+        "Utopia (WorldProviderChaos)",
+        "Mining (WorldProviderChaos2)",
+        "Village Mania (WorldProviderChaos3)",
+        "Islands / danger (WorldProviderChaos4)",
+        "Crystal (WorldProviderChaos5)",
+        "Chaos (WorldProviderChaos6)"
+    };
+
+    int[] resolved = new int[6];
+    for (int i = 0; i < 6; i++) {
+      Property p = config.get(ids, dimKeys[i], -1);
+      p.setComment(
+          "Numeric world ID for " + dimLabels[i] + ". Use -1 for automatic: BaseDimensionID+" + i + ". "
+              + "Set a specific free ID to avoid conflicts (each Chaos Persists dimension must differ from every other mod).");
+      int raw = p.getInt();
+      resolved[i] = raw >= 0 ? raw : BaseDimensionID + i;
+    }
+
+    HashSet<Integer> seen = new HashSet<Integer>();
+    for (int i = 0; i < 6; i++) {
+      if (!seen.add(Integer.valueOf(resolved[i]))) {
+        throw new IllegalStateException(
+            "ChaosPersists: duplicate dimension ID "
+                + resolved[i]
+                + " in config category ["
+                + ids
+                + "]. Keys "
+                + java.util.Arrays.toString(dimKeys)
+                + " must all be unique (or -1 with distinct BaseDimensionID offsets).");
+      }
+    }
+
+    DimensionID = resolved[0];
+    DimensionID2 = resolved[1];
+    DimensionID3 = resolved[2];
+    DimensionID4 = resolved[3];
+    DimensionID5 = resolved[4];
+    DimensionID6 = resolved[5];
+
+    if (LogRegisteredDimensionIds) {
+      FMLLog.log.info("ChaosPersists dimension IDs (change in chaospersists.cfg -> [{}] if a mod conflicts):", ids);
+      for (int i = 0; i < 6; i++) {
+        FMLLog.log.info("  [{}] = {}  ({})", dimKeys[i], Integer.valueOf(resolved[i]), dimLabels[i]);
+      }
+    }
   }
 
   private ArmorStats get_armorstats(Configuration config, String s, int dura, int head, int chest, int leg, int boots, int enchant, int e_resp, int e_aqua, int e_prot, int e_fire, int e_blast, int e_proj, int e_unbreak, int e_feather)
