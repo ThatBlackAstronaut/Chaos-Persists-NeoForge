@@ -164,7 +164,18 @@ extends EntityMob {
     public void onLivingUpdate() {
         EntityLivingBase e;
         super.onLivingUpdate();
-        if (this.world.rand.nextInt(8) == 0 && (e = this.findSomethingToAttack()) != null) {
+        e = this.getAttackTarget();
+        if (e != null && !e.isEntityAlive()) {
+            this.setAttackTarget(null);
+            e = null;
+        }
+        if (e == null) {
+            e = this.findSomethingToAttack();
+            if (e != null) {
+                this.setAttackTarget(e);
+            }
+        }
+        if (this.world.rand.nextInt(8) == 0 && e != null) {
             if (this.getDistanceSq((Entity)e) < 5.0 && !this.world.isRemote && this.world.rand.nextInt(18) == 1) {
                 this.world.createExplosion((Entity)this, this.posX, this.posY, this.posZ, 2.5f, this.world.getGameRules().getBoolean("mobGriefing"));
                 this.setDead();

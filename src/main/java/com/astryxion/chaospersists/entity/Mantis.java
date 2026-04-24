@@ -272,14 +272,23 @@ extends EntityMob {
                 }
                 --keep_trying;
             }
-        } else if (this.rand.nextInt(8) == 0) {
-            EntityLivingBase e = null;
-            e = (EntityLivingBase)this.rt;
-            if (e != null && e.isDead) {
+        } else {
+            EntityLivingBase e = this.getAttackTarget();
+            if (e != null && (!e.isEntityAlive() || !this.isSuitableTarget(e, false))) {
+                this.setAttackTarget(null);
                 e = null;
             }
             if (e == null) {
+                e = (EntityLivingBase)this.rt;
+                if (e != null && e.isDead) {
+                    e = null;
+                }
+            }
+            if (e == null) {
                 e = this.findSomethingToAttack();
+                if (e != null) {
+                    this.setAttackTarget(e);
+                }
             }
             if (e != null) {
                 this.setAttacking(1);

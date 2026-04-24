@@ -768,11 +768,8 @@ extends EntityTameable {
     public void onUpdate() {
         EntityLivingBase e = null;
         this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.noClip = this.getActivity() != 0 && !this.getPassengers().isEmpty();
-        if (!this.world.isRemote && this.getActivity() != 0 && this.getPassengers().isEmpty() && !this.isSitting()) {
-            this.fly_without_rider();
-        }
         super.onUpdate();
+        this.noClip = this.getActivity() != 0;
         if (!this.world.isRemote) {
             int i;
             if (this.world.rand.nextInt(10) == 1) {
@@ -1161,6 +1158,8 @@ extends EntityTameable {
                     if (!this.getPassengers().isEmpty() && this.getPassengers().get(0).isDead) {
                         this.removePassengers();
                     }
+                } else {
+                    this.fly_without_rider();
                 }
             }
             this.always_do();

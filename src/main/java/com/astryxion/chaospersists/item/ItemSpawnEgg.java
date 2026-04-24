@@ -73,16 +73,9 @@ extends Item {
     @Override
     public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
         ItemStack stack = playerIn.getHeldItem(handIn);
-        if (worldIn.isRemote) {
-            return new ActionResult<>(EnumActionResult.SUCCESS, stack);
-        }
-        double spawnX = playerIn.posX;
-        double spawnY = playerIn.posY + 1.0;
-        double spawnZ = playerIn.posZ;
-        if (doSpawn(stack, playerIn, worldIn, spawnX, spawnY, spawnZ)) {
-            return new ActionResult<>(EnumActionResult.SUCCESS, stack);
-        }
-        return new ActionResult<>(EnumActionResult.FAIL, stack);
+        // 1.7.10 parity: spawn eggs only spawn from block use.
+        // Prevent air right-click from spawning mobs at player position.
+        return new ActionResult<>(EnumActionResult.PASS, stack);
     }
 
     /** Shared spawn logic for onItemUse and onItemRightClick. */

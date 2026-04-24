@@ -129,6 +129,7 @@ extends EntityTameable {
     private RenderInfo renderdata = new RenderInfo();
     private int stream_count = 0;
     private int hurt_timer = 0;
+    private int combat_tick = 0;
     private float moveSpeed = 0.25f;
     private int closest = 99999;
     private int tx = 0;
@@ -176,16 +177,16 @@ extends EntityTameable {
         this.renderdata.ri4 = 0;
     }
 
-    public boolean interact(EntityPlayer par1EntityPlayer) {
-        ItemStack var2 = par1EntityPlayer.inventory.getCurrentItem();
-        if (var2 != null && var2.isEmpty()) {
-            par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, (ItemStack)null);
-            var2 = null;
+    public boolean processInteract(EntityPlayer par1EntityPlayer, net.minecraft.util.EnumHand hand) {
+        ItemStack var2 = par1EntityPlayer.getHeldItem(hand);
+        if (!var2.isEmpty() && var2.getCount() <= 0) {
+            par1EntityPlayer.setHeldItem(hand, ItemStack.EMPTY);
+            var2 = ItemStack.EMPTY;
         }
-        if (super.processInteract(par1EntityPlayer, net.minecraft.util.EnumHand.MAIN_HAND)) {
+        if (super.processInteract(par1EntityPlayer, hand)) {
             return true;
         }
-        if (var2 != null && var2.getItem() == Items.FISH && par1EntityPlayer.getDistanceSq((Entity)this) < 25.0) {
+        if (var2 != null && !var2.isEmpty() && var2.getItem() == Items.FISH && par1EntityPlayer.getDistanceSq((Entity)this) < 25.0) {
             if (!this.isTamed()) {
                 if (!this.world.isRemote) {
                     if (this.rand.nextInt(3) == 0) {
@@ -210,13 +211,13 @@ extends EntityTameable {
             }
             if (!par1EntityPlayer.capabilities.isCreativeMode) {
                 var2.shrink(1);
-                if (var2.isEmpty()) {
-                    par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, (ItemStack)null);
+                if (var2.getCount() <= 0) {
+                    par1EntityPlayer.setHeldItem(hand, ItemStack.EMPTY);
                 }
             }
             return true;
         }
-        if (this.isTamed() && var2 != null && var2.getItem() == Item.getItemFromBlock((Block)Blocks.DEADBUSH) && par1EntityPlayer.getDistanceSq((Entity)this) < 25.0 && this.isOwner(par1EntityPlayer)) {
+        if (this.isTamed() && var2 != null && !var2.isEmpty() && var2.getItem() == Item.getItemFromBlock((Block)Blocks.DEADBUSH) && par1EntityPlayer.getDistanceSq((Entity)this) < 25.0 && this.isOwner(par1EntityPlayer)) {
             if (!this.world.isRemote) {
                 this.setTamed(false);
                 this.setOwnerId((java.util.UUID)null);
@@ -225,18 +226,18 @@ extends EntityTameable {
             }
             if (!par1EntityPlayer.capabilities.isCreativeMode) {
                 var2.shrink(1);
-                if (var2.isEmpty()) {
-                    par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, (ItemStack)null);
+                if (var2.getCount() <= 0) {
+                    par1EntityPlayer.setHeldItem(hand, ItemStack.EMPTY);
                 }
             }
             return true;
         }
-        if (this.isTamed() && var2 != null && var2.getItem() == Items.NAME_TAG && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0 && this.isOwner(par1EntityPlayer)) {
+        if (this.isTamed() && var2 != null && !var2.isEmpty() && var2.getItem() == Items.NAME_TAG && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0 && this.isOwner(par1EntityPlayer)) {
             this.setCustomNameTag(var2.getDisplayName());
             if (!par1EntityPlayer.capabilities.isCreativeMode) {
                 var2.shrink(1);
-                if (var2.isEmpty()) {
-                    par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, (ItemStack)null);
+                if (var2.getCount() <= 0) {
+                    par1EntityPlayer.setHeldItem(hand, ItemStack.EMPTY);
                 }
             }
             return true;
@@ -646,6 +647,7 @@ extends EntityTameable {
         if (this.hurt_timer > 0) {
             --this.hurt_timer;
         }
+        ++this.combat_tick;
         if (!this.isInWater() && this.world.rand.nextInt(25) == 0 && !this.isSitting()) {
             this.closest = 99999;
             this.tz = 0;
@@ -672,21 +674,37 @@ extends EntityTameable {
                 }
             }
         }
-        if (this.world.rand.nextInt(200) == 0) {
-            this.setAttackTarget(null);
-        }
-        if (this.world.getDifficulty() != EnumDifficulty.PEACEFUL && this.world.rand.nextInt(5) == 1) {
-            EntityLivingBase e = this.findSomethingToAttack();
+        if (this.world.getDifficulty() != EnumDifficulty.PEACEFUL) {
+            EntityLivingBase e = this.getAttackTarget();
+            if (e != null && (!e.isEntityAlive() || !this.isSuitableTarget(e, false))) {
+                this.setAttackTarget(null);
+                e = null;
+            }
+            if (e == null) {
+                e = this.findSomethingToAttack();
+                if (e != null) {
+                    this.setAttackTarget(e);
+                }
+            }
+            if (e == null && !this.isTamed()) {
+                EntityPlayer p = this.world.getClosestPlayerToEntity(this, 14.0);
+                if (p != null && !p.capabilities.isCreativeMode && this.getEntitySenses().canSee((Entity)p)) {
+                    e = p;
+                    this.setAttackTarget((EntityLivingBase)p);
+                }
+            }
             if (e != null) {
-                this.faceEntity((Entity)e, 10.0f, 10.0f);
-                if (this.getDistanceSq((Entity)e) < (double)((4.0f + e.width / 2.0f) * (4.0f + e.width / 2.0f))) {
-                    this.setAttacking(1);
-                    if (this.world.rand.nextInt(4) == 0 || this.world.rand.nextInt(5) == 1) {
-                        this.attackEntityAsMob((Entity)e);
+                this.getNavigator().tryMoveToEntityLiving((Entity)e, 1.0);
+                if (this.combat_tick % 5 == 0) {
+                    this.faceEntity((Entity)e, 10.0f, 10.0f);
+                    if (this.getDistanceSq((Entity)e) < (double)((4.0f + e.width / 2.0f) * (4.0f + e.width / 2.0f))) {
+                        this.setAttacking(1);
+                        if (this.world.rand.nextInt(4) == 0 || this.world.rand.nextInt(5) == 1) {
+                            this.attackEntityAsMob((Entity)e);
+                        }
+                    } else {
+                        this.watercanon(e);
                     }
-                } else {
-                    this.getNavigator().tryMoveToEntityLiving((Entity)e, 1.0);
-                    this.watercanon(e);
                 }
             } else {
                 this.setAttacking(0);

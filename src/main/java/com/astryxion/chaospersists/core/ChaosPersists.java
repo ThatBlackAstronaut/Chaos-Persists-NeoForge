@@ -55,6 +55,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityMobSpawner;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
@@ -95,6 +96,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.IAttribute;
+import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.ai.attributes.RangedAttribute;
 
 import com.astryxion.chaospersists.util.ArmorStats;
@@ -3618,6 +3620,9 @@ public class ChaosPersists
     int rockid = nextEntityId++;
     EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "thrown_rock"), EntityThrownRock.class, "EntityThrownRock", rockid, this, 64, 1, true);
 
+    int thunderboltid = nextEntityId++;
+    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "thunder_bolt"), com.astryxion.chaospersists.item.ThunderBolt.class, "ThunderBolt", thunderboltid, this, 64, 1, true);
+
     ItemStack RayStack = new ItemStack(MyRayGun);
     RayStack.setItemDamage(32767);
     addShapelessRecipe(new ResourceLocation("chaospersists", "repair_raygun"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyRayGun), Ingredient.fromStacks(new ItemStack(Blocks.REDSTONE_BLOCK)), Ingredient.fromStacks(RayStack));
@@ -4777,6 +4782,78 @@ public class ChaosPersists
       }
       b.setAttackTarget(victim);
     }
+  }
+
+  /**
+   * 1.7.10 parity: custom mobs used legacy armor reduction expectations.
+   * In 1.12.2, high-damage hits penetrate armor more aggressively, making
+   * high-defense mobs (e.g. Emperor Scorpion) take too much damage.
+   *
+   * This adjusts pre-armor incoming damage for ChaosPersists mobs so that
+   * post-armor damage tracks the legacy model: damage * (1 - armor/25).
+   */
+  @SubscribeEvent
+  public void onLivingHurtLegacyArmorParity(LivingHurtEvent event) {
+    if (event == null || event.getEntityLiving() == null) {
+      return;
+    }
+    EntityLivingBase living = event.getEntityLiving();
+    if (living.world == null || living.world.isRemote) {
+      return;
+    }
+    ResourceLocation id = EntityList.getKey(living);
+    if (id == null || !"chaospersists".equals(id.getNamespace())) {
+      return;
+    }
+    DamageSource source = event.getSource();
+    if (source == null || source.isUnblockable()) {
+      return;
+    }
+    float incoming = event.getAmount();
+    if (incoming <= 0.0f) {
+      return;
+    }
+
+    int armor = Math.max(0, Math.min(20, living.getTotalArmorValue()));
+    if (armor <= 0) {
+      return;
+    }
+
+    // 1.7.10-style final damage expectation.
+    float legacyFinal = incoming * (25.0f - (float)armor) / 25.0f;
+
+    float toughness = 0.0f;
+    IAttributeInstance toughAttr = living.getEntityAttribute(SharedMonsterAttributes.ARMOR_TOUGHNESS);
+    if (toughAttr != null) {
+      toughness = (float)toughAttr.getAttributeValue();
+    }
+
+    float vanillaFinalAtIncoming = net.minecraft.util.CombatRules.getDamageAfterAbsorb(incoming, (float)armor, toughness);
+    if (vanillaFinalAtIncoming <= legacyFinal + 1.0e-4f) {
+      return;
+    }
+
+    // Invert 1.12 armor curve by binary search for pre-armor amount.
+    float low = 0.0f;
+    float high = incoming;
+    float cappedHigh = incoming * 8.0f + 40.0f;
+    while (net.minecraft.util.CombatRules.getDamageAfterAbsorb(high, (float)armor, toughness) < legacyFinal && high < cappedHigh) {
+      high *= 2.0f;
+    }
+    if (high > cappedHigh) {
+      high = cappedHigh;
+    }
+    for (int i = 0; i < 14; ++i) {
+      float mid = (low + high) * 0.5f;
+      float out = net.minecraft.util.CombatRules.getDamageAfterAbsorb(mid, (float)armor, toughness);
+      if (out < legacyFinal) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+
+    event.setAmount(high);
   }
 
   private ResourceLocation getSpawnerEntityId(TileEntityMobSpawner spawner) {

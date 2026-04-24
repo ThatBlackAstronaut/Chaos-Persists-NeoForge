@@ -243,7 +243,10 @@ extends EntityMob {
         super.updateAITasks();
         if (this.world.rand.nextInt(5) == 1) {
             EntityLivingBase e = null;
-            e = this.rt;
+            e = this.getAttackTarget();
+            if (e == null) {
+                e = this.rt;
+            }
             if (ChaosPersists.PlayNicely != 0) {
                 e = null;
             }
@@ -251,6 +254,7 @@ extends EntityMob {
                 if (e.isDead || this.world.rand.nextInt(200) == 1) {
                     e = null;
                     this.rt = null;
+                    this.setAttackTarget(null);
                 }
                 if (e != null && !this.getEntitySenses().canSee((Entity)e)) {
                     e = null;
@@ -258,6 +262,9 @@ extends EntityMob {
             }
             if (e == null) {
                 e = this.findSomethingToAttack();
+                if (e != null) {
+                    this.setAttackTarget(e);
+                }
             }
             if (e != null) {
                 this.faceEntity((Entity)e, 10.0f, 10.0f);

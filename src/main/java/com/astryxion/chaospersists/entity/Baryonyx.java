@@ -159,11 +159,8 @@ extends EntityAnimal {
     }
 
     protected void dropFewItems(boolean par1, int par2) {
-        int var3 = 0;
-        var3 = this.rand.nextInt(5);
-        for (int var4 = 0; var4 < (var3 += 2); ++var4) {
-            this.dropItem(Items.BEEF, 1);
-        }
+        int var3 = this.rand.nextInt(5) + 2;
+        this.dropItem(Items.BEEF, var3);
     }
 
     private boolean scan_it(int x, int y, int z, int dx, int dy, int dz) {

@@ -1,6 +1,8 @@
 package com.astryxion.chaospersists.item;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.entity.Boyfriend;
+import com.astryxion.chaospersists.entity.Girlfriend;
 
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.network.datasync.DataParameter;
@@ -8,9 +10,13 @@ import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.passive.EntityTameable;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.init.Items;
+import net.minecraft.init.SoundEvents;
+import net.minecraft.network.play.server.SPacketChangeGameState;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.MathHelper;
@@ -81,67 +87,84 @@ public class UltimateArrow extends EntityArrow {
     public void onUpdate() {
         super.onUpdate();
 
-        if (!this.inGround) {
-
-            if (this.getIsCritical()) {
-                for (int i = 0; i < 4; ++i) {
-                    this.world.spawnParticle(
-                            EnumParticleTypes.CRIT,
-                            this.posX + this.motionX * i / 4.0,
-                            this.posY + this.motionY * i / 4.0,
-                            this.posZ + this.motionZ * i / 4.0,
-                            -this.motionX,
-                            -this.motionY + 0.2,
-                            -this.motionZ
-                    );
-                }
+        if (!this.inGround && this.getIsCritical()) {
+            for (int i = 0; i < 4; ++i) {
+                this.world.spawnParticle(
+                        EnumParticleTypes.CRIT,
+                        this.posX + this.motionX * i / 4.0,
+                        this.posY + this.motionY * i / 4.0,
+                        this.posZ + this.motionZ * i / 4.0,
+                        -this.motionX,
+                        -this.motionY + 0.2,
+                        -this.motionZ
+                );
             }
-
-            this.motionY -= 0.05F;
-            this.motionX *= 0.99F;
-            this.motionY *= 0.99F;
-            this.motionZ *= 0.99F;
-
-            setPosition(
-                    this.posX + this.motionX,
-                    this.posY + this.motionY,
-                    this.posZ + this.motionZ
-            );
-
-            this.resetPositionToBB();
         }
     }
 
     @Override
     protected void onHit(RayTraceResult result) {
+        if (result.entityHit == null) {
+            super.onHit(result);
+            return;
+        }
 
-        if (result.entityHit != null) {
+        Entity hit = result.entityHit;
 
-            Entity hit = result.entityHit;
-
-            float damage = (float) ChaosPersists.UltimateBowDamage;
-
-            if (this.getIsCritical()) {
-                damage *= 1.5F;
-            }
-
-            DamageSource source = this.shootingEntity == null
-                    ? DamageSource.causeArrowDamage(this, this)
-                    : DamageSource.causeArrowDamage(this, this.shootingEntity);
-
-            if (hit instanceof EntityLivingBase) {
-                EntityLivingBase target = (EntityLivingBase) hit;
-                if (this.isBurning()) {
-                    target.setFire(5);
+        if (ChaosPersists.ultimate_sword_pvp == 0) {
+            if (hit instanceof EntityPlayer || hit instanceof Girlfriend || hit instanceof Boyfriend) {
+                this.playSound(SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.2F / (this.rand.nextFloat() * 0.2F + 0.9F));
+                if (hit instanceof EntityLivingBase) {
+                    ((EntityLivingBase) hit).heal(1.0F);
                 }
-                target.attackEntityFrom(source, damage);
-            } else {
-                hit.attackEntityFrom(source, damage);
+                this.setDead();
+                return;
             }
+            if (hit instanceof EntityTameable && ((EntityTameable) hit).isTamed()) {
+                this.playSound(SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.2F / (this.rand.nextFloat() * 0.2F + 0.9F));
+                ((EntityTameable) hit).heal(1.0F);
+                this.setDead();
+                return;
+            }
+        }
+
+        float velocity = MathHelper.sqrt(this.motionX * this.motionX + this.motionY * this.motionY + this.motionZ * this.motionZ);
+        int damage = MathHelper.ceil(velocity * (float) ChaosPersists.UltimateBowDamage);
+
+        if (this.getIsCritical()) {
+            damage += this.rand.nextInt(damage / 2 + 2);
+        }
+
+        DamageSource source = this.shootingEntity == null
+                ? DamageSource.causeArrowDamage(this, this)
+                : DamageSource.causeArrowDamage(this, this.shootingEntity);
+
+        if (this.isBurning()) {
+            hit.setFire(5);
+        }
+
+        if (hit.attackEntityFrom(source, damage)) {
+            if (hit instanceof EntityLiving) {
+                EntityLiving living = (EntityLiving) hit;
+                if (!this.world.isRemote) {
+                    living.setArrowCountInEntity(living.getArrowCountInEntity() + 1);
+                }
+            }
+
             applyKnockback(hit);
 
-            this.playSound(net.minecraft.init.SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.0F);
+            if (this.shootingEntity instanceof EntityPlayerMP && hit instanceof EntityPlayer && hit != this.shootingEntity) {
+                ((EntityPlayerMP) this.shootingEntity).connection.sendPacket(new SPacketChangeGameState(6, 0.0F));
+            }
+
+            this.playSound(SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.2F / (this.rand.nextFloat() * 0.2F + 0.9F));
             this.setDead();
+        } else {
+            this.motionX *= -0.10000000149D;
+            this.motionY *= -0.10000000149D;
+            this.motionZ *= -0.10000000149D;
+            this.rotationYaw += 180.0F;
+            this.prevRotationYaw += 180.0F;
         }
     }
 

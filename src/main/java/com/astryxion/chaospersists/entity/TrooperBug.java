@@ -487,6 +487,9 @@ extends EntityMob {
             }
             if (e == null) {
                 e = this.findSomethingToAttack();
+                if (e != null) {
+                    this.setAttackTarget(e);
+                }
             }
             if (e != null) {
                 this.faceEntity((Entity)e, 10.0f, 10.0f);
@@ -508,7 +511,7 @@ extends EntityMob {
                     this.getNavigator().tryMoveToEntityLiving((Entity)e, 1.2);
                 }
                 if (this.world.rand.nextInt(30) == 1) {
-                    EntityCreature newent = (EntityCreature)TrooperBug.spawnCreature((World)this.world, (String)"Spit Bug", (double)((this.posX + e.posX) / 2.0 + (double)this.world.rand.nextInt(5) - (double)this.world.rand.nextInt(5)), (double)((this.posY + e.posY) / 2.0 + 1.01), (double)((this.posZ + e.posZ) / 2.0 + (double)this.world.rand.nextInt(5) - (double)this.world.rand.nextInt(5)));
+                    EntityCreature newent = (EntityCreature)TrooperBug.spawnCreature((World)this.world, (String)"chaospersists:spit_bug", (double)((this.posX + e.posX) / 2.0 + (double)this.world.rand.nextInt(5) - (double)this.world.rand.nextInt(5)), (double)((this.posY + e.posY) / 2.0 + 1.01), (double)((this.posZ + e.posZ) / 2.0 + (double)this.world.rand.nextInt(5) - (double)this.world.rand.nextInt(5)));
                 }
             } else {
                 this.setAttacking(0);

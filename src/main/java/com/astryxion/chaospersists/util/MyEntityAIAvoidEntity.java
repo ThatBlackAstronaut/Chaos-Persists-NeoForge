@@ -58,6 +58,7 @@ extends EntityAIBase {
         this.setMutexBits(1);
     }
 
+    @Override
     public boolean shouldExecute() {
         EntityCannonFodder cf;
         Vec3d Vec3d;
@@ -91,18 +92,22 @@ extends EntityAIBase {
         return last != null && Math.abs(last.x + 0.5 - Vec3d.x) < 0.5 && Math.abs(last.y + 0.5 - Vec3d.y) < 0.5 && Math.abs(last.z + 0.5 - Vec3d.z) < 0.5;
     }
 
-    public boolean continueExecuting() {
+    @Override
+    public boolean shouldContinueExecuting() {
         return !this.entityPathNavigate.noPath();
     }
 
+    @Override
     public void startExecuting() {
         this.entityPathNavigate.setPath(this.entityPath, this.farSpeed);
     }
 
+    @Override
     public void resetTask() {
         this.closestLivingEntity = null;
     }
 
+    @Override
     public void updateTask() {
         if (this.theEntity.getDistanceSq(this.closestLivingEntity) < 49.0) {
             this.theEntity.getNavigator().setSpeed(this.nearSpeed);

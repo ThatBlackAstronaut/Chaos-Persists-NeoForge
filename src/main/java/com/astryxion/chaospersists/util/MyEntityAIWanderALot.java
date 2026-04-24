@@ -43,6 +43,7 @@ extends EntityAIBase {
         this.busy = i;
     }
 
+    @Override
     public boolean shouldExecute() {
         if (this.busy != 0) {
             return false;
@@ -63,10 +64,12 @@ extends EntityAIBase {
         return true;
     }
 
-    public boolean continueExecuting() {
+    @Override
+    public boolean shouldContinueExecuting() {
         return !this.entity.getNavigator().noPath();
     }
 
+    @Override
     public void startExecuting() {
         this.entity.getNavigator().tryMoveToXYZ(this.xPosition, this.yPosition, this.zPosition, this.speed);
     }

@@ -526,7 +526,17 @@ extends EntityMob {
             }
         }
         if (this.world.rand.nextInt(5) == 1) {
-            EntityLivingBase e = this.findSomethingToAttack();
+            EntityLivingBase e = this.getAttackTarget();
+            if (e != null && !e.isEntityAlive()) {
+                this.setAttackTarget(null);
+                e = null;
+            }
+            if (e == null) {
+                e = this.findSomethingToAttack();
+                if (e != null) {
+                    this.setAttackTarget(e);
+                }
+            }
             if (e != null) {
                 this.faceEntity((Entity)e, 10.0f, 10.0f);
                 if (this.getDistanceSq((Entity)e) < (double)((4.0f + e.width / 2.0f) * (4.0f + e.width / 2.0f))) {

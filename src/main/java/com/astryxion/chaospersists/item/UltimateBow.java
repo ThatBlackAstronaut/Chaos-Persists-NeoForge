@@ -43,18 +43,22 @@ public class UltimateBow extends Item {
         stack.addEnchantment(Enchantments.INFINITY, 1);
     }
 
-    // 🔥 Instant Full Power Shot BUT Keep Bow Animation
     @Override
     public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
-
         ItemStack stack = player.getHeldItem(hand);
+        player.setActiveHand(hand);
+        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+    }
 
-        player.setActiveHand(hand); // keeps bow animation
+    @Override
+    public void onPlayerStoppedUsing(ItemStack stack, World world, EntityLivingBase entityLiving, int timeLeft) {
+        if (!(entityLiving instanceof EntityPlayer)) {
+            return;
+        }
+        EntityPlayer player = (EntityPlayer) entityLiving;
 
         if (!world.isRemote) {
-
             UltimateArrow arrow = new UltimateArrow(world, player, 3.0f);
-
             if (world.rand.nextInt(4) == 1) {
                 arrow.setIsCritical(true);
             }
@@ -63,40 +67,26 @@ public class UltimateBow extends Item {
             if (punchLevel > 0) {
                 arrow.setKnockbackStrength(punchLevel);
             }
-
             if (EnchantmentHelper.getEnchantmentLevel(Enchantments.FLAME, stack) > 0) {
                 arrow.setFire(100);
             }
 
-            arrow.pickupStatus = EntityArrow.PickupStatus.ALLOWED;
-
+            arrow.pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;
             world.spawnEntity(arrow);
         }
 
-        world.playSound(
-                null,
-                player.posX,
-                player.posY,
-                player.posZ,
-                SoundEvents.ENTITY_ARROW_SHOOT,
-                player.getSoundCategory(),
-                1.0f,
-                1.0f / (itemRand.nextFloat() * 0.4f + 1.2f) + 0.5f
-        );
-
+        world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ARROW_SHOOT, player.getSoundCategory(), 1.0f, 1.0f / (itemRand.nextFloat() * 0.4f + 1.2f) + 0.5f);
         stack.damageItem(1, player);
-
-        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
     }
 
     @Override
     public EnumAction getItemUseAction(ItemStack stack) {
-        return EnumAction.BOW; // keeps bow draw animation
+        return EnumAction.BOW;
     }
 
     @Override
     public int getMaxItemUseDuration(ItemStack stack) {
-        return 72000; // standard bow duration (animation)
+        return 9000;
     }
 
     @Override

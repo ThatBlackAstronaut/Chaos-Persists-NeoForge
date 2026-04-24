@@ -298,8 +298,17 @@ implements IMob {
                 }
             }
             if (target == null && this.world.rand.nextInt(3) == 0) {
-                EntityLivingBase e = null;
-                e = this.findSomethingToAttack();
+                EntityLivingBase e = this.getAttackTarget();
+                if (e != null && !e.isEntityAlive()) {
+                    this.setAttackTarget(null);
+                    e = null;
+                }
+                if (e == null) {
+                    e = this.findSomethingToAttack();
+                    if (e != null) {
+                        this.setAttackTarget(e);
+                    }
+                }
                 if (e != null) {
                     this.currentFlightTarget = new BlockPos((int)e.posX, (int)e.posY + 5, (int)e.posZ);
                     if (this.world.rand.nextInt(shoot) == 0) {

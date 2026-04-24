@@ -457,8 +457,11 @@ extends EntityMob {
             }
             if (e == null) {
                 e = this.findSomethingToAttack();
+                if (e != null) {
+                    this.setAttackTarget(e);
+                }
                 if (this.head_found == 0) {
-                    EntityLiving newent = (EntityLiving)Godzilla.spawnCreature((World)this.world, (String)"MobzillaHead", (double)this.posX, (double)(this.posY + 20.0), (double)this.posZ);
+                    EntityLiving newent = (EntityLiving)Godzilla.spawnCreature((World)this.world, (String)"chaospersists:mobzilla_head", (double)this.posX, (double)(this.posY + 20.0), (double)this.posZ);
                 }
             }
             if (e != null) {
@@ -862,8 +865,8 @@ extends EntityMob {
         if (this.hurt_timer > 0) {
             return false;
         }
-        if (dm > 750.0f) {
-            dm = 750.0f;
+        if (dm > 120.0f) {
+            dm = 120.0f;
         }
         if ((e = par1DamageSource.getTrueSource()) != null && e instanceof EntityLivingBase) {
             EntityLivingBase enl = (EntityLivingBase)e;

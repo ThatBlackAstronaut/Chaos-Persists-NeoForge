@@ -207,7 +207,10 @@ extends EntityMob {
 
     public static Entity spawnCreature(World par0World, String par1, double par2, double par4, double par6) {
         Entity var8 = null;
-        var8 = EntityList.createEntityByIDFromName(new net.minecraft.util.ResourceLocation("chaospersists", par1.toLowerCase().replace(" ", "_")), par0World);
+        net.minecraft.util.ResourceLocation res = par1.contains(":")
+                ? new net.minecraft.util.ResourceLocation(par1)
+                : new net.minecraft.util.ResourceLocation("chaospersists", par1.toLowerCase().replace(" ", "_"));
+        var8 = EntityList.createEntityByIDFromName(res, par0World);
         if (var8 != null) {
             var8.setLocationAndAngles(par2, par4, par6, par0World.rand.nextFloat() * 360.0f, 0.0f);
             par0World.spawnEntity(var8);
@@ -467,7 +470,7 @@ extends EntityMob {
         if ((this.getHealth() <= 0.0f || this.isDead) && this.world.provider.getDimension() != ChaosPersists.getDimension(5) && !this.world.isRemote && e != null && e instanceof EntityPlayer && this.world.rand.nextInt(15) == 1 && ChaosPersists.KrakenEnable != 0 && this.wasshot == 0) {
             int j = 1 + this.world.rand.nextInt(3);
             for (int i = 0; i < j; ++i) {
-                EntityCreature newent = (EntityCreature)AttackSquid.spawnCreature((World)this.world, (String)"The Kraken", (double)(this.posX + (double)this.world.rand.nextInt(4) - (double)this.world.rand.nextInt(4)), (double)170.0, (double)(this.posZ + (double)this.world.rand.nextInt(4) - (double)this.world.rand.nextInt(4)));
+                EntityCreature newent = (EntityCreature)AttackSquid.spawnCreature((World)this.world, (String)"chaospersists:the_kraken", (double)(this.posX + (double)this.world.rand.nextInt(4) - (double)this.world.rand.nextInt(4)), (double)170.0, (double)(this.posZ + (double)this.world.rand.nextInt(4) - (double)this.world.rand.nextInt(4)));
             }
         }
         return ret;

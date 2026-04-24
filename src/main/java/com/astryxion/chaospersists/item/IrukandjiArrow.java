@@ -120,73 +120,74 @@ public class IrukandjiArrow extends EntityArrow {
 
     @Override
     protected void onHit(RayTraceResult result) {
+        if (result.entityHit == null) {
+            super.onHit(result);
+            return;
+        }
 
-        if (result.entityHit != null) {
+        EntityLivingBase target = (EntityLivingBase) result.entityHit;
 
-            EntityLivingBase target = (EntityLivingBase) result.entityHit;
+        float damage = 100.0F; // Chaos-tier damage
 
-            float damage = 100.0F; // Chaos-tier damage
+        // PvP protection logic
+        if (ChaosPersists.ultimate_sword_pvp == 0) {
 
-            // PvP protection logic
-            if (ChaosPersists.ultimate_sword_pvp == 0) {
+            if (target instanceof EntityPlayer
+                    || target instanceof Girlfriend
+                    || target instanceof Boyfriend) {
+                this.playSound(SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.0F);
+                this.setDead();
+                return;
+            }
 
-                if (target instanceof EntityPlayer
-                        || target instanceof Girlfriend
-                        || target instanceof Boyfriend) {
+            if (target instanceof EntityTameable) {
+                EntityTameable tame = (EntityTameable) target;
+                if (tame.isTamed()) {
                     this.playSound(SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.0F);
                     this.setDead();
                     return;
                 }
-
-                if (target instanceof EntityTameable) {
-                    EntityTameable tame = (EntityTameable) target;
-                    if (tame.isTamed()) {
-                        this.playSound(SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.0F);
-                        this.setDead();
-                        return;
-                    }
-                }
             }
+        }
 
-            if (this.getIsCritical()) {
-                damage *= 1.5F;
-            }
+        if (this.getIsCritical()) {
+            damage *= 1.5F;
+        }
 
-            DamageSource source = this.shootingEntity == null
-                    ? DamageSource.causeArrowDamage(this, this)
-                    : DamageSource.causeArrowDamage(this, this.shootingEntity);
+        DamageSource source = this.shootingEntity == null
+                ? DamageSource.causeArrowDamage(this, this)
+                : DamageSource.causeArrowDamage(this, this.shootingEntity);
 
-            if (this.isBurning()) {
-                target.setFire(5);
-            }
+        if (this.isBurning()) {
+            target.setFire(5);
+        }
 
-            if (target.attackEntityFrom(source, damage)) {
+        if (target.attackEntityFrom(source, damage)) {
 
-                if (this.knockbackStrength > 0) {
-                    float f = MathHelper.sqrt(
-                            this.motionX * this.motionX +
-                            this.motionZ * this.motionZ
+            if (this.knockbackStrength > 0) {
+                float f = MathHelper.sqrt(
+                        this.motionX * this.motionX +
+                        this.motionZ * this.motionZ
+                );
+
+                if (f > 0.0F) {
+                    target.addVelocity(
+                            this.motionX * this.knockbackStrength * 0.6D / f,
+                            0.1D,
+                            this.motionZ * this.knockbackStrength * 0.6D / f
                     );
-
-                    if (f > 0.0F) {
-                        target.addVelocity(
-                                this.motionX * this.knockbackStrength * 0.6D / f,
-                                0.1D,
-                                this.motionZ * this.knockbackStrength * 0.6D / f
-                        );
-                    }
                 }
-
-                if (this.shootingEntity instanceof EntityPlayerMP
-                        && target instanceof EntityPlayer) {
-                    ((EntityPlayerMP) this.shootingEntity)
-                            .connection
-                            .sendPacket(new SPacketChangeGameState(6, 0.0F));
-                }
-
-                this.playSound(SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.0F);
-                this.setDead();
             }
+
+            if (this.shootingEntity instanceof EntityPlayerMP
+                    && target instanceof EntityPlayer) {
+                ((EntityPlayerMP) this.shootingEntity)
+                        .connection
+                        .sendPacket(new SPacketChangeGameState(6, 0.0F));
+            }
+
+            this.playSound(SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.0F);
+            this.setDead();
         }
     }
 

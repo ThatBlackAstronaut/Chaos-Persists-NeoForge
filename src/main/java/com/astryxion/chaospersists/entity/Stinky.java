@@ -656,7 +656,18 @@ extends EntityTameable {
                 do_new = true;
             }
         }
-        if (this.world.rand.nextInt(7) == 1 && this.world.getDifficulty() != EnumDifficulty.PEACEFUL && (e = this.findSomethingToAttack()) != null) {
+        e = this.getAttackTarget();
+        if (e != null && !e.isEntityAlive()) {
+            this.setAttackTarget(null);
+            e = null;
+        }
+        if (e == null && this.world.getDifficulty() != EnumDifficulty.PEACEFUL) {
+            e = this.findSomethingToAttack();
+            if (e != null) {
+                this.setAttackTarget(e);
+            }
+        }
+        if (this.world.rand.nextInt(7) == 1 && this.world.getDifficulty() != EnumDifficulty.PEACEFUL && e != null) {
             if (this.isTamed() && this.getHealth() / (float)this.mygetMaxHealth() < 0.25f) {
                 this.setActivity(2);
                 do_new = false;

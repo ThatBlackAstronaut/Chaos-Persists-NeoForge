@@ -63,7 +63,8 @@ extends EntityAIBase {
         this.nearbyOnly = par4;
     }
 
-    public boolean continueExecuting() {
+    @Override
+    public boolean shouldContinueExecuting() {
         EntityLivingBase var1 = this.taskOwner.getAttackTarget();
         if (var1 == null) {
             return false;
@@ -88,12 +89,14 @@ extends EntityAIBase {
         return true;
     }
 
+    @Override
     public void startExecuting() {
         this.targetSearchStatus = 0;
         this.targetSearchDelay = 0;
         this.field_75298_g = 0;
     }
 
+    @Override
     public void resetTask() {
         this.taskOwner.setAttackTarget((EntityLivingBase)null);
     }

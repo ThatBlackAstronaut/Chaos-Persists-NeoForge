@@ -1029,34 +1029,23 @@ implements IRangedAttackMob {
     }
 
     protected void dropFewItems(boolean par1, int par2) {
-        int var4;
         int var3 = 0;
         if (this.isTamed()) {
-            var3 = this.rand.nextInt(5);
-            for (int var42 = 0; var42 < (var3 += 2); ++var42) {
-                this.dropItem(Item.getItemFromBlock((Block)Blocks.RED_FLOWER), 1);
-            }
+            var3 = this.rand.nextInt(5) + 2;
+            this.dropItem(Item.getItemFromBlock((Block)Blocks.RED_FLOWER), var3);
         }
         Item v6 = ChaosPersists.MyItemShoes;
         Item v7 = ChaosPersists.MyItemShoes_1;
         Item v8 = ChaosPersists.MyItemShoes_2;
         Item v9 = ChaosPersists.MyItemShoes_3;
-        var3 = this.rand.nextInt(16);
-        for (var4 = 0; var4 < (var3 += 4); ++var4) {
-            this.dropItem(v6, 1);
-        }
-        var3 = this.rand.nextInt(16);
-        for (var4 = 0; var4 < (var3 += 4); ++var4) {
-            this.dropItem(v7, 1);
-        }
-        var3 = this.rand.nextInt(16);
-        for (var4 = 0; var4 < (var3 += 4); ++var4) {
-            this.dropItem(v8, 1);
-        }
-        var3 = this.rand.nextInt(16);
-        for (var4 = 0; var4 < (var3 += 4); ++var4) {
-            this.dropItem(v9, 1);
-        }
+        var3 = this.rand.nextInt(16) + 4;
+        this.dropItem(v6, var3);
+        var3 = this.rand.nextInt(16) + 4;
+        this.dropItem(v7, var3);
+        var3 = this.rand.nextInt(16) + 4;
+        this.dropItem(v8, var3);
+        var3 = this.rand.nextInt(16) + 4;
+        this.dropItem(v9, var3);
         if (this.isTamed()) {
             ItemStack var5 = this.getHeldItemMainhand();
             if (var5 != null && var5.getCount() > 0) {

@@ -434,7 +434,7 @@ extends EntityCannonFodder {
         double pi = 3.1415926545;
         double deltav = 0.0;
         int dist = 2;
-        if (this.getControllingPassenger() == null && !this.world.isRemote) {
+        if (this.getControllingPassenger() == null) {
             super.onLivingUpdate();
             return;
         }

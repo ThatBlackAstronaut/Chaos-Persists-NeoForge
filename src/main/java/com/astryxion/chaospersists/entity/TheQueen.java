@@ -436,7 +436,7 @@ extends EntityMob {
                     j = 45;
                 }
                 for (i = 0; i < j; ++i) {
-                    Entity ppwr = TheQueen.spawnCreature((World)this.world, (String)"PurplePower", (double)(this.posX - xzoff * Math.sin(Math.toRadians(this.rotationYaw))), (double)(this.posY + yoff), (double)(this.posZ + xzoff * Math.cos(Math.toRadians(this.rotationYaw))));
+                    Entity ppwr = TheQueen.spawnCreature((World)this.world, (String)"chaospersists:purple_power", (double)(this.posX - xzoff * Math.sin(Math.toRadians(this.rotationYaw))), (double)(this.posY + yoff), (double)(this.posZ + xzoff * Math.cos(Math.toRadians(this.rotationYaw))));
                     if (ppwr == null) continue;
                     ppwr.motionX = this.motionX * 3.0;
                     ppwr.motionZ = this.motionZ * 3.0;

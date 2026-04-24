@@ -283,6 +283,9 @@ extends EntityMob {
             }
             if (e == null) {
                 e = this.findSomethingToAttack();
+                if (e != null) {
+                    this.setAttackTarget(e);
+                }
             }
             this.reload_ticker = 20;
             if (e != null) {

@@ -1000,6 +1000,7 @@ extends CommonProxyChaos {
         RenderingRegistry.registerEntityRenderingHandler(IceBall.class, manager -> new RenderThrowableBillboard(manager, texIceBall));
         RenderingRegistry.registerEntityRenderingHandler(Acid.class, manager -> new RenderThrowableBillboard(manager, texAcid));
         RenderingRegistry.registerEntityRenderingHandler(DeadIrukandji.class, manager -> new RenderThrowableBillboard(manager, texDeadIruk));
+        RenderingRegistry.registerEntityRenderingHandler(com.astryxion.chaospersists.item.ThunderBolt.class, manager -> new RenderThrowableBillboard(manager, texLaserBall));
         RenderingRegistry.registerEntityRenderingHandler(BerthaHit.class, manager -> new RenderItemUrchin(manager));
         RenderingRegistry.registerEntityRenderingHandler(EntityCage.class, manager -> new RenderCage(manager));
         RenderingRegistry.registerEntityRenderingHandler(UltimateFishHook.class, manager -> new RenderFish(manager));

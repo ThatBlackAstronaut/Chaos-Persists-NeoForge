@@ -806,7 +806,17 @@ extends EntityLiving {
         }
         if (this.world.getDifficulty() != EnumDifficulty.PEACEFUL && !this.world.isRemote && this.getControllingPassenger() != null && this.world.rand.nextInt(15) == 0) {
             EntityLivingBase e = null;
-            e = this.findSomethingToAttack();
+            e = this.getAttackTarget();
+            if (e != null && !e.isEntityAlive()) {
+                this.setAttackTarget(null);
+                e = null;
+            }
+            if (e == null) {
+                e = this.findSomethingToAttack();
+                if (e != null) {
+                    this.setAttackTarget(e);
+                }
+            }
             if (e != null) {
                 if (this.getDistanceSq((Entity)e) < (double)((12.0f + e.width / 2.0f) * (12.0f + e.width / 2.0f))) {
                     this.setAttacking(1);

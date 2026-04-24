@@ -1046,8 +1046,17 @@ extends EntityMob {
                 }
             }
             if (target == null && this.world.rand.nextInt(2) == 0) {
-                EntityLivingBase e = null;
-                e = this.findSomethingToAttack();
+                EntityLivingBase e = this.getAttackTarget();
+                if (e != null && !e.isEntityAlive()) {
+                    this.setAttackTarget(null);
+                    e = null;
+                }
+                if (e == null) {
+                    e = this.findSomethingToAttack();
+                    if (e != null) {
+                        this.setAttackTarget(e);
+                    }
+                }
                 if (e != null) {
                     this.currentFlightTarget = new net.minecraft.util.math.BlockPos((int)e.posX, (int)e.posY + 15, (int)e.posZ);
                     this.attackWithSomething(e);

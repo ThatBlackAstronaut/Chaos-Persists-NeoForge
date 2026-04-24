@@ -960,8 +960,8 @@ extends EntityCreature {
 
     public void onUpdate() {
         this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.noClip = this.getActivity() != 0 && !this.getPassengers().isEmpty();
         super.onUpdate();
+        this.noClip = this.getActivity() != 0;
         if (this.getActivity() == 1) {
             ++this.wing_sound;
             if (this.wing_sound > 22) {

@@ -1087,7 +1087,17 @@ extends EntityTameable {
             --this.flyaway;
         }
         if (!toofar && this.unstick_timer == 0 && this.flyaway == 0 && this.world.getDifficulty() != EnumDifficulty.PEACEFUL && this.world.rand.nextInt(9) == 1) {
-            e = this.findSomethingToAttack();
+            e = this.getAttackTarget();
+            if (e != null && !e.isEntityAlive()) {
+                this.setAttackTarget(null);
+                e = null;
+            }
+            if (e == null) {
+                e = this.findSomethingToAttack();
+                if (e != null) {
+                    this.setAttackTarget(e);
+                }
+            }
             if (e != null) {
                 if (this.isTamed() && this.getHealth() / (float)this.mygetMaxHealth() < 0.25f) {
                     this.setActivity(1);

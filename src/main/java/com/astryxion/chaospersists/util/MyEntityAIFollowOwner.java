@@ -55,6 +55,7 @@ extends EntityAIBase {
         this.setMutexBits(3);
     }
 
+    @Override
     public boolean shouldExecute() {
         EntityLivingBase var1 = this.thePet.getOwner();
         if (var1 == null) {
@@ -76,7 +77,8 @@ extends EntityAIBase {
         return true;
     }
 
-    public boolean continueExecuting() {
+    @Override
+    public boolean shouldContinueExecuting() {
         EntityLivingBase var1;
         EntityTameable gf;
         if (this.thePet.isSitting()) {
@@ -91,16 +93,19 @@ extends EntityAIBase {
         return this.thePet.getDistanceSq((Entity)this.theOwner) > (double)(this.minDist * this.minDist);
     }
 
+    @Override
     public void startExecuting() {
         this.field_75343_h = 0;
         this.field_75344_i = false;
     }
 
+    @Override
     public void resetTask() {
         this.theOwner = null;
         this.petPathfinder.clearPath();
     }
 
+    @Override
     public void updateTask() {
         this.thePet.getLookHelper().setLookPositionWithEntity((Entity)this.theOwner, 10.0f, (float)this.thePet.getVerticalFaceSpeed());
         if (!this.thePet.isSitting() && --this.field_75343_h <= 0) {

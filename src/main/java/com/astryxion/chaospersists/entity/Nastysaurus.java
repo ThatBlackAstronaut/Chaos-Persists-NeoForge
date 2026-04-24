@@ -285,6 +285,9 @@ extends EntityMob {
             }
             if (e == null) {
                 e = this.findSomethingToAttack();
+                if (e != null) {
+                    this.setAttackTarget(e);
+                }
             }
             if (e != null) {
                 this.faceEntity((Entity)e, 10.0f, 10.0f);

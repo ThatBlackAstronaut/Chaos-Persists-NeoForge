@@ -36,6 +36,7 @@ extends EntityAIBase {
         this.setMutexBits(1);
     }
 
+    @Override
     public boolean shouldExecute() {
         if (this.entity.getRNG().nextInt(90) != 0) {
             return false;
@@ -53,7 +54,8 @@ extends EntityAIBase {
         return true;
     }
 
-    public boolean continueExecuting() {
+    @Override
+    public boolean shouldContinueExecuting() {
         EntityLivingBase var1;
         EntityTameable gf;
         if (this.entity != null && this.entity instanceof EntityTameable && (var1 = (gf = (EntityTameable)this.entity).getOwner()) != null && (int)gf.posZ == (int)var1.posZ && (int)gf.posX == (int)var1.posX && (int)gf.posY < (int)var1.posY + 2 && (int)gf.posY > (int)var1.posY - 2) {
@@ -62,6 +64,7 @@ extends EntityAIBase {
         return !this.entity.getNavigator().noPath();
     }
 
+    @Override
     public void startExecuting() {
         this.entity.getNavigator().tryMoveToXYZ(this.xPosition, this.yPosition, this.zPosition, (double)this.speed);
     }

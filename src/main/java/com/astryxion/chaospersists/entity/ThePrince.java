@@ -433,11 +433,8 @@ extends EntityTameable {
     }
 
     protected void dropFewItems(boolean par1, int par2) {
-        int var3 = 0;
-        var3 = this.world.rand.nextInt(4);
-        for (int var4 = 0; var4 < ++var3; ++var4) {
-            this.dropItem(Items.BEEF, 1);
-        }
+        int var3 = this.world.rand.nextInt(4) + 1;
+        this.dropItem(Items.BEEF, var3);
     }
 
     protected float getSoundPitch() {
@@ -501,7 +498,7 @@ extends EntityTameable {
     public void onUpdate() {
         int i;
         super.onUpdate();
-        this.noClip = this.getActivity() == 2 && !this.getPassengers().isEmpty();
+        this.noClip = this.getActivity() == 2;
         if (this.world.rand.nextInt(10) == 1) {
             i = this.world.rand.nextInt(3);
             if (i == 0) {
@@ -558,26 +555,6 @@ extends EntityTameable {
         }
         if (this.head3ext > 60) {
             this.head3ext = 60;
-        }
-        if (!this.world.isRemote) {
-            MyUtils.enforceDragonMountGroundSafety(this);
-            if (this.getPassengers().isEmpty()) {
-                this.pushOutOfBlocks(this.posX, this.posY, this.posZ);
-            }
-        }
-    }
-
-    @Override
-    protected void removePassenger(Entity passenger) {
-        super.removePassenger(passenger);
-        if (!this.world.isRemote && this.getPassengers().isEmpty()) {
-            this.setActivity(1);
-            this.owner_flying = 0;
-            this.motionY = 0.0;
-            this.noClip = false;
-            this.setNoGravity(false);
-            this.pushOutOfBlocks(this.posX, this.posY, this.posZ);
-            MyUtils.enforceDragonMountGroundSafety(this);
         }
     }
 
@@ -646,7 +623,7 @@ extends EntityTameable {
         }
 
         this.owner_flying = 0;
-        if ((isTamed()) && (getOwner() != null) && !this.getPassengers().isEmpty()) {
+        if ((isTamed()) && (getOwner() != null)) {
           EntityPlayer e = (EntityPlayer)getOwner();
 
           if (e.capabilities.isFlying) {
@@ -742,56 +719,64 @@ extends EntityTameable {
                 do_new = true;
             }
         }
-        if (this.world.rand.nextInt(7) == 1 && this.world.getDifficulty() != EnumDifficulty.PEACEFUL) {
+        e = this.getAttackTarget();
+        if (e != null && (!e.isEntityAlive() || !this.isSuitableTarget(e, false))) {
+            this.setAttackTarget(null);
+            e = null;
+        }
+        if (e == null && this.world.getDifficulty() != EnumDifficulty.PEACEFUL) {
             e = this.findSomethingToAttack();
             if (e != null) {
-                if (this.isTamed() && this.getHealth() / (float)this.mygetMaxHealth() < 0.25f) {
-                    this.setActivity(2);
-                    this.setAttacking(0);
-                    do_new = false;
-                    this.currentFlightTarget = new BlockPos((int)(this.posX + (this.posX - e.posX)), (int)(this.posY + 1.0), (int)(this.posZ + (this.posZ - e.posZ)));
-                } else {
-                    this.setActivity(2);
-                    this.setAttacking(1);
-                    this.currentFlightTarget = new BlockPos((int)e.posX, (int)(e.posY + 1.0), (int)e.posZ);
-                    do_new = false;
-                    if (this.getDistanceSq((Entity)e) < (double)((3.0f + e.width / 2.0f) * (3.0f + e.width / 2.0f))) {
-                        this.attackEntityAsMob((Entity)e);
-                    } else if (!(this.getDistanceSq((Entity)e) <= 25.0 || this.getDistanceSq((Entity)e) >= 144.0 || this.isInWater() || this.getSpyroFire() == 0 || this.world.rand.nextInt(3) != 0 && this.world.rand.nextInt(4) != 1)) {
-                        int which = this.world.rand.nextInt(3);
-                        if (which == 0) {
-                            rr = Math.atan2(e.posZ - this.posZ, e.posX - this.posX);
-                            rdd = Math.abs(rr - (rhdir = Math.toRadians((this.rotationYaw + 90.0f) % 360.0f))) % (pi * 2.0);
-                            if (rdd > pi) {
-                                rdd -= pi * 2.0;
-                            }
-                            if ((rdd = Math.abs(rdd)) < 0.5) {
-                                this.firecanon(e);
-                            }
-                        } else if (which == 1) {
-                            rr = Math.atan2(e.posZ - this.posZ, e.posX - this.posX);
-                            rdd = Math.abs(rr - (rhdir = Math.toRadians((this.rotationYaw + 90.0f) % 360.0f))) % (pi * 2.0);
-                            if (rdd > pi) {
-                                rdd -= pi * 2.0;
-                            }
-                            if ((rdd = Math.abs(rdd)) < 0.5) {
-                                this.firecanonl(e);
-                            }
-                        } else {
-                            rr = Math.atan2(e.posZ - this.posZ, e.posX - this.posX);
-                            rdd = Math.abs(rr - (rhdir = Math.toRadians((this.rotationYaw + 90.0f) % 360.0f))) % (pi * 2.0);
-                            if (rdd > pi) {
-                                rdd -= pi * 2.0;
-                            }
-                            if ((rdd = Math.abs(rdd)) < 0.5) {
-                                this.firecanoni(e);
-                            }
+                this.setAttackTarget(e);
+            }
+        }
+        if (e != null) {
+            if (this.isTamed() && this.getHealth() / (float)this.mygetMaxHealth() < 0.25f) {
+                this.setActivity(2);
+                this.setAttacking(0);
+                do_new = false;
+                this.currentFlightTarget = new BlockPos((int)(this.posX + (this.posX - e.posX)), (int)(this.posY + 1.0), (int)(this.posZ + (this.posZ - e.posZ)));
+            } else {
+                this.setActivity(2);
+                this.setAttacking(1);
+                this.currentFlightTarget = new BlockPos((int)e.posX, (int)(e.posY + 1.0), (int)e.posZ);
+                do_new = false;
+                if (this.getDistanceSq((Entity)e) < (double)((3.0f + e.width / 2.0f) * (3.0f + e.width / 2.0f))) {
+                    this.attackEntityAsMob((Entity)e);
+                } else if (!(this.getDistanceSq((Entity)e) <= 25.0 || this.getDistanceSq((Entity)e) >= 144.0 || this.isInWater() || this.getSpyroFire() == 0 || this.world.rand.nextInt(3) != 0 && this.world.rand.nextInt(4) != 1)) {
+                    int which = this.world.rand.nextInt(3);
+                    if (which == 0) {
+                        rr = Math.atan2(e.posZ - this.posZ, e.posX - this.posX);
+                        rdd = Math.abs(rr - (rhdir = Math.toRadians((this.rotationYaw + 90.0f) % 360.0f))) % (pi * 2.0);
+                        if (rdd > pi) {
+                            rdd -= pi * 2.0;
+                        }
+                        if ((rdd = Math.abs(rdd)) < 0.5) {
+                            this.firecanon(e);
+                        }
+                    } else if (which == 1) {
+                        rr = Math.atan2(e.posZ - this.posZ, e.posX - this.posX);
+                        rdd = Math.abs(rr - (rhdir = Math.toRadians((this.rotationYaw + 90.0f) % 360.0f))) % (pi * 2.0);
+                        if (rdd > pi) {
+                            rdd -= pi * 2.0;
+                        }
+                        if ((rdd = Math.abs(rdd)) < 0.5) {
+                            this.firecanonl(e);
+                        }
+                    } else {
+                        rr = Math.atan2(e.posZ - this.posZ, e.posX - this.posX);
+                        rdd = Math.abs(rr - (rhdir = Math.toRadians((this.rotationYaw + 90.0f) % 360.0f))) % (pi * 2.0);
+                        if (rdd > pi) {
+                            rdd -= pi * 2.0;
+                        }
+                        if ((rdd = Math.abs(rdd)) < 0.5) {
+                            this.firecanoni(e);
                         }
                     }
                 }
-            } else {
-                this.setAttacking(0);
             }
+        } else {
+            this.setAttacking(0);
         }
         if (this.activity == 1) {
             return;
@@ -863,9 +848,6 @@ extends EntityTameable {
         if (!par1EntityLiving.isEntityAlive()) {
             return false;
         }
-        if (!this.getEntitySenses().canSee((Entity)par1EntityLiving)) {
-            return false;
-        }
         if (MyUtils.isRoyalty((Entity)par1EntityLiving)) {
             return false;
         }
@@ -902,7 +884,9 @@ extends EntityTameable {
         while (var2.hasNext()) {
             var3 = (Entity)var2.next();
             var4 = (EntityLivingBase)var3;
-            if (!this.isSuitableTarget(var4, false) || !this.canSeeTarget(var4.posX, var4.posY, var4.posZ)) continue;
+            if (!this.isSuitableTarget(var4, false)) continue;
+            boolean canSee = this.canSeeTarget(var4.posX, var4.posY, var4.posZ) || this.canSeeTarget(var4.posX, var4.posY + (double)(var4.height * 0.5f), var4.posZ);
+            if (!canSee && this.getDistanceSq((Entity)var4) > 64.0) continue;
             return var4;
         }
         return null;

@@ -355,6 +355,9 @@ extends EntityMob {
             }
             if (e == null) {
                 e = this.findSomethingToAttack();
+                if (e != null) {
+                    this.setAttackTarget(e);
+                }
             }
             if (e != null) {
                 double rr = Math.atan2(e.posZ - this.posZ, e.posX - this.posX);

@@ -849,7 +849,7 @@ implements IRangedAttackMob {
             }
             return true;
         }
-        return super.processInitialInteract(par1EntityPlayer, hand);
+        return super.processInteract(par1EntityPlayer, hand);
     }
 
     public boolean isWheat(ItemStack par1ItemStack) {
@@ -937,16 +937,12 @@ implements IRangedAttackMob {
     protected void dropFewItems(boolean par1, int par2) {
         int var3 = 0;
         if (this.isTamed()) {
-            var3 = this.rand.nextInt(5);
-            for (int var4 = 0; var4 < (var3 += 2); ++var4) {
-                this.entityDropItem(new ItemStack(Item.getItemFromBlock((Block)Blocks.RED_FLOWER), 1), 0.0f);
-            }
+            var3 = this.rand.nextInt(5) + 2;
+            this.entityDropItem(new ItemStack(Item.getItemFromBlock((Block)Blocks.RED_FLOWER), var3), 0.0f);
         }
         Item v6 = ChaosPersists.MyItemGameController;
-        var3 = this.world.rand.nextInt(26);
-        for (int var4 = 0; var4 < (var3 += 10); ++var4) {
-            this.entityDropItem(new ItemStack(v6, 1), 0.0f);
-        }
+        var3 = this.world.rand.nextInt(26) + 10;
+        this.entityDropItem(new ItemStack(v6, var3), 0.0f);
         if (this.isTamed()) {
             ItemStack var5 = this.getCurrentEquippedItem();
             if (var5 != null && var5.getCount() > 0) {

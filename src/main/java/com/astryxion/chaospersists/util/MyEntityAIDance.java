@@ -48,6 +48,7 @@ extends EntityAIBase {
         return false;
     }
 
+    @Override
     public boolean shouldExecute() {
         if (this.thePet.isSitting()) {
             return false;
@@ -74,7 +75,8 @@ extends EntityAIBase {
         return true;
     }
 
-    public boolean continueExecuting() {
+    @Override
+    public boolean shouldContinueExecuting() {
         if (this.thePet.isSitting()) {
             return false;
         }
@@ -108,6 +110,7 @@ extends EntityAIBase {
         return true;
     }
 
+    @Override
     public void startExecuting() {
         this.thePet.setSneaking(false);
         this.ticker = 0;
@@ -134,6 +137,7 @@ extends EntityAIBase {
         }
     }
 
+    @Override
     public void resetTask() {
         this.thePet.setSneaking(false);
         this.ticker = 0;
@@ -142,6 +146,7 @@ extends EntityAIBase {
     }
 
 
+    @Override
     public void updateTask()
     {
       int cycle = 20;
