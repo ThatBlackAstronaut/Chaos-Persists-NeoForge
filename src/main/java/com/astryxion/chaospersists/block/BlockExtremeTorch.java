@@ -1,60 +1,60 @@
 package com.astryxion.chaospersists.block;
 
-import com.astryxion.chaospersists.core.ChaosPersists;
-import net.minecraft.block.BlockTorch;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import com.astryxion.chaospersists.util.MyUtils;
 
-import java.util.Random;
+import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import org.joml.Vector3f;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.WallTorchBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.ForgeRegistries;
 
-public class BlockExtremeTorch extends BlockTorch {
+public class BlockExtremeTorch extends WallTorchBlock {
+
+    private static final DustParticleOptions RED_DUST =
+            new DustParticleOptions(new Vector3f(1.0f, 0.0f, 0.0f), 1.0f);
 
     public BlockExtremeTorch() {
-        super();
-        this.setCreativeTab(CreativeTabs.REDSTONE);
+        super(
+                net.minecraft.world.level.block.Block.Properties.of().noCollission().instabreak().lightLevel(state -> 15).sound(net.minecraft.world.level.block.SoundType.WOOD),
+                ParticleTypes.FLAME);
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    public void randomDisplayTick(IBlockState stateIn, World worldIn, BlockPos pos, Random rand) {
-        EnumFacing facing = stateIn.getValue(FACING);
-        double d0 = (double) pos.getX() + 0.5D;
-        double d1 = (double) pos.getY() + 0.7D;
-        double d2 = (double) pos.getZ() + 0.5D;
-
-        if (facing.getAxis().isHorizontal()) {
-            EnumFacing attach = facing.getOpposite();
-            d0 += (double) attach.getXOffset() * 0.3D;
-            d1 += 0.22D;
-            d2 += (double) attach.getZOffset() * 0.3D;
-        } else if (facing == EnumFacing.UP) {
-            d1 -= 0.1D;
-        } else {
-            d1 += 0.15D;
-        }
-
-        worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, d0, d1, d2, 0.0D, 0.0D, 0.0D);
-        worldIn.spawnParticle(EnumParticleTypes.FLAME, d0, d1, d2, 0.0D, 0.0D, 0.0D);
-        worldIn.spawnParticle(EnumParticleTypes.REDSTONE, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+    public String getDescriptionId() {
+        return Util.makeDescriptionId("block", BuiltInRegistries.BLOCK.getKey(this));
     }
 
     @Override
-    public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
+    public void animateTick(BlockState stateIn, Level worldIn, BlockPos pos, net.minecraft.util.RandomSource rand) {
+        Direction facing = stateIn.getValue(FACING);
+        Direction attach = facing.getOpposite();
+        double d0 = (double) pos.getX() + 0.5D + (double) attach.getStepX() * 0.3D;
+        double d1 = (double) pos.getY() + 0.22D;
+        double d2 = (double) pos.getZ() + 0.5D + (double) attach.getStepZ() * 0.3D;
+
+        worldIn.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+        worldIn.addParticle(ParticleTypes.FLAME, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+        worldIn.addParticle(RED_DUST, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+    }
+
+    @Override
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         int par2 = pos.getX();
         int par3 = pos.getY();
         int par4 = pos.getZ();
@@ -63,15 +63,21 @@ public class BlockExtremeTorch extends BlockTorch {
         int z = par4;
         boolean found = false;
 
-        if (world.getBlockState(new BlockPos(x, y - 1, z)).getBlock() == ChaosPersists.MyEyeOfEnderBlock) {
+        Block eyeBlock =
+                ForgeRegistries.BLOCKS.getValue(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "eyeofender"));
+        if (eyeBlock != null && world.getBlockState(new BlockPos(x, y - 1, z)).is(eyeBlock)) {
             block0:
             for (int tries = 0; tries < 100 && !found; ++tries) {
-                x = world.rand.nextInt(2) == 0 ? par2 + 4 + world.rand.nextInt(3) - world.rand.nextInt(3) : par2 - 4 + world.rand.nextInt(3) - world.rand.nextInt(3);
-                z = world.rand.nextInt(2) == 0 ? par4 + 4 + world.rand.nextInt(3) - world.rand.nextInt(3) : par4 - 4 + world.rand.nextInt(3) - world.rand.nextInt(3);
+                x = world.getRandom().nextInt(2) == 0
+                        ? par2 + 4 + world.getRandom().nextInt(3) - world.getRandom().nextInt(3)
+                        : par2 - 4 + world.getRandom().nextInt(3) - world.getRandom().nextInt(3);
+                z = world.getRandom().nextInt(2) == 0
+                        ? par4 + 4 + world.getRandom().nextInt(3) - world.getRandom().nextInt(3)
+                        : par4 - 4 + world.getRandom().nextInt(3) - world.getRandom().nextInt(3);
                 for (y = par3 - 2; y <= par3 + 2; ++y) {
                     BlockPos below = new BlockPos(x, y - 1, z);
-                    IBlockState belowState = world.getBlockState(below);
-                    if (!belowState.getBlock().getMaterial(belowState).isSolid()
+                    BlockState belowState = world.getBlockState(below);
+                    if (!belowState.isFaceSturdy(world, below, Direction.UP)
                             || world.getBlockState(new BlockPos(x, y, z)).getBlock() != Blocks.AIR
                             || world.getBlockState(new BlockPos(x, y + 1, z)).getBlock() != Blocks.AIR) {
                         continue;
@@ -81,33 +87,58 @@ public class BlockExtremeTorch extends BlockTorch {
                 }
             }
             if (found) {
-                if (!world.isRemote) {
-                    spawnCreature(world, new ResourceLocation("chaospersists", "cephadrome"), (double) x + 0.5D, (double) y + 0.01D, (double) z + 0.5D);
+                if (!world.isClientSide) {
+                    spawnCreature(world, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "cephadrome"), (double) x + 0.5D, (double) y + 0.01D, (double) z + 0.5D);
                 } else {
                     for (int var3 = 0; var3 < 16; ++var3) {
-                        world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, (double) ((float) par2 + world.rand.nextFloat() - world.rand.nextFloat()), (double) ((float) par3 + world.rand.nextFloat()), (double) ((float) par4 + world.rand.nextFloat() - world.rand.nextFloat()), 0.0, 0.0, 0.0);
-                        world.spawnParticle(EnumParticleTypes.EXPLOSION_NORMAL, (double) ((float) par2 + world.rand.nextFloat() - world.rand.nextFloat()), (double) ((float) par3 + world.rand.nextFloat()), (double) ((float) par4 + world.rand.nextFloat() - world.rand.nextFloat()), 0.0, 0.0, 0.0);
-                        world.spawnParticle(EnumParticleTypes.REDSTONE, (double) ((float) par2 + world.rand.nextFloat() - world.rand.nextFloat()), (double) ((float) par3 + world.rand.nextFloat()), (double) ((float) par4 + world.rand.nextFloat() - world.rand.nextFloat()), 0.0, 0.0, 0.0);
+                        world.addParticle(
+                                ParticleTypes.SMOKE,
+                                (float) par2 + world.getRandom().nextFloat() - world.getRandom().nextFloat(),
+                                (float) par3 + world.getRandom().nextFloat(),
+                                (float) par4 + world.getRandom().nextFloat() - world.getRandom().nextFloat(),
+                                0.0,
+                                0.0,
+                                0.0);
+                        world.addParticle(
+                                ParticleTypes.EXPLOSION,
+                                (float) par2 + world.getRandom().nextFloat() - world.getRandom().nextFloat(),
+                                (float) par3 + world.getRandom().nextFloat(),
+                                (float) par4 + world.getRandom().nextFloat() - world.getRandom().nextFloat(),
+                                0.0,
+                                0.0,
+                                0.0);
+                        world.addParticle(
+                                RED_DUST,
+                                (float) par2 + world.getRandom().nextFloat() - world.getRandom().nextFloat(),
+                                (float) par3 + world.getRandom().nextFloat(),
+                                (float) par4 + world.getRandom().nextFloat() - world.getRandom().nextFloat(),
+                                0.0,
+                                0.0,
+                                0.0);
                     }
                 }
                 if (placer != null) {
-                    world.playSound(null, placer.posX, placer.posY, placer.posZ, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 1.0f, world.rand.nextFloat() * 0.2f + 0.9f);
+                    world.playSound(null, placer.getX(), placer.getY(), placer.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 1.0f, world.getRandom().nextFloat() * 0.2f + 0.9f);
                 } else {
-                    world.playSound(null, (double) par2, (double) par3, (double) par4, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 1.0f, world.rand.nextFloat() * 0.2f + 0.9f);
+                    world.playSound(null, par2, par3, par4, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 1.0f, world.getRandom().nextFloat() * 0.2f + 0.9f);
                 }
-                world.setBlockState(pos, Blocks.AIR.getDefaultState());
+                world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             }
         }
-        super.onBlockPlacedBy(world, pos, state, placer, stack);
+        super.setPlacedBy(world, pos, state, placer, stack);
     }
 
-    private static Entity spawnCreature(World world, ResourceLocation entityId, double px, double py, double pz) {
-        Entity entity = EntityList.createEntityByIDFromName(entityId, world);
+    private static Entity spawnCreature(Level world, net.minecraft.resources.ResourceLocation entityId, double px, double py, double pz) {
+        EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(entityId);
+        if (type == null || !(world instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        Entity entity = type.create(serverLevel);
         if (entity != null) {
-            entity.setLocationAndAngles(px, py, pz, world.rand.nextFloat() * 360.0f, 0.0f);
-            world.spawnEntity(entity);
-            if (entity instanceof EntityLiving) {
-                ((EntityLiving) entity).playLivingSound();
+            entity.moveTo(px, py, pz, world.getRandom().nextFloat() * 360.0f, 0.0f);
+            serverLevel.addFreshEntity(entity);
+            if (entity instanceof Mob mob) {
+                MyUtils.playAmbientSound(mob);
             }
         }
         return entity;

@@ -1,144 +1,85 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelSlice
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- */
 package com.astryxion.chaospersists.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
-public class ModelSlice
-extends ModelBase {
-    ModelRenderer Grip;
-    ModelRenderer Blade1;
-    ModelRenderer Handguard2;
-    ModelRenderer Handguard1;
-    ModelRenderer hg2;
-    ModelRenderer hg4;
-    ModelRenderer hg3;
-    ModelRenderer hg1;
-    ModelRenderer BaseGrip;
-    ModelRenderer Bottom;
-    ModelRenderer Blade2;
-    ModelRenderer Blade3;
-    ModelRenderer Blade4;
-    ModelRenderer Shape1;
+public class ModelSlice {
+    private final ModelPart Grip;
+    private final ModelPart Blade1;
+    private final ModelPart Handguard2;
+    private final ModelPart Handguard1;
+    private final ModelPart hg2;
+    private final ModelPart hg4;
+    private final ModelPart hg3;
+    private final ModelPart hg1;
+    private final ModelPart BaseGrip;
+    private final ModelPart Bottom;
+    private final ModelPart Blade2;
+    private final ModelPart Blade3;
+    private final ModelPart Blade4;
+    private final ModelPart Shape1;
 
     public ModelSlice() {
-        this.textureWidth = 64;
-        this.textureHeight = 128;
-        this.Grip = new ModelRenderer((ModelBase)this, 0, 0);
-        this.Grip.addBox(0.0f, -6.0f, 0.0f, 1, 12, 1);
-        this.Grip.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.Grip.setTextureSize(64, 128);
-        this.Grip.mirror = true;
-        this.setRotation(this.Grip, 0.0f, 0.0f, 0.0f);
-        this.Blade1 = new ModelRenderer((ModelBase)this, 6, 49);
-        this.Blade1.addBox(0.0f, -41.0f, 0.0f, 1, 34, 3);
-        this.Blade1.setRotationPoint(0.5f, 0.0f, -2.3f);
-        this.Blade1.setTextureSize(64, 128);
-        this.Blade1.mirror = true;
-        this.setRotation(this.Blade1, 0.0f, 0.3490659f, 0.0f);
-        this.Handguard2 = new ModelRenderer((ModelBase)this, 16, 0);
-        this.Handguard2.addBox(0.0f, -7.0f, -4.0f, 1, 1, 9);
-        this.Handguard2.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.Handguard2.setTextureSize(64, 128);
-        this.Handguard2.mirror = true;
-        this.setRotation(this.Handguard2, 0.0f, 0.0f, 0.0f);
-        this.Handguard1 = new ModelRenderer((ModelBase)this, 18, 12);
-        this.Handguard1.addBox(-3.0f, -7.0f, 0.0f, 7, 1, 1);
-        this.Handguard1.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.Handguard1.setTextureSize(64, 128);
-        this.Handguard1.mirror = true;
-        this.setRotation(this.Handguard1, 0.0f, 0.0f, 0.0f);
-        this.hg2 = new ModelRenderer((ModelBase)this, 0, 15);
-        this.hg2.addBox(0.0f, -9.0f, -7.0f, 1, 3, 3);
-        this.hg2.setRotationPoint(0.5f, 0.0f, 0.0f);
-        this.hg2.setTextureSize(64, 128);
-        this.hg2.mirror = true;
-        this.setRotation(this.hg2, 0.0f, 0.0f, 0.0f);
-        this.hg4 = new ModelRenderer((ModelBase)this, 0, 22);
-        this.hg4.addBox(0.0f, -9.0f, 5.0f, 1, 3, 3);
-        this.hg4.setRotationPoint(0.5f, 0.0f, 0.0f);
-        this.hg4.setTextureSize(64, 128);
-        this.hg4.mirror = true;
-        this.setRotation(this.hg4, 0.0f, 0.0f, 0.0f);
-        this.hg3 = new ModelRenderer((ModelBase)this, 0, 29);
-        this.hg3.addBox(-4.0f, -9.0f, 0.0f, 3, 3, 1);
-        this.hg3.setRotationPoint(-2.0f, 0.0f, 0.5f);
-        this.hg3.setTextureSize(64, 128);
-        this.hg3.mirror = true;
-        this.setRotation(this.hg3, 0.0f, 0.0f, 0.0f);
-        this.hg1 = new ModelRenderer((ModelBase)this, 0, 34);
-        this.hg1.addBox(4.0f, -9.0f, 0.0f, 3, 3, 1);
-        this.hg1.setRotationPoint(0.0f, 0.0f, 0.5f);
-        this.hg1.setTextureSize(64, 128);
-        this.hg1.mirror = true;
-        this.setRotation(this.hg1, 0.0f, 0.0f, 0.0f);
-        this.BaseGrip = new ModelRenderer((ModelBase)this, 0, 39);
-        this.BaseGrip.addBox(-1.0f, 5.0f, -1.0f, 3, 1, 3);
-        this.BaseGrip.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.BaseGrip.setTextureSize(64, 128);
-        this.BaseGrip.mirror = true;
-        this.setRotation(this.BaseGrip, 0.0f, 0.0f, 0.0f);
-        this.Bottom = new ModelRenderer((ModelBase)this, 0, 45);
-        this.Bottom.addBox(0.0f, 6.0f, 0.0f, 1, 1, 1);
-        this.Bottom.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.Bottom.setTextureSize(64, 128);
-        this.Bottom.mirror = true;
-        this.setRotation(this.Bottom, 0.0f, 0.0f, 0.0f);
-        this.Blade2 = new ModelRenderer((ModelBase)this, 24, 49);
-        this.Blade2.addBox(-1.0f, -41.0f, 0.0f, 1, 34, 3);
-        this.Blade2.setRotationPoint(0.5f, 0.0f, -2.3f);
-        this.Blade2.setTextureSize(64, 128);
-        this.Blade2.mirror = true;
-        this.setRotation(this.Blade2, 0.0f, -0.3490659f, 0.0f);
-        this.Blade3 = new ModelRenderer((ModelBase)this, 15, 49);
-        this.Blade3.addBox(0.0f, -41.0f, 0.0f, 1, 34, 3);
-        this.Blade3.setRotationPoint(1.5f, 0.0f, 0.4f);
-        this.Blade3.setTextureSize(64, 128);
-        this.Blade3.mirror = true;
-        this.setRotation(this.Blade3, 0.0f, -0.3490659f, 0.0f);
-        this.Blade4 = new ModelRenderer((ModelBase)this, 33, 49);
-        this.Blade4.addBox(0.0f, -41.0f, 0.0f, 1, 34, 3);
-        this.Blade4.setRotationPoint(-1.5f, 0.0f, 0.7f);
-        this.Blade4.setTextureSize(64, 128);
-        this.Blade4.mirror = true;
-        this.setRotation(this.Blade4, 0.0f, 0.3490659f, 0.0f);
-        this.Shape1 = new ModelRenderer((ModelBase)this, 6, 0);
-        this.Shape1.addBox(0.0f, -6.0f, 0.0f, 1, 6, 3);
-        this.Shape1.setRotationPoint(0.5f, -40.0f, -1.0f);
-        this.Shape1.setTextureSize(64, 128);
-        this.Shape1.mirror = true;
-        this.setRotation(this.Shape1, 0.0f, 0.0f, 0.0f);
+        this(LayerDefinition.create(createMesh(), 64, 128).bakeRoot());
     }
 
-    public void render() {
-        float f5 = 1.0f;
-        this.Grip.render(f5);
-        this.Blade1.render(f5);
-        this.Handguard2.render(f5);
-        this.Handguard1.render(f5);
-        this.hg2.render(f5);
-        this.hg4.render(f5);
-        this.hg3.render(f5);
-        this.hg1.render(f5);
-        this.BaseGrip.render(f5);
-        this.Bottom.render(f5);
-        this.Blade2.render(f5);
-        this.Blade3.render(f5);
-        this.Blade4.render(f5);
-        this.Shape1.render(f5);
+    public ModelSlice(ModelPart root) {
+        this.Grip = root.getChild("Grip");
+        this.Blade1 = root.getChild("Blade1");
+        this.Handguard2 = root.getChild("Handguard2");
+        this.Handguard1 = root.getChild("Handguard1");
+        this.hg2 = root.getChild("hg2");
+        this.hg4 = root.getChild("hg4");
+        this.hg3 = root.getChild("hg3");
+        this.hg1 = root.getChild("hg1");
+        this.BaseGrip = root.getChild("BaseGrip");
+        this.Bottom = root.getChild("Bottom");
+        this.Blade2 = root.getChild("Blade2");
+        this.Blade3 = root.getChild("Blade3");
+        this.Blade4 = root.getChild("Blade4");
+        this.Shape1 = root.getChild("Shape1");
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
+    public static MeshDefinition createMesh() {
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
+        partdefinition.addOrReplaceChild("Grip", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, -6.0f, 0.0f, 1, 12, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Blade1", CubeListBuilder.create().texOffs(6, 49).mirror().addBox(0.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(0.5f, 0.0f, -2.3f, 0.0f, 0.3490659f, 0.0f));
+        partdefinition.addOrReplaceChild("Handguard2", CubeListBuilder.create().texOffs(16, 0).mirror().addBox(0.0f, -7.0f, -4.0f, 1, 1, 9), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Handguard1", CubeListBuilder.create().texOffs(18, 12).mirror().addBox(-3.0f, -7.0f, 0.0f, 7, 1, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("hg2", CubeListBuilder.create().texOffs(0, 15).mirror().addBox(0.0f, -9.0f, -7.0f, 1, 3, 3), PartPose.offsetAndRotation(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("hg4", CubeListBuilder.create().texOffs(0, 22).mirror().addBox(0.0f, -9.0f, 5.0f, 1, 3, 3), PartPose.offsetAndRotation(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("hg3", CubeListBuilder.create().texOffs(0, 29).mirror().addBox(-4.0f, -9.0f, 0.0f, 3, 3, 1), PartPose.offsetAndRotation(-2.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("hg1", CubeListBuilder.create().texOffs(0, 34).mirror().addBox(4.0f, -9.0f, 0.0f, 3, 3, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("BaseGrip", CubeListBuilder.create().texOffs(0, 39).mirror().addBox(-1.0f, 5.0f, -1.0f, 3, 1, 3), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Bottom", CubeListBuilder.create().texOffs(0, 45).mirror().addBox(0.0f, 6.0f, 0.0f, 1, 1, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Blade2", CubeListBuilder.create().texOffs(24, 49).mirror().addBox(-1.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(0.5f, 0.0f, -2.3f, 0.0f, -0.3490659f, 0.0f));
+        partdefinition.addOrReplaceChild("Blade3", CubeListBuilder.create().texOffs(15, 49).mirror().addBox(0.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(1.5f, 0.0f, 0.4f, 0.0f, -0.3490659f, 0.0f));
+        partdefinition.addOrReplaceChild("Blade4", CubeListBuilder.create().texOffs(33, 49).mirror().addBox(0.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(-1.5f, 0.0f, 0.7f, 0.0f, 0.3490659f, 0.0f));
+        partdefinition.addOrReplaceChild("Shape1", CubeListBuilder.create().texOffs(6, 0).mirror().addBox(0.0f, -6.0f, 0.0f, 1, 6, 3), PartPose.offsetAndRotation(0.5f, -40.0f, -1.0f, 0.0f, 0.0f, 0.0f));
+        return meshdefinition;
+    }
+
+    public void render(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay) {
+        this.Grip.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.Blade1.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.Handguard2.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.Handguard1.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.hg2.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.hg4.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.hg3.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.hg1.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.BaseGrip.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.Bottom.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.Blade2.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.Blade3.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.Blade4.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.Shape1.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
     }
 }
-

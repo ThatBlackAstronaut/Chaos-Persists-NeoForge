@@ -1,64 +1,28 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Dragonfly
- *  com.astryxion.chaospersists.ModelDragonfly
- *  com.astryxion.chaospersists.RenderDragonfly
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.renderer.entity.RenderLiving
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.util.ResourceLocation
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.Dragonfly;
 import com.astryxion.chaospersists.model.ModelDragonfly;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.entity.RenderLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.resources.ResourceLocation;
 
-public class RenderDragonfly
-extends RenderLiving {
-    protected ModelDragonfly model;
-    private float scale = 1.0f;
-    private static final ResourceLocation texture = new ResourceLocation("chaospersists", "textures/entity/dragonfly.png");
+public class RenderDragonfly extends MobRenderer<Dragonfly, ModelDragonfly> {
+    private static final ResourceLocation TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/dragonfly.png");
+    private final float scale;
 
-    public RenderDragonfly(net.minecraft.client.renderer.entity.RenderManager manager, ModelDragonfly par1ModelBase, float par2, float par3) {
-        super(manager, (ModelBase)par1ModelBase, par2 * par3);
-        this.model = (ModelDragonfly)this.mainModel;
-        this.scale = par3;
+    public RenderDragonfly(EntityRendererProvider.Context context, ModelDragonfly model, float shadow, float scale) {
+        super(context, model, shadow * scale);
+        this.scale = scale;
     }
 
-    public void renderDragonfly(Dragonfly par1EntityDragonfly, double par2, double par4, double par6, float par8, float par9) {
-        super.doRender((EntityLiving)par1EntityDragonfly, par2, par4, par6, par8, par9);
+    @Override
+    protected void scale(Dragonfly entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
+        poseStack.scale(this.scale, this.scale, this.scale);
     }
 
-    public void doRender(EntityLiving par1EntityLiving, double par2, double par4, double par6, float par8, float par9) {
-        this.renderDragonfly((Dragonfly)par1EntityLiving, par2, par4, par6, par8, par9);
-    }
-
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-        this.renderDragonfly((Dragonfly)par1Entity, par2, par4, par6, par8, par9);
-    }
-
-    protected void preRenderScale(Dragonfly par1Entity, float par2) {
-        GL11.glScalef((float)this.scale, (float)this.scale, (float)this.scale);
-    }
-
-    protected void preRenderCallback(EntityLivingBase par1EntityLiving, float par2) {
-        this.preRenderScale((Dragonfly)par1EntityLiving, par2);
-    }
-
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        return texture;
+    @Override
+    public ResourceLocation getTextureLocation(Dragonfly entity) {
+        return TEXTURE;
     }
 }
-

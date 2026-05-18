@@ -1,162 +1,139 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Fairy
- *  com.astryxion.chaospersists.GenericTargetSorter
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.entity.DataWatcher
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAILookIdle
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.EntityAIWatchClosest
- *  net.minecraft.entity.ai.EntitySenses
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.passive.EntityAmbientCreature
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.init.Blocks
- *  net.minecraft.item.Item
- *  net.minecraft.nbt.NBTTagCompound
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.ChunkCoordinates
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.MathHelper
- *  net.minecraft.util.math.RayTraceResult
- *  net.minecraft.util.ResourceLocation
- *  net.minecraft.util.math.Vec3d
- *  net.minecraft.world.EnumDifficulty
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
+import com.astryxion.chaospersists.util.MyUtils;
 
-import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
+import com.astryxion.chaospersists.util.GenericTargetSorter;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.EntityAIWatchClosest;
-import net.minecraft.entity.ai.EntitySenses;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.passive.EntityAmbientCreature;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.EnumDifficulty;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ambient.AmbientCreature;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
-public class Fairy
-extends EntityAmbientCreature {
-    private static final DataParameter<Integer> FAIRY_TYPE = EntityDataManager.createKey(Fairy.class, DataSerializers.VARINT);
-    private static final ResourceLocation texture0 = new ResourceLocation("chaospersists", "textures/entity/fairytexture.png");
-    private static final ResourceLocation texture1 = new ResourceLocation("chaospersists", "textures/entity/fairytexture2.png");
-    private static final ResourceLocation texture2 = new ResourceLocation("chaospersists", "textures/entity/fairytexture3.png");
-    private static final ResourceLocation texture3 = new ResourceLocation("chaospersists", "textures/entity/fairytexture4.png");
-    private static final ResourceLocation texture4 = new ResourceLocation("chaospersists", "textures/entity/fairytexture5.png");
-    private static final ResourceLocation texture5 = new ResourceLocation("chaospersists", "textures/entity/fairytexture6.png");
-    private static final ResourceLocation texture6 = new ResourceLocation("chaospersists", "textures/entity/fairytexture7.png");
-    private static final ResourceLocation texture7 = new ResourceLocation("chaospersists", "textures/entity/fairytexture8.png");
-    private static final ResourceLocation texture8 = new ResourceLocation("chaospersists", "textures/entity/fairytexture9.png");
+public class Fairy extends AmbientCreature {
+    private int stuck_count;
+    private static final EntityDataAccessor<Integer> FAIRY_TYPE =
+            SynchedEntityData.defineId(Fairy.class, EntityDataSerializers.INT);
+    private static final ResourceLocation TEXTURE0 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/fairytexture.png");
+    private static final ResourceLocation TEXTURE1 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/fairytexture2.png");
+    private static final ResourceLocation TEXTURE2 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/fairytexture3.png");
+    private static final ResourceLocation TEXTURE3 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/fairytexture4.png");
+    private static final ResourceLocation TEXTURE4 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/fairytexture5.png");
+    private static final ResourceLocation TEXTURE5 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/fairytexture6.png");
+    private static final ResourceLocation TEXTURE6 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/fairytexture7.png");
+    private static final ResourceLocation TEXTURE7 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/fairytexture8.png");
+    private static final ResourceLocation TEXTURE8 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/fairytexture9.png");
+
     int my_blink = 0;
     int blinker = 0;
-    int myspace = 0;
     public int fairy_type = 0;
     private int force_sync = 10;
     private BlockPos currentFlightTarget = null;
     private String myowner = null;
-    private GenericTargetSorter TargetSorter = null;
+    private final GenericTargetSorter targetSorter;
 
-    public Fairy(World par1World) {
-        super(par1World);
-        this.my_blink = 20 + this.rand.nextInt(20);
-        this.setSize(0.4f, 0.8f);
-        if (par1World != null) {
-            this.fairy_type = par1World.rand.nextInt(9);
+    public Fairy(EntityType<? extends Fairy> type, Level level) {
+        super(type, level);
+        this.my_blink = 20 + this.getRandom().nextInt(20);
+        if (level != null) {
+            this.fairy_type = level.getRandom().nextInt(9);
         }
-                // renderDistanceWeight not settable in 1.12.2
-        this.tasks.addTask(0, (EntityAIBase)new EntityAIWatchClosest((EntityLiving)this, EntityLiving.class, 8.0f));
-        this.tasks.addTask(1, (EntityAIBase)new EntityAILookIdle((EntityLiving)this));
-        this.TargetSorter = new GenericTargetSorter((Entity)this);
+        this.targetSorter = new GenericTargetSorter(this);
+        this.goalSelector.addGoal(0, new LookAtPlayerGoal(this, LivingEntity.class, 8.0f));
+        this.goalSelector.addGoal(1, new RandomLookAroundGoal(this));
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.10000000149011612);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(3.0);
+    public static AttributeSupplier.Builder createAttributes() {
+        return AmbientCreature.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 40.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.10000000149011612)
+                .add(Attributes.ATTACK_DAMAGE, 3.0);
+    }
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(FAIRY_TYPE, this.fairy_type);
     }
 
     public ResourceLocation getTexture(Fairy a) {
-        if (this.fairy_type == 8) {
-            return texture8;
+        if (a.fairy_type == 8) {
+            return TEXTURE8;
         }
-        if (this.fairy_type == 7) {
-            return texture7;
+        if (a.fairy_type == 7) {
+            return TEXTURE7;
         }
-        if (this.fairy_type == 6) {
-            return texture6;
+        if (a.fairy_type == 6) {
+            return TEXTURE6;
         }
-        if (this.fairy_type == 5) {
-            return texture5;
+        if (a.fairy_type == 5) {
+            return TEXTURE5;
         }
-        if (this.fairy_type == 4) {
-            return texture4;
+        if (a.fairy_type == 4) {
+            return TEXTURE4;
         }
-        if (this.fairy_type == 3) {
-            return texture3;
+        if (a.fairy_type == 3) {
+            return TEXTURE3;
         }
-        if (this.fairy_type == 2) {
-            return texture2;
+        if (a.fairy_type == 2) {
+            return TEXTURE2;
         }
-        if (this.fairy_type == 1) {
-            return texture1;
+        if (a.fairy_type == 1) {
+            return TEXTURE1;
         }
-        return texture0;
+        return TEXTURE0;
     }
 
-    protected void entityInit() {
-        super.entityInit();
-        this.getDataManager().register(FAIRY_TYPE, this.fairy_type);
+    public int getFairyType() {
+        return this.entityData.get(FAIRY_TYPE);
     }
 
-    public void setOwner(EntityLivingBase e) {
-        String s;
-        EntityPlayer p = null;
-        if (e != null && e instanceof EntityPlayer && (s = (p = (EntityPlayer)e).getDisplayName().getUnformattedText()) != null) {
-            this.myowner = s;
+    public void setFairyType(int par1) {
+        this.fairy_type = par1;
+        this.entityData.set(FAIRY_TYPE, par1);
+    }
+
+    public void setOwner(LivingEntity e) {
+        if (e instanceof Player p) {
+            this.myowner = p.getGameProfile().getName();
         }
     }
 
@@ -167,63 +144,62 @@ extends EntityAmbientCreature {
         return 0.0f;
     }
 
-    public boolean attackEntityAsMob(Entity par1Entity) {
-        if (this.world.getDifficulty() == EnumDifficulty.PEACEFUL) {
+    @Override
+    public boolean doHurtTarget(Entity par1Entity) {
+        if (this.level().getDifficulty() == Difficulty.PEACEFUL) {
             return false;
         }
-        boolean var4 = par1Entity.attackEntityFrom(DamageSource.causeMobDamage((EntityLivingBase)this), 2.0f);
-        return var4;
+        return par1Entity.hurt(this.damageSources().mobAttack(this), 2.0f);
     }
 
-    public int getTotalArmorValue() {
-        return 4;
-    }
-
+    @Override
     protected float getSoundVolume() {
         return 0.25f;
     }
 
-    protected float getSoundPitch() {
+    @Override
+    public float getVoicePitch() {
         return 1.7f;
     }
 
-    protected net.minecraft.util.SoundEvent getAmbientSound() {
-        return null;
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return ChaosSounds.RATHIT;
     }
 
-    protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource ds) {
-        return com.astryxion.chaospersists.core.ChaosSounds.RATHIT;
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ChaosSounds.BIG_SPLAT;
     }
 
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return com.astryxion.chaospersists.core.ChaosSounds.BIG_SPLAT;
-    }
-
-    public boolean canBePushed() {
+    @Override
+    public boolean isPushable() {
         return true;
     }
 
-    protected void collideWithEntity(Entity par1Entity) {
+    @Override
+    protected void doPush(Entity entity) {
     }
 
-    protected void collideWithNearbyEntities() {
+    @Override
+    protected void pushEntities() {
     }
 
     public int mygetMaxHealth() {
         return 40;
     }
 
-    protected Item getDropItem() {
-        return Item.getItemFromBlock((Block)ChaosPersists.CrystalTorch);
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        if (ChaosPersists.CrystalTorch != null) {
+            this.spawnAtLocation(ChaosPersists.CrystalTorch.asItem());
+        }
     }
 
-    protected boolean isAIEnabled() {
-        return true;
-    }
-
-    public void onUpdate() {
-        super.onUpdate();
-        this.motionY *= 0.600000023841;
+    @Override
+    public void tick() {
+        super.tick();
+        this.setDeltaMovement(this.getDeltaMovement().multiply(1.0, 0.6000000238418579, 1.0));
         ++this.blinker;
         if (this.blinker > this.my_blink) {
             this.blinker = 0;
@@ -231,41 +207,217 @@ extends EntityAmbientCreature {
         --this.force_sync;
         if (this.force_sync < 0) {
             this.force_sync = 10;
-            if (this.world.isRemote) {
-                this.fairy_type = this.getDataManager().get(FAIRY_TYPE).intValue();
+            if (this.level().isClientSide) {
+                this.fairy_type = this.getFairyType();
             } else {
-                this.getDataManager().set(FAIRY_TYPE, this.fairy_type);
+                this.setFairyType(this.fairy_type);
             }
         }
-        long t = this.world.getWorldTime();
-        if ((t %= 24000L) < 12000L) {
+        long t = this.level().getDayTime() % 24000L;
+        if (t < 12000L) {
             return;
         }
-        if (this.world.isRemote && this.world.rand.nextInt(5) == 0 && this.getBlink() > 1.0f) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FIREWORKS_SPARK, this.posX, this.posY - 0.15000000596046448, this.posZ, (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 8.0f), (double)((- this.world.rand.nextFloat()) / 8.0f), (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 8.0f));
+        if (this.level().isClientSide
+                && this.getRandom().nextInt(5) == 0
+                && this.getBlink() > 1.0f) {
+            this.level()
+                    .addParticle(
+                            ParticleTypes.FIREWORK,
+                            this.getX(),
+                            this.getY() - 0.15000000596046448,
+                            this.getZ(),
+                            (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 8.0f,
+                            (-this.getRandom().nextFloat()) / 8.0f,
+                            (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 8.0f);
         }
     }
 
-    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {
-        super.writeEntityToNBT(par1NBTTagCompound);
+    @Override
+    public void addAdditionalSaveData(CompoundTag par1NBTTagCompound) {
+        super.addAdditionalSaveData(par1NBTTagCompound);
         if (this.myowner == null) {
             this.myowner = "null";
         }
-        par1NBTTagCompound.setString("MyOwner", this.myowner);
-        par1NBTTagCompound.setInteger("FairyType", this.fairy_type);
+        par1NBTTagCompound.putString("MyOwner", this.myowner);
+        par1NBTTagCompound.putInt("FairyType", this.fairy_type);
     }
 
-    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound) {
-        super.readEntityFromNBT(par1NBTTagCompound);
+    @Override
+    public void readAdditionalSaveData(CompoundTag par1NBTTagCompound) {
+        super.readAdditionalSaveData(par1NBTTagCompound);
         this.myowner = par1NBTTagCompound.getString("MyOwner");
         if (this.myowner != null && this.myowner.equals("null")) {
             this.myowner = null;
         }
-        this.fairy_type = par1NBTTagCompound.getInteger("fairyType");
+        this.fairy_type = par1NBTTagCompound.getInt("fairyType");
+        this.entityData.set(FAIRY_TYPE, this.fairy_type);
     }
 
-    private boolean isSuitableTarget(EntityLivingBase par1EntityLiving, boolean par2) {
-        if (this.world.getDifficulty() == EnumDifficulty.PEACEFUL) {
+    public boolean canSeeTarget(double pX, double pY, double pZ) {
+        HitResult hit =
+                this.level()
+                        .clip(
+                                new ClipContext(
+                                        new Vec3(this.getX(), this.getY() + 0.25, this.getZ()),
+                                        new Vec3(pX, pY, pZ),
+                                        ClipContext.Block.COLLIDER,
+                                        ClipContext.Fluid.NONE,
+                                        this));
+        return hit.getType() == HitResult.Type.MISS;
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        int keepTrying = 25;
+        if (this.isDeadOrDying()) {
+            return;
+        }
+        super.customServerAiStep();
+        if (this.currentFlightTarget == null) {
+            this.currentFlightTarget = BlockPos.containing(this.getX(), this.getY(), this.getZ());
+        }
+        if (this.getRandom().nextInt(200) == 0
+                || this.currentFlightTarget.distToCenterSqr(this.getX(), this.getY(), this.getZ()) < 2.5) {
+            BlockState bid = Blocks.STONE.defaultBlockState();
+            this.stuck_count = 0;
+            while (!bid.isAir() && keepTrying != 0) {
+                int zdir = this.getRandom().nextInt(8);
+                int xdir = this.getRandom().nextInt(8);
+                if (this.getRandom().nextInt(2) == 0) {
+                    zdir = -zdir;
+                }
+                if (this.getRandom().nextInt(2) == 0) {
+                    xdir = -xdir;
+                }
+                this.currentFlightTarget =
+                        new BlockPos(
+                                (int) this.getX() + xdir,
+                                (int) this.getY() + this.getRandom().nextInt(5) - 2,
+                                (int) this.getZ() + zdir);
+                bid = this.level().getBlockState(this.currentFlightTarget);
+                if (bid.isAir()
+                        && !this.canSeeTarget(
+                                this.currentFlightTarget.getX(),
+                                this.currentFlightTarget.getY(),
+                                this.currentFlightTarget.getZ())) {
+                    bid = Blocks.STONE.defaultBlockState();
+                }
+                --keepTrying;
+            }
+        } else if (this.getRandom().nextInt(12) == 0 && this.level().getDifficulty() != Difficulty.PEACEFUL) {
+            LivingEntity e = this.findSomethingToAttack();
+            if (e != null) {
+                this.currentFlightTarget = new BlockPos((int) e.getX(), (int) (e.getY() + 1.0), (int) e.getZ());
+                if (this.distanceToSqr(e) < 6.0) {
+                    this.doHurtTarget(e);
+                }
+            }
+        } else if (this.myowner != null && this.level() instanceof ServerLevel serverLevel) {
+            Player p = serverLevel.getServer().getPlayerList().getPlayerByName(this.myowner);
+            if (p != null) {
+                if (this.distanceToSqr(p) > 64.0) {
+                    this.currentFlightTarget =
+                            new BlockPos(
+                                    (int) p.getX() + this.getRandom().nextInt(3) - this.getRandom().nextInt(3),
+                                    (int) (p.getY() + 1.0),
+                                    (int) p.getZ() + this.getRandom().nextInt(3) - this.getRandom().nextInt(3));
+                }
+                if (this.distanceToSqr(p) > 256.0) {
+                    this.moveTo(
+                            p.getX() + this.getRandom().nextFloat() - this.getRandom().nextFloat(),
+                            p.getY(),
+                            p.getZ() + this.getRandom().nextFloat() - this.getRandom().nextFloat());
+                }
+            }
+        }
+        if (this.getRandom().nextInt(250) == 1) {
+            this.heal(1.0f);
+        }
+        double var1 = (double) this.currentFlightTarget.getX() + 0.5 - this.getX();
+        double var3 = (double) this.currentFlightTarget.getY() + 0.1 - this.getY();
+        double var5 = (double) this.currentFlightTarget.getZ() + 0.5 - this.getZ();
+        Vec3 motion = this.getDeltaMovement();
+        this.setDeltaMovement(
+                motion.add(
+                        (Math.signum(var1) * 0.2 - motion.x) * 0.1,
+                        (Math.signum(var3) * 0.699999988079071 - motion.y) * 0.1,
+                        (Math.signum(var5) * 0.2 - motion.z) * 0.1));
+        motion = this.getDeltaMovement();
+        float var7 = (float) (Mth.atan2(motion.z, motion.x) * 180.0 / Math.PI) - 90.0f;
+        float var8 = Mth.wrapDegrees(var7 - this.getYRot());
+        this.setYRot(this.getYRot() + var8 / 4.0f);
+    }
+
+    public boolean canTriggerPressurePlate() {
+        return false;
+    }
+
+    @Override
+    public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {
+        return false;
+    }
+
+    @Override
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
+        this.fallDistance = 0.0f;
+    }
+
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        if (this.isPersistenceRequired()) {
+            return false;
+        }
+        if (this.myowner != null) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkFairySpawnRules(
+            EntityType<Fairy> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        int sc = 0;
+        for (int k = -1; k <= 1; ++k) {
+            for (int j = -1; j <= 1; ++j) {
+                if (MyUtils.getBlockStateForSpawnRules(level, pos.offset(j, 0, k)).isAir()) {
+                    ++sc;
+                }
+            }
+        }
+        if (sc < 6) {
+            return false;
+        }
+        if (pos.getY() < 50) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        int sc = 0;
+        BlockPos pos = this.blockPosition();
+        for (int k = -1; k <= 1; ++k) {
+            for (int j = -1; j <= 1; ++j) {
+                if (MyUtils.getBlockStateForSpawnRules(level, pos.offset(j, 0, k)).isAir()) {
+                    ++sc;
+                }
+            }
+        }
+        if (sc < 6) {
+            return false;
+        }
+        if (this.getY() < 50.0) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isSuitableTarget(LivingEntity par1EntityLiving, boolean par2) {
+        if (this.level().getDifficulty() == Difficulty.PEACEFUL) {
             return false;
         }
         if (par1EntityLiving == null) {
@@ -274,144 +426,32 @@ extends EntityAmbientCreature {
         if (par1EntityLiving == this) {
             return false;
         }
-        if (!par1EntityLiving.isEntityAlive()) {
+        if (!par1EntityLiving.isAlive()) {
             return false;
         }
-        if (!this.getEntitySenses().canSee((Entity)par1EntityLiving)) {
+        if (!this.hasLineOfSight(par1EntityLiving)) {
             return false;
         }
-        if (par1EntityLiving instanceof EntityMob) {
-            return true;
-        }
-        return false;
+        return par1EntityLiving instanceof Monster;
     }
 
-    private EntityLivingBase findSomethingToAttack() {
+    private LivingEntity findSomethingToAttack() {
         if (ChaosPersists.PlayNicely != 0) {
             return null;
         }
-        List var5 = this.world.getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox().expand(8.0, 8.0, 8.0));
-        Collections.sort(var5, this.TargetSorter);
-        Iterator var2 = var5.iterator();
-        Entity var3 = null;
-        EntityLivingBase var4 = null;
+        List<LivingEntity> var5 =
+                this.level()
+                        .getEntitiesOfClass(
+                                LivingEntity.class, this.getBoundingBox().inflate(8.0, 8.0, 8.0));
+        Collections.sort(var5, this.targetSorter);
+        Iterator<LivingEntity> var2 = var5.iterator();
         while (var2.hasNext()) {
-            var3 = (Entity)var2.next();
-            var4 = (EntityLivingBase)var3;
-            if (!this.isSuitableTarget(var4, false)) continue;
+            LivingEntity var4 = var2.next();
+            if (!this.isSuitableTarget(var4, false)) {
+                continue;
+            }
             return var4;
         }
         return null;
     }
-
-    public boolean canSeeTarget(double pX, double pY, double pZ) {
-        return this.world.rayTraceBlocks(new Vec3d((double)this.posX, (double)(this.posY + 0.25), (double)this.posZ), new Vec3d((double)pX, (double)pY, (double)pZ), false) == null;
-    }
-
-    protected void updateAITasks() {
-        EntityPlayer p;
-        int keep_trying = 25;
-        if (this.isDead) {
-            return;
-        }
-        super.updateAITasks();
-        if (this.currentFlightTarget == null) {
-            this.currentFlightTarget = new BlockPos((int)this.posX, (int)this.posY, (int)this.posZ);
-        }
-        if (this.world.rand.nextInt(200) == 0 || this.currentFlightTarget.distanceSq(this.posX, this.posY, this.posZ) < 2.5) {
-            Block bid = Blocks.STONE;
-            while (bid != Blocks.AIR && keep_trying != 0) {
-                int zdir = this.world.rand.nextInt(8);
-                int xdir = this.world.rand.nextInt(8);
-                if (this.world.rand.nextInt(2) == 0) {
-                    zdir = - zdir;
-                }
-                if (this.world.rand.nextInt(2) == 0) {
-                    xdir = - xdir;
-                }
-                this.currentFlightTarget = new BlockPos((int)this.posX + xdir, (int)this.posY + this.world.rand.nextInt(5) - 2, (int)this.posZ + zdir);
-                bid = this.world.getBlockState(this.currentFlightTarget).getBlock();
-                if (bid == Blocks.AIR && !this.canSeeTarget((double)this.currentFlightTarget.getX(), (double)this.currentFlightTarget.getY(), (double)this.currentFlightTarget.getZ())) {
-                    bid = Blocks.STONE;
-                }
-                --keep_trying;
-            }
-        } else if (this.world.rand.nextInt(12) == 0 && this.world.getDifficulty() != EnumDifficulty.PEACEFUL) {
-            EntityLivingBase e = null;
-            e = this.findSomethingToAttack();
-            if (e != null) {
-                this.currentFlightTarget = new BlockPos((int)e.posX, (int)(e.posY + 1.0), (int)e.posZ);
-                if (this.getDistanceSq((Entity)e) < 6.0) {
-                    this.attackEntityAsMob((Entity)e);
-                }
-            }
-        } else if (this.myowner != null && (p = this.world.getPlayerEntityByName(this.myowner)) != null) {
-            if (this.getDistanceSq((Entity)p) > 64.0) {
-                this.currentFlightTarget = new BlockPos((int)p.posX + this.world.rand.nextInt(3) - this.world.rand.nextInt(3), (int)(p.posY + 1.0), (int)p.posZ + this.world.rand.nextInt(3) - this.world.rand.nextInt(3));
-            }
-            if (this.getDistanceSq((Entity)p) > 256.0) {
-                this.setPosition(p.posX + (double)this.world.rand.nextFloat() - (double)this.world.rand.nextFloat(), p.posY, p.posZ + (double)this.world.rand.nextFloat() - (double)this.world.rand.nextFloat());
-            }
-        }
-        if (this.world.rand.nextInt(250) == 1) {
-            this.heal(1.0f);
-        }
-        double var1 = (double)this.currentFlightTarget.getX() + 0.5 - this.posX;
-        double var3 = (double)this.currentFlightTarget.getY() + 0.1 - this.posY;
-        double var5 = (double)this.currentFlightTarget.getZ() + 0.5 - this.posZ;
-        this.motionX += (Math.signum(var1) * 0.2 - this.motionX) * 0.1;
-        this.motionY += (Math.signum(var3) * 0.699999988079071 - this.motionY) * 0.1;
-        this.motionZ += (Math.signum(var5) * 0.2 - this.motionZ) * 0.1;
-        float var7 = (float)(Math.atan2(this.motionZ, this.motionX) * 180.0 / 3.141592653589793) - 90.0f;
-        float var8 = MathHelper.wrapDegrees(var7 - this.rotationYaw);
-        this.moveForward = 0.2f;
-        this.rotationYaw += var8 / 4.0f;
-    }
-
-    protected boolean canTriggerWalking() {
-        return false;
-    }
-
-    public void fall(float distance, float damageMultiplier) {
-    }
-
-    protected void updateFallState(double y, boolean onGroundIn, net.minecraft.block.state.IBlockState state, net.minecraft.util.math.BlockPos pos) {
-        fallDistance = 0.0f;
-    }
-
-    public boolean doesEntityNotTriggerPressurePlate() {
-        return true;
-    }
-
-    public boolean getCanSpawnHere() {
-        int sc = 0;
-        for (int k = -1; k <= 1; ++k) {
-            for (int j = -1; j <= 1; ++j) {
-                Block bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY, (int)this.posZ + k)).getBlock();
-                if (bid != Blocks.AIR) continue;
-                ++sc;
-            }
-        }
-        if (sc < 6) {
-            return false;
-        }
-        if (this.posY < 50.0) {
-            return false;
-        }
-        return true;
-    }
-
-    public void initCreature() {
-    }
-
-    protected boolean canDespawn() {
-        if (this.isNoDespawnRequired()) {
-            return false;
-        }
-        if (this.myowner != null) {
-            return false;
-        }
-        return true;
-    }
 }
-

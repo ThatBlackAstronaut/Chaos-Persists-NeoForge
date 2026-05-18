@@ -1,133 +1,80 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelSquidZooka
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
-public class ModelSquidZooka
-extends ModelBase {
-    ModelRenderer Barrel;
-    ModelRenderer tail1;
-    ModelRenderer tail2;
-    ModelRenderer tail3;
-    ModelRenderer tail4;
-    ModelRenderer tail5;
-    ModelRenderer tail6;
-    ModelRenderer tail7;
-    ModelRenderer sight3;
-    ModelRenderer sight2;
-    ModelRenderer sight1;
-    ModelRenderer handle1;
+public class ModelSquidZooka {
+    private final ModelPart Barrel;
+    private final ModelPart tail1;
+    private final ModelPart tail2;
+    private final ModelPart tail3;
+    private final ModelPart tail4;
+    private final ModelPart tail5;
+    private final ModelPart tail6;
+    private final ModelPart tail7;
+    private final ModelPart sight3;
+    private final ModelPart sight2;
+    private final ModelPart sight1;
+    private final ModelPart handle1;
 
     public ModelSquidZooka() {
-        this.textureWidth = 128;
-        this.textureHeight = 128;
-        this.Barrel = new ModelRenderer((ModelBase)this, 29, 19);
-        this.Barrel.addBox(-1.0f, -1.0f, -19.0f, 2, 2, 34);
-        this.Barrel.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.Barrel.setTextureSize(128, 128);
-        this.Barrel.mirror = true;
-        this.setRotation(this.Barrel, 0.0f, 0.0f, 0.0f);
-        this.tail1 = new ModelRenderer((ModelBase)this, 0, 53);
-        this.tail1.addBox(-1.5f, -1.5f, 15.0f, 3, 3, 1);
-        this.tail1.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.tail1.setTextureSize(128, 128);
-        this.tail1.mirror = true;
-        this.setRotation(this.tail1, 0.0f, 0.0f, 0.0f);
-        this.tail2 = new ModelRenderer((ModelBase)this, 0, 58);
-        this.tail2.addBox(-2.0f, -2.0f, 16.0f, 4, 4, 1);
-        this.tail2.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.tail2.setTextureSize(128, 128);
-        this.tail2.mirror = true;
-        this.setRotation(this.tail2, 0.0f, 0.0f, 0.0f);
-        this.tail3 = new ModelRenderer((ModelBase)this, 0, 64);
-        this.tail3.addBox(-2.5f, -2.5f, 17.0f, 5, 5, 1);
-        this.tail3.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.tail3.setTextureSize(128, 128);
-        this.tail3.mirror = true;
-        this.setRotation(this.tail3, 0.0f, 0.0f, 0.0f);
-        this.tail4 = new ModelRenderer((ModelBase)this, 0, 71);
-        this.tail4.addBox(-3.0f, -3.0f, 18.0f, 6, 6, 6);
-        this.tail4.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.tail4.setTextureSize(128, 128);
-        this.tail4.mirror = true;
-        this.setRotation(this.tail4, 0.0f, 0.0f, 0.0f);
-        this.tail5 = new ModelRenderer((ModelBase)this, 0, 84);
-        this.tail5.addBox(-2.5f, -2.5f, 24.0f, 5, 5, 1);
-        this.tail5.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.tail5.setTextureSize(128, 128);
-        this.tail5.mirror = true;
-        this.setRotation(this.tail5, 0.0f, 0.0f, 0.0f);
-        this.tail6 = new ModelRenderer((ModelBase)this, 0, 91);
-        this.tail6.addBox(-2.0f, -2.0f, 25.0f, 4, 4, 1);
-        this.tail6.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.tail6.setTextureSize(128, 128);
-        this.tail6.mirror = true;
-        this.setRotation(this.tail6, 0.0f, 0.0f, 0.0f);
-        this.tail7 = new ModelRenderer((ModelBase)this, 0, 97);
-        this.tail7.addBox(-1.5f, -1.5f, 26.0f, 3, 3, 1);
-        this.tail7.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.tail7.setTextureSize(128, 128);
-        this.tail7.mirror = true;
-        this.setRotation(this.tail7, 0.0f, 0.0f, 0.0f);
-        this.sight3 = new ModelRenderer((ModelBase)this, 25, 0);
-        this.sight3.addBox(1.0f, -2.0f, -10.0f, 1, 1, 2);
-        this.sight3.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.sight3.setTextureSize(128, 128);
-        this.sight3.mirror = true;
-        this.setRotation(this.sight3, 0.0f, 0.0f, 0.0f);
-        this.sight2 = new ModelRenderer((ModelBase)this, 32, 0);
-        this.sight2.addBox(0.5f, -4.0f, -12.0f, 2, 2, 6);
-        this.sight2.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.sight2.setTextureSize(128, 128);
-        this.sight2.mirror = true;
-        this.setRotation(this.sight2, 0.0f, 0.0f, 0.0f);
-        this.sight1 = new ModelRenderer((ModelBase)this, 18, 0);
-        this.sight1.addBox(1.0f, -1.0f, -10.0f, 1, 1, 2);
-        this.sight1.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.sight1.setTextureSize(128, 128);
-        this.sight1.mirror = true;
-        this.setRotation(this.sight1, 0.0f, 0.0f, 0.0f);
-        this.handle1 = new ModelRenderer((ModelBase)this, 0, 0);
-        this.handle1.addBox(0.0f, 1.0f, 0.0f, 1, 7, 1);
-        this.handle1.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.handle1.setTextureSize(128, 128);
-        this.handle1.mirror = true;
-        this.setRotation(this.handle1, 0.0f, 0.0f, 0.0f);
+        this(LayerDefinition.create(createMesh(), 64, 128).bakeRoot());
     }
 
-    public void render() {
-        float f5 = 1.0f;
-        GL11.glPushMatrix();
-        GL11.glRotatef((float)180.0f, (float)0.0f, (float)0.0f, (float)1.0f);
-        this.Barrel.render(f5);
-        this.tail1.render(f5);
-        this.tail2.render(f5);
-        this.tail3.render(f5);
-        this.tail4.render(f5);
-        this.tail5.render(f5);
-        this.tail6.render(f5);
-        this.tail7.render(f5);
-        this.sight3.render(f5);
-        this.sight2.render(f5);
-        this.sight1.render(f5);
-        this.handle1.render(f5);
-        GL11.glPopMatrix();
+    public ModelSquidZooka(ModelPart root) {
+        this.Barrel = root.getChild("Barrel");
+        this.tail1 = root.getChild("tail1");
+        this.tail2 = root.getChild("tail2");
+        this.tail3 = root.getChild("tail3");
+        this.tail4 = root.getChild("tail4");
+        this.tail5 = root.getChild("tail5");
+        this.tail6 = root.getChild("tail6");
+        this.tail7 = root.getChild("tail7");
+        this.sight3 = root.getChild("sight3");
+        this.sight2 = root.getChild("sight2");
+        this.sight1 = root.getChild("sight1");
+        this.handle1 = root.getChild("handle1");
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
+    public static MeshDefinition createMesh() {
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
+        partdefinition.addOrReplaceChild("Barrel", CubeListBuilder.create().texOffs(29, 19).mirror().addBox(-1.0f, -1.0f, -19.0f, 2, 2, 34), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail1", CubeListBuilder.create().texOffs(0, 53).mirror().addBox(-1.5f, -1.5f, 15.0f, 3, 3, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail2", CubeListBuilder.create().texOffs(0, 58).mirror().addBox(-2.0f, -2.0f, 16.0f, 4, 4, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail3", CubeListBuilder.create().texOffs(0, 64).mirror().addBox(-2.5f, -2.5f, 17.0f, 5, 5, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail4", CubeListBuilder.create().texOffs(0, 71).mirror().addBox(-3.0f, -3.0f, 18.0f, 6, 6, 6), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail5", CubeListBuilder.create().texOffs(0, 84).mirror().addBox(-2.5f, -2.5f, 24.0f, 5, 5, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail6", CubeListBuilder.create().texOffs(0, 91).mirror().addBox(-2.0f, -2.0f, 25.0f, 4, 4, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail7", CubeListBuilder.create().texOffs(0, 97).mirror().addBox(-1.5f, -1.5f, 26.0f, 3, 3, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("sight3", CubeListBuilder.create().texOffs(25, 0).mirror().addBox(1.0f, -2.0f, -10.0f, 1, 1, 2), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("sight2", CubeListBuilder.create().texOffs(32, 0).mirror().addBox(0.5f, -4.0f, -12.0f, 2, 2, 6), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("sight1", CubeListBuilder.create().texOffs(18, 0).mirror().addBox(1.0f, -1.0f, -10.0f, 1, 1, 2), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("handle1", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 1.0f, 0.0f, 1, 7, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        return meshdefinition;
+    }
+
+    public void render(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(180.0f));
+        this.Barrel.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.tail1.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.tail2.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.tail3.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.tail4.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.tail5.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.tail6.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.tail7.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.sight3.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.sight2.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.sight1.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.handle1.render(poseStack, buffer, packedLight, packedOverlay, 1.0f, 1.0f, 1.0f, 1.0f);
+        poseStack.popPose();
     }
 }
-

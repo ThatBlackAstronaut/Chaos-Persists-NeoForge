@@ -1,111 +1,119 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ItemChaosArmor
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.RubyBirdDungeon
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockChest
- *  net.minecraft.init.Blocks
- *  net.minecraft.inventory.IInventory
- *  net.minecraft.item.Item
- *  net.minecraft.tileentity.MobSpawnerBaseLogic
- *  net.minecraft.tileentity.TileEntity
- *  net.minecraft.tileentity.TileEntityChest
- *  net.minecraft.tileentity.TileEntityMobSpawner
- *  net.minecraft.util.WeightedRandomChestContent
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.world.dimension.structure;
 
-import com.astryxion.chaospersists.item.ItemChaosArmor;
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.util.WeightedRandomChestContent;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockChest;
-import net.minecraft.init.Blocks;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.Item;
-import net.minecraft.tileentity.MobSpawnerBaseLogic;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityChest;
-import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.world.ore.OreRuby;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 
 public class RubyBirdDungeon {
-    private final WeightedRandomChestContent[] chestContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.CageEmpty, 0, 3, 10, 20), new WeightedRandomChestContent(ChaosPersists.MyRuby, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyBacon, 0, 6, 12, 20), new WeightedRandomChestContent(ChaosPersists.MyButterCandy, 0, 6, 12, 20), new WeightedRandomChestContent(ChaosPersists.MyRubyPickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubyShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubyHoe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubyAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubySword, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyBoots, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyThunderStaff, 0, 1, 1, 5)};
+    private final WeightedRandomChestContent[] chestContentsList =
+            new WeightedRandomChestContent[] {
+                new WeightedRandomChestContent(ChaosPersists.CageEmpty, 0, 3, 10, 20),
+                new WeightedRandomChestContent(ChaosPersists.MyRuby, 0, 2, 8, 15),
+                new WeightedRandomChestContent(ChaosPersists.MyBacon, 0, 6, 12, 20),
+                new WeightedRandomChestContent(ChaosPersists.MyButterCandy, 0, 6, 12, 20),
+                new WeightedRandomChestContent(ChaosPersists.MyRubyPickaxe, 0, 1, 1, 15),
+                new WeightedRandomChestContent(ChaosPersists.MyRubyShovel, 0, 1, 1, 15),
+                new WeightedRandomChestContent(ChaosPersists.MyRubyHoe, 0, 1, 1, 15),
+                new WeightedRandomChestContent(ChaosPersists.MyRubyAxe, 0, 1, 1, 15),
+                new WeightedRandomChestContent(ChaosPersists.MyRubySword, 0, 1, 1, 15),
+                new WeightedRandomChestContent(ChaosPersists.RubyBody, 0, 1, 1, 15),
+                new WeightedRandomChestContent(ChaosPersists.RubyLegs, 0, 1, 1, 15),
+                new WeightedRandomChestContent(ChaosPersists.RubyHelmet, 0, 1, 1, 15),
+                new WeightedRandomChestContent(ChaosPersists.RubyBoots, 0, 1, 1, 15),
+                new WeightedRandomChestContent(ChaosPersists.MyThunderStaff, 0, 1, 1, 5)
+            };
 
-    private void setThisBlock(World world, int cposx, int cposy, int cposz) {
-        if (world.rand.nextInt(20) == 1) {
-            this.FastSetBlock(world, cposx, cposy, cposz, ChaosPersists.MyOreRubyBlock);
-        } else if (world.rand.nextInt(2) == 1) {
-            this.FastSetBlock(world, cposx, cposy, cposz, Blocks.MOSSY_COBBLESTONE);
+    private static Block rubyOreBlock() {
+        if (ChaosPersists.MyOreRubyBlock instanceof OreRuby oreRuby) {
+            return oreRuby;
+        }
+        return (Block) (Object) ChaosPersists.MyOreRubyBlock;
+    }
+
+    private void setThisBlock(Level level, RandomSource rand, int cposx, int cposy, int cposz) {
+        if (rand.nextInt(20) == 1) {
+            this.FastSetBlock(level, cposx, cposy, cposz, rubyOreBlock());
+        } else if (rand.nextInt(2) == 1) {
+            this.FastSetBlock(level, cposx, cposy, cposz, Blocks.MOSSY_COBBLESTONE);
         } else {
-            this.FastSetBlock(world, cposx, cposy, cposz, Blocks.COBBLESTONE);
+            this.FastSetBlock(level, cposx, cposy, cposz, Blocks.COBBLESTONE);
         }
     }
 
-    public void makeDungeon(World world, int cposx, int cposy, int cposz) {
-        int i;
-        int k;
-        int j;
+    public void makeDungeon(Level level, int cposx, int cposy, int cposz) {
         int width = 10;
         int height = 5;
-        for (i = 0; i < width; ++i) {
-            for (j = 0; j < height; ++j) {
-                for (k = 0; k < width; ++k) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+        RandomSource rand = level.getRandom();
+
+        for (int i = 0; i < width; ++i) {
+            for (int j = 0; j < height; ++j) {
+                for (int k = 0; k < width; ++k) {
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, Blocks.AIR);
                 }
             }
         }
-        for (i = 0; i < width; ++i) {
-            j = 0;
-            for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.MOSSY_COBBLESTONE);
+        for (int i = 0; i < width; ++i) {
+            int j = 0;
+            for (int k = 0; k < width; ++k) {
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, Blocks.MOSSY_COBBLESTONE);
             }
         }
-        for (i = 0; i < width; ++i) {
-            j = height - 1;
-            for (k = 0; k < width; ++k) {
-                this.setThisBlock(world, cposx + i, cposy + j, cposz + k);
+        for (int i = 0; i < width; ++i) {
+            int j = height - 1;
+            for (int k = 0; k < width; ++k) {
+                this.setThisBlock(level, rand, cposx + i, cposy + j, cposz + k);
             }
         }
-        for (i = 0; i < width; ++i) {
-            for (j = 0; j < height; ++j) {
-                k = 0;
-                this.setThisBlock(world, cposx + i, cposy + j, cposz + k);
+        for (int i = 0; i < width; ++i) {
+            for (int j = 0; j < height; ++j) {
+                int k = 0;
+                this.setThisBlock(level, rand, cposx + i, cposy + j, cposz + k);
                 k = width - 1;
-                this.setThisBlock(world, cposx + i, cposy + j, cposz + k);
+                this.setThisBlock(level, rand, cposx + i, cposy + j, cposz + k);
             }
         }
-        for (k = 0; k < width; ++k) {
-            for (j = 0; j < height; ++j) {
-                i = 0;
-                this.setThisBlock(world, cposx + i, cposy + j, cposz + k);
+        for (int k = 0; k < width; ++k) {
+            for (int j = 0; j < height; ++j) {
+                int i = 0;
+                this.setThisBlock(level, rand, cposx + i, cposy + j, cposz + k);
                 i = width - 1;
-                this.setThisBlock(world, cposx + i, cposy + j, cposz + k);
+                this.setThisBlock(level, rand, cposx + i, cposy + j, cposz + k);
             }
         }
+
         BlockPos spawnerPos = new BlockPos(cposx + width / 2, cposy + 1, cposz + width / 2);
-        world.setBlockState(spawnerPos, Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        TileEntityMobSpawner tileentitymobspawner = (TileEntityMobSpawner)world.getTileEntity(spawnerPos);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ruby_bird"));
+        level.setBlock(spawnerPos, Blocks.SPAWNER.defaultBlockState(), 2);
+        BlockEntity spawnerEntity = level.getBlockEntity(spawnerPos);
+        if (spawnerEntity instanceof SpawnerBlockEntity spawner) {
+            EntityType<?> rubyBird =
+                    ForgeRegistries.ENTITY_TYPES.getValue(
+                            ResourceLocation.fromNamespaceAndPath("chaospersists", "ruby_bird"));
+            if (rubyBird != null) {
+                spawner.setEntityId(rubyBird, level.getRandom());
+            }
         }
-        TileEntityChest chest = null;
+
         BlockPos chestPos = new BlockPos(cposx + width / 2, cposy + 1, cposz + 1);
-        world.setBlockState(chestPos, Blocks.CHEST.getDefaultState(), 2);
-        chest = (TileEntityChest)world.getTileEntity(chestPos);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])this.chestContentsList, (IInventory)chest, (int)(4 + world.rand.nextInt(7)));
+        level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 2);
+        BlockEntity chestEntity = level.getBlockEntity(chestPos);
+        if (chestEntity instanceof ChestBlockEntity chest) {
+            WeightedRandomChestContent.generateChestContents(
+                    rand, this.chestContentsList, chest, 4 + rand.nextInt(7));
         }
     }
 
-    public void FastSetBlock(World world, int ix, int iy, int iz, Block id) {
-        ChaosPersists.setBlockFast((World)world, (int)ix, (int)iy, (int)iz, (Block)id, (int)0, (int)2);
+    public void FastSetBlock(Level level, int ix, int iy, int iz, Block id) {
+        ChaosPersists.setBlockFast(level, ix, iy, iz, id, 0, 2);
     }
 }
-

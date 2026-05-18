@@ -1,64 +1,28 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.IslandToo
- *  com.astryxion.chaospersists.ModelIsland
- *  com.astryxion.chaospersists.RenderIslandToo
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.renderer.entity.RenderLiving
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.util.ResourceLocation
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.IslandToo;
 import com.astryxion.chaospersists.model.ModelIsland;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.entity.RenderLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.resources.ResourceLocation;
 
-public class RenderIslandToo
-extends RenderLiving {
-    protected ModelIsland model;
-    private float scale = 1.0f;
-    private static final ResourceLocation texture = new ResourceLocation("chaospersists", "textures/entity/islandtoo.png");
+public class RenderIslandToo extends MobRenderer<IslandToo, ModelIsland<IslandToo>> {
+    private static final ResourceLocation TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/island.png");
+    private final float scale;
 
-    public RenderIslandToo(net.minecraft.client.renderer.entity.RenderManager manager, ModelIsland par1ModelBase, float par2, float par3) {
-        super(manager, (ModelBase)par1ModelBase, par2 * par3);
-        this.model = (ModelIsland)this.mainModel;
-        this.scale = par3;
+    public RenderIslandToo(EntityRendererProvider.Context context, ModelIsland<IslandToo> model, float shadow, float scale) {
+        super(context, model, shadow * scale);
+        this.scale = scale;
     }
 
-    public void renderIslandToo(IslandToo par1EntityIslandToo, double par2, double par4, double par6, float par8, float par9) {
-        super.doRender((EntityLiving)par1EntityIslandToo, par2, par4, par6, par8, par9);
+    @Override
+    protected void scale(IslandToo entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
+        poseStack.scale(this.scale, this.scale, this.scale);
     }
 
-    public void doRender(EntityLiving par1EntityLiving, double par2, double par4, double par6, float par8, float par9) {
-        this.renderIslandToo((IslandToo)par1EntityLiving, par2, par4, par6, par8, par9);
-    }
-
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-        this.renderIslandToo((IslandToo)par1Entity, par2, par4, par6, par8, par9);
-    }
-
-    protected void preRenderScale(IslandToo par1Entity, float par2) {
-        GL11.glScalef((float)this.scale, (float)this.scale, (float)this.scale);
-    }
-
-    protected void preRenderCallback(EntityLivingBase par1EntityLiving, float par2) {
-        this.preRenderScale((IslandToo)par1EntityLiving, par2);
-    }
-
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        return texture;
+    @Override
+    public ResourceLocation getTextureLocation(IslandToo entity) {
+        return TEXTURE;
     }
 }
-

@@ -1,17 +1,14 @@
 package com.astryxion.chaospersists.item;
 
-import net.minecraft.block.Block;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Enchantments;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 
 /**
  * Display name: Nether Tracker. Shapeless: nether star + netherrack.
@@ -23,48 +20,42 @@ import net.minecraft.world.World;
 public class ItemNetherLost extends Item {
 
     public ItemNetherLost(int par1) {
-        this.setMaxStackSize(1);
-        this.setMaxDamage(3000);
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
+        super(new Properties().stacksTo(1).durability(3000));
     }
 
     @Override
-    public void onCreated(ItemStack stack, World world, EntityPlayer player) {
-        stack.addEnchantment(Enchantments.SHARPNESS, 2);
-    }
-
-    public void onUsingTick(ItemStack stack, EntityPlayer player, int count) {
-        int lvl = EnchantmentHelper.getEnchantmentLevel(Enchantments.SHARPNESS, stack);
-        if (lvl <= 0) {
-            stack.addEnchantment(Enchantments.SHARPNESS, 2);
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
+        if (!level.isClientSide) {
+            stack.enchant(Enchantments.SHARPNESS, 2);
         }
     }
 
-    @Override
-    public void onUpdate(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
-        this.onUsingTick(stack, null, 0);
-        if (world == null || entity == null || !(entity instanceof EntityPlayer)) {
+    private static void ensureSharpness(ItemStack stack, Level level) {
+        if (level.isClientSide) {
             return;
         }
-        EntityPlayer player = (EntityPlayer) entity;
-        boolean holding = player.getHeldItemMainhand() == stack || player.getHeldItemOffhand() == stack;
+        if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SHARPNESS, stack) <= 0) {
+            stack.enchant(Enchantments.SHARPNESS, 2);
+        }
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+        ensureSharpness(stack, level);
+        if (level.isClientSide || !(entity instanceof Player player)) {
+            return;
+        }
+        boolean holding = player.getMainHandItem() == stack || player.getOffhandItem() == stack;
         if (!holding) {
             return;
         }
-        if (world.provider.getDimension() != -1) {
+        if (level.dimension() != Level.NETHER) {
             return;
         }
-        BlockPos below = new BlockPos((int) player.posX, (int) player.posY - 1, (int) player.posZ);
-        if (world.getBlockState(below).getBlock() != Blocks.NETHERRACK) {
+        BlockPos below = BlockPos.containing(player.getX(), player.getY() - 1.0, player.getZ());
+        if (!level.getBlockState(below).is(Blocks.NETHERRACK)) {
             return;
         }
-        if (!world.isRemote) {
-            world.setBlockState(below, Blocks.QUARTZ_BLOCK.getDefaultState(), 3);
-        }
-    }
-
-    @Override
-    public int getMaxItemUseDuration(ItemStack stack) {
-        return 3000;
+        level.setBlock(below, Blocks.QUARTZ_BLOCK.defaultBlockState(), 3);
     }
 }

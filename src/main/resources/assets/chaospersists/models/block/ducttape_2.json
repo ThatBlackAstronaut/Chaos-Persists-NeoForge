@@ -14,10 +14,10 @@
     }
   ],
   "textures": {
-    "particle": "chaospersists:blocks/ducttape_top",
-    "bottom": "chaospersists:blocks/ducttape_bottom",
-    "top": "chaospersists:blocks/ducttape_top",
-    "side": "chaospersists:blocks/ducttape_side",
-    "inner": "chaospersists:blocks/ducttape_inner"
+    "particle": "chaospersists:block/ducttape_top",
+    "bottom": "chaospersists:block/ducttape_bottom",
+    "top": "chaospersists:block/ducttape_top",
+    "side": "chaospersists:block/ducttape_side",
+    "inner": "chaospersists:block/ducttape_inner"
   }
 }

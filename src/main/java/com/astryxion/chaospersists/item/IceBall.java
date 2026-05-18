@@ -1,58 +1,41 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.IceBall
- *  com.astryxion.chaospersists.LaserBall
- *  com.astryxion.chaospersists.MyUtils
- *  net.minecraft.block.Block
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.init.Blocks
- *  net.minecraft.util.math.RayTraceResult
- *  net.minecraft.util.math.Vec3d
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import com.astryxion.chaospersists.item.LaserBall;
-import com.astryxion.chaospersists.util.MyUtils;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.init.Blocks;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
-public class IceBall
-extends LaserBall {
+public class IceBall extends LaserBall {
     private int my_index = 84;
     private int icemaker = 0;
 
-    public IceBall(World par1World) {
-        super(par1World);
+    public IceBall(EntityType<? extends IceBall> type, Level level) {
+        super(type, level);
         super.setIceBall();
     }
 
-    public IceBall(World par1World, int par2) {
-        super(par1World);
+    public IceBall(EntityType<? extends IceBall> type, Level level, int par2) {
+        super(type, level, par2);
         super.setIceBall();
     }
 
-    public IceBall(World par1World, EntityLivingBase par2EntityLiving) {
-        super(par1World, par2EntityLiving);
+    public IceBall(EntityType<? extends IceBall> type, LivingEntity shooter, Level level) {
+        super(type, shooter, level);
         super.setIceBall();
     }
 
-    public IceBall(World par1World, EntityLivingBase par2EntityLiving, int par3) {
-        super(par1World, par2EntityLiving);
+    public IceBall(EntityType<? extends IceBall> type, LivingEntity shooter, Level level, int par3) {
+        super(type, shooter, level, par3);
         super.setIceBall();
     }
 
-    public IceBall(World par1World, double par2, double par4, double par6) {
-        super(par1World, par2, par4, par6);
+    public IceBall(EntityType<? extends IceBall> type, double x, double y, double z, Level level) {
+        super(type, x, y, z, level);
         super.setIceBall();
     }
 
@@ -64,35 +47,55 @@ extends LaserBall {
         this.icemaker = i;
     }
 
-    protected void onImpact(RayTraceResult par1MovingObjectPosition) {
-        if (this.world.isRemote) {
+    @Override
+    protected void onHit(HitResult result) {
+        if (this.level().isClientSide) {
             return;
         }
-        if (par1MovingObjectPosition.entityHit != null && MyUtils.isRoyalty((Entity)par1MovingObjectPosition.entityHit)) {
-            this.setDead();
-            return;
+        if (result.getType() == HitResult.Type.ENTITY) {
+            Entity hit = ((EntityHitResult) result).getEntity();
+            if (isRoyalty(hit)) {
+                this.discard();
+                return;
+            }
         }
-        super.onImpact(par1MovingObjectPosition);
+        Vec3 hitVec = result.getLocation();
+        super.onHit(result);
         if (this.icemaker != 0) {
             for (int i = 0; i < 5; ++i) {
-                int x = this.world.rand.nextInt(4);
-                if (this.world.rand.nextInt(2) == 1) {
-                    x = - x;
+                int x = this.random.nextInt(4);
+                if (this.random.nextInt(2) == 1) {
+                    x = -x;
                 }
-                int y = this.world.rand.nextInt(4);
-                if (this.world.rand.nextInt(2) == 1) {
-                    y = - y;
+                int y = this.random.nextInt(4);
+                if (this.random.nextInt(2) == 1) {
+                    y = -y;
                 }
-                int z = this.world.rand.nextInt(4);
-                if (this.world.rand.nextInt(2) == 1) {
-                    z = - z;
+                int z = this.random.nextInt(4);
+                if (this.random.nextInt(2) == 1) {
+                    z = -z;
                 }
-                x = (int)((double)x + par1MovingObjectPosition.hitVec.x);
-                y = (int)((double)y + par1MovingObjectPosition.hitVec.y);
-                z = (int)((double)z + par1MovingObjectPosition.hitVec.z);
-                this.world.setBlockState(new net.minecraft.util.math.BlockPos(x, y, z), Blocks.ICE.getDefaultState(), 3);
+                x = (int) ((double) x + hitVec.x);
+                y = (int) ((double) y + hitVec.y);
+                z = (int) ((double) z + hitVec.z);
+                this.level().setBlock(new BlockPos(x, y, z), Blocks.ICE.defaultBlockState(), 3);
             }
         }
     }
-}
 
+    private static boolean isRoyalty(Entity e) {
+        if (!(e instanceof LivingEntity)) {
+            return false;
+        }
+        String name = e.getClass().getSimpleName();
+        return name.equals("ThePrince")
+                || name.equals("ThePrinceTeen")
+                || name.equals("ThePrinceAdult")
+                || name.equals("ThePrincess")
+                || name.equals("TheKing")
+                || name.equals("KingHead")
+                || name.equals("TheQueen")
+                || name.equals("QueenHead")
+                || name.equals("PurplePower");
+    }
+}

@@ -1,64 +1,60 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Kyuubi
- *  com.astryxion.chaospersists.ModelKyuubi
- *  com.astryxion.chaospersists.RenderKyuubi
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.renderer.entity.RenderLiving
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.util.ResourceLocation
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.Kyuubi;
 import com.astryxion.chaospersists.model.ModelKyuubi;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.entity.RenderLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 
-public class RenderKyuubi
-extends RenderLiving {
-    protected ModelKyuubi model;
-    private float scale = 1.0f;
-    private static final ResourceLocation texture = new ResourceLocation("chaospersists", "textures/entity/kyuubi.png");
+public class RenderKyuubi extends MobRenderer<Kyuubi, ModelKyuubi> {
+    private static final ResourceLocation TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/kyuubi.png");
+    private final float scale;
 
-    public RenderKyuubi(net.minecraft.client.renderer.entity.RenderManager manager, ModelKyuubi par1ModelBase, float par2, float par3) {
-        super(manager, (ModelBase)par1ModelBase, par2 * par3);
-        this.model = (ModelKyuubi)this.mainModel;
-        this.scale = par3;
+    public RenderKyuubi(EntityRendererProvider.Context context, ModelKyuubi model, float shadow, float scale) {
+        super(context, model, shadow * scale);
+        this.scale = scale;
     }
 
-    public void renderKyuubi(Kyuubi par1EntityKyuubi, double par2, double par4, double par6, float par8, float par9) {
-        super.doRender((EntityLiving)par1EntityKyuubi, par2, par4, par6, par8, par9);
+    @Override
+    public void render(
+            Kyuubi entity,
+            float entityYaw,
+            float partialTicks,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight) {
+        poseStack.pushPose();
+        this.scale(entity, poseStack, partialTicks);
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
+        float bodyRot = Mth.rotLerp(partialTicks, entity.yBodyRotO, entity.yBodyRot);
+        float headRot = Mth.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);
+        this.model.setupAnim(
+                entity,
+                entity.walkAnimation.position(partialTicks),
+                entity.walkAnimation.speed(partialTicks),
+                entity.tickCount + partialTicks,
+                headRot - bodyRot,
+                entity.getViewXRot(partialTicks));
+        VertexConsumer vertexConsumer = buffer.getBuffer(RenderType.entityTranslucent(this.getTextureLocation(entity)));
+        this.model.renderToBuffer(poseStack, vertexConsumer, packedLight, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f);
+        poseStack.popPose();
     }
 
-    public void doRender(EntityLiving par1EntityLiving, double par2, double par4, double par6, float par8, float par9) {
-        this.renderKyuubi((Kyuubi)par1EntityLiving, par2, par4, par6, par8, par9);
+    @Override
+    protected void scale(Kyuubi entity, PoseStack poseStack, float partialTick) {
+        poseStack.scale(this.scale, this.scale, this.scale);
     }
 
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-        this.renderKyuubi((Kyuubi)par1Entity, par2, par4, par6, par8, par9);
-    }
-
-    protected void preRenderScale(Kyuubi par1Entity, float par2) {
-        GL11.glScalef((float)this.scale, (float)this.scale, (float)this.scale);
-    }
-
-    protected void preRenderCallback(EntityLivingBase par1EntityLiving, float par2) {
-        this.preRenderScale((Kyuubi)par1EntityLiving, par2);
-    }
-
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        return texture;
+    @Override
+    public ResourceLocation getTextureLocation(Kyuubi entity) {
+        return TEXTURE;
     }
 }
-

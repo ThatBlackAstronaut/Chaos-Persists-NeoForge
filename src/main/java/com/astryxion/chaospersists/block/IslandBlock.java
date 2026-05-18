@@ -1,104 +1,82 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.IslandBlock
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockReed
- *  net.minecraft.block.material.Material
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityList
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.init.Blocks
- *  net.minecraft.item.Item
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.block;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import com.astryxion.chaospersists.util.MyUtils;
+
 import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockReed;
-import net.minecraft.block.material.Material;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Enchantments;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
-
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.registries.ForgeRegistries;
 
-/*
- * Exception performing whole class analysis ignored.
- */
-public class IslandBlock
-extends BlockReed {
-    public IslandBlock() { this(0); }
+public class IslandBlock extends Block {
+    private static final float HALF = 0.375f;
+    private static final VoxelShape SHAPE =
+            Shapes.box(0.5 - HALF, 0.0, 0.5 - HALF, 0.5 + HALF, 1.0, 0.5 + HALF);
+
+    public IslandBlock() {
+        this(0);
+    }
+
     protected IslandBlock(int par1) {
-        super();
-        // Match 1.7.10: worldgen uses random ticks so islands grow sparsely. Player placement still uses onBlockAdded schedule.
-        this.setTickRandomly(true);
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
+        super(net.minecraft.world.level.block.Block.Properties.of().mapColor(MapColor.PLANT).noCollission().randomTicks().noOcclusion());
     }
 
     @Override
-    public net.minecraft.util.math.AxisAlignedBB getBoundingBox(net.minecraft.block.state.IBlockState state, net.minecraft.world.IBlockAccess source, net.minecraft.util.math.BlockPos pos) {
-        float var3 = 0.375f;
-        return new net.minecraft.util.math.AxisAlignedBB(0.5 - var3, 0.0, 0.5 - var3, 0.5 + var3, 1.0, 0.5 + var3);
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE;
     }
 
     @Override
-    public boolean canPlaceBlockAt(World worldIn, BlockPos pos) {
-        return worldIn.getBlockState(pos.down()).getMaterial().isSolid();
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return level.getBlockState(pos.below()).isSolid();
     }
 
     @Override
-    public void onBlockAdded(World world, BlockPos pos, IBlockState state) {
-        if (world.isRemote) {
-            return;
-        }
-        world.scheduleUpdate(pos, this, 40);
-    }
-
-    @Override
-    public void randomTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-        if (!worldIn.isRemote) {
-            this.runIslandSpawn(worldIn, pos.getX(), pos.getY(), pos.getZ(), rand);
+    public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!world.isClientSide) {
+            world.scheduleTick(pos, this, 40);
         }
     }
 
     @Override
-    public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-        if (worldIn.isRemote) {
-            return;
-        }
+    public void randomTick(BlockState state, ServerLevel worldIn, BlockPos pos, RandomSource rand) {
         this.runIslandSpawn(worldIn, pos.getX(), pos.getY(), pos.getZ(), rand);
     }
 
-    private void runIslandSpawn(World world, int par2, int par3, int par4, Random par5Random) {
+    @Override
+    public void tick(BlockState state, ServerLevel worldIn, BlockPos pos, RandomSource rand) {
+        this.runIslandSpawn(worldIn, pos.getX(), pos.getY(), pos.getZ(), rand);
+    }
+
+    private void runIslandSpawn(Level world, int par2, int par3, int par4, RandomSource par5Random) {
         boolean isok;
         int n = 1 + par5Random.nextInt(3);
         int m = 64;
@@ -126,112 +104,114 @@ extends BlockReed {
                 continue;
             }
             if (par5Random.nextInt(25) == 1) {
-                IslandBlock.spawnCreature(world, "Island", (double)par2, (double)(par3 + height), (double)par4);
+                IslandBlock.spawnCreature(world, "Island", (double) par2, (double) (par3 + height), (double) par4);
                 continue;
             }
-            IslandBlock.spawnCreature(world, "IslandToo", (double)par2, (double)(par3 + height), (double)par4);
+            IslandBlock.spawnCreature(world, "IslandToo", (double) par2, (double) (par3 + height), (double) par4);
         }
-        world.setBlockState(new BlockPos(par2, par3, par4), Blocks.AIR.getDefaultState(), 2);
-        world.setBlockState(new BlockPos(par2, par3 + 1, par4), Blocks.AIR.getDefaultState(), 2);
+        world.setBlock(new BlockPos(par2, par3, par4), Blocks.AIR.defaultBlockState(), 2);
+        world.setBlock(new BlockPos(par2, par3 + 1, par4), Blocks.AIR.defaultBlockState(), 2);
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
-    }
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    public void randomDisplayTick(IBlockState stateIn, World worldIn, BlockPos pos, Random rand) {
-        if (worldIn.rand.nextInt(20) != 1) {
+    public void animateTick(BlockState stateIn, Level worldIn, BlockPos pos, RandomSource rand) {
+        if (worldIn.random.nextInt(20) != 1) {
             return;
         }
         for (int j1 = 0; j1 < 20; ++j1) {
-            worldIn.spawnParticle(EnumParticleTypes.VILLAGER_HAPPY,
-                    (double)((float)pos.getX() + worldIn.rand.nextFloat()),
-                    (double)pos.getY() + (double)worldIn.rand.nextFloat(),
-                    (double)((float)pos.getZ() + worldIn.rand.nextFloat()),
-                    0.0, 0.0, 0.0);
+            worldIn.addParticle(
+                    ParticleTypes.HAPPY_VILLAGER,
+                    (float) pos.getX() + rand.nextFloat(),
+                    (double) pos.getY() + rand.nextFloat(),
+                    (float) pos.getZ() + rand.nextFloat(),
+                    0.0,
+                    0.0,
+                    0.0);
         }
     }
 
-    public Item getItemDropped(int par1, Random par2Random, int par3) {
-        return Item.getItemFromBlock((Block)ChaosPersists.MyIslandBlock);
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        return Collections.singletonList(new ItemStack(ChaosPersists.MyIslandBlock));
     }
 
-    public int quantityDropped(Random par1Random) {
-        return 1;
-    }
-
-    public static Entity spawnCreature(World par0World, String par1, double par2, double par4, double par6) {
-        Entity var8 = null;
+    public static Entity spawnCreature(Level par0World, String par1, double par2, double par4, double par6) {
         ResourceLocation rl;
         if ("Island".equals(par1)) {
-            rl = new ResourceLocation("chaospersists", "island");
+            rl = ResourceLocation.fromNamespaceAndPath("chaospersists", "island");
         } else if ("IslandToo".equals(par1)) {
-            rl = new ResourceLocation("chaospersists", "island_too");
+            rl = ResourceLocation.fromNamespaceAndPath("chaospersists", "island_too");
         } else {
-            rl = new ResourceLocation("chaospersists", par1.toLowerCase(Locale.ROOT));
+            rl = ResourceLocation.fromNamespaceAndPath("chaospersists", par1.toLowerCase(Locale.ROOT));
         }
-        var8 = EntityList.createEntityByIDFromName(rl, par0World);
+        EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(rl);
+        if (type == null) {
+            return null;
+        }
+        Entity var8 = type.create(par0World);
         if (var8 != null) {
-            var8.setLocationAndAngles(par2, par4, par6, par0World.rand.nextFloat() * 360.0f, 0.0f);
-            par0World.spawnEntity(var8);
-            ((EntityLiving)var8).playLivingSound();
+            var8.moveTo(par2, par4, par6, par0World.getRandom().nextFloat() * 360.0f, 0.0f);
+            par0World.addFreshEntity(var8);
+            if (var8 instanceof LivingEntity living) {
+                MyUtils.playAmbientSound(living);
+            }
         }
         return var8;
     }
 
     /**
-     * Same UX as {@link com.astryxion.chaospersists.item.ItemRandomDungeon}: Fortune, and use on stone/cobble/grass/dirt (y≥40) to place the island block above.
+     * Same UX as {@link com.astryxion.chaospersists.item.ItemRandomDungeon}: Fortune, and use on stone/cobble/grass/dirt (yâ‰¥40) to place the island block above.
      */
-    public static class ItemIslandBlock extends ItemBlock {
+    public static class ItemIslandBlock extends BlockItem {
 
-        public ItemIslandBlock(Block block) {
-            super(block);
-            this.setMaxStackSize(1);
-            this.setCreativeTab(CreativeTabs.REDSTONE);
+        public ItemIslandBlock(Block block, Item.Properties properties) {
+            super(block, properties.stacksTo(1));
         }
 
         @Override
-        public void onCreated(ItemStack stack, World world, EntityPlayer player) {
-            stack.addEnchantment(Enchantments.FORTUNE, 2);
+        public void onCraftedBy(ItemStack stack, Level world, Player player) {
+            stack.enchant(Enchantments.BLOCK_FORTUNE, 2);
         }
 
         @Override
-        public void onUpdate(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-            int lvl = EnchantmentHelper.getEnchantmentLevel(Enchantments.FORTUNE, stack);
+        public void inventoryTick(ItemStack stack, Level world, net.minecraft.world.entity.Entity entity, int slot, boolean selected) {
+            int lvl = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLOCK_FORTUNE, stack);
             if (lvl <= 0) {
-                stack.addEnchantment(Enchantments.FORTUNE, 2);
+                stack.enchant(Enchantments.BLOCK_FORTUNE, 2);
             }
         }
 
         @Override
-        public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand,
-                                          EnumFacing facing, float hitX, float hitY, float hitZ) {
-            ItemStack stack = player.getHeldItem(hand);
+        public InteractionResult useOn(
+                net.minecraft.world.item.context.UseOnContext context) {
+            Player player = context.getPlayer();
+            Level world = context.getLevel();
+            BlockPos pos = context.getClickedPos();
+            ItemStack stack = context.getItemInHand();
             Block clicked = world.getBlockState(pos).getBlock();
-            if (clicked != Blocks.STONE && clicked != Blocks.COBBLESTONE && clicked != Blocks.GRASS && clicked != Blocks.DIRT) {
-                return EnumActionResult.FAIL;
+            if (clicked != Blocks.STONE
+                    && clicked != Blocks.COBBLESTONE
+                    && clicked != Blocks.GRASS_BLOCK
+                    && clicked != Blocks.DIRT) {
+                return InteractionResult.FAIL;
             }
-            // Low sky in mod dimensions (e.g. Islands / Chaos4 grass ~y=7): only enforce in Overworld.
-            if (world.provider.getDimension() == 0 && pos.getY() < 40) {
-                return EnumActionResult.FAIL;
+            if (world.dimension() == Level.OVERWORLD && pos.getY() < 40) {
+                return InteractionResult.FAIL;
             }
-            if (!world.isRemote) {
-                BlockPos up = pos.up();
-                if (!world.isAirBlock(up) || !ChaosPersists.MyIslandBlock.canPlaceBlockAt(world, up)) {
-                    return EnumActionResult.FAIL;
+            if (!world.isClientSide) {
+                BlockPos up = pos.above();
+                if (!world.isEmptyBlock(up)
+                        || !ChaosPersists.MyIslandBlock.canSurvive(
+                                ChaosPersists.MyIslandBlock.defaultBlockState(), world, up)) {
+                    return InteractionResult.FAIL;
                 }
-                IBlockState state = ChaosPersists.MyIslandBlock.getDefaultState();
-                world.setBlockState(up, state, 2);
+                BlockState placeState = ChaosPersists.MyIslandBlock.defaultBlockState();
+                world.setBlock(up, placeState, 2);
             }
-            if (!player.capabilities.isCreativeMode) {
+            if (player != null && !player.getAbilities().instabuild) {
                 stack.shrink(1);
             }
-            return EnumActionResult.SUCCESS;
+            return InteractionResult.sidedSuccess(world.isClientSide);
         }
     }
 }
-

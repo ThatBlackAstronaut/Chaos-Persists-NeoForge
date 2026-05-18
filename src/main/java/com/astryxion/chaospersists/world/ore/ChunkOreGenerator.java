@@ -6,26 +6,24 @@
  *  com.astryxion.chaospersists.OreGenericEgg
  *  com.astryxion.chaospersists.ChaosPersists
  *  com.astryxion.chaospersists.OreStats
- *  net.minecraft.block.Block
- *  net.minecraft.init.Blocks
+ *  com.astryxion.chaospersists.compat.minecraft.block.Block
+ *  com.astryxion.chaospersists.compat.minecraft.init.Blocks
  *  net.minecraft.util.MathHelper
- *  net.minecraft.world.World
- *  net.minecraft.world.chunk.Chunk
+ *  com.astryxion.chaospersists.compat.minecraft.world.World
+ *  com.astryxion.chaospersists.compat.minecraft.world.chunk.Chunk
  */
 package com.astryxion.chaospersists.world.ore;
 
-import com.astryxion.chaospersists.world.ore.OreGenericEgg;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import com.astryxion.chaospersists.util.OreStats;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 public class ChunkOreGenerator {
-    public void generateOresInChunk(World world, Random random, int chunkX, int chunkZ, Chunk chunk) {
+    public void generateOresInChunk(Level world, RandomSource random, int chunkX, int chunkZ, LevelChunk chunk) {
         int i;
         int randPosY;
         int randPosX;
@@ -622,12 +620,27 @@ public class ChunkOreGenerator {
         }
     }
 
-    public boolean generateBlockOre(World par1World, Random par2Random, int par3, int par4, int par5, Chunk chunk, Block newbid, int numberOfBlocks) {
+    public boolean generateBlockOre(
+            Level par1World, RandomSource par2Random, int par3, int par4, int par5, LevelChunk chunk, Block newbid, int numberOfBlocks) {
+        return this.generateBlockOre(
+                par1World, par2Random, par3, par4, par5, chunk, newbid, numberOfBlocks, Blocks.STONE);
+    }
+
+    public boolean generateBlockOre(
+            Level par1World,
+            RandomSource par2Random,
+            int par3,
+            int par4,
+            int par5,
+            LevelChunk chunk,
+            Block newbid,
+            int numberOfBlocks,
+            Block oldbid) {
         float f = par2Random.nextFloat() * 3.1415927f;
-        double d0 = (float)(par3 + 8) + MathHelper.sin((float)f) * (float)numberOfBlocks / 8.0f;
-        double d1 = (float)(par3 + 8) - MathHelper.sin((float)f) * (float)numberOfBlocks / 8.0f;
-        double d2 = (float)(par5 + 8) + MathHelper.cos((float)f) * (float)numberOfBlocks / 8.0f;
-        double d3 = (float)(par5 + 8) - MathHelper.cos((float)f) * (float)numberOfBlocks / 8.0f;
+        double d0 = (float)(par3 + 8) + Mth.sin(f) * (float)numberOfBlocks / 8.0f;
+        double d1 = (float)(par3 + 8) - Mth.sin(f) * (float)numberOfBlocks / 8.0f;
+        double d2 = (float)(par5 + 8) + Mth.cos(f) * (float)numberOfBlocks / 8.0f;
+        double d3 = (float)(par5 + 8) - Mth.cos(f) * (float)numberOfBlocks / 8.0f;
         double d4 = par4 + par2Random.nextInt(3) - 2;
         double d5 = par4 + par2Random.nextInt(3) - 2;
         for (int l = 0; l <= numberOfBlocks; ++l) {
@@ -635,14 +648,14 @@ public class ChunkOreGenerator {
             double d7 = d4 + (d5 - d4) * (double)l / (double)numberOfBlocks;
             double d8 = d2 + (d3 - d2) * (double)l / (double)numberOfBlocks;
             double d9 = par2Random.nextDouble() * (double)numberOfBlocks / 16.0;
-            double d10 = (double)(MathHelper.sin((float)((float)l * 3.1415927f / (float)numberOfBlocks)) + 1.0f) * d9 + 1.0;
-            double d11 = (double)(MathHelper.sin((float)((float)l * 3.1415927f / (float)numberOfBlocks)) + 1.0f) * d9 + 1.0;
-            int i1 = MathHelper.floor((double)(d6 - d10 / 2.0));
-            int j1 = MathHelper.floor((double)(d7 - d11 / 2.0));
-            int k1 = MathHelper.floor((double)(d8 - d10 / 2.0));
-            int l1 = MathHelper.floor((double)(d6 + d10 / 2.0));
-            int i2 = MathHelper.floor((double)(d7 + d11 / 2.0));
-            int j2 = MathHelper.floor((double)(d8 + d10 / 2.0));
+            double d10 = (double)(Mth.sin((float)l * 3.1415927f / (float)numberOfBlocks) + 1.0f) * d9 + 1.0;
+            double d11 = (double)(Mth.sin((float)l * 3.1415927f / (float)numberOfBlocks) + 1.0f) * d9 + 1.0;
+            int i1 = Mth.floor(d6 - d10 / 2.0);
+            int j1 = Mth.floor(d7 - d11 / 2.0);
+            int k1 = Mth.floor(d8 - d10 / 2.0);
+            int l1 = Mth.floor(d6 + d10 / 2.0);
+            int i2 = Mth.floor(d7 + d11 / 2.0);
+            int j2 = Mth.floor(d8 + d10 / 2.0);
             for (int k2 = i1; k2 <= l1; ++k2) {
                 double d12 = ((double)k2 + 0.5 - d6) / (d10 / 2.0);
                 if (d12 * d12 >= 1.0) continue;
@@ -651,9 +664,9 @@ public class ChunkOreGenerator {
                     if (d12 * d12 + d13 * d13 >= 1.0) continue;
                     for (int i3 = k1; i3 <= j2; ++i3) {
                         double d14 = ((double)i3 + 0.5 - d8) / (d10 / 2.0);
-                        Block bid = ChaosPersists.getBlockIDInChunk((Chunk)chunk, (int)k2, (int)l2, (int)i3);
-                        if (d12 * d12 + d13 * d13 + d14 * d14 >= 1.0 || bid != Blocks.STONE) continue;
-                        ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)k2, (int)l2, (int)i3, (Block)newbid, (int)0);
+                        Block bid = ChaosPersists.getBlockIDInChunk(chunk, k2, l2, i3);
+                        if (d12 * d12 + d13 * d13 + d14 * d14 >= 1.0 || bid != oldbid) continue;
+                        ChaosPersists.setBlockIDWithMetadataInChunk(chunk, k2, l2, i3, newbid, 0);
                     }
                 }
             }

@@ -1,81 +1,58 @@
 package com.astryxion.chaospersists.item;
 
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.core.ChaosPersists;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public class ItemRayGun extends Item {
-
     public ItemRayGun(int i) {
-        this.maxStackSize = 1;
-        this.setMaxDamage(50);
-        this.setCreativeTab(CreativeTabs.COMBAT);
+        super(new Item.Properties().stacksTo(1).durability(50));
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
-
-        ItemStack stack = player.getHeldItem(hand);
-
-        // Prevent use if nearly broken (same logic)
-        if (stack.getMaxDamage() - stack.getItemDamage() <= 1) {
-            return new ActionResult<>(EnumActionResult.FAIL, stack);
+    public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (stack.getMaxDamage() - stack.getDamageValue() <= 1) {
+            return InteractionResultHolder.fail(stack);
         }
-
-        // Play sound (same sound as original)
-        SoundEvent sound = SoundEvent.REGISTRY.getObject(new ResourceLocation("minecraft", "entity.firework.launch"));
-        if (sound != null) {
-            world.playSound(
-                    player,
-                    player.posX,
-                    player.posY,
-                    player.posZ,
-                    sound,
-                    SoundCategory.PLAYERS,
-                    3.5f,
-                    0.5f
-            );
-        }
-
-        if (!world.isRemote) {
-            LaserBall lb = new LaserBall(world, player);
+        world.playSound(
+                player,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.FIREWORK_ROCKET_LAUNCH,
+                SoundSource.PLAYERS,
+                3.5f,
+                0.5f);
+        if (!world.isClientSide) {
+            LaserBall lb = new LaserBall(ChaosPersists.ENTITY_TYPE_LASER_BALL.get(), player, world);
             lb.setSpecial();
-            Vec3d look = player.getLookVec();
+            Vec3 look = player.getLookAngle();
             double spawnDist = 0.65;
-            double px = player.posX + look.x * spawnDist;
-            double py = player.posY + player.getEyeHeight() + look.y * spawnDist;
-            double pz = player.posZ + look.z * spawnDist;
-            lb.setPosition(px, py, pz);
+            double px = player.getX() + look.x * spawnDist;
+            double py = player.getEyeY() + look.y * spawnDist;
+            double pz = player.getZ() + look.z * spawnDist;
+            lb.moveTo(px, py, pz, player.getYRot(), player.getXRot());
             double speed = 1.85;
-            lb.motionX = look.x * speed;
-            lb.motionY = look.y * speed;
-            lb.motionZ = look.z * speed;
-            world.spawnEntity(lb);
+            lb.setDeltaMovement(look.x * speed, look.y * speed, look.z * speed);
+            world.addFreshEntity(lb);
         }
-
-        // Swing animation
-        player.swingArm(hand);
-
-        // Strong recoil boost (same math)
-        player.addVelocity(
-                Math.cos(Math.toRadians(player.rotationYaw - 90.0f)) * 1.5,
+        player.swing(hand);
+        player.push(
+                Math.cos(Math.toRadians(player.getYRot() - 90.0f)) * 1.5,
                 0.3,
-                Math.sin(Math.toRadians(player.rotationYaw - 90.0f)) * 1.5
-        );
-
-        // Damage item
-        stack.damageItem(1, player);
-
-        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+                Math.sin(Math.toRadians(player.getYRot() - 90.0f)) * 1.5);
+        stack.hurtAndBreak(1, player, p -> p.broadcastBreakEvent(hand));
+        player.awardStat(Stats.ITEM_USED.get(this));
+        return InteractionResultHolder.sidedSuccess(stack, world.isClientSide);
     }
 
     public String getMaterialName() {

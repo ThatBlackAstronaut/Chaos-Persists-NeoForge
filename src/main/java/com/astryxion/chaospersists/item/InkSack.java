@@ -1,104 +1,131 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.AttackSquid
- *  com.astryxion.chaospersists.InkSack
- *  com.astryxion.chaospersists.WaterDragon
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.monster.EntityCreeper
- *  net.minecraft.entity.projectile.EntityThrowable
- *  net.minecraft.potion.Potion
- *  net.minecraft.potion.PotionEffect
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.math.RayTraceResult
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
+import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.entity.AttackSquid;
-import com.astryxion.chaospersists.entity.WaterDragon;
-import java.util.Random;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.monster.EntityCreeper;
-import net.minecraft.entity.projectile.EntityThrowable;
-import net.minecraft.init.MobEffects;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
-public class InkSack
-extends EntityThrowable {
+public class InkSack extends Projectile {
     private float my_rotation = 0.0f;
     private int my_index = 65;
 
-    public InkSack(World par1World) {
-        super(par1World);
+    public InkSack(EntityType<? extends InkSack> type, Level level) {
+        super(type, level);
     }
 
-    public InkSack(World par1World, int par2) {
-        super(par1World);
+    public InkSack(Level level) {
+        this(ChaosPersists.ENTITY_TYPE_INK_SACK.get(), level);
     }
 
-    public InkSack(World par1World, EntityLiving par2EntityLiving) {
-        super(par1World, (EntityLivingBase)par2EntityLiving);
+    public InkSack(Level level, int par2) {
+        this(level);
     }
 
-    public InkSack(World par1World, EntityLiving par2EntityLiving, int par3) {
-        super(par1World, (EntityLivingBase)par2EntityLiving);
+    public InkSack(Level level, LivingEntity thrower) {
+        this(level);
+        this.setOwner(thrower);
     }
 
-    public InkSack(World par1World, double par2, double par4, double par6) {
-        super(par1World, par2, par4, par6);
+    public InkSack(Level level, LivingEntity thrower, int par3) {
+        this(level, thrower);
+    }
+
+    public InkSack(EntityType<? extends InkSack> type, double x, double y, double z, Level level) {
+        super(type, level);
+        this.setPos(x, y, z);
+    }
+
+    public InkSack(Level level, double x, double y, double z) {
+        this(ChaosPersists.ENTITY_TYPE_INK_SACK.get(), x, y, z, level);
+    }
+
+    public void shoot(double xd, double yd, double zd, float velocity, float inaccuracy) {
+        Vec3 vec3 = new Vec3(xd, yd, zd).normalize().scale(velocity);
+        vec3 = vec3.add(
+                this.random.triangle(0.0, inaccuracy * 0.0075),
+                this.random.triangle(0.0, inaccuracy * 0.0075),
+                this.random.triangle(0.0, inaccuracy * 0.0075));
+        this.setDeltaMovement(vec3);
     }
 
     public int getInkSackIndex() {
         return this.my_index;
     }
 
-    protected void onImpact(RayTraceResult par1MovingObjectPosition) {
-        if (par1MovingObjectPosition.entityHit != null) {
-            float var2 = 1.0f;
-            if (par1MovingObjectPosition.entityHit instanceof EntityCreeper) {
-                var2 = 4.0f;
-            }
-            if (par1MovingObjectPosition.entityHit instanceof WaterDragon) {
-                return;
-            }
-            if (par1MovingObjectPosition.entityHit instanceof AttackSquid) {
-                return;
-            }
-            par1MovingObjectPosition.entityHit.attackEntityFrom(DamageSource.causeThrownDamage((Entity)this, (Entity)this.getThrower()), var2);
-            if (par1MovingObjectPosition.entityHit instanceof EntityLivingBase && this.world.rand.nextInt(2) == 0) {
-                ((EntityLivingBase)par1MovingObjectPosition.entityHit).addPotionEffect(new PotionEffect(MobEffects.BLINDNESS, 100 + 50 * this.world.rand.nextInt(8), 0));
-            }
-        }
-        for (int var3 = 0; var3 < 4; ++var3) {
-            this.world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, this.posX + (double)this.rand.nextFloat() - (double)this.rand.nextFloat(), this.posY + (double)this.rand.nextFloat() - (double)this.rand.nextFloat(), this.posZ + (double)this.rand.nextFloat(), 0.0, 0.0, 0.0);
-        }
-        this.world.playSound(this.posX, this.posY, this.posZ, SoundEvents.ENTITY_GENERIC_SPLASH, SoundCategory.NEUTRAL, 0.5f, 1.0f + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.5f, false);
-        if (!this.world.isRemote) {
-            this.setDead();
-        }
-    }
+    @Override
+    protected void defineSynchedData() {}
 
-    public void onUpdate() {
-        super.onUpdate();
+    @Override
+    public void tick() {
+        super.tick();
         this.my_rotation += 30.0f;
         while (this.my_rotation > 360.0f) {
             this.my_rotation -= 360.0f;
         }
-        this.rotationPitch = this.prevRotationPitch = this.my_rotation;
+        this.setXRot(this.my_rotation);
+        this.xRotO = this.my_rotation;
+        HitResult hit = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+        if (hit.getType() != HitResult.Type.MISS) {
+            this.onHit(hit);
+        }
+        this.checkInsideBlocks();
+    }
+
+    @Override
+    protected void onHit(HitResult result) {
+        super.onHit(result);
+        if (result.getType() == HitResult.Type.ENTITY) {
+            Entity entity = ((EntityHitResult) result).getEntity();
+            float damage = 1.0f;
+            if (entity instanceof Creeper) {
+                damage = 4.0f;
+            }
+            if (entity instanceof com.astryxion.chaospersists.entity.WaterDragon) {
+                return;
+            }
+            if (entity instanceof AttackSquid) {
+                return;
+            }
+            Entity owner = this.getOwner();
+            entity.hurt(
+                    this.damageSources().thrown(this, owner instanceof LivingEntity ? (LivingEntity) owner : null),
+                    damage);
+            if (entity instanceof LivingEntity living && this.random.nextInt(2) == 0) {
+                living.addEffect(
+                        new MobEffectInstance(MobEffects.BLINDNESS, 100 + 50 * this.random.nextInt(8), 0));
+            }
+        }
+        if (this.level().isClientSide) {
+            for (int i = 0; i < 4; ++i) {
+                this.level()
+                        .addParticle(
+                                ParticleTypes.SMOKE,
+                                this.getX() + this.random.nextFloat() - this.random.nextFloat(),
+                                this.getY() + this.random.nextFloat() - this.random.nextFloat(),
+                                this.getZ() + this.random.nextFloat(),
+                                0.0,
+                                0.0,
+                                0.0);
+            }
+        }
+        this.playSound(
+                SoundEvents.GENERIC_SPLASH,
+                0.5f,
+                1.0f + (this.random.nextFloat() - this.random.nextFloat()) * 0.5f);
+        if (!this.level().isClientSide) {
+            this.discard();
+        }
     }
 }
-

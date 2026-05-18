@@ -1,176 +1,125 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.EasterBunny
- *  com.astryxion.chaospersists.MyEntityAIWanderALot
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityAgeable
- *  net.minecraft.entity.EntityCreature
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIAvoidEntity
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAILookIdle
- *  net.minecraft.entity.ai.EntityAIMate
- *  net.minecraft.entity.ai.EntityAIPanic
- *  net.minecraft.entity.ai.EntityAISwimming
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.EntityAIWatchClosest
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.passive.EntityAnimal
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
-import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityAgeable;
-import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIAvoidEntity;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAIMate;
-import net.minecraft.entity.ai.EntityAIPanic;
-import net.minecraft.entity.ai.EntityAISwimming;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.EntityAIWatchClosest;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.passive.EntityAnimal;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.util.MyUtils;
 
-public class EasterBunny
-extends EntityAnimal {
+import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
+import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
+
+public class EasterBunny extends Animal {
     private float moveSpeed = 0.45f;
 
-    public EasterBunny(World par1World) {
-        super(par1World);
-        this.setSize(0.5f, 0.75f);
+    public EasterBunny(EntityType<? extends EasterBunny> type, Level level) {
+        super(type, level);
+        this.xpReward = 5;
         this.moveSpeed = 0.45f;
-                this.experienceValue = 5;
-                this.tasks.addTask(0, (EntityAIBase)new EntityAISwimming((EntityLiving)this));
-        this.tasks.addTask(1, (EntityAIBase)new EntityAIMate((EntityAnimal)this, 1.0));
-        this.tasks.addTask(2, (EntityAIBase)new EntityAIAvoidEntity((EntityCreature)this, EntityMob.class, 8.0f, 1.0, 1.399999976158142));
-        this.tasks.addTask(3, (EntityAIBase)new EntityAIAvoidEntity((EntityCreature)this, EntityPlayer.class, 8.0f, 1.0, 1.399999976158142));
-        this.tasks.addTask(4, (EntityAIBase)new EntityAIPanic((EntityCreature)this, 1.5));
-        this.tasks.addTask(5, (EntityAIBase)new EntityAIWatchClosest((EntityLiving)this, EntityLiving.class, 8.0f));
-        this.tasks.addTask(6, (EntityAIBase)new MyEntityAIWanderALot((EntityCreature)this, 16, 1.0));
-        this.tasks.addTask(7, (EntityAIBase)new EntityAILookIdle((EntityLiving)this));
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new BreedGoal(this, 1.0));
+        this.goalSelector.addGoal(
+                2, new AvoidEntityGoal<>(this, Monster.class, 8.0f, 1.0, 1.399999976158142));
+        this.goalSelector.addGoal(
+                3, new AvoidEntityGoal<>(this, Player.class, 8.0f, 1.0, 1.399999976158142));
+        this.goalSelector.addGoal(4, new PanicGoal(this, 1.5));
+        this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, LivingEntity.class, 8.0f));
+        this.goalSelector.addGoal(6, new MyEntityAIWanderALot(this, 16, 1.0));
+        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(8.0);
+    public static AttributeSupplier.Builder createAttributes() {
+        return Animal.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 10.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.45)
+                .add(Attributes.ATTACK_DAMAGE, 8.0);
     }
 
-    protected void entityInit() {
-        super.entityInit();
-    }
-
-    public void onUpdate() {
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        super.onUpdate();
-    }
-
-    public boolean getCanSpawnHere() {
-        if (this.posY < 50.0) {
-            return false;
-        }
-        if (!this.world.isDaytime()) {
-            return false;
-        }
-        EasterBunny target = null;
-        target = (EasterBunny)this.world.findNearestEntityWithinAABB(EasterBunny.class, this.getEntityBoundingBox().expand(32.0, 8.0, 32.0), (Entity)this);
-        if (target != null) {
-            return false;
-        }
-        return true;
-    }
-
-    public boolean isAIEnabled() {
-        return true;
-    }
-
-    public boolean canBreatheUnderwater() {
-        return false;
+    @Override
+    public void tick() {
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
+        super.tick();
     }
 
     public int mygetMaxHealth() {
         return 10;
     }
 
-    protected net.minecraft.util.SoundEvent getAmbientSound() {
+    @Override
+    protected SoundEvent getAmbientSound() {
         return null;
     }
 
-    protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource damageSource) {
-        return com.astryxion.chaospersists.core.ChaosSounds.DUCK_HURT;
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return ChaosSounds.DUCK_HURT;
     }
 
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return com.astryxion.chaospersists.core.ChaosSounds.DUCK_HURT;
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ChaosSounds.DUCK_HURT;
     }
 
+    @Override
     protected float getSoundVolume() {
         return 0.4f;
     }
 
-    protected Item getDropItem() {
-        return Items.CHICKEN;
-    }
-
-    protected void dropFewItems(boolean par1, int par2) {
-        int var3 = this.rand.nextInt(3) + 2;
-        this.dropItem(Items.CHICKEN, var3);
-    }
-
-    protected void updateAITasks() {
-        if (this.world.rand.nextInt(200) == 1) {
-            this.setRevengeTarget(null);
-        }
-        super.updateAITasks();
-        if (this.world.rand.nextInt(600) == 1) {
-            this.LayAnEgg(1 + this.world.rand.nextInt(3));
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        int var3 = this.getRandom().nextInt(3) + 2;
+        for (int var4 = 0; var4 < var3; ++var4) {
+            this.spawnAtLocation(Items.CHICKEN);
         }
     }
 
-    private ItemStack LayAnEgg(int par1) {
-        EntityItem var3 = null;
+    @Override
+    protected void customServerAiStep() {
+        if (this.isDeadOrDying()) {
+            return;
+        }
+        if (this.getRandom().nextInt(200) == 1) {
+            this.setLastHurtByMob(null);
+        }
+        super.customServerAiStep();
+        if (this.getRandom().nextInt(600) == 1) {
+            this.layAnEgg(1 + this.getRandom().nextInt(3));
+        }
+    }
+
+    private ItemStack layAnEgg(int par1) {
+
+        ItemEntity var3 = null;
         int i = 0;
         Item index = null;
         int val = 0;
         ItemStack is = null;
-        i = this.world.rand.nextInt(115);
+        i = this.getRandom().nextInt(115);
         switch (i) {
             case 5: {
                 index = ChaosPersists.GirlfriendEgg;
@@ -615,39 +564,78 @@ extends EntityAnimal {
         if (index == null) {
             return null;
         }
-        is = new ItemStack(index, par1, val);
-        var3 = new EntityItem(this.world, this.posX + (double)ChaosPersists.ChaosRand.nextInt(2) - (double)ChaosPersists.ChaosRand.nextInt(2), this.posY + 1.0, this.posZ + (double)ChaosPersists.ChaosRand.nextInt(2) - (double)ChaosPersists.ChaosRand.nextInt(2), is);
+        is = new ItemStack(index, par1);
+        var3 = new ItemEntity(this.level(), this.getX() + (double)ChaosPersists.ChaosRand.nextInt(2) - (double)ChaosPersists.ChaosRand.nextInt(2), this.getY() + 1.0, this.getZ() + (double)ChaosPersists.ChaosRand.nextInt(2) - (double)ChaosPersists.ChaosRand.nextInt(2), is);
         if (var3 != null) {
-            this.world.spawnEntity((Entity)var3);
+            this.level().addFreshEntity(var3);
         }
+        
         return is;
     }
 
-    protected boolean canDespawn() {
-        if (this.isChild()) {
-            this.enablePersistence();
+    public static boolean checkEasterBunnySpawnRules(
+            EntityType<EasterBunny> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        if (ChaosPersists.easter_day == 0) {
             return false;
         }
-        if (this.isNoDespawnRequired()) {
+        if (pos.getY() < 50) {
+            return false;
+        }
+        if (!MyUtils.isDay(level)) {
+            return false;
+        }
+        List<EasterBunny> nearby =
+                level.getLevel()
+                        .getEntitiesOfClass(EasterBunny.class, new AABB(pos).inflate(32.0, 8.0, 32.0));
+        return nearby.isEmpty();
+    }
+
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        if (ChaosPersists.easter_day == 0) {
+            return false;
+        }
+        if (this.getY() < 50.0) {
+            return false;
+        }
+        if (level instanceof Level world && !world.isDay()) {
+            return false;
+        }
+        List<EasterBunny> nearby =
+                this.level()
+                        .getEntitiesOfClass(
+                                EasterBunny.class, this.getBoundingBox().inflate(32.0, 8.0, 32.0));
+        for (EasterBunny eb : nearby) {
+            if (eb != this) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        if (this.isBaby()) {
+            this.setPersistenceRequired();
+            return false;
+        }
+        if (this.isPersistenceRequired()) {
             return false;
         }
         return true;
     }
 
-    public EntityAgeable createChild(EntityAgeable entityageable) {
-        return this.spawnBabyAnimal(entityageable);
+    @Override
+    public EasterBunny getBreedOffspring(ServerLevel level, AgeableMob partner) {
+        return (EasterBunny) this.getType().create(level);
     }
 
-    public EasterBunny spawnBabyAnimal(EntityAgeable par1EntityAgeable) {
-        return new EasterBunny(this.world);
-    }
-
-    public boolean isWheat(ItemStack par1ItemStack) {
-        return par1ItemStack != null && par1ItemStack.getItem() == Items.APPLE;
-    }
-
-    public boolean isBreedingItem(ItemStack par1ItemStack) {
-        return par1ItemStack.getItem() == ChaosPersists.MyCrystalApple;
+    @Override
+    public boolean isFood(ItemStack stack) {
+        return stack.is(ChaosPersists.MyCrystalApple);
     }
 }
-

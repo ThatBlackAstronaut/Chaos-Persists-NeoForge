@@ -1,44 +1,68 @@
 package com.astryxion.chaospersists.client;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
-import javax.vecmath.Matrix4f;
 
-import org.apache.commons.lang3.tuple.Pair;
-
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.block.model.ItemOverrideList;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.model.data.ModelData;
 
 /**
- * Marks an item as using a TEISR and records the hand {@link ItemCameraTransforms.TransformType}
- * so rendering can use 3D in-hand and the flat JSON model elsewhere.
+ * Marks an item as using a custom in-hand renderer and records per-item {@link BlockEntityWithoutLevelRenderer}
+ * instances for {@link net.minecraftforge.client.extensions.common.IClientItemExtensions}.
  */
-public class TeisrHandBakedModelWrapper implements IBakedModel {
+public class TeisrHandBakedModelWrapper implements BakedModel {
 
-    private final IBakedModel inner;
+    private static final Map<Item, BlockEntityWithoutLevelRenderer> CUSTOM_RENDERERS = new HashMap<>();
 
-    public TeisrHandBakedModelWrapper(IBakedModel inner) {
+    private final BakedModel inner;
+
+    public TeisrHandBakedModelWrapper(BakedModel inner) {
         this.inner = inner;
     }
 
-    public IBakedModel getInner() {
+    public static void registerCustomRenderer(Item item, BlockEntityWithoutLevelRenderer renderer) {
+        CUSTOM_RENDERERS.put(item, renderer);
+    }
+
+    @Nullable
+    public static BlockEntityWithoutLevelRenderer getCustomRenderer(Item item) {
+        return CUSTOM_RENDERERS.get(item);
+    }
+
+    public BakedModel getInner() {
         return inner;
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand) {
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource rand) {
         return inner.getQuads(state, side, rand);
     }
 
     @Override
-    public boolean isAmbientOcclusion() {
-        return inner.isAmbientOcclusion();
+    public List<BakedQuad> getQuads(
+            @Nullable BlockState state,
+            @Nullable Direction side,
+            RandomSource rand,
+            ModelData data,
+            @Nullable net.minecraft.client.renderer.RenderType renderType) {
+        return inner.getQuads(state, side, rand, data, renderType);
+    }
+
+    @Override
+    public boolean useAmbientOcclusion() {
+        return inner.useAmbientOcclusion();
     }
 
     @Override
@@ -47,43 +71,27 @@ public class TeisrHandBakedModelWrapper implements IBakedModel {
     }
 
     @Override
-    public boolean isBuiltInRenderer() {
+    public boolean usesBlockLight() {
+        return inner.usesBlockLight();
+    }
+
+    @Override
+    public boolean isCustomRenderer() {
         return true;
     }
 
     @Override
-    public TextureAtlasSprite getParticleTexture() {
-        return inner.getParticleTexture();
+    public TextureAtlasSprite getParticleIcon() {
+        return inner.getParticleIcon();
     }
 
     @Override
-    public ItemCameraTransforms getItemCameraTransforms() {
-        return inner.getItemCameraTransforms();
-    }
-
-    @Override
-    public ItemOverrideList getOverrides() {
+    public ItemOverrides getOverrides() {
         return inner.getOverrides();
     }
 
     @Override
-    public Pair<? extends IBakedModel, Matrix4f> handlePerspective(ItemCameraTransforms.TransformType cameraTransformType) {
-        switch (cameraTransformType) {
-            case FIRST_PERSON_LEFT_HAND:
-            case FIRST_PERSON_RIGHT_HAND:
-            case THIRD_PERSON_LEFT_HAND:
-            case THIRD_PERSON_RIGHT_HAND: {
-                TeisrHandTransformHolder.set(cameraTransformType);
-                Pair<? extends IBakedModel, Matrix4f> innerPerspective = inner.handlePerspective(cameraTransformType);
-                Matrix4f mat = innerPerspective != null ? innerPerspective.getRight() : null;
-                if (mat == null) {
-                    mat = new Matrix4f();
-                    mat.setIdentity();
-                }
-                return Pair.of(this, mat);
-            }
-            default:
-                return inner.handlePerspective(cameraTransformType);
-        }
+    public ItemTransforms getTransforms() {
+        return inner.getTransforms();
     }
 }

@@ -1,1105 +1,902 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Alien
- *  com.astryxion.chaospersists.Alosaurus
- *  com.astryxion.chaospersists.AttackSquid
- *  com.astryxion.chaospersists.BandP
- *  com.astryxion.chaospersists.Baryonyx
- *  com.astryxion.chaospersists.Basilisk
- *  com.astryxion.chaospersists.Beaver
- *  com.astryxion.chaospersists.Bee
- *  com.astryxion.chaospersists.Boyfriend
- *  com.astryxion.chaospersists.Brutalfly
- *  com.astryxion.chaospersists.Camarasaurus
- *  com.astryxion.chaospersists.Cassowary
- *  com.astryxion.chaospersists.CaterKiller
- *  com.astryxion.chaospersists.CaveFisher
- *  com.astryxion.chaospersists.Cephadrome
- *  com.astryxion.chaospersists.Chipmunk
- *  com.astryxion.chaospersists.CliffRacer
- *  com.astryxion.chaospersists.CloudShark
- *  com.astryxion.chaospersists.Cockateil
- *  com.astryxion.chaospersists.Crab
- *  com.astryxion.chaospersists.CreepingHorror
- *  com.astryxion.chaospersists.Cricket
- *  com.astryxion.chaospersists.Cryolophosaurus
- *  com.astryxion.chaospersists.CrystalCow
- *  com.astryxion.chaospersists.Dragon
- *  com.astryxion.chaospersists.Dragonfly
- *  com.astryxion.chaospersists.DungeonBeast
- *  com.astryxion.chaospersists.EasterBunny
- *  com.astryxion.chaospersists.EmperorScorpion
- *  com.astryxion.chaospersists.EnchantedCow
- *  com.astryxion.chaospersists.EnderKnight
- *  com.astryxion.chaospersists.EnderReaper
- *  com.astryxion.chaospersists.EntityCage
- *  com.astryxion.chaospersists.Fairy
- *  com.astryxion.chaospersists.Firefly
- *  com.astryxion.chaospersists.Flounder
- *  com.astryxion.chaospersists.Frog
- *  com.astryxion.chaospersists.GammaMetroid
- *  com.astryxion.chaospersists.Gazelle
- *  com.astryxion.chaospersists.Girlfriend
- *  com.astryxion.chaospersists.GoldCow
- *  com.astryxion.chaospersists.GoldFish
- *  com.astryxion.chaospersists.Hammerhead
- *  com.astryxion.chaospersists.HerculesBeetle
- *  com.astryxion.chaospersists.Hydrolisc
- *  com.astryxion.chaospersists.Irukandji
- *  com.astryxion.chaospersists.Kraken
- *  com.astryxion.chaospersists.Kyuubi
- *  com.astryxion.chaospersists.LeafMonster
- *  com.astryxion.chaospersists.Leon
- *  com.astryxion.chaospersists.Lizard
- *  com.astryxion.chaospersists.LurkingTerror
- *  com.astryxion.chaospersists.Mantis
- *  com.astryxion.chaospersists.Molenoid
- *  com.astryxion.chaospersists.Mothra
- *  com.astryxion.chaospersists.Nastysaurus
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.Ostrich
- *  com.astryxion.chaospersists.Peacock
- *  com.astryxion.chaospersists.PitchBlack
- *  com.astryxion.chaospersists.Pointysaurus
- *  com.astryxion.chaospersists.Rat
- *  com.astryxion.chaospersists.RedCow
- *  com.astryxion.chaospersists.Rotator
- *  com.astryxion.chaospersists.RubberDucky
- *  com.astryxion.chaospersists.Scorpion
- *  com.astryxion.chaospersists.SeaMonster
- *  com.astryxion.chaospersists.SeaViper
- *  com.astryxion.chaospersists.Skate
- *  com.astryxion.chaospersists.SpiderDriver
- *  com.astryxion.chaospersists.SpitBug
- *  com.astryxion.chaospersists.Spyro
- *  com.astryxion.chaospersists.StinkBug
- *  com.astryxion.chaospersists.Stinky
- *  com.astryxion.chaospersists.TRex
- *  com.astryxion.chaospersists.TerribleTerror
- *  com.astryxion.chaospersists.Triffid
- *  com.astryxion.chaospersists.TrooperBug
- *  com.astryxion.chaospersists.Urchin
- *  com.astryxion.chaospersists.VelocityRaptor
- *  com.astryxion.chaospersists.Vortex
- *  com.astryxion.chaospersists.WaterDragon
- *  com.astryxion.chaospersists.Whale
- *  com.astryxion.chaospersists.WormLarge
- *  com.astryxion.chaospersists.WormMedium
- *  com.astryxion.chaospersists.WormSmall
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.IEntityMultiPart
- *  net.minecraft.entity.boss.EntityDragon
- *  net.minecraft.entity.boss.EntityDragonPart
- *  net.minecraft.entity.boss.EntityWither
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.monster.EntityBlaze
- *  net.minecraft.entity.monster.EntityCaveSpider
- *  net.minecraft.entity.monster.EntityCreeper
- *  net.minecraft.entity.monster.EntityEnderman
- *  net.minecraft.entity.monster.EntityGhast
- *  net.minecraft.entity.monster.EntityIronGolem
- *  net.minecraft.entity.monster.EntityMagmaCube
- *  net.minecraft.entity.monster.EntityPigZombie
- *  net.minecraft.entity.monster.EntitySilverfish
- *  net.minecraft.entity.monster.EntitySkeleton
- *  net.minecraft.entity.monster.EntitySlime
- *  net.minecraft.entity.monster.EntitySnowman
- *  net.minecraft.entity.monster.EntitySpider
- *  net.minecraft.entity.monster.EntityWitch
- *  net.minecraft.entity.monster.EntityZombie
- *  net.minecraft.entity.passive.EntityBat
- *  net.minecraft.entity.passive.EntityChicken
- *  net.minecraft.entity.passive.EntityCow
- *  net.minecraft.entity.passive.EntityHorse
- *  net.minecraft.entity.passive.EntityMooshroom
- *  net.minecraft.entity.passive.EntityOcelot
- *  net.minecraft.entity.passive.EntityPig
- *  net.minecraft.entity.passive.EntitySheep
- *  net.minecraft.entity.passive.EntitySquid
- *  net.minecraft.entity.passive.EntityVillager
- *  net.minecraft.entity.passive.EntityWolf
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.projectile.EntityThrowable
- *  net.minecraft.item.Item
- *  net.minecraft.util.math.RayTraceResult
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import com.astryxion.chaospersists.entity.Alien;
-import com.astryxion.chaospersists.entity.Alosaurus;
-import com.astryxion.chaospersists.entity.AttackSquid;
-import com.astryxion.chaospersists.item.BandP;
-import com.astryxion.chaospersists.entity.Baryonyx;
-import com.astryxion.chaospersists.entity.Basilisk;
-import com.astryxion.chaospersists.entity.Beaver;
-import com.astryxion.chaospersists.entity.Bee;
-import com.astryxion.chaospersists.entity.Boyfriend;
-import com.astryxion.chaospersists.entity.Brutalfly;
-import com.astryxion.chaospersists.entity.Camarasaurus;
-import com.astryxion.chaospersists.entity.Cassowary;
-import com.astryxion.chaospersists.entity.CaterKiller;
-import com.astryxion.chaospersists.entity.CaveFisher;
-import com.astryxion.chaospersists.entity.Cephadrome;
-import com.astryxion.chaospersists.entity.Chipmunk;
-import com.astryxion.chaospersists.entity.CliffRacer;
-import com.astryxion.chaospersists.entity.CloudShark;
-import com.astryxion.chaospersists.entity.Cockateil;
-import com.astryxion.chaospersists.entity.Crab;
-import com.astryxion.chaospersists.entity.CreepingHorror;
-import com.astryxion.chaospersists.entity.Cricket;
-import com.astryxion.chaospersists.entity.Cryolophosaurus;
-import com.astryxion.chaospersists.entity.CrystalCow;
-import com.astryxion.chaospersists.entity.Dragon;
-import com.astryxion.chaospersists.entity.Dragonfly;
-import com.astryxion.chaospersists.entity.DungeonBeast;
-import com.astryxion.chaospersists.entity.EasterBunny;
-import com.astryxion.chaospersists.entity.EmperorScorpion;
-import com.astryxion.chaospersists.entity.EnchantedCow;
-import com.astryxion.chaospersists.entity.EnderKnight;
-import com.astryxion.chaospersists.entity.EnderReaper;
-import com.astryxion.chaospersists.entity.Fairy;
-import com.astryxion.chaospersists.entity.Firefly;
-import com.astryxion.chaospersists.entity.Flounder;
-import com.astryxion.chaospersists.entity.Frog;
-import com.astryxion.chaospersists.entity.GammaMetroid;
-import com.astryxion.chaospersists.entity.Gazelle;
-import com.astryxion.chaospersists.entity.Girlfriend;
-import com.astryxion.chaospersists.entity.GoldCow;
-import com.astryxion.chaospersists.entity.GoldFish;
-import com.astryxion.chaospersists.entity.Hammerhead;
-import com.astryxion.chaospersists.entity.HerculesBeetle;
-import com.astryxion.chaospersists.entity.Hydrolisc;
-import com.astryxion.chaospersists.entity.Irukandji;
-import com.astryxion.chaospersists.entity.Kraken;
-import com.astryxion.chaospersists.entity.Kyuubi;
-import com.astryxion.chaospersists.entity.LeafMonster;
-import com.astryxion.chaospersists.entity.Leon;
-import com.astryxion.chaospersists.entity.Lizard;
-import com.astryxion.chaospersists.entity.LurkingTerror;
-import com.astryxion.chaospersists.entity.Mantis;
-import com.astryxion.chaospersists.entity.Molenoid;
-import com.astryxion.chaospersists.entity.Mothra;
-import com.astryxion.chaospersists.entity.Nastysaurus;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import com.astryxion.chaospersists.entity.Ostrich;
-import com.astryxion.chaospersists.entity.Peacock;
-import com.astryxion.chaospersists.entity.PitchBlack;
-import com.astryxion.chaospersists.entity.Pointysaurus;
-import com.astryxion.chaospersists.entity.Rat;
-import com.astryxion.chaospersists.entity.RedCow;
-import com.astryxion.chaospersists.entity.Rotator;
-import com.astryxion.chaospersists.entity.RubberDucky;
-import com.astryxion.chaospersists.entity.Scorpion;
-import com.astryxion.chaospersists.entity.SeaMonster;
-import com.astryxion.chaospersists.entity.SeaViper;
-import com.astryxion.chaospersists.entity.Skate;
-import com.astryxion.chaospersists.entity.SpiderDriver;
-import com.astryxion.chaospersists.entity.SpitBug;
-import com.astryxion.chaospersists.entity.Spyro;
-import com.astryxion.chaospersists.entity.StinkBug;
-import com.astryxion.chaospersists.entity.Stinky;
-import com.astryxion.chaospersists.entity.TRex;
-import com.astryxion.chaospersists.entity.TerribleTerror;
-import com.astryxion.chaospersists.entity.Triffid;
-import com.astryxion.chaospersists.entity.TrooperBug;
-import com.astryxion.chaospersists.entity.Urchin;
-import com.astryxion.chaospersists.entity.VelocityRaptor;
-import com.astryxion.chaospersists.entity.Vortex;
-import com.astryxion.chaospersists.entity.WaterDragon;
-import com.astryxion.chaospersists.entity.Whale;
-import com.astryxion.chaospersists.entity.WormLarge;
-import com.astryxion.chaospersists.entity.WormMedium;
-import com.astryxion.chaospersists.entity.WormSmall;
+import com.astryxion.chaospersists.item.BandP;
 import com.astryxion.chaospersists.item.CritterCage;
-import java.util.Random;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.IEntityMultiPart;
-import net.minecraft.entity.boss.EntityDragon;
-import net.minecraft.entity.boss.EntityDragon;
-import net.minecraft.entity.boss.EntityWither;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityBlaze;
-import net.minecraft.entity.monster.EntityCaveSpider;
-import net.minecraft.entity.monster.EntityCreeper;
-import net.minecraft.entity.monster.EntityEnderman;
-import net.minecraft.entity.monster.EntityGhast;
-import net.minecraft.entity.monster.EntityIronGolem;
-import net.minecraft.entity.monster.EntityMagmaCube;
-import net.minecraft.entity.monster.EntityPigZombie;
-import net.minecraft.entity.monster.EntitySilverfish;
-import net.minecraft.entity.monster.EntitySkeleton;
-import net.minecraft.entity.monster.EntitySlime;
-import net.minecraft.entity.monster.EntitySnowman;
-import net.minecraft.entity.monster.EntitySpider;
-import net.minecraft.entity.monster.EntityWitch;
-import net.minecraft.entity.monster.EntityZombie;
-import net.minecraft.entity.passive.EntityBat;
-import net.minecraft.entity.passive.EntityChicken;
-import net.minecraft.entity.passive.EntityCow;
-import net.minecraft.entity.passive.EntityHorse;
-import net.minecraft.entity.passive.EntityMooshroom;
-import net.minecraft.entity.passive.EntityOcelot;
-import net.minecraft.entity.passive.EntityPig;
-import net.minecraft.entity.passive.EntitySheep;
-import net.minecraft.entity.passive.EntitySquid;
-import net.minecraft.entity.passive.EntityVillager;
-import net.minecraft.entity.passive.EntityWolf;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.projectile.EntityThrowable;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.Item;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.world.World;
-
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ambient.Bat;
+import net.minecraft.world.entity.animal.Chicken;
+import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.entity.animal.MushroomCow;
+import net.minecraft.world.entity.animal.Ocelot;
+import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.animal.SnowGolem;
+import net.minecraft.world.entity.animal.Squid;
+import net.minecraft.world.entity.animal.Wolf;
+import net.minecraft.world.entity.animal.horse.Horse;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraftforge.entity.PartEntity;
+import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
+import net.minecraft.world.entity.monster.Blaze;
+import net.minecraft.world.entity.monster.CaveSpider;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.EnderMan;
+import net.minecraft.world.entity.monster.Ghast;
+import net.minecraft.world.entity.monster.MagmaCube;
+import net.minecraft.world.entity.monster.Silverfish;
+import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.monster.Spider;
+import net.minecraft.world.entity.monster.Witch;
+import net.minecraft.world.entity.monster.WitherSkeleton;
+import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.monster.ZombifiedPiglin;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 public class EntityCage
-extends EntityThrowable {
+extends ThrowableProjectile {
     private float my_rotation = 0.0f;
     public int my_index = 160;
-    private World throwerWorld = null;
-    private EntityLivingBase thrower = null;
+    private Level throwerLevel = null;
+    private LivingEntity thrower = null;
 
-    public EntityCage(World par1World) {
-        super(par1World);
-        this.throwerWorld = par1World;
+    public EntityCage(EntityType<? extends EntityCage> type, Level level) {
+        super(type, level);
+        this.throwerLevel = level;
     }
 
-    public EntityCage(World par1World, int i) {
-        super(par1World);
-        this.throwerWorld = par1World;
+    public EntityCage(EntityType<? extends EntityCage> type, Level level, int i) {
+        super(type, level);
+        this.throwerLevel = level;
         this.my_index = i;
     }
 
-    public EntityCage(World worldIn, EntityLivingBase throwerIn, int cageId) {
-        super(worldIn, throwerIn);
-        this.throwerWorld = worldIn;
+    public EntityCage(EntityType<? extends EntityCage> type, Level level, LivingEntity throwerIn, int cageId) {
+        super(type, throwerIn, level);
+        this.throwerLevel = level;
         this.thrower = throwerIn;
         this.my_index = cageId;
-        if (this.thrower != null && this.thrower.world != null) {
-            this.throwerWorld = this.thrower.world;
+        if (this.thrower != null) {
+            this.throwerLevel = this.thrower.level();
         }
     }
 
-    /** @deprecated Use {@link #EntityCage(World, EntityLivingBase, int)} */
-    public EntityCage(World par1World, EntityPlayer par2EntityLiving, int i) {
-        this(par1World, (EntityLivingBase)par2EntityLiving, i);
+    
+    private void dropCageItem(Item item, int count) {
+        if (!this.level().isClientSide && item != null) {
+            this.spawnAtLocation(new ItemStack(item, count));
+        }
     }
+
+    @Override
+    protected void defineSynchedData() {}
 
     public int getCageIndex() {
         return this.my_index;
     }
 
-    protected void onImpact(RayTraceResult par1MovingObjectPosition) {
+    @Override
+    protected void onHit(HitResult result) {
+        if (this.isRemoved()) {
+            return;
+        }
         int empty_id = ((CritterCage)ChaosPersists.CageEmpty).cage_id;
         if (this.my_index != empty_id) {
-            if (!this.world.isRemote) {
-                Entity ent = CritterCage.spawnMobForCage(this.world, this.my_index, this.posX, this.posY, this.posZ);
+            if (!this.level().isClientSide) {
+                Entity ent = CritterCage.spawnMobForCage(this.level(), this.my_index, this.getX(), this.getY(), this.getZ());
                 if (ent != null) {
-                    ent.dropItem(ChaosPersists.CageEmpty, 1);
+                    ent.spawnAtLocation(new ItemStack(ChaosPersists.CageEmpty));
                 }
             }
-            this.setDead();
+            this.discard();
             return;
         }
-        if (par1MovingObjectPosition.entityHit != null && this.rand.nextInt(10) >= 2) {
-            Girlfriend gf;
-            Boyfriend gf2;
-            if (this.throwerWorld != null) {
+        if (result.getType() == HitResult.Type.ENTITY && this.random.nextInt(10) >= 2) {
+            Entity hitEntity = ((EntityHitResult) result).getEntity();
+            if (this.throwerLevel != null) {
                 for (int var3 = 0; var3 < 4; ++var3) {
-                    this.throwerWorld.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, par1MovingObjectPosition.entityHit.posX, par1MovingObjectPosition.entityHit.posY + 0.25, par1MovingObjectPosition.entityHit.posZ, 0.0, 0.0, 0.0);
-                    this.throwerWorld.spawnParticle(net.minecraft.util.EnumParticleTypes.EXPLOSION_NORMAL, par1MovingObjectPosition.entityHit.posX, par1MovingObjectPosition.entityHit.posY + 0.25, par1MovingObjectPosition.entityHit.posZ, 0.0, 0.0, 0.0);
-                    this.throwerWorld.spawnParticle(net.minecraft.util.EnumParticleTypes.REDSTONE, par1MovingObjectPosition.entityHit.posX, par1MovingObjectPosition.entityHit.posY + 0.25, par1MovingObjectPosition.entityHit.posZ, 0.0, 0.0, 0.0);
+                    this.throwerLevel.addParticle(ParticleTypes.SMOKE, hitEntity.getX(), hitEntity.getY() + 0.25, hitEntity.getZ(), 0.0, 0.0, 0.0);
+                    this.throwerLevel.addParticle(ParticleTypes.EXPLOSION, hitEntity.getX(), hitEntity.getY() + 0.25, hitEntity.getZ(), 0.0, 0.0, 0.0);
+                    this.throwerLevel.addParticle(ParticleTypes.ENTITY_EFFECT, hitEntity.getX(), hitEntity.getY() + 0.25, hitEntity.getZ(), 1.0, 0.0, 0.0);
                 }
                 if (this.thrower != null) {
-                    this.throwerWorld.playSound(null, this.thrower.posX, this.thrower.posY, this.thrower.posZ, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.NEUTRAL, 1.0f, 1.5f);
+                    this.throwerLevel.playSound(null, this.thrower.getX(), this.thrower.getY(), this.thrower.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.NEUTRAL, 1.0f, 1.5f);
                 }
             }
-            if (!this.world.isRemote) {
-            if (par1MovingObjectPosition.entityHit instanceof EntityPlayer) {
-                if (!this.world.isRemote) {
-                    this.dropItem(ChaosPersists.CageEmpty, 1);
-                    this.setDead();
+            if (!this.level().isClientSide) {
+            if (hitEntity instanceof Player) {
+                if (!this.level().isClientSide) {
+                    this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                    this.discard();
                 }
                 return;
             }
-            if (par1MovingObjectPosition.entityHit instanceof SpiderDriver) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedSpiderDriver, 1);
-            } else if (par1MovingObjectPosition.entityHit instanceof EntitySpider) {
-                if (par1MovingObjectPosition.entityHit instanceof EntityCaveSpider) {
-                    par1MovingObjectPosition.entityHit.setDead();
-                    this.dropItem(ChaosPersists.CagedCaveSpider, 1);
+            if (hitEntity instanceof SpiderDriver) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedSpiderDriver, 1);
+            } else if (hitEntity instanceof Spider) {
+                if (hitEntity instanceof CaveSpider) {
+                    hitEntity.discard();
+                    this.dropCageItem(ChaosPersists.CagedCaveSpider, 1);
                 } else {
-                    par1MovingObjectPosition.entityHit.setDead();
-                    this.dropItem(ChaosPersists.CagedSpider, 1);
+                    hitEntity.discard();
+                    this.dropCageItem(ChaosPersists.CagedSpider, 1);
                 }
             }
-            if (par1MovingObjectPosition.entityHit instanceof Crab) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCrab, 1);
+            if (hitEntity instanceof Crab) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCrab, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityBat) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedBat, 2);
+            if (hitEntity instanceof Bat) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedBat, 2);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityPig) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedPig, 1);
+            if (hitEntity instanceof Pig) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedPig, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntitySquid) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedSquid, 1);
+            if (hitEntity instanceof Squid) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedSquid, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityChicken) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedChicken, 1);
+            if (hitEntity instanceof Chicken) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedChicken, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityCreeper) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCreeper, 1);
+            if (hitEntity instanceof Creeper) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCreeper, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityHorse) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedHorse, 1);
+            if (hitEntity instanceof Horse) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedHorse, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntitySkeleton) {
-                EntitySkeleton sk = (EntitySkeleton)par1MovingObjectPosition.entityHit;
-                if (par1MovingObjectPosition.entityHit instanceof net.minecraft.entity.monster.EntityWitherSkeleton) {
-                    this.dropItem(ChaosPersists.CagedWitherSkeleton, 1);
+            if (hitEntity instanceof Skeleton) {
+                Skeleton sk = (Skeleton)hitEntity;
+                if (hitEntity instanceof WitherSkeleton) {
+                    this.dropCageItem(ChaosPersists.CagedWitherSkeleton, 1);
                 } else {
-                    this.dropItem(ChaosPersists.CagedSkeleton, 1);
+                    this.dropCageItem(ChaosPersists.CagedSkeleton, 1);
                 }
-                par1MovingObjectPosition.entityHit.setDead();
+                hitEntity.discard();
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityZombie) {
-                if (par1MovingObjectPosition.entityHit instanceof EntityPigZombie) {
-                    par1MovingObjectPosition.entityHit.setDead();
-                    this.dropItem(ChaosPersists.CagedZombiePigman, 1);
+            if (hitEntity instanceof Zombie) {
+                if (hitEntity instanceof ZombifiedPiglin) {
+                    hitEntity.discard();
+                    this.dropCageItem(ChaosPersists.CagedZombiePigman, 1);
                 } else {
-                    par1MovingObjectPosition.entityHit.setDead();
-                    this.dropItem(ChaosPersists.CagedZombie, 1);
+                    hitEntity.discard();
+                    this.dropCageItem(ChaosPersists.CagedZombie, 1);
                 }
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntitySlime) {
-                if (par1MovingObjectPosition.entityHit instanceof EntityMagmaCube) {
-                    par1MovingObjectPosition.entityHit.setDead();
-                    this.dropItem(ChaosPersists.CagedMagmaCube, 1);
+            if (hitEntity instanceof Slime) {
+                if (hitEntity instanceof MagmaCube) {
+                    hitEntity.discard();
+                    this.dropCageItem(ChaosPersists.CagedMagmaCube, 1);
                 } else {
-                    par1MovingObjectPosition.entityHit.setDead();
-                    this.dropItem(ChaosPersists.CagedSlime, 1);
+                    hitEntity.discard();
+                    this.dropCageItem(ChaosPersists.CagedSlime, 1);
                 }
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityGhast) {
-                if (this.rand.nextInt(10) < 2) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Ghast) {
+                if (this.random.nextInt(10) < 2) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedGhast, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedGhast, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityEnderman) {
-                if (this.rand.nextInt(10) < 2) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof EnderMan) {
+                if (this.random.nextInt(10) < 2) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedEnderman, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedEnderman, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntitySilverfish) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedSilverfish, 2);
+            if (hitEntity instanceof Silverfish) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedSilverfish, 2);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityWitch) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedWitch, 1);
+            if (hitEntity instanceof Witch) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedWitch, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntitySheep) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedSheep, 1);
+            if (hitEntity instanceof Sheep) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedSheep, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityWolf) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedWolf, 1);
+            if (hitEntity instanceof Wolf) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedWolf, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityOcelot) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedOcelot, 1);
+            if (hitEntity instanceof Ocelot) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedOcelot, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityBlaze) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedBlaze, 1);
+            if (hitEntity instanceof Blaze) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedBlaze, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Girlfriend && !(gf = (Girlfriend)par1MovingObjectPosition.entityHit).isTamed()) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedGirlfriend, 1);
+            if (hitEntity instanceof Girlfriend girlfriend && !girlfriend.isTame()) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedGirlfriend, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Boyfriend && !(gf2 = (Boyfriend)par1MovingObjectPosition.entityHit).isTamed()) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedBoyfriend, 1);
+            if (hitEntity instanceof Boyfriend boyfriend && !boyfriend.isTame()) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedBoyfriend, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityDragon) {
-                if (this.rand.nextInt(10) < 5) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof EnderDragon) {
+                if (this.random.nextInt(10) < 5) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                EntityDragon dr = (EntityDragon)par1MovingObjectPosition.entityHit;
-                dr.setDead();
-                this.dropItem(ChaosPersists.CagedEnderDragon, 1);
+                EnderDragon dr = (EnderDragon)hitEntity;
+                dr.discard();
+                this.dropCageItem(ChaosPersists.CagedEnderDragon, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof net.minecraft.entity.MultiPartEntityPart) {
-                net.minecraft.entity.MultiPartEntityPart part = (net.minecraft.entity.MultiPartEntityPart)par1MovingObjectPosition.entityHit;
-                if (!(part.parent instanceof EntityDragon)) return;
-                if (this.rand.nextInt(10) < 5) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof PartEntity<?> part) {
+                if (!(part.getParent() instanceof EnderDragon)) return;
+                if (this.random.nextInt(10) < 5) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                EntityDragon dr = (EntityDragon)part.parent;
-                dr.setDead();
-                this.dropItem(ChaosPersists.CagedEnderDragon, 1);
+                EnderDragon dr = (EnderDragon) part.getParent();
+                dr.discard();
+                this.dropCageItem(ChaosPersists.CagedEnderDragon, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntitySnowman) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedSnowGolem, 1);
+            if (hitEntity instanceof SnowGolem) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedSnowGolem, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityIronGolem) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedIronGolem, 1);
+            if (hitEntity instanceof IronGolem) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedIronGolem, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityWither) {
-                if (this.rand.nextInt(10) < 2) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof WitherBoss) {
+                if (this.random.nextInt(10) < 2) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedWitherBoss, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedWitherBoss, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof CrystalCow) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCrystalCow, 1);
-                if (!this.world.isRemote) {
-                    this.setDead();
+            if (hitEntity instanceof CrystalCow) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCrystalCow, 1);
+                if (!this.level().isClientSide) {
+                    this.discard();
                 }
                 return;
             }
-            if (par1MovingObjectPosition.entityHit instanceof EnchantedCow) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedEnchantedCow, 1);
-                if (!this.world.isRemote) {
-                    this.setDead();
+            if (hitEntity instanceof EnchantedCow) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedEnchantedCow, 1);
+                if (!this.level().isClientSide) {
+                    this.discard();
                 }
                 return;
             }
-            if (par1MovingObjectPosition.entityHit instanceof GoldCow) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedGoldCow, 1);
-                if (!this.world.isRemote) {
-                    this.setDead();
+            if (hitEntity instanceof GoldCow) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedGoldCow, 1);
+                if (!this.level().isClientSide) {
+                    this.discard();
                 }
                 return;
             }
-            if (par1MovingObjectPosition.entityHit instanceof RedCow) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedRedCow, 1);
-                if (!this.world.isRemote) {
-                    this.setDead();
+            if (hitEntity instanceof RedCow) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedRedCow, 1);
+                if (!this.level().isClientSide) {
+                    this.discard();
                 }
                 return;
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityCow) {
-                if (par1MovingObjectPosition.entityHit instanceof EntityMooshroom) {
-                    par1MovingObjectPosition.entityHit.setDead();
-                    this.dropItem(ChaosPersists.CagedMooshroom, 1);
+            if (hitEntity instanceof Cow) {
+                if (hitEntity instanceof MushroomCow) {
+                    hitEntity.discard();
+                    this.dropCageItem(ChaosPersists.CagedMooshroom, 1);
                 } else {
-                    par1MovingObjectPosition.entityHit.setDead();
-                    this.dropItem(ChaosPersists.CagedCow, 1);
+                    hitEntity.discard();
+                    this.dropCageItem(ChaosPersists.CagedCow, 1);
                 }
-                if (!this.world.isRemote) {
-                    this.setDead();
-                }
-                return;
-            }
-            if (par1MovingObjectPosition.entityHit instanceof EntityVillager) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedVillager, 1);
-                if (!this.world.isRemote) {
-                    this.setDead();
+                if (!this.level().isClientSide) {
+                    this.discard();
                 }
                 return;
             }
-            if (par1MovingObjectPosition.entityHit instanceof Mothra) {
-                if (this.rand.nextInt(10) < 4) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Villager) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedVillager, 1);
+                if (!this.level().isClientSide) {
+                    this.discard();
+                }
+                return;
+            }
+            if (hitEntity instanceof Mothra) {
+                if (this.random.nextInt(10) < 4) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedMOTHRA, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedMOTHRA, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Alosaurus) {
-                if (this.rand.nextInt(10) < 4) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Alosaurus) {
+                if (this.random.nextInt(10) < 4) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedAlo, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedAlo, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Cryolophosaurus) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCryo, 1);
+            if (hitEntity instanceof Cryolophosaurus) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCryo, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Camarasaurus) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCama, 1);
+            if (hitEntity instanceof Camarasaurus) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCama, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof VelocityRaptor) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedVelo, 1);
+            if (hitEntity instanceof VelocityRaptor) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedVelo, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Hydrolisc) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedHydro, 1);
+            if (hitEntity instanceof Hydrolisc) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedHydro, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Basilisk) {
-                if (this.rand.nextInt(10) < 6) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Basilisk) {
+                if (this.random.nextInt(10) < 6) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedBasil, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedBasil, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Dragonfly) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedDragonfly, 2);
+            if (hitEntity instanceof Dragonfly) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedDragonfly, 2);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EmperorScorpion) {
-                if (this.rand.nextInt(10) < 7) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof EmperorScorpion) {
+                if (this.random.nextInt(10) < 7) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedEmperorScorpion, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedEmperorScorpion, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Cephadrome) {
-                if (this.rand.nextInt(10) < 7) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Cephadrome) {
+                if (this.random.nextInt(10) < 7) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCephadrome, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCephadrome, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Dragon) {
-                if (this.rand.nextInt(10) < 7) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Dragon) {
+                if (this.random.nextInt(10) < 7) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedDragon, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedDragon, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Scorpion) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedScorpion, 1);
+            if (hitEntity instanceof Scorpion) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedScorpion, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof CaveFisher) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCaveFisher, 1);
+            if (hitEntity instanceof CaveFisher) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCaveFisher, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Spyro) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedSpyro, 1);
+            if (hitEntity instanceof Spyro) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedSpyro, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Baryonyx) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedBaryonyx, 1);
+            if (hitEntity instanceof Baryonyx) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedBaryonyx, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof GammaMetroid) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedGammaMetroid, 1);
+            if (hitEntity instanceof GammaMetroid) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedGammaMetroid, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Cockateil) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCockateil, 4);
+            if (hitEntity instanceof Cockateil) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCockateil, 4);
             }
-            if (par1MovingObjectPosition.entityHit instanceof AttackSquid) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedAttackSquid, 6);
+            if (hitEntity instanceof AttackSquid) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedAttackSquid, 6);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Kyuubi) {
-                if (this.rand.nextInt(10) < 3) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Kyuubi) {
+                if (this.random.nextInt(10) < 3) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedKyuubi, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedKyuubi, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof WaterDragon) {
-                if (this.rand.nextInt(10) < 6) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof WaterDragon) {
+                if (this.random.nextInt(10) < 6) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedWaterDragon, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedWaterDragon, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Kraken) {
-                if (this.rand.nextInt(100) < 95) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Kraken) {
+                if (this.random.nextInt(100) < 95) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedKraken, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedKraken, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Lizard) {
-                if (this.rand.nextInt(10) < 2) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Lizard) {
+                if (this.random.nextInt(10) < 2) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedLizard, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedLizard, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Alien) {
-                if (this.rand.nextInt(10) < 5) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Alien) {
+                if (this.random.nextInt(10) < 5) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedAlien, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedAlien, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Bee) {
-                if (this.rand.nextInt(10) < 3) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Bee) {
+                if (this.random.nextInt(10) < 3) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedBee, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedBee, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Firefly) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedFirefly, 1);
+            if (hitEntity instanceof Firefly) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedFirefly, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Chipmunk) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedChipmunk, 1);
+            if (hitEntity instanceof Chipmunk) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedChipmunk, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Gazelle) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedGazelle, 1);
+            if (hitEntity instanceof Gazelle) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedGazelle, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Ostrich) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedOstrich, 1);
+            if (hitEntity instanceof Ostrich) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedOstrich, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof TrooperBug) {
-                if (this.rand.nextInt(10) < 6) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof TrooperBug) {
+                if (this.random.nextInt(10) < 6) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedTrooper, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedTrooper, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof SpitBug) {
-                if (this.rand.nextInt(10) < 3) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof SpitBug) {
+                if (this.random.nextInt(10) < 3) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedSpit, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedSpit, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof StinkBug) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedStink, 1);
+            if (hitEntity instanceof StinkBug) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedStink, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof CreepingHorror) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCreepingHorror, 1);
+            if (hitEntity instanceof CreepingHorror) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCreepingHorror, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof TerribleTerror) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedTerribleTerror, 1);
+            if (hitEntity instanceof TerribleTerror) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedTerribleTerror, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof CliffRacer) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCliffRacer, 1);
+            if (hitEntity instanceof CliffRacer) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCliffRacer, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Triffid) {
-                if (this.rand.nextInt(10) < 6) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Triffid) {
+                if (this.random.nextInt(10) < 6) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedTriffid, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedTriffid, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof PitchBlack) {
-                if (this.rand.nextInt(10) < 7) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof PitchBlack) {
+                if (this.random.nextInt(10) < 7) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedPitchBlack, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedPitchBlack, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof LurkingTerror) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedLurkingTerror, 1);
+            if (hitEntity instanceof LurkingTerror) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedLurkingTerror, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof WormSmall) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedSmallWorm, 1);
+            if (hitEntity instanceof WormSmall) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedSmallWorm, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof WormMedium) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedMediumWorm, 1);
+            if (hitEntity instanceof WormMedium) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedMediumWorm, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Cassowary) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCassowary, 1);
+            if (hitEntity instanceof Cassowary) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCassowary, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof CloudShark) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCloudShark, 1);
+            if (hitEntity instanceof CloudShark) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCloudShark, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof GoldFish) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedGoldFish, 1);
+            if (hitEntity instanceof GoldFish) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedGoldFish, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof LeafMonster) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedLeafMonster, 1);
+            if (hitEntity instanceof LeafMonster) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedLeafMonster, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof WormLarge) {
-                if (this.rand.nextInt(10) < 5) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof WormLarge) {
+                if (this.random.nextInt(10) < 5) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedLargeWorm, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedLargeWorm, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EnderKnight) {
-                if (this.rand.nextInt(10) < 3) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof EnderKnight) {
+                if (this.random.nextInt(10) < 3) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedEnderKnight, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedEnderKnight, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EnderReaper) {
-                if (this.rand.nextInt(10) < 2) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof EnderReaper) {
+                if (this.random.nextInt(10) < 2) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedEnderReaper, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedEnderReaper, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Beaver) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedBeaver, 1);
+            if (hitEntity instanceof Beaver) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedBeaver, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Urchin) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedUrchin, 1);
+            if (hitEntity instanceof Urchin) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedUrchin, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Flounder) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedFlounder, 1);
+            if (hitEntity instanceof Flounder) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedFlounder, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Skate) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedSkate, 1);
+            if (hitEntity instanceof Skate) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedSkate, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Rotator) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedRotator, 1);
+            if (hitEntity instanceof Rotator) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedRotator, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Peacock) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedPeacock, 1);
+            if (hitEntity instanceof Peacock) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedPeacock, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Fairy) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedFairy, 1);
+            if (hitEntity instanceof Fairy) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedFairy, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof DungeonBeast) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedDungeonBeast, 1);
+            if (hitEntity instanceof DungeonBeast) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedDungeonBeast, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Vortex) {
-                if (this.rand.nextInt(10) < 3) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Vortex) {
+                if (this.random.nextInt(10) < 3) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedVortex, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedVortex, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Rat) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedRat, 1);
+            if (hitEntity instanceof Rat) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedRat, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Whale) {
-                if (this.rand.nextInt(10) < 2) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Whale) {
+                if (this.random.nextInt(10) < 2) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedWhale, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedWhale, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Irukandji) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedIrukandji, 1);
+            if (hitEntity instanceof Irukandji) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedIrukandji, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Stinky) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedStinky, 1);
+            if (hitEntity instanceof Stinky) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedStinky, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Mantis) {
-                if (this.rand.nextInt(10) < 3) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Mantis) {
+                if (this.random.nextInt(10) < 3) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedMantis, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedMantis, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof TRex) {
-                if (this.rand.nextInt(10) < 4) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof TRex) {
+                if (this.random.nextInt(10) < 4) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedTRex, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedTRex, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof HerculesBeetle) {
-                if (this.rand.nextInt(10) < 5) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof HerculesBeetle) {
+                if (this.random.nextInt(10) < 5) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedHercules, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedHercules, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof EasterBunny) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedEasterBunny, 1);
+            if (hitEntity instanceof EasterBunny) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedEasterBunny, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof CaterKiller) {
-                if (this.rand.nextInt(10) < 7) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof CaterKiller) {
+                if (this.random.nextInt(10) < 7) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCaterKiller, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCaterKiller, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Molenoid) {
-                if (this.rand.nextInt(10) < 5) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Molenoid) {
+                if (this.random.nextInt(10) < 5) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedMolenoid, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedMolenoid, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof SeaMonster) {
-                if (this.rand.nextInt(10) < 3) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof SeaMonster) {
+                if (this.random.nextInt(10) < 3) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedSeaMonster, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedSeaMonster, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof SeaViper) {
-                if (this.rand.nextInt(10) < 4) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof SeaViper) {
+                if (this.random.nextInt(10) < 4) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedSeaViper, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedSeaViper, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof RubberDucky) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedRubberDucky, 1);
+            if (hitEntity instanceof RubberDucky) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedRubberDucky, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Leon) {
-                if (this.rand.nextInt(10) < 7) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Leon) {
+                if (this.random.nextInt(10) < 7) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedLeon, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedLeon, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Hammerhead) {
-                if (this.rand.nextInt(10) < 7) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Hammerhead) {
+                if (this.random.nextInt(10) < 7) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedHammerhead, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedHammerhead, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof BandP) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCriminal, 1);
+            if (hitEntity instanceof BandP) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCriminal, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Cricket) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedCricket, 1);
+            if (hitEntity instanceof Cricket) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedCricket, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Frog) {
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedFrog, 1);
+            if (hitEntity instanceof Frog) {
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedFrog, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Brutalfly) {
-                if (this.rand.nextInt(10) < 5) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Brutalfly) {
+                if (this.random.nextInt(10) < 5) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedBrutalfly, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedBrutalfly, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Nastysaurus) {
-                if (this.rand.nextInt(10) < 7) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Nastysaurus) {
+                if (this.random.nextInt(10) < 7) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedNastysaurus, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedNastysaurus, 1);
             }
-            if (par1MovingObjectPosition.entityHit instanceof Pointysaurus) {
-                if (this.rand.nextInt(10) < 2) {
-                    if (!this.world.isRemote) {
-                        this.dropItem(ChaosPersists.CageEmpty, 1);
-                        this.setDead();
+            if (hitEntity instanceof Pointysaurus) {
+                if (this.random.nextInt(10) < 2) {
+                    if (!this.level().isClientSide) {
+                        this.dropCageItem(ChaosPersists.CageEmpty, 1);
+                        this.discard();
                     }
                     return;
                 }
-                par1MovingObjectPosition.entityHit.setDead();
-                this.dropItem(ChaosPersists.CagedPointysaurus, 1);
+                hitEntity.discard();
+                this.dropCageItem(ChaosPersists.CagedPointysaurus, 1);
             }
             }
-            this.setDead();
+            this.discard();
             return;
-        } else if (!this.world.isRemote) {
-            this.dropItem(ChaosPersists.CageEmpty, 1);
+        } else if (!this.level().isClientSide) {
+            this.dropCageItem(ChaosPersists.CageEmpty, 1);
         }
-        if (!this.world.isRemote) {
-            this.setDead();
+        if (!this.level().isClientSide) {
+            this.discard();
         }
     }
 
-    public void onUpdate() {
-        super.onUpdate();
+    @Override
+    public void tick() {
+        super.tick();
         this.my_rotation += 20.0f;
         while (this.my_rotation > 360.0f) {
             this.my_rotation -= 360.0f;
         }
-        this.rotationPitch = this.prevRotationPitch = this.my_rotation;
+        this.setXRot(this.my_rotation);
+        this.xRotO = this.my_rotation;
     }
 }
 

@@ -1,57 +1,79 @@
 package com.astryxion.chaospersists.item;
 
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Enchantments;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.ItemFishingRod;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumHand;
-import net.minecraft.world.World;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.FishingRodItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
 
-public class UltimateFishingRod extends ItemFishingRod {
+public class UltimateFishingRod extends FishingRodItem {
 
+    public UltimateFishingRod() {
+        super(new Properties().stacksTo(1).durability(3000));
+    }
+
+    /** Legacy ChaosPersists hub still passes BaseItemID offset. */
     public UltimateFishingRod(int par1) {
-        super();
-        this.setMaxDamage(3000);
-        this.setMaxStackSize(1);
-        this.setCreativeTab(CreativeTabs.TOOLS);
+        this();
     }
 
     @Override
-    public void onCreated(ItemStack par1ItemStack, World par2World, EntityPlayer par3EntityPlayer) {
-        par1ItemStack.addEnchantment(Enchantments.UNBREAKING, 2);
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
+        stack.enchant(Enchantments.UNBREAKING, 2);
     }
 
     @Override
-    public void onUsingTick(ItemStack stack, EntityLivingBase player, int count) {
-        int lvl = EnchantmentHelper.getEnchantmentLevel(Enchantments.UNBREAKING, stack);
-        if (lvl <= 0) {
-            stack.addEnchantment(Enchantments.UNBREAKING, 2);
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.UNBREAKING, stack) <= 0) {
+            stack.enchant(Enchantments.UNBREAKING, 2);
         }
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
-        ItemStack stack = player.getHeldItem(hand);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
 
-        if (player.fishEntity != null) {
-            int dmg = player.fishEntity.handleHookRetraction();
-            stack.damageItem(dmg, (EntityLivingBase) player);
-            player.swingArm(hand);
-        } else {
-            world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ARROW_SHOOT,
-                    player.getSoundCategory(), 0.5f, 0.4f / (itemRand.nextFloat() * 0.4f + 0.8f));
-            if (!world.isRemote) {
-                world.spawnEntity(new UltimateFishHook(world, player));
+        if (player.fishing != null) {
+            if (!level.isClientSide) {
+                int dmg = player.fishing.retrieve(stack);
+                stack.hurtAndBreak(dmg, player, e -> e.broadcastBreakEvent(hand));
             }
-            player.swingArm(hand);
+            level.playSound(
+                    null,
+                    player.getX(),
+                    player.getY(),
+                    player.getZ(),
+                    SoundEvents.FISHING_BOBBER_RETRIEVE,
+                    SoundSource.NEUTRAL,
+                    1.0f,
+                    0.4f / (level.getRandom().nextFloat() * 0.4f + 0.8f));
+            player.gameEvent(GameEvent.ITEM_INTERACT_FINISH);
+        } else {
+            level.playSound(
+                    null,
+                    player.getX(),
+                    player.getY(),
+                    player.getZ(),
+                    SoundEvents.FISHING_BOBBER_THROW,
+                    SoundSource.NEUTRAL,
+                    0.5f,
+                    0.4f / (level.getRandom().nextFloat() * 0.4f + 0.8f));
+            if (!level.isClientSide) {
+                UltimateFishHook hook = new UltimateFishHook(level, player);
+                level.addFreshEntity(hook);
+                player.awardStat(Stats.ITEM_USED.get(this));
+            }
+            player.gameEvent(GameEvent.ITEM_INTERACT_START);
         }
-        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 }
-

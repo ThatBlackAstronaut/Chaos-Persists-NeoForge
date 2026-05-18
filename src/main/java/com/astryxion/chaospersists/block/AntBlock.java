@@ -1,166 +1,109 @@
 package com.astryxion.chaospersists.block;
 
-import com.astryxion.chaospersists.entity.EntityAnt;
-import com.astryxion.chaospersists.entity.EntityRedAnt;
-import com.astryxion.chaospersists.entity.EntityRainbowAnt;
-import com.astryxion.chaospersists.entity.EntityUnstableAnt;
-import com.astryxion.chaospersists.entity.Termite;
+import com.astryxion.chaospersists.util.MyUtils;
+
 import com.astryxion.chaospersists.core.ChaosPersists;
-
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
 import java.util.List;
-import java.util.Random;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.GrassBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockGrass;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ColorizerGrass;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
-
-public class AntBlock extends BlockGrass {
+public class AntBlock extends GrassBlock {
 
     public AntBlock(int par1) {
-        this.setTickRandomly(true);
-        this.setCreativeTab(CreativeTabs.BUILDING_BLOCKS);
+        super(net.minecraft.world.level.block.Block.Properties.copy(Blocks.GRASS_BLOCK).randomTicks());
     }
 
     /**
      * Official-style 1.12.2 passive nest spawning.
-     * Daytime only, no player requirement, cap 20, spawn 2–7.
+     * Daytime only, no player requirement, cap 20, spawn 2â€“7.
      */
     @Override
-    public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-        if (worldIn.isRemote) return;
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource rand) {
+        if (level.getBlockState(pos.above()).getBlock() != Blocks.AIR) {
+            return;
+        }
 
-        // Block above must be air
-        if (worldIn.getBlockState(pos.up()).getBlock() != Blocks.AIR) return;
+        if (!MyUtils.isDay(level)) {
+            return;
+        }
 
-        // Daytime only
-        if (!worldIn.isDaytime()) return;
-
-        String mobName = getMobNameForBlock();
-        if (mobName == null) return;
-
-        Class<? extends Entity> entityClass = getEntityClassForBlock();
-        if (entityClass == null) return;
+        EntityType<? extends Mob> entityType = getEntityTypeForBlock();
+        if (entityType == null) {
+            return;
+        }
 
         int radius = 16;
 
-        AxisAlignedBB aabb = new AxisAlignedBB(
-                pos.getX() - radius, 0.0D, pos.getZ() - radius,
-                pos.getX() + radius, 200.0D, pos.getZ() + radius
-        );
+        AABB aabb = new AABB(
+                pos.getX() - radius,
+                0.0D,
+                pos.getZ() - radius,
+                pos.getX() + radius,
+                200.0D,
+                pos.getZ() + radius);
 
-        List<Entity> nearby = worldIn.getEntitiesWithinAABB(entityClass, aabb);
+        List<? extends Mob> nearby =
+                level.getEntitiesOfClass(Mob.class, aabb, mob -> mob.getType() == entityType);
 
-        if (nearby.size() > 20) return;
+        if (nearby.size() > 20) {
+            return;
+        }
 
         int count = rand.nextInt(6) + 2;
 
         for (int i = 0; i < count; i++) {
-            spawnCreature(
-                    worldIn,
-                    mobName,
-                    pos.getX() + 0.5,
-                    pos.getY() + 1.0,
-                    pos.getZ() + 0.5
-            );
+            spawnCreature(level, entityType, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5);
         }
     }
 
-    /** Returns spawn entity name, or null if disabled by config. */
-    private String getMobNameForBlock() {
+    private EntityType<? extends Mob> getEntityTypeForBlock() {
         if (this == ChaosPersists.MyAntBlock) {
-            return ChaosPersists.BlackAntEnable != 0 ? "Ant" : null;
+            return ChaosPersists.BlackAntEnable != 0 ? ChaosPersists.ENTITY_TYPE_ANT.get() : null;
         }
         if (this == ChaosPersists.MyRedAntBlock) {
-            return ChaosPersists.RedAntEnable != 0 ? "Red Ant" : null;
+            return ChaosPersists.RedAntEnable != 0 ? ChaosPersists.ENTITY_TYPE_RED_ANT.get() : null;
         }
         if (this == ChaosPersists.MyRainbowAntBlock) {
-            return ChaosPersists.RainbowAntEnable != 0 ? "Rainbow Ant" : null;
+            return ChaosPersists.RainbowAntEnable != 0 ? ChaosPersists.ENTITY_TYPE_RAINBOW_ANT.get() : null;
         }
         if (this == ChaosPersists.MyUnstableAntBlock) {
-            return ChaosPersists.UnstableAntEnable != 0 ? "Unstable Ant" : null;
+            return ChaosPersists.UnstableAntEnable != 0 ? ChaosPersists.ENTITY_TYPE_UNSTABLE_ANT.get() : null;
         }
         if (this == ChaosPersists.TermiteBlock) {
-            return ChaosPersists.TermiteEnable != 0 ? "Termite" : null;
+            return ChaosPersists.TermiteEnable != 0 ? ChaosPersists.ENTITY_TYPE_TERMITE.get() : null;
         }
-        return null;
-    }
-
-    /** Returns entity class for nearby count. */
-    @SuppressWarnings("unchecked")
-    private Class<? extends Entity> getEntityClassForBlock() {
-        if (this == ChaosPersists.MyAntBlock) return EntityAnt.class;
-        if (this == ChaosPersists.MyRedAntBlock) return EntityRedAnt.class;
-        if (this == ChaosPersists.MyRainbowAntBlock) return EntityRainbowAnt.class;
-        if (this == ChaosPersists.MyUnstableAntBlock) return EntityUnstableAnt.class;
-        if (this == ChaosPersists.TermiteBlock) return Termite.class;
         return null;
     }
 
     @Override
-    public Item getItemDropped(IBlockState state, Random rand, int fortune) {
-        return Item.getItemFromBlock(this);
+    public ItemStack getCloneItemStack(net.minecraft.world.level.BlockGetter level, BlockPos pos, BlockState state) {
+        return new ItemStack(this);
     }
 
-    public static Entity spawnCreature(World world, String name, double x, double y, double z) {
-        Entity entity = null;
-
-        net.minecraft.util.ResourceLocation loc =
-                new net.minecraft.util.ResourceLocation("chaospersists",
-                        name.toLowerCase().replace(" ", "_"));
-
-        entity = EntityList.createEntityByIDFromName(loc, world);
+    public static Entity spawnCreature(
+            Level world, EntityType<? extends Mob> entityType, double x, double y, double z) {
+        Entity entity = entityType.create(world);
 
         if (entity != null) {
-            entity.setLocationAndAngles(x, y, z,
-                    world.rand.nextFloat() * 360.0F, 0.0F);
-            world.spawnEntity(entity);
-            ((EntityLiving) entity).playLivingSound();
-        }
-
-        return entity;
-    }
-
-    @SideOnly(Side.CLIENT)
-    public int getBlockColor() {
-        return ColorizerGrass.getGrassColor(0.5D, 1.0D);
-    }
-
-    @SideOnly(Side.CLIENT)
-    public int getRenderColor(int meta) {
-        return this.getBlockColor();
-    }
-
-    @SideOnly(Side.CLIENT)
-    public int colorMultiplier(IBlockAccess world, BlockPos pos, int renderPass) {
-        int r = 0;
-        int g = 0;
-        int b = 0;
-
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                BlockPos sample = pos.add(dx, 0, dz);
-                int color = world.getBiome(sample).getGrassColorAtPos(sample);
-
-                r += (color >> 16) & 255;
-                g += (color >> 8) & 255;
-                b += color & 255;
+            entity.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
+            world.addFreshEntity(entity);
+            if (entity instanceof LivingEntity living) {
+                MyUtils.playAmbientSound(living);
             }
         }
 
-        return ((r / 9) << 16) | ((g / 9) << 8) | (b / 9);
+        return entity;
     }
 }

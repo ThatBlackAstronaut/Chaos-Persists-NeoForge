@@ -1,63 +1,58 @@
 package com.astryxion.chaospersists.block;
 
+import com.astryxion.chaospersists.container.ContainerCrystalWorkbench;
 import com.astryxion.chaospersists.core.ChaosPersists;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CraftingTableBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.network.NetworkHooks;
 
-import net.minecraft.block.BlockWorkbench;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
-public class CrystalWorkbench extends BlockWorkbench {
+public class CrystalWorkbench extends CraftingTableBlock {
 
     public CrystalWorkbench(float hardness, float resistance) {
-        super();
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
-        this.setHardness(hardness);
-        this.setResistance(resistance);
+        super(net.minecraft.world.level.block.Block.Properties.of().strength(hardness, resistance).noOcclusion());
     }
 
-    // ===== RIGHT CLICK =====
+    @Override
+    public InteractionResult use(
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Player player,
+            InteractionHand hand,
+            BlockHitResult hit) {
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (player instanceof ServerPlayer serverPlayer) {
+            NetworkHooks.openScreen(
+                    serverPlayer,
+                    new SimpleMenuProvider(
+                            (windowId, inventory, ignored) ->
+                                    new ContainerCrystalWorkbench(windowId, inventory, level, pos),
+                            Component.translatable("container.crafting")),
+                    buf -> buf.writeBlockPos(pos));
+        }
+        return InteractionResult.CONSUME;
+    }
 
     @Override
-    public boolean onBlockActivated(World world, BlockPos pos,
-                                    IBlockState state,
-                                    EntityPlayer player,
-                                    EnumHand hand,
-                                    EnumFacing facing,
-                                    float hitX, float hitY, float hitZ) {
-
-        if (world.isRemote) {
-            return true;
-        }
-
-        player.openGui(ChaosPersists.instance, 1, world,
-                pos.getX(), pos.getY(), pos.getZ());
-
+    public boolean useShapeForLightOcclusion(BlockState state) {
         return true;
     }
 
-    // ===== TRANSPARENCY =====
-
     @Override
-    public boolean isOpaqueCube(IBlockState state) {
+    public boolean skipRendering(BlockState state, BlockState adjacentState, net.minecraft.core.Direction side) {
         return false;
-    }
-
-    @Override
-    public boolean isFullCube(IBlockState state) {
-        return false;
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
     }
 }

@@ -1,133 +1,123 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Tshirt
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityAgeable
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.passive.EntityAnimal
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityAgeable;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.passive.EntityAnimal;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.util.MyUtils;
 
-public class Tshirt
-extends EntityAnimal {
-    private float moveSpeed = 0.0f;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
 
-    public Tshirt(World par1World) {
-        super(par1World);
-        this.setSize(4.0f, 4.0f);
-        this.experienceValue = 40;
-            }
+public class Tshirt extends Animal {
+    private final float moveSpeed = 0.0f;
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(0.0);
+    public Tshirt(EntityType<? extends Tshirt> type, Level level) {
+        super(type, level);
+        this.xpReward = 40;
     }
 
-    protected void entityInit() {
-        super.entityInit();
-    }
-
-    protected boolean canDespawn() {
-        if (this.isNoDespawnRequired()) {
-            return false;
-        }
-        return true;
-    }
-
-    public void onUpdate() {
-        super.onUpdate();
+    public static AttributeSupplier.Builder createAttributes() {
+        return Animal.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 1.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.0)
+                .add(Attributes.ATTACK_DAMAGE, 0.0);
     }
 
     public int mygetMaxHealth() {
         return 1;
     }
 
-    public int getTotalArmorValue() {
+    @Override
+    public int getArmorValue() {
         return 0;
     }
 
-    protected boolean isAIEnabled() {
-        return true;
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return !this.isPersistenceRequired();
     }
 
-    public void onLivingUpdate() {
-        super.onLivingUpdate();
-    }
-
-    protected String getLivingSound() {
-        return null;
-    }
-
-    protected String getHurtSound() {
-        return null;
-    }
-
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return null;
-    }
-
+    @Override
     protected float getSoundVolume() {
         return 1.0f;
     }
 
-    protected float getSoundPitch() {
+    @Override
+    public float getVoicePitch() {
         return 1.0f;
     }
 
-    protected Item getDropItem() {
-        return Items.EMERALD;
-    }
-
-    public void initCreature() {
-    }
-
-    public boolean interact(EntityPlayer par1EntityPlayer) {
-        return false;
-    }
-
-    public boolean getCanSpawnHere() {
-        if (!this.world.isDaytime()) {
-            return false;
-        }
-        if (this.posY < 50.0) {
-            return false;
-        }
-        Tshirt target = null;
-        target = (Tshirt)this.world.findNearestEntityWithinAABB(Tshirt.class, this.getEntityBoundingBox().expand(20.0, 8.0, 20.0), (Entity)this);
-        if (target != null) {
-            return false;
-        }
-        return true;
-    }
-
-    public EntityAgeable createChild(EntityAgeable entityageable) {
+    @Override
+    protected net.minecraft.sounds.SoundEvent getAmbientSound() {
         return null;
     }
-}
 
+    @Override
+    protected net.minecraft.sounds.SoundEvent getHurtSound(DamageSource damageSource) {
+        return null;
+    }
+
+    @Override
+    protected net.minecraft.sounds.SoundEvent getDeathSound() {
+        return null;
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        this.spawnAtLocation(new ItemStack(Items.EMERALD));
+    }
+
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        return InteractionResult.PASS;
+    }
+
+    @Override
+    public AgeableMob getBreedOffspring(net.minecraft.server.level.ServerLevel level, AgeableMob partner) {
+        return null;
+    }
+
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+        return EntityDimensions.scalable(4.0f, 4.0f);
+    }
+
+    public static boolean checkTshirtSpawnRules(
+            EntityType<Tshirt> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            net.minecraft.core.BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        if (!MyUtils.isDay(level)) {
+            return false;
+        }
+        if (pos.getY() < 50) {
+            return false;
+        }
+        AABB box = new AABB(pos).inflate(20.0, 8.0, 20.0);
+        return level.getEntitiesOfClass(Tshirt.class, box).isEmpty();
+    }
+
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        if (!(level instanceof ServerLevelAccessor serverLevel)) {
+            return false;
+        }
+        return checkTshirtSpawnRules(
+                ChaosPersists.ENTITY_TYPE_TSHIRT.get(), serverLevel, spawnReason, this.blockPosition(), this.getRandom());
+    }
+}

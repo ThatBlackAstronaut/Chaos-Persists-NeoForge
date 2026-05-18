@@ -1,193 +1,147 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.BlockCrystalPlant
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockGrass
- *  net.minecraft.block.BlockReed
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.init.Blocks
- *  net.minecraft.item.Item
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.block;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockBush;
-import net.minecraft.block.BlockGrass;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
+import java.util.Collections;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class BlockCrystalPlant
-extends BlockBush {
-    protected static final AxisAlignedBB SAPLING_AABB =
-        new AxisAlignedBB(0.1D, 0.0D, 0.1D, 0.9D, 0.8D, 0.9D);
+public class BlockCrystalPlant extends Block {
+    private static void plantSetBlock(Level level, int x, int y, int z, Block block) {
+        level.setBlock(new BlockPos(x, y, z), block.defaultBlockState(), 2);
+    }
+    private static final VoxelShape SAPLING_SHAPE = Shapes.box(0.1D, 0.0D, 0.1D, 0.9D, 0.8D, 0.9D);
 
     public BlockCrystalPlant() { this(0); }
     protected BlockCrystalPlant(int par1) {
-        super();
-        this.setTickRandomly(true);
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
+        super(net.minecraft.world.level.block.Block.Properties.of().noCollission().randomTicks().noOcclusion().sound(SoundType.GRASS));
+        
     }
 
     @Override
-    public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
-        return SAPLING_AABB;
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SAPLING_SHAPE;
     }
 
     @Override
-    public boolean isOpaqueCube(IBlockState state) {
-        return false;
-    }
-
-    @Override
-    public boolean isFullCube(IBlockState state) {
-        return false;
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
-    }
-
-    public boolean canPlaceBlockAt(World par1World, int par2, int par3, int par4) {
-        Block bid = par1World.getBlockState(new net.minecraft.util.math.BlockPos(par2, par3 - 1, par4)).getBlock();
+    public boolean canSurvive(BlockState state, LevelReader par1World, BlockPos pos) {
+        Block bid = par1World.getBlockState(pos.below()).getBlock();
         if (bid == Blocks.AIR) {
             return false;
         }
-        if (bid == Blocks.GRASS || bid == Blocks.DIRT || bid == Blocks.FARMLAND || bid == ChaosPersists.CrystalGrass) {
+        if (bid == Blocks.GRASS_BLOCK || bid == Blocks.DIRT || bid == Blocks.FARMLAND || bid == ChaosPersists.CrystalGrass) {
             return true;
         }
         return false;
     }
 
-    public void randomDisplayTick(World par1World, int par2, int par3, int par4, Random par5Random) {
-        if (par1World.rand.nextInt(30) != 1) {
+    @Override
+    public void animateTick(BlockState stateIn, Level par1World, BlockPos pos, RandomSource par5Random) {
+        if (par1World.random.nextInt(30) != 1) {
             return;
         }
         for (int j1 = 0; j1 < 10; ++j1) {
-            par1World.spawnParticle(net.minecraft.util.EnumParticleTypes.VILLAGER_HAPPY, (double)((float)par2 + par1World.rand.nextFloat()), (double)par3 + (double)par1World.rand.nextFloat(), (double)((float)par4 + par1World.rand.nextFloat()), 0.0, 0.0, 0.0);
+            par1World.addParticle(ParticleTypes.HAPPY_VILLAGER, (float)pos.getX() + par5Random.nextFloat(), (double)pos.getY() + par5Random.nextFloat(), (float)pos.getZ() + par5Random.nextFloat(), 0.0, 0.0, 0.0);
         }
     }
 
-    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random) {
-        if (par1World.isRemote) {
+    @Override
+    public void randomTick(BlockState state, ServerLevel par1World, BlockPos pos, RandomSource par5Random) {
+        if (par1World.getRandom().nextInt(5) != 1) {
             return;
         }
-        if (par1World.rand.nextInt(5) != 1) {
-            return;
-        }
-        par1World.setBlockState(new net.minecraft.util.math.BlockPos(par2, par3, par4), Blocks.AIR.getDefaultState(), 2);
+        par1World.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
         if (this == ChaosPersists.MyCrystalPlant) {
-            this.TallCrystalTree(par1World, par2, par3, par4);
+            this.TallCrystalTree(par1World, pos.getX(), pos.getY(), pos.getZ());
         }
         if (this == ChaosPersists.MyCrystalPlant2) {
-            this.ScragglyCrystalTreeWithBranches(par1World, par2, par3, par4);
+            this.ScragglyCrystalTreeWithBranches(par1World, pos.getX(), pos.getY(), pos.getZ());
         }
         if (this == ChaosPersists.MyCrystalPlant3) {
-            this.TallCrystalTreeBlue(par1World, par2, par3, par4);
+            this.TallCrystalTreeBlue(par1World, pos.getX(), pos.getY(), pos.getZ());
         }
     }
 
-    public Item getItemDropped(int par1, Random par2Random, int par3) {
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
         if (this == ChaosPersists.MyCrystalPlant) {
-            return Item.getItemFromBlock((Block)ChaosPersists.MyCrystalPlant);
+            return Collections.singletonList(new ItemStack(ChaosPersists.MyCrystalPlant));
         }
         if (this == ChaosPersists.MyCrystalPlant2) {
-            Item.getItemFromBlock((Block)ChaosPersists.MyCrystalPlant2);
+            return Collections.singletonList(new ItemStack(ChaosPersists.MyCrystalPlant2));
         }
-        return Item.getItemFromBlock((Block)ChaosPersists.MyCrystalPlant3);
+        return Collections.singletonList(new ItemStack(ChaosPersists.MyCrystalPlant3));
     }
 
-    public int quantityDropped(Random par1Random) {
-        return 1;
-    }
-
-    public int idPicked(World par1World, int par2, int par3, int par4) {
-        return 0;
-    }
-
-    protected int getSeedItem() {
-        return 0;
-    }
-
-    protected int getCropItem() {
-        return 0;
-    }
-
-    public void TallCrystalTree(World world, int x, int y, int z) {
+    public void TallCrystalTree(Level level, int x, int y, int z) {
         int n;
         int m;
         int k;
         Block bid;
-        int i = 10 + world.rand.nextInt(12);
-        int j = i + world.rand.nextInt(18);
+        int i = 10 + level.getRandom().nextInt(12);
+        int j = i + level.getRandom().nextInt(18);
         for (k = 0; k < i; ++k) {
-            bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x, y + k, z)).getBlock();
+            bid = level.getBlockState(new BlockPos(x, y + k, z)).getBlock();
             if (k >= 1 && bid != Blocks.AIR && bid != ChaosPersists.MyCrystalTreeLog && bid != ChaosPersists.MyCrystalLeaves) {
                 return;
             }
-            ChaosPersists.setBlockFast((World)world, (int)x, (int)(y + k), (int)z, (Block)ChaosPersists.MyCrystalTreeLog, (int)0, (int)2);
+            plantSetBlock(level, (int)x, (int)(y + k), (int)z, ChaosPersists.MyCrystalTreeLog);
         }
         y += i - 1;
-        for (k = i; k < j && ((bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x, ++y, z)).getBlock()) == Blocks.AIR || bid == ChaosPersists.MyCrystalTreeLog || bid == ChaosPersists.MyCrystalLeaves); ++k) {
-            ChaosPersists.setBlockFast((World)world, (int)x, (int)y, (int)z, (Block)ChaosPersists.MyCrystalTreeLog, (int)0, (int)2);
+        for (k = i; k < j && ((bid = level.getBlockState(new BlockPos(x, ++y, z)).getBlock()) == Blocks.AIR || bid == ChaosPersists.MyCrystalTreeLog || bid == ChaosPersists.MyCrystalLeaves); ++k) {
+            plantSetBlock(level, (int)x, (int)y, (int)z, ChaosPersists.MyCrystalTreeLog);
             if (k % 4 != 0) continue;
             for (m = -1; m < 2; ++m) {
                 for (n = -1; n < 2; ++n) {
-                    if (world.rand.nextInt(2) != 1 || (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
-                    ChaosPersists.setBlockFast((World)world, (int)(x + m), (int)y, (int)(z + n), (Block)ChaosPersists.MyCrystalLeaves, (int)0, (int)2);
+                    if (level.getRandom().nextInt(2) != 1 || (bid = level.getBlockState(new BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
+                    plantSetBlock(level, (int)(x + m), (int)y, (int)(z + n), ChaosPersists.MyCrystalLeaves);
                 }
             }
         }
         ++y;
         for (m = -1; m < 2; ++m) {
             for (n = -1; n < 2; ++n) {
-                if (world.rand.nextInt(2) != 1 || (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(x + m), (int)y, (int)(z + n), (Block)ChaosPersists.MyCrystalTreeLog, (int)0, (int)2);
+                if (level.getRandom().nextInt(2) != 1 || (bid = level.getBlockState(new BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
+                plantSetBlock(level, (int)(x + m), (int)y, (int)(z + n), ChaosPersists.MyCrystalTreeLog);
             }
         }
         for (m = -3; m < 4; ++m) {
             for (n = -3; n < 4; ++n) {
-                bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + m, y, z + n)).getBlock();
+                bid = level.getBlockState(new BlockPos(x + m, y, z + n)).getBlock();
                 if (bid != Blocks.AIR) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(x + m), (int)y, (int)(z + n), (Block)ChaosPersists.MyCrystalLeaves, (int)0, (int)2);
+                plantSetBlock(level, (int)(x + m), (int)y, (int)(z + n), ChaosPersists.MyCrystalLeaves);
             }
         }
         ++y;
         for (m = -1; m < 2; ++m) {
             for (n = -1; n < 2; ++n) {
-                bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + m, y, z + n)).getBlock();
+                bid = level.getBlockState(new BlockPos(x + m, y, z + n)).getBlock();
                 if (bid != Blocks.AIR) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(x + m), (int)y, (int)(z + n), (Block)ChaosPersists.MyCrystalLeaves, (int)0, (int)2);
+                plantSetBlock(level, (int)(x + m), (int)y, (int)(z + n), ChaosPersists.MyCrystalLeaves);
             }
         }
     }
 
-    public void makeScragglyCrystalBranch(World world, int x, int y, int z, int len, int biasx, int biasz) {
+    public void makeScragglyCrystalBranch(Level level, int x, int y, int z, int len, int biasx, int biasz) {
         for (int k = 0; k < len; ++k) {
             Block bid;
             int iy;
-            int ix = world.rand.nextInt(2) - world.rand.nextInt(2) + biasx;
-            int iz = world.rand.nextInt(2) - world.rand.nextInt(2) + biasz;
+            int ix = level.getRandom().nextInt(2) - level.getRandom().nextInt(2) + biasx;
+            int iz = level.getRandom().nextInt(2) - level.getRandom().nextInt(2) + biasz;
             if (ix > 1) {
                 ix = 1;
             }
@@ -200,101 +154,103 @@ extends BlockBush {
             if (iz < -1) {
                 iz = -1;
             }
-            if ((bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x += ix, y += (iy = world.rand.nextInt(3) > 0 ? 1 : 0), z += iz)).getBlock()) != Blocks.AIR && bid != ChaosPersists.MyCrystalTreeLog && bid != ChaosPersists.MyCrystalLeaves2) {
+            if ((bid = level.getBlockState(new BlockPos(x += ix, y += (iy = level.getRandom().nextInt(3) > 0 ? 1 : 0), z += iz)).getBlock()) != Blocks.AIR && bid != ChaosPersists.MyCrystalTreeLog && bid != ChaosPersists.MyCrystalLeaves2) {
                 return;
             }
-            ChaosPersists.setBlockFast((World)world, (int)x, (int)y, (int)z, (Block)ChaosPersists.MyCrystalTreeLog, (int)0, (int)2);
+            plantSetBlock(level, (int)x, (int)y, (int)z, ChaosPersists.MyCrystalTreeLog);
             for (int m = -1; m < 2; ++m) {
                 for (int n = -1; n < 2; ++n) {
-                    if (world.rand.nextInt(2) != 1 || (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
-                    ChaosPersists.setBlockFast((World)world, (int)(x + m), (int)y, (int)(z + n), (Block)ChaosPersists.MyCrystalLeaves2, (int)0, (int)2);
+                    if (level.getRandom().nextInt(2) != 1 || (bid = level.getBlockState(new BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
+                    plantSetBlock(level, (int)(x + m), (int)y, (int)(z + n), ChaosPersists.MyCrystalLeaves2);
                 }
             }
-            if (world.rand.nextInt(2) != 1 || (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x, y + 1, z)).getBlock()) != Blocks.AIR) continue;
-            ChaosPersists.setBlockFast((World)world, (int)x, (int)(y + 1), (int)z, (Block)ChaosPersists.MyCrystalLeaves2, (int)0, (int)2);
+            if (level.getRandom().nextInt(2) != 1 || (bid = level.getBlockState(new BlockPos(x, y + 1, z)).getBlock()) != Blocks.AIR) continue;
+            plantSetBlock(level, (int)x, (int)(y + 1), (int)z, ChaosPersists.MyCrystalLeaves2);
         }
     }
 
-    public void ScragglyCrystalTreeWithBranches(World world, int x, int y, int z) {
+    public void ScragglyCrystalTreeWithBranches(Level level, int x, int y, int z) {
         int k;
         Block bid;
-        int i = 1 + world.rand.nextInt(2);
-        int j = i + world.rand.nextInt(8);
+        int i = 1 + level.getRandom().nextInt(2);
+        int j = i + level.getRandom().nextInt(8);
         for (k = 0; k < i; ++k) {
-            bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x, y + k, z)).getBlock();
+            bid = level.getBlockState(new BlockPos(x, y + k, z)).getBlock();
             if (k >= 1 && bid != Blocks.AIR && bid != ChaosPersists.MyCrystalTreeLog && bid != ChaosPersists.MyCrystalLeaves2) {
                 return;
             }
-            ChaosPersists.setBlockFast((World)world, (int)x, (int)(y + k), (int)z, (Block)ChaosPersists.MyCrystalTreeLog, (int)0, (int)2);
+            plantSetBlock(level, (int)x, (int)(y + k), (int)z, ChaosPersists.MyCrystalTreeLog);
         }
         y += i - 1;
         for (k = i; k < j; ++k) {
-            int ix = world.rand.nextInt(2) - world.rand.nextInt(2);
-            int iz = world.rand.nextInt(2) - world.rand.nextInt(2);
-            int iy = world.rand.nextInt(4) > 0 ? 1 : 0;
-            bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x += ix, y += iy, z += iz)).getBlock();
+            int ix = level.getRandom().nextInt(2) - level.getRandom().nextInt(2);
+            int iz = level.getRandom().nextInt(2) - level.getRandom().nextInt(2);
+            int iy = level.getRandom().nextInt(4) > 0 ? 1 : 0;
+            bid = level.getBlockState(new BlockPos(x += ix, y += iy, z += iz)).getBlock();
             if (bid != Blocks.AIR && bid != ChaosPersists.MyCrystalTreeLog && bid != ChaosPersists.MyCrystalLeaves2) break;
-            ChaosPersists.setBlockFast((World)world, (int)x, (int)y, (int)z, (Block)ChaosPersists.MyCrystalTreeLog, (int)0, (int)2);
-            if (world.rand.nextInt(4) == 1) {
-                this.makeScragglyCrystalBranch(world, x, y, z, world.rand.nextInt(1 + j - k), world.rand.nextInt(2) - world.rand.nextInt(2), world.rand.nextInt(2) - world.rand.nextInt(2));
+            plantSetBlock(level, (int)x, (int)y, (int)z, ChaosPersists.MyCrystalTreeLog);
+            if (level.getRandom().nextInt(4) == 1) {
+                this.makeScragglyCrystalBranch(level, x, y, z, level.getRandom().nextInt(1 + j - k), level.getRandom().nextInt(2) - level.getRandom().nextInt(2), level.getRandom().nextInt(2) - level.getRandom().nextInt(2));
             }
             for (int m = -1; m < 2; ++m) {
                 for (int n = -1; n < 2; ++n) {
-                    if (world.rand.nextInt(2) != 1 || (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
-                    ChaosPersists.setBlockFast((World)world, (int)(x + m), (int)y, (int)(z + n), (Block)ChaosPersists.MyCrystalLeaves2, (int)0, (int)2);
+                    if (level.getRandom().nextInt(2) != 1 || (bid = level.getBlockState(new BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
+                    plantSetBlock(level, (int)(x + m), (int)y, (int)(z + n), ChaosPersists.MyCrystalLeaves2);
                 }
             }
-            if (world.rand.nextInt(2) != 1 || (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x, y + 1, z)).getBlock()) != Blocks.AIR) continue;
-            ChaosPersists.setBlockFast((World)world, (int)x, (int)(y + 1), (int)z, (Block)ChaosPersists.MyCrystalLeaves2, (int)0, (int)2);
+            if (level.getRandom().nextInt(2) != 1 || (bid = level.getBlockState(new BlockPos(x, y + 1, z)).getBlock()) != Blocks.AIR) continue;
+            plantSetBlock(level, (int)x, (int)(y + 1), (int)z, ChaosPersists.MyCrystalLeaves2);
         }
     }
 
-    public void TallCrystalTreeBlue(World world, int x, int y, int z) {
+    public void TallCrystalTreeBlue(Level level, int x, int y, int z) {
         int n;
         int m;
         int k;
         Block bid;
-        int i = 5 + world.rand.nextInt(6);
-        int j = 2 + i + world.rand.nextInt(12);
+        int i = 5 + level.getRandom().nextInt(6);
+        int j = 2 + i + level.getRandom().nextInt(12);
         for (k = 0; k < i; ++k) {
-            bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x, y + k, z)).getBlock();
+            bid = level.getBlockState(new BlockPos(x, y + k, z)).getBlock();
             if (k >= 1 && bid != Blocks.AIR && bid != ChaosPersists.MyCrystalTreeLog && bid != ChaosPersists.MyCrystalLeaves3) {
                 return;
             }
-            ChaosPersists.setBlockFast((World)world, (int)x, (int)(y + k), (int)z, (Block)ChaosPersists.MyCrystalTreeLog, (int)0, (int)2);
+            plantSetBlock(level, (int)x, (int)(y + k), (int)z, ChaosPersists.MyCrystalTreeLog);
         }
         y += i - 1;
-        for (k = i; k < j && ((bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x, ++y, z)).getBlock()) == Blocks.AIR || bid == ChaosPersists.MyCrystalTreeLog || bid == ChaosPersists.MyCrystalLeaves3); ++k) {
-            ChaosPersists.setBlockFast((World)world, (int)x, (int)y, (int)z, (Block)ChaosPersists.MyCrystalTreeLog, (int)0, (int)2);
+        for (k = i; k < j && ((bid = level.getBlockState(new BlockPos(x, ++y, z)).getBlock()) == Blocks.AIR || bid == ChaosPersists.MyCrystalTreeLog || bid == ChaosPersists.MyCrystalLeaves3); ++k) {
+            plantSetBlock(level, (int)x, (int)y, (int)z, ChaosPersists.MyCrystalTreeLog);
             if (k % 3 != 0) continue;
             for (m = -1; m < 2; ++m) {
                 for (n = -1; n < 2; ++n) {
-                    if (world.rand.nextInt(2) != 1 || (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
-                    ChaosPersists.setBlockFast((World)world, (int)(x + m), (int)y, (int)(z + n), (Block)ChaosPersists.MyCrystalLeaves3, (int)0, (int)2);
+                    if (level.getRandom().nextInt(2) != 1 || (bid = level.getBlockState(new BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
+                    plantSetBlock(level, (int)(x + m), (int)y, (int)(z + n), ChaosPersists.MyCrystalLeaves3);
                 }
             }
         }
         ++y;
         for (m = -1; m < 2; ++m) {
             for (n = -1; n < 2; ++n) {
-                if (world.rand.nextInt(2) != 1 || (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(x + m), (int)y, (int)(z + n), (Block)ChaosPersists.MyCrystalTreeLog, (int)0, (int)2);
+                if (level.getRandom().nextInt(2) != 1 || (bid = level.getBlockState(new BlockPos(x + m, y, z + n)).getBlock()) != Blocks.AIR) continue;
+                plantSetBlock(level, (int)(x + m), (int)y, (int)(z + n), ChaosPersists.MyCrystalTreeLog);
             }
         }
         for (m = -3; m < 4; ++m) {
             for (n = -3; n < 4; ++n) {
-                bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + m, y, z + n)).getBlock();
+                bid = level.getBlockState(new BlockPos(x + m, y, z + n)).getBlock();
                 if (bid != Blocks.AIR) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(x + m), (int)y, (int)(z + n), (Block)ChaosPersists.MyCrystalLeaves3, (int)0, (int)2);
+                plantSetBlock(level, (int)(x + m), (int)y, (int)(z + n), ChaosPersists.MyCrystalLeaves3);
             }
         }
         ++y;
         for (m = -1; m < 2; ++m) {
             for (n = -1; n < 2; ++n) {
-                bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + m, y, z + n)).getBlock();
+                bid = level.getBlockState(new BlockPos(x + m, y, z + n)).getBlock();
                 if (bid != Blocks.AIR) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(x + m), (int)y, (int)(z + n), (Block)ChaosPersists.MyCrystalLeaves3, (int)0, (int)2);
+                plantSetBlock(level, (int)(x + m), (int)y, (int)(z + n), ChaosPersists.MyCrystalLeaves3);
             }
         }
-    }}
+    }
+}
+
 

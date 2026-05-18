@@ -1,146 +1,119 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.BlockQuinoa
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockGrass
- *  net.minecraft.block.BlockReed
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.init.Blocks
- *  net.minecraft.item.Item
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.block;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockGrass;
-import net.minecraft.block.BlockReed;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.world.World;
+import java.util.Collections;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.storage.loot.LootParams;
 
-public class BlockQuinoa
-extends BlockReed {
+public class BlockQuinoa extends Block {
+    public static final IntegerProperty AGE = IntegerProperty.create("age", 0, 15);
+
     private int myMaxHeight = 0;
 
-    public BlockQuinoa() { this(0); }
+    public BlockQuinoa() {
+        this(0);
+    }
+
     protected BlockQuinoa(int par1) {
-        this.setTickRandomly(true);
-    }
-
-    /** Same as {@link BlockCorn}: {@link BlockReed} AGE is 0–15; clamp meta so blockstates always match. */
-    @Override
-    public IBlockState getStateFromMeta(int meta) {
-        return super.getStateFromMeta(meta & 15);
+        super(net.minecraft.world.level.block.Block.Properties.of().noCollission().randomTicks().sound(SoundType.CROP).noOcclusion());
+        registerDefaultState(stateDefinition.any().setValue(AGE, 0));
     }
 
     @Override
-    public int getMetaFromState(IBlockState state) {
-        return state.getValue(BlockReed.AGE).intValue();
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
     }
 
     @Override
-    public EnumBlockRenderType getRenderType(IBlockState state) {
-        return EnumBlockRenderType.MODEL;
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
-    }
-
-    public boolean canPlaceBlockAt(World par1World, int par2, int par3, int par4) {
-        Block bid = par1World.getBlockState(new net.minecraft.util.math.BlockPos(par2, par3 - 1, par4)).getBlock();
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        Block bid = level.getBlockState(pos.below()).getBlock();
         if (bid == Blocks.AIR) {
             return false;
         }
-        if (bid == ChaosPersists.MyQuinoaPlant1 || bid == ChaosPersists.MyQuinoaPlant2 || bid == ChaosPersists.MyQuinoaPlant3 || bid == ChaosPersists.MyQuinoaPlant4 || bid == Blocks.GRASS || bid == Blocks.DIRT || bid == Blocks.FARMLAND || bid == ChaosPersists.CrystalGrass) {
-            return true;
-        }
-        return false;
+        return bid == ChaosPersists.MyQuinoaPlant1
+                || bid == ChaosPersists.MyQuinoaPlant2
+                || bid == ChaosPersists.MyQuinoaPlant3
+                || bid == ChaosPersists.MyQuinoaPlant4
+                || bid == Blocks.GRASS_BLOCK
+                || bid == Blocks.DIRT
+                || bid == Blocks.FARMLAND
+                || bid == ChaosPersists.CrystalGrass;
     }
 
-    public void updateTick(World par1World, net.minecraft.util.math.BlockPos pos, net.minecraft.block.state.IBlockState state, Random par5Random) {
+    @Override
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource par5Random) {
         Block bid;
         int Height = 1;
         boolean dontGrow = false;
-        if (par1World.isRemote) {
-            return;
-        }
         if (this != ChaosPersists.MyQuinoaPlant1 && this != ChaosPersists.MyQuinoaPlant3) {
             return;
         }
-        int par2 = pos.getX(), par3 = pos.getY(), par4 = pos.getZ();
-        int var7 = this.getMetaFromState(state);
+        int var7 = state.getValue(AGE);
         this.myMaxHeight = var7 >> 8;
         var7 &= 255;
         if (this.myMaxHeight == 0) {
             this.myMaxHeight = 2 + ChaosPersists.ChaosRand.nextInt(3);
         }
-        if ((bid = par1World.getBlockState(pos.up()).getBlock()) == Blocks.AIR) {
-            for (int var6 = 1; var6 < 10 && ((bid = par1World.getBlockState(pos.down(var6)).getBlock()) == ChaosPersists.MyQuinoaPlant1 || bid == ChaosPersists.MyQuinoaPlant2 || bid == ChaosPersists.MyQuinoaPlant3 || bid == ChaosPersists.MyQuinoaPlant4); ++var6) {
+        if (level.getBlockState(pos.above()).isAir()) {
+            for (int var6 = 1; var6 < 10; ++var6) {
+                bid = level.getBlockState(pos.below(var6)).getBlock();
+                if (bid != ChaosPersists.MyQuinoaPlant1
+                        && bid != ChaosPersists.MyQuinoaPlant2
+                        && bid != ChaosPersists.MyQuinoaPlant3
+                        && bid != ChaosPersists.MyQuinoaPlant4) {
+                    break;
+                }
                 ++Height;
-                if (bid != ChaosPersists.MyQuinoaPlant3 && bid != ChaosPersists.MyQuinoaPlant4) continue;
-                dontGrow = true;
+                if (bid == ChaosPersists.MyQuinoaPlant3 || bid == ChaosPersists.MyQuinoaPlant4) {
+                    dontGrow = true;
+                }
             }
             if (dontGrow) {
                 this.myMaxHeight = Height;
             }
-            int metaVal = this.myMaxHeight << 8;
             if (var7 >= 5 - this.myMaxHeight / 3) {
                 if (Height < this.myMaxHeight) {
-                    par1World.setBlockState(pos.up(), ChaosPersists.MyQuinoaPlant1.getDefaultState(), 2);
-                    par1World.setBlockState(pos, ChaosPersists.MyQuinoaPlant2.getDefaultState(), 2);
+                    level.setBlock(pos.above(), ChaosPersists.MyQuinoaPlant1.defaultBlockState(), 2);
+                    level.setBlock(pos, ChaosPersists.MyQuinoaPlant2.defaultBlockState(), 2);
                 } else {
-                    bid = par1World.getBlockState(pos).getBlock();
+                    bid = level.getBlockState(pos).getBlock();
                     if (bid == ChaosPersists.MyQuinoaPlant1) {
-                        par1World.setBlockState(pos, ChaosPersists.MyQuinoaPlant3.getDefaultState(), 2);
+                        level.setBlock(pos, ChaosPersists.MyQuinoaPlant3.defaultBlockState(), 2);
                     } else if (bid == ChaosPersists.MyQuinoaPlant3) {
-                        par1World.setBlockState(pos, ChaosPersists.MyQuinoaPlant4.getDefaultState(), 2);
+                        level.setBlock(pos, ChaosPersists.MyQuinoaPlant4.defaultBlockState(), 2);
                     }
-                    par1World.setBlockState(pos, par1World.getBlockState(pos).getBlock().getDefaultState(), 2);
+                    bid = level.getBlockState(pos).getBlock();
+                    level.setBlock(pos, bid.defaultBlockState(), 2);
                 }
             } else {
-                bid = par1World.getBlockState(pos).getBlock();
-                par1World.setBlockState(pos, bid.getDefaultState(), 2);
+                bid = level.getBlockState(pos).getBlock();
+                level.setBlock(pos, bid.defaultBlockState(), 2);
             }
         }
     }
 
     @Override
-    public Item getItemDropped(IBlockState state, Random rand, int fortune) {
-        return ChaosPersists.MyQuinoa;
-    }
-
-    public int quantityDropped(Random par1Random) {
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
         if (this == ChaosPersists.MyQuinoaPlant4) {
-            return 3 + par1Random.nextInt(3);
+            RandomSource r = builder.getLevel().getRandom();
+            return Collections.singletonList(new ItemStack(ChaosPersists.MyQuinoa, 3 + r.nextInt(3)));
         }
-        return 0;
+        return Collections.emptyList();
     }
 
-    public Item itemPicked(World par1World, int par2, int par3, int par4) {
-        return ChaosPersists.MyQuinoa;
+    @Override
+    public ItemStack getCloneItemStack(net.minecraft.world.level.BlockGetter level, BlockPos pos, BlockState state) {
+        return new ItemStack(ChaosPersists.MyQuinoa);
     }
-
-    protected Item getSeedItem() {
-        return ChaosPersists.MyQuinoa;
-    }
-
-    protected Item getCropItem() {
-        return ChaosPersists.MyQuinoa;
-    }}
-
+}

@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "chaospersists:items/lettuce_3"
+    "layer0": "chaospersists:block/lettuce_3"
   }
 }

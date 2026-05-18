@@ -1,64 +1,49 @@
 package com.astryxion.chaospersists.command;
 
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.DimensionManager;
-
 import com.astryxion.chaospersists.core.ChaosPersists;
-import com.astryxion.chaospersists.world.dimension.teleporter.TeleporterUtopia;
-import java.util.Collections;
-import java.util.List;
+import com.astryxion.chaospersists.world.dimension.teleporter.VillageTeleporter;
+import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 
-public class CommandVillageMania extends CommandBase {
+public final class CommandVillageMania {
+    private CommandVillageMania() {}
 
-    @Override
-    public String getName() {
-        return "villagemania";
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
+                Commands.literal("villagemania")
+                        .requires(source -> source.hasPermission(2))
+                        .executes(ctx -> execute(ctx.getSource())));
     }
 
-    @Override
-    public String getUsage(ICommandSender sender) {
-        return "commands.villagemania.usage";
-    }
-
-    @Override
-    public int getRequiredPermissionLevel() {
-        return 2;
-    }
-
-    @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        if (!(sender.getCommandSenderEntity() instanceof EntityPlayerMP)) {
-            sender.sendMessage(new TextComponentString(TextFormatting.RED + "This command can only be used by a player."));
-            return;
+    private static int execute(CommandSourceStack source) {
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            source.sendFailure(
+                    Component.literal("This command can only be used by a player.").withStyle(ChatFormatting.RED));
+            return 0;
         }
-        EntityPlayerMP player = (EntityPlayerMP) sender.getCommandSenderEntity();
-        int dimId = ChaosPersists.getDimension(3);
-        if (player.dimension == dimId) {
-            player.sendMessage(new TextComponentString(TextFormatting.YELLOW + "You are already in the Village Mania dimension."));
-            return;
+        ResourceKey<Level> villageKey = ChaosPersists.getVillageDimensionKey();
+        if (player.level().dimension().equals(villageKey)) {
+            player.sendSystemMessage(
+                    Component.literal("You are already in the Village Mania dimension.")
+                            .withStyle(ChatFormatting.YELLOW));
+            return 0;
         }
-        WorldServer world = DimensionManager.getWorld(dimId);
+        ServerLevel world = player.server.getLevel(villageKey);
         if (world == null) {
-            player.sendMessage(new TextComponentString(TextFormatting.RED + "Village Mania dimension is not available."));
-            return;
+            player.sendSystemMessage(
+                    Component.literal("Village Mania dimension is not available.").withStyle(ChatFormatting.RED));
+            return 0;
         }
-        double x = player.posX;
-        double z = player.posZ;
-        TeleporterUtopia teleporter = new TeleporterUtopia(world, x, z);
-        player.getServer().getPlayerList().transferPlayerToDimension(player, dimId, teleporter);
-        player.sendMessage(new TextComponentString(TextFormatting.GREEN + "Teleported to Village Mania."));
-    }
-
-    @Override
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos) {
-        return Collections.emptyList();
+        VillageTeleporter teleporter = new VillageTeleporter(player.getX(), player.getZ());
+        player.changeDimension(world, teleporter);
+        player.sendSystemMessage(Component.literal("Teleported to Village Mania.").withStyle(ChatFormatting.GREEN));
+        return 1;
     }
 }

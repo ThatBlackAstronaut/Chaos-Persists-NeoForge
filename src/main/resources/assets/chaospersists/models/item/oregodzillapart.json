@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "chaospersists:items/oregodzillapart"
+    "layer0": "chaospersists:block/oregodzillapart"
   }
 }

@@ -1,30 +1,31 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.ItemStrawberrySeed
- *  net.minecraft.block.Block
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemSeeds
- *  net.minecraft.util.IIcon
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraft.block.Block;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemSeeds;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class ItemStrawberrySeed
-extends ItemSeeds {
-    public ItemStrawberrySeed(Block par2, Block par3) {
-        super(par2, par3);
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
-    }}
+/** 1.12 {@code ItemSeeds}: plants crop on configured soil (no food). */
+public class ItemStrawberrySeed extends BlockItem {
+    private final Block soilBlock;
 
+    public ItemStrawberrySeed(Block cropBlock, Block soilBlock) {
+        super(cropBlock, new Item.Properties());
+        this.soilBlock = soilBlock;
+    }
+
+    @Override
+    public InteractionResult useOn(UseOnContext context) {
+        if (context.getClickedFace() != Direction.UP) {
+            return InteractionResult.FAIL;
+        }
+        BlockState ground = context.getLevel().getBlockState(context.getClickedPos());
+        if (ground.getBlock() != this.soilBlock) {
+            return InteractionResult.FAIL;
+        }
+        return super.useOn(context);
+    }
+}

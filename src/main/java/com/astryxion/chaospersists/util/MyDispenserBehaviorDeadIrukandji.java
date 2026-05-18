@@ -1,30 +1,21 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.DeadIrukandji
- *  com.astryxion.chaospersists.MyDispenserBehaviorDeadIrukandji
- *  net.minecraft.dispenser.BehaviorProjectileDispense
- *  net.minecraft.dispenser.IPosition
- *  net.minecraft.entity.IProjectile
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.util;
 
+import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.entity.DeadIrukandji;
-import net.minecraft.dispenser.BehaviorProjectileDispense;
-import net.minecraft.dispenser.IPosition;
-import net.minecraft.entity.IProjectile;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.core.Position;
+import net.minecraft.core.dispenser.AbstractProjectileDispenseBehavior;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
-public final class MyDispenserBehaviorDeadIrukandji
-extends BehaviorProjectileDispense {
-    public MyDispenserBehaviorDeadIrukandji() {
-    }
-
-    protected IProjectile getProjectileEntity(World par1World, IPosition par2IPosition, ItemStack par3ItemStack) {
-        DeadIrukandji entityarrow = new DeadIrukandji(par1World, par2IPosition.getX(), par2IPosition.getY(), par2IPosition.getZ());
-        return entityarrow;
+public final class MyDispenserBehaviorDeadIrukandji extends AbstractProjectileDispenseBehavior {
+    @Override
+    protected Projectile getProjectile(Level level, Position position, ItemStack stack) {
+        return new DeadIrukandji(
+                ChaosPersists.ENTITY_TYPE_DEAD_IRUKANDJI.get(),
+                position.x(),
+                position.y(),
+                position.z(),
+                level);
     }
 }

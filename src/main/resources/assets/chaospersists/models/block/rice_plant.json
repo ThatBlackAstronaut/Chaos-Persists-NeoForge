@@ -1,6 +1,6 @@
 {
   "parent": "block/cross",
   "textures": {
-    "cross": "chaospersists:blocks/rice_0"
+    "cross": "chaospersists:block/rice_0"
   }
 }

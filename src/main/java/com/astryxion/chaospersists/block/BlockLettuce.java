@@ -1,97 +1,82 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.BlockLettuce
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockGrass
- *  net.minecraft.block.BlockReed
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.init.Blocks
- *  net.minecraft.item.Item
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.block;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockGrass;
-import net.minecraft.block.BlockReed;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.world.World;
+import java.util.Collections;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.storage.loot.LootParams;
 
-public class BlockLettuce
-extends BlockReed {
-    public BlockLettuce() { this(0); }
+public class BlockLettuce extends Block {
+    public static final IntegerProperty AGE = IntegerProperty.create("age", 0, 15);
+
+    public BlockLettuce() {
+        this(0);
+    }
+
     protected BlockLettuce(int par1) {
-        float var3 = 0.375f;
-        this.setTickRandomly(true);
+        super(net.minecraft.world.level.block.Block.Properties.of().noCollission().randomTicks().sound(SoundType.CROP).noOcclusion());
+        registerDefaultState(stateDefinition.any().setValue(AGE, 0));
     }
 
     @Override
-    public EnumBlockRenderType getRenderType(IBlockState state) {
-        return EnumBlockRenderType.MODEL;
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
     }
 
-    @SideOnly(Side.CLIENT)
     @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
-    }
-
-    public boolean canPlaceBlockAt(World par1World, int par2, int par3, int par4) {
-        Block bid = par1World.getBlockState(new net.minecraft.util.math.BlockPos(par2, par3 - 1, par4)).getBlock();
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        Block bid = level.getBlockState(pos.below()).getBlock();
         if (bid == Blocks.AIR) {
             return false;
         }
-        if (bid == ChaosPersists.MyLettucePlant1 || bid == ChaosPersists.MyLettucePlant2 || bid == ChaosPersists.MyLettucePlant3 || bid == ChaosPersists.MyLettucePlant4 || bid == Blocks.GRASS || bid == Blocks.DIRT || bid == Blocks.FARMLAND) {
-            return true;
-        }
-        return false;
+        return bid == ChaosPersists.MyLettucePlant1
+                || bid == ChaosPersists.MyLettucePlant2
+                || bid == ChaosPersists.MyLettucePlant3
+                || bid == ChaosPersists.MyLettucePlant4
+                || bid == Blocks.GRASS_BLOCK
+                || bid == Blocks.DIRT
+                || bid == Blocks.FARMLAND;
     }
 
-    public void updateTick(World par1World, net.minecraft.util.math.BlockPos pos, net.minecraft.block.state.IBlockState state, Random par5Random) {
-        boolean dontGrow = false;
-        if (par1World.isRemote) {
-            return;
-        }
-        int par2 = pos.getX(), par3 = pos.getY(), par4 = pos.getZ();
-        int var7 = this.getMetaFromState(state);
+    @Override
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource par5Random) {
+        int var7 = state.getValue(AGE);
         if ((var7 &= 255) >= 4) {
-            Block bid = par1World.getBlockState(pos).getBlock();
+            Block bid = level.getBlockState(pos).getBlock();
             if (bid == ChaosPersists.MyLettucePlant1) {
-                par1World.setBlockState(pos, ChaosPersists.MyLettucePlant2.getDefaultState(), 2);
+                level.setBlock(pos, ChaosPersists.MyLettucePlant2.defaultBlockState(), 2);
             } else if (bid == ChaosPersists.MyLettucePlant2) {
-                par1World.setBlockState(pos, ChaosPersists.MyLettucePlant3.getDefaultState(), 2);
+                level.setBlock(pos, ChaosPersists.MyLettucePlant3.defaultBlockState(), 2);
             } else if (bid == ChaosPersists.MyLettucePlant3) {
-                par1World.setBlockState(pos, ChaosPersists.MyLettucePlant4.getDefaultState(), 2);
+                level.setBlock(pos, ChaosPersists.MyLettucePlant4.defaultBlockState(), 2);
             }
         } else {
-            Block bid = par1World.getBlockState(pos).getBlock();
-            par1World.setBlockState(pos, bid.getStateFromMeta(var7 + 1), 2);
+            Block bid = level.getBlockState(pos).getBlock();
+            level.setBlock(pos, bid.defaultBlockState().setValue(AGE, Math.min(15, var7 + 1)), 2);
         }
     }
 
     @Override
-    public Item getItemDropped(IBlockState state, Random rand, int fortune) {
-        return ChaosPersists.MyLettuce;
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        if (this == ChaosPersists.MyLettucePlant4) {
+            RandomSource r = builder.getLevel().getRandom();
+            return Collections.singletonList(new ItemStack(ChaosPersists.MyLettuce, 2 + r.nextInt(3)));
+        }
+        return Collections.emptyList();
     }
 
-    public int quantityDropped(Random par1Random) {
-        if (this == ChaosPersists.MyLettucePlant4) {
-            return 2 + par1Random.nextInt(3);
-        }
-        return 0;
-    }}
-
+    @Override
+    public ItemStack getCloneItemStack(net.minecraft.world.level.BlockGetter level, BlockPos pos, BlockState state) {
+        return new ItemStack(ChaosPersists.MyLettuce);
+    }
+}

@@ -1,45 +1,35 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.OreTitanium
- *  net.minecraft.block.Block
- *  net.minecraft.block.material.Material
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.world.ore;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import org.joml.Vector3f;
 
-public class OreTitanium
-extends Block {
+public class OreTitanium extends Block {
+    private static final DustParticleOptions RED_DUST =
+            new DustParticleOptions(new Vector3f(1.0f, 0.0f, 0.0f), 1.0f);
+
     private boolean glowing = false;
     private int glowcount = 0;
 
-    public OreTitanium() { super(Material.ROCK);
-        this.setHardness(15.0f);
-        this.setResistance(5.0f);
-        this.setCreativeTab(CreativeTabs.BUILDING_BLOCKS);
-        this.setTickRandomly(true);
+    public OreTitanium() {
+        super(Block.Properties.of()
+                .strength(15.0f, 5.0f)
+                .sound(SoundType.STONE)
+                .requiresCorrectToolForDrops()
+                .randomTicks());
         this.glowing = false;
     }
 
@@ -47,35 +37,38 @@ extends Block {
         return 30;
     }
 
-    public void onBlockClicked(World par1World, BlockPos pos, EntityPlayer par5EntityPlayer) {
-        this.glow(par1World, pos.getX(), pos.getY(), pos.getZ());
-        super.onBlockClicked(par1World, pos, par5EntityPlayer);
+    @Override
+    public void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        this.glow(level, pos.getX(), pos.getY(), pos.getZ());
+        super.attack(state, level, pos, player);
     }
 
-    public void onEntityWalk(World par1World, BlockPos pos, Entity par5Entity) {
-        this.glow(par1World, pos.getX(), pos.getY(), pos.getZ());
-        super.onEntityWalk(par1World, pos, par5Entity);
+    @Override
+    public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
+        this.glow(level, pos.getX(), pos.getY(), pos.getZ());
+        super.stepOn(level, pos, state, entity);
     }
 
-    public boolean onBlockActivated(World par1World, BlockPos pos, IBlockState state, EntityPlayer par5EntityPlayer, EnumHand hand, net.minecraft.util.EnumFacing facing, float par7, float par8, float par9) {
-        this.glow(par1World, pos.getX(), pos.getY(), pos.getZ());
-        return super.onBlockActivated(par1World, pos, state, par5EntityPlayer, hand, facing, par7, par8, par9);
+    @Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        this.glow(level, pos.getX(), pos.getY(), pos.getZ());
+        return super.use(state, level, pos, player, hand, hit);
     }
 
-    private void glow(World par1World, int par2, int par3, int par4) {
+    private void glow(Level level, int par2, int par3, int par4) {
         this.glowing = true;
         this.glowcount = 5;
-        this.sparkle(par1World, par2, par3, par4);
+        this.sparkle(level, par2, par3, par4);
     }
 
-    public void updateTick(World par1World, BlockPos pos, IBlockState state, Random par5Random) {
-    }
-
-    @SideOnly(value=Side.CLIENT)
-    public void randomDisplayTick(IBlockState stateIn, World par1World, BlockPos pos, Random par5Random) {
-        int par2 = pos.getX(), par3 = pos.getY(), par4 = pos.getZ();
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        int par2 = pos.getX();
+        int par3 = pos.getY();
+        int par4 = pos.getZ();
         if (this.glowing) {
-            this.sparkle(par1World, par2, par3, par4);
+            this.sparkle(level, par2, par3, par4);
             if (this.glowcount > 0) {
                 --this.glowcount;
             } else {
@@ -84,41 +77,51 @@ extends Block {
         }
     }
 
-    private void sparkle(World par1World, int par2, int par3, int par4) {
-        Random var5 = par1World.rand;
+    private void sparkle(Level level, int par2, int par3, int par4) {
+        RandomSource var5 = level.getRandom();
         double var6 = 0.0625;
         for (int var8 = 0; var8 < 6; ++var8) {
-            double var9 = (float)par2 + var5.nextFloat();
-            double var11 = (float)par3 + var5.nextFloat();
-            double var13 = (float)par4 + var5.nextFloat();
-            if (var8 == 0 && !par1World.getBlockState(new BlockPos(par2, par3 + 1, par4)).isFullCube()) {
-                var11 = (double)(par3 + 1) + var6;
+            double var9 = (float) par2 + var5.nextFloat();
+            double var11 = (float) par3 + var5.nextFloat();
+            double var13 = (float) par4 + var5.nextFloat();
+            if (var8 == 0
+                    && !level.getBlockState(new BlockPos(par2, par3 + 1, par4)).isCollisionShapeFullBlock(level, new BlockPos(par2, par3 + 1, par4))) {
+                var11 = (double) (par3 + 1) + var6;
             }
-            if (var8 == 1 && !par1World.getBlockState(new BlockPos(par2, par3 - 1, par4)).isFullCube()) {
-                var11 = (double)(par3 + 0) - var6;
+            if (var8 == 1
+                    && !level.getBlockState(new BlockPos(par2, par3 - 1, par4)).isCollisionShapeFullBlock(level, new BlockPos(par2, par3 - 1, par4))) {
+                var11 = (double) (par3 + 0) - var6;
             }
-            if (var8 == 2 && !par1World.getBlockState(new BlockPos(par2, par3, par4 + 1)).isFullCube()) {
-                var13 = (double)(par4 + 1) + var6;
+            if (var8 == 2
+                    && !level.getBlockState(new BlockPos(par2, par3, par4 + 1)).isCollisionShapeFullBlock(level, new BlockPos(par2, par3, par4 + 1))) {
+                var13 = (double) (par4 + 1) + var6;
             }
-            if (var8 == 3 && !par1World.getBlockState(new BlockPos(par2, par3, par4 - 1)).isFullCube()) {
-                var13 = (double)(par4 + 0) - var6;
+            if (var8 == 3
+                    && !level.getBlockState(new BlockPos(par2, par3, par4 - 1)).isCollisionShapeFullBlock(level, new BlockPos(par2, par3, par4 - 1))) {
+                var13 = (double) (par4 + 0) - var6;
             }
-            if (var8 == 4 && !par1World.getBlockState(new BlockPos(par2 + 1, par3, par4)).isFullCube()) {
-                var9 = (double)(par2 + 1) + var6;
+            if (var8 == 4
+                    && !level.getBlockState(new BlockPos(par2 + 1, par3, par4)).isCollisionShapeFullBlock(level, new BlockPos(par2 + 1, par3, par4))) {
+                var9 = (double) (par2 + 1) + var6;
             }
-            if (var8 == 5 && !par1World.getBlockState(new BlockPos(par2 - 1, par3, par4)).isFullCube()) {
-                var9 = (double)(par2 + 0) - var6;
+            if (var8 == 5
+                    && !level.getBlockState(new BlockPos(par2 - 1, par3, par4)).isCollisionShapeFullBlock(level, new BlockPos(par2 - 1, par3, par4))) {
+                var9 = (double) (par2 + 0) - var6;
             }
-            if (var9 >= (double)par2 && var9 <= (double)(par2 + 1) && var11 >= 0.0 && var11 <= (double)(par3 + 1) && var13 >= (double)par4 && var13 <= (double)(par4 + 1)) continue;
-            par1World.spawnParticle(EnumParticleTypes.REDSTONE, var9, var11, var13, 0.0, 0.0, 0.0);
+            if (var9 >= (double) par2 && var9 <= (double) (par2 + 1) && var11 >= 0.0 && var11 <= (double) (par3 + 1) && var13 >= (double) par4
+                    && var13 <= (double) (par4 + 1)) {
+                continue;
+            }
+            level.addParticle(RED_DUST, var9, var11, var13, 0.0, 0.0, 0.0);
         }
     }
 
-    public void dropBlockAsItemWithChance(World par1World, BlockPos pos, IBlockState state, float par6, int par7) {
-        super.dropBlockAsItemWithChance(par1World, pos, state, par6, par7);
-        int j1 = 5 + par1World.rand.nextInt(5) + par1World.rand.nextInt(10);
-        if (pos.getY() < 40) {
-            this.dropXpOnBlockBreak(par1World, pos, j1);
+    @Override
+    public void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, net.minecraft.world.item.ItemStack stack, boolean dropExperience) {
+        super.spawnAfterBreak(state, level, pos, stack, dropExperience);
+        if (dropExperience && pos.getY() < 40) {
+            int j1 = 5 + level.getRandom().nextInt(5) + level.getRandom().nextInt(10);
+            this.popExperience(level, pos, j1);
         }
-    }}
-
+    }
+}

@@ -1,350 +1,230 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Crab
- *  com.astryxion.chaospersists.ModelCrab
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- */
 package com.astryxion.chaospersists.model;
 
 import com.astryxion.chaospersists.entity.Crab;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.util.Mth;
 
-public class ModelCrab
-extends ModelBase {
-    ModelRenderer body1;
-    ModelRenderer body2;
-    ModelRenderer leg1;
-    ModelRenderer body3;
-    ModelRenderer body4;
-    ModelRenderer leg2;
-    ModelRenderer leg3;
-    ModelRenderer body5;
-    ModelRenderer body6;
-    ModelRenderer Leye1;
-    ModelRenderer Reye1;
-    ModelRenderer Leye2;
-    ModelRenderer Reye2;
-    ModelRenderer Lclaw1;
-    ModelRenderer Lclaw2;
-    ModelRenderer Lclaw3;
-    ModelRenderer Lclaw4;
-    ModelRenderer Lclaw5;
-    ModelRenderer Rclaw1;
-    ModelRenderer Rclaw2;
-    ModelRenderer Rclaw3;
-    ModelRenderer Rclaw4;
-    ModelRenderer Rclaw5;
-    ModelRenderer Rmouth;
-    ModelRenderer Lmouth;
+public class ModelCrab extends EntityModel<Crab> {
+    private float limbSwingAmountAnim;
+    private float ageInTicksAnim;
+    private final ModelPart body1;
+    private final ModelPart body2;
+    private final ModelPart leg1;
+    private final ModelPart body3;
+    private final ModelPart body4;
+    private final ModelPart leg2;
+    private final ModelPart leg3;
+    private final ModelPart body5;
+    private final ModelPart body6;
+    private final ModelPart Leye1;
+    private final ModelPart Reye1;
+    private final ModelPart Leye2;
+    private final ModelPart Reye2;
+    private final ModelPart Lclaw1;
+    private final ModelPart Lclaw2;
+    private final ModelPart Lclaw3;
+    private final ModelPart Lclaw4;
+    private final ModelPart Lclaw5;
+    private final ModelPart Rclaw1;
+    private final ModelPart Rclaw2;
+    private final ModelPart Rclaw3;
+    private final ModelPart Rclaw4;
+    private final ModelPart Rclaw5;
+    private final ModelPart Rmouth;
+    private final ModelPart Lmouth;
 
-    public ModelCrab(float f) {
-        this.textureWidth = 256;
-        this.textureHeight = 512;
-        this.body1 = new ModelRenderer((ModelBase)this, 0, 450);
-        this.body1.addBox(-38.0f, -5.0f, -8.0f, 76, 10, 48);
-        this.body1.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.body1.setTextureSize(64, 32);
-        this.body1.mirror = true;
-        this.setRotation(this.body1, 0.0f, 0.0f, 0.0f);
-        this.body2 = new ModelRenderer((ModelBase)this, 0, 406);
-        this.body2.addBox(-32.0f, -10.0f, -10.0f, 64, 5, 34);
-        this.body2.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.body2.setTextureSize(64, 32);
-        this.body2.mirror = true;
-        this.setRotation(this.body2, 0.0f, 0.0f, 0.0f);
-        this.leg1 = new ModelRenderer((ModelBase)this, 128, 0);
-        this.leg1.addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4);
-        this.leg1.setRotationPoint(36.0f, 3.0f, 0.0f);
-        this.leg1.setTextureSize(64, 32);
-        this.leg1.mirror = true;
-        this.setRotation(this.leg1, -1.343904f, -1.500983f, 0.0f);
-        this.body3 = new ModelRenderer((ModelBase)this, 0, 357);
-        this.body3.addBox(0.0f, 0.0f, 0.0f, 8, 4, 40);
-        this.body3.setRotationPoint(38.0f, -5.0f, -6.0f);
-        this.body3.setTextureSize(64, 32);
-        this.body3.mirror = true;
-        this.setRotation(this.body3, 0.0f, 0.0f, 0.0f);
-        this.body4 = new ModelRenderer((ModelBase)this, 100, 357);
-        this.body4.addBox(0.0f, 0.0f, 0.0f, 8, 4, 40);
-        this.body4.setRotationPoint(-46.0f, -5.0f, -6.0f);
-        this.body4.setTextureSize(64, 32);
-        this.body4.mirror = true;
-        this.setRotation(this.body4, 0.0f, 0.0f, 0.0f);
-        this.leg2 = new ModelRenderer((ModelBase)this, 128, 20);
-        this.leg2.addBox(-1.0f, 10.0f, -6.0f, 3, 16, 3);
-        this.leg2.setRotationPoint(36.0f, 3.0f, 0.0f);
-        this.leg2.setTextureSize(256, 512);
-        this.leg2.mirror = true;
-        this.setRotation(this.leg2, -0.9599311f, -1.500983f, 0.0f);
-        this.leg3 = new ModelRenderer((ModelBase)this, 128, 43);
-        this.leg3.addBox(0.0f, 21.0f, -15.0f, 2, 16, 2);
-        this.leg3.setRotationPoint(36.0f, 3.0f, 0.0f);
-        this.leg3.setTextureSize(256, 512);
-        this.leg3.mirror = true;
-        this.setRotation(this.leg3, -0.5759587f, -1.500983f, 0.0f);
-        this.body5 = new ModelRenderer((ModelBase)this, 0, 339);
-        this.body5.addBox(-25.0f, 0.0f, 0.0f, 50, 4, 10);
-        this.body5.setRotationPoint(0.0f, -4.0f, 40.0f);
-        this.body5.setTextureSize(64, 32);
-        this.body5.mirror = true;
-        this.setRotation(this.body5, 0.0f, 0.0f, 0.0f);
-        this.body6 = new ModelRenderer((ModelBase)this, 124, 342);
-        this.body6.addBox(-14.0f, 0.0f, 0.0f, 28, 3, 4);
-        this.body6.setRotationPoint(0.0f, -10.0f, -14.0f);
-        this.body6.setTextureSize(64, 32);
-        this.body6.mirror = true;
-        this.setRotation(this.body6, 0.0f, 0.0f, 0.0f);
-        this.Leye1 = new ModelRenderer((ModelBase)this, 62, 0);
-        this.Leye1.addBox(-0.5f, -12.0f, -0.5f, 1, 12, 1);
-        this.Leye1.setRotationPoint(9.0f, -9.0f, -11.0f);
-        this.Leye1.setTextureSize(64, 32);
-        this.Leye1.mirror = true;
-        this.setRotation(this.Leye1, 0.0f, 0.0f, 0.4886922f);
-        this.Reye1 = new ModelRenderer((ModelBase)this, 40, 0);
-        this.Reye1.addBox(-0.5f, -12.0f, -0.5f, 1, 12, 1);
-        this.Reye1.setRotationPoint(-9.0f, -9.0f, -11.0f);
-        this.Reye1.setTextureSize(64, 32);
-        this.Reye1.mirror = true;
-        this.setRotation(this.Reye1, 0.0f, 0.0f, -0.4886922f);
-        this.Leye2 = new ModelRenderer((ModelBase)this, 50, 0);
-        this.Leye2.addBox(-1.0f, -14.0f, -1.0f, 2, 2, 2);
-        this.Leye2.setRotationPoint(9.0f, -9.0f, -11.0f);
-        this.Leye2.setTextureSize(64, 32);
-        this.Leye2.mirror = true;
-        this.setRotation(this.Leye2, 0.0f, 0.0f, 0.4886922f);
-        this.Reye2 = new ModelRenderer((ModelBase)this, 26, 0);
-        this.Reye2.addBox(-1.0f, -14.0f, -1.0f, 2, 2, 2);
-        this.Reye2.setRotationPoint(-9.0f, -9.0f, -11.0f);
-        this.Reye2.setTextureSize(64, 32);
-        this.Reye2.mirror = true;
-        this.setRotation(this.Reye2, 0.0f, 0.0f, -0.4886922f);
-        this.Lclaw1 = new ModelRenderer((ModelBase)this, 0, 80);
-        this.Lclaw1.addBox(-4.0f, 0.0f, -14.0f, 8, 4, 18);
-        this.Lclaw1.setRotationPoint(31.0f, -2.0f, -8.0f);
-        this.Lclaw1.setTextureSize(64, 32);
-        this.Lclaw1.mirror = true;
-        this.setRotation(this.Lclaw1, 0.0f, -0.4886922f, 0.0f);
-        this.Lclaw2 = new ModelRenderer((ModelBase)this, 0, 105);
-        this.Lclaw2.addBox(-7.0f, -3.0f, -12.0f, 17, 6, 16);
-        this.Lclaw2.setRotationPoint(37.0f, 0.0f, -20.0f);
-        this.Lclaw2.setTextureSize(64, 32);
-        this.Lclaw2.mirror = true;
-        this.setRotation(this.Lclaw2, 0.0f, -0.1745329f, 0.0f);
-        this.Lclaw3 = new ModelRenderer((ModelBase)this, 0, 131);
-        this.Lclaw3.addBox(0.0f, -5.0f, -25.0f, 17, 10, 30);
-        this.Lclaw3.setRotationPoint(37.0f, 0.0f, -31.0f);
-        this.Lclaw3.setTextureSize(64, 32);
-        this.Lclaw3.mirror = true;
-        this.setRotation(this.Lclaw3, 0.0f, -0.4537856f, 0.0f);
-        this.Lclaw4 = new ModelRenderer((ModelBase)this, 0, 175);
-        this.Lclaw4.addBox(2.0f, -3.0f, -32.0f, 11, 5, 12);
-        this.Lclaw4.setRotationPoint(37.0f, 0.0f, -31.0f);
-        this.Lclaw4.setTextureSize(64, 32);
-        this.Lclaw4.mirror = true;
-        this.setRotation(this.Lclaw4, 0.0f, -0.3490659f, 0.0f);
-        this.Lclaw5 = new ModelRenderer((ModelBase)this, 0, 197);
-        this.Lclaw5.addBox(-4.0f, -3.0f, -27.0f, 7, 5, 32);
-        this.Lclaw5.setRotationPoint(36.0f, 0.0f, -31.0f);
-        this.Lclaw5.setTextureSize(64, 32);
-        this.Lclaw5.mirror = true;
-        this.setRotation(this.Lclaw5, 0.0f, 0.3839724f, 0.0f);
-        this.Rclaw1 = new ModelRenderer((ModelBase)this, 102, 78);
-        this.Rclaw1.addBox(-4.0f, 0.0f, -14.0f, 8, 4, 18);
-        this.Rclaw1.setRotationPoint(-31.0f, -2.0f, -8.0f);
-        this.Rclaw1.setTextureSize(64, 32);
-        this.Rclaw1.mirror = true;
-        this.setRotation(this.Rclaw1, 0.0f, 0.4886922f, 0.0f);
-        this.Rclaw2 = new ModelRenderer((ModelBase)this, 103, 106);
-        this.Rclaw2.addBox(-10.0f, -3.0f, -12.0f, 17, 6, 16);
-        this.Rclaw2.setRotationPoint(-37.0f, 0.0f, -20.0f);
-        this.Rclaw2.setTextureSize(64, 32);
-        this.Rclaw2.mirror = true;
-        this.setRotation(this.Rclaw2, 0.0f, 0.1745329f, 0.0f);
-        this.Rclaw3 = new ModelRenderer((ModelBase)this, 100, 131);
-        this.Rclaw3.addBox(-17.0f, -5.0f, -25.0f, 17, 10, 30);
-        this.Rclaw3.setRotationPoint(-37.0f, 0.0f, -31.0f);
-        this.Rclaw3.setTextureSize(64, 32);
-        this.Rclaw3.mirror = true;
-        this.setRotation(this.Rclaw3, 0.0f, 0.4537856f, 0.0f);
-        this.Rclaw4 = new ModelRenderer((ModelBase)this, 101, 175);
-        this.Rclaw4.addBox(-13.0f, -3.0f, -32.0f, 11, 5, 12);
-        this.Rclaw4.setRotationPoint(-37.0f, 0.0f, -31.0f);
-        this.Rclaw4.setTextureSize(64, 32);
-        this.Rclaw4.mirror = true;
-        this.setRotation(this.Rclaw4, 0.0f, 0.3490659f, 0.0f);
-        this.Rclaw5 = new ModelRenderer((ModelBase)this, 100, 197);
-        this.Rclaw5.addBox(-4.0f, -3.0f, -27.0f, 7, 5, 32);
-        this.Rclaw5.setRotationPoint(-36.0f, 0.0f, -31.0f);
-        this.Rclaw5.setTextureSize(64, 32);
-        this.Rclaw5.mirror = true;
-        this.setRotation(this.Rclaw5, 0.0f, -0.3839724f, 0.0f);
-        this.Rmouth = new ModelRenderer((ModelBase)this, 0, 28);
-        this.Rmouth.addBox(0.0f, 0.0f, -0.5f, 6, 3, 1);
-        this.Rmouth.setRotationPoint(-7.0f, 0.0f, -7.5f);
-        this.Rmouth.setTextureSize(256, 512);
-        this.Rmouth.mirror = true;
-        this.setRotation(this.Rmouth, 0.0f, 0.3665191f, 0.0f);
-        this.Lmouth = new ModelRenderer((ModelBase)this, 0, 19);
-        this.Lmouth.addBox(-6.0f, 0.0f, -0.5f, 6, 3, 1);
-        this.Lmouth.setRotationPoint(7.0f, 0.0f, -7.5f);
-        this.Lmouth.setTextureSize(256, 512);
-        this.Lmouth.mirror = true;
-        this.setRotation(this.Lmouth, 0.0f, -0.3665191f, 0.0f);
+    public ModelCrab() {
+        this(LayerDefinition.create(createMesh(), 256, 512).bakeRoot());
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        Crab e = (Crab)entity;
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        this.leg3.rotationPointX = 36.0f;
-        this.leg2.rotationPointX = 36.0f;
-        this.leg1.rotationPointX = 36.0f;
-        this.leg3.rotationPointY = 3.0f;
-        this.leg2.rotationPointY = 3.0f;
-        this.leg1.rotationPointY = 3.0f;
-        this.leg3.rotationPointZ = 0.0f;
-        this.leg2.rotationPointZ = 0.0f;
-        this.leg1.rotationPointZ = 0.0f;
-        this.leg2.rotateAngleY = this.leg3.rotateAngleY = (float)(-1.5707963267948966 + (double)(MathHelper.cos((float)(f2 * 1.7f)) * 3.1415927f * 0.15f * f1));
-        this.leg1.rotateAngleY = this.leg3.rotateAngleY;
-        this.leg1.render(f5);
-        this.leg2.render(f5);
-        this.leg3.render(f5);
-        this.leg3.rotationPointZ = 10.0f;
-        this.leg2.rotationPointZ = 10.0f;
-        this.leg1.rotationPointZ = 10.0f;
-        this.leg2.rotateAngleY = this.leg3.rotateAngleY = (float)(-1.5707963267948966 - (double)(MathHelper.cos((float)(f2 * 1.7f)) * 3.1415927f * 0.15f * f1));
-        this.leg1.rotateAngleY = this.leg3.rotateAngleY;
-        this.leg1.render(f5);
-        this.leg2.render(f5);
-        this.leg3.render(f5);
-        this.leg3.rotationPointZ = 20.0f;
-        this.leg2.rotationPointZ = 20.0f;
-        this.leg1.rotationPointZ = 20.0f;
-        this.leg2.rotateAngleY = this.leg3.rotateAngleY = (float)(-1.5707963267948966 + (double)(MathHelper.cos((float)(f2 * 1.7f)) * 3.1415927f * 0.15f * f1));
-        this.leg1.rotateAngleY = this.leg3.rotateAngleY;
-        this.leg1.render(f5);
-        this.leg2.render(f5);
-        this.leg3.render(f5);
-        this.leg3.rotationPointZ = 30.0f;
-        this.leg2.rotationPointZ = 30.0f;
-        this.leg1.rotationPointZ = 30.0f;
-        this.leg2.rotateAngleY = this.leg3.rotateAngleY = (float)(-1.5707963267948966 - (double)(MathHelper.cos((float)(f2 * 1.7f)) * 3.1415927f * 0.15f * f1));
-        this.leg1.rotateAngleY = this.leg3.rotateAngleY;
-        this.leg1.render(f5);
-        this.leg2.render(f5);
-        this.leg3.render(f5);
-        this.leg3.rotationPointX = -36.0f;
-        this.leg2.rotationPointX = -36.0f;
-        this.leg1.rotationPointX = -36.0f;
-        this.leg3.rotationPointY = 3.0f;
-        this.leg2.rotationPointY = 3.0f;
-        this.leg1.rotationPointY = 3.0f;
-        this.leg3.rotationPointZ = 0.0f;
-        this.leg2.rotationPointZ = 0.0f;
-        this.leg1.rotationPointZ = 0.0f;
-        this.leg2.rotateAngleY = this.leg3.rotateAngleY = (float)(- -1.5707963267948966 + (double)(MathHelper.cos((float)(f2 * 1.7f)) * 3.1415927f * 0.15f * f1));
-        this.leg1.rotateAngleY = this.leg3.rotateAngleY;
-        this.leg1.render(f5);
-        this.leg2.render(f5);
-        this.leg3.render(f5);
-        this.leg3.rotationPointZ = 10.0f;
-        this.leg2.rotationPointZ = 10.0f;
-        this.leg1.rotationPointZ = 10.0f;
-        this.leg2.rotateAngleY = this.leg3.rotateAngleY = (float)(- -1.5707963267948966 - (double)(MathHelper.cos((float)(f2 * 1.7f)) * 3.1415927f * 0.15f * f1));
-        this.leg1.rotateAngleY = this.leg3.rotateAngleY;
-        this.leg1.render(f5);
-        this.leg2.render(f5);
-        this.leg3.render(f5);
-        this.leg3.rotationPointZ = 20.0f;
-        this.leg2.rotationPointZ = 20.0f;
-        this.leg1.rotationPointZ = 20.0f;
-        this.leg2.rotateAngleY = this.leg3.rotateAngleY = (float)(- -1.5707963267948966 + (double)(MathHelper.cos((float)(f2 * 1.7f)) * 3.1415927f * 0.15f * f1));
-        this.leg1.rotateAngleY = this.leg3.rotateAngleY;
-        this.leg1.render(f5);
-        this.leg2.render(f5);
-        this.leg3.render(f5);
-        this.leg3.rotationPointZ = 30.0f;
-        this.leg2.rotationPointZ = 30.0f;
-        this.leg1.rotationPointZ = 30.0f;
-        this.leg2.rotateAngleY = this.leg3.rotateAngleY = (float)(- -1.5707963267948966 - (double)(MathHelper.cos((float)(f2 * 1.7f)) * 3.1415927f * 0.15f * f1));
-        this.leg1.rotateAngleY = this.leg3.rotateAngleY;
-        this.leg1.render(f5);
-        this.leg2.render(f5);
-        this.leg3.render(f5);
-        if (e.getAttacking() == 0) {
-            this.Leye1.rotateAngleX = this.Leye2.rotateAngleX = MathHelper.cos((float)(f2 * 0.35f)) * 3.1415927f * 0.05f;
-            this.Leye1.rotateAngleZ = this.Leye2.rotateAngleZ = 0.54f + MathHelper.cos((float)(f2 * 0.25f)) * 3.1415927f * 0.05f;
-            this.Reye1.rotateAngleX = this.Reye2.rotateAngleX = MathHelper.cos((float)(f2 * 0.3f)) * 3.1415927f * 0.05f;
-            this.Reye1.rotateAngleZ = this.Reye2.rotateAngleZ = -0.54f + MathHelper.cos((float)(f2 * 0.45f)) * 3.1415927f * 0.05f;
-            this.Lmouth.rotateAngleY = -0.72f + MathHelper.cos((float)(f2 * 0.25f)) * 3.1415927f * 0.05f;
-            this.Rmouth.rotateAngleY = 0.72f - MathHelper.cos((float)(f2 * 0.25f)) * 3.1415927f * 0.05f;
-            float newangle = MathHelper.cos((float)(f2 * 0.15f)) * 3.1415927f * 0.03f;
-            this.Lclaw3.rotateAngleY = -0.453f + newangle;
-            this.Lclaw4.rotateAngleY = -0.349f + newangle;
-            this.Lclaw5.rotateAngleY = 0.384f - newangle;
-            newangle = MathHelper.cos((float)(f2 * 0.13f)) * 3.1415927f * 0.02f;
-            this.Rclaw3.rotateAngleY = 0.453f + newangle;
-            this.Rclaw4.rotateAngleY = 0.349f + newangle;
-            this.Rclaw5.rotateAngleY = -0.384f - newangle;
+    public ModelCrab(ModelPart root) {
+        this.body1 = root.getChild("body1");
+        this.body2 = root.getChild("body2");
+        this.leg1 = root.getChild("leg1");
+        this.body3 = root.getChild("body3");
+        this.body4 = root.getChild("body4");
+        this.leg2 = root.getChild("leg2");
+        this.leg3 = root.getChild("leg3");
+        this.body5 = root.getChild("body5");
+        this.body6 = root.getChild("body6");
+        this.Leye1 = root.getChild("Leye1");
+        this.Reye1 = root.getChild("Reye1");
+        this.Leye2 = root.getChild("Leye2");
+        this.Reye2 = root.getChild("Reye2");
+        this.Lclaw1 = root.getChild("Lclaw1");
+        this.Lclaw2 = root.getChild("Lclaw2");
+        this.Lclaw3 = root.getChild("Lclaw3");
+        this.Lclaw4 = root.getChild("Lclaw4");
+        this.Lclaw5 = root.getChild("Lclaw5");
+        this.Rclaw1 = root.getChild("Rclaw1");
+        this.Rclaw2 = root.getChild("Rclaw2");
+        this.Rclaw3 = root.getChild("Rclaw3");
+        this.Rclaw4 = root.getChild("Rclaw4");
+        this.Rclaw5 = root.getChild("Rclaw5");
+        this.Rmouth = root.getChild("Rmouth");
+        this.Lmouth = root.getChild("Lmouth");
+    }
+
+    private static MeshDefinition createMesh() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("body1", CubeListBuilder.create().texOffs(0, 450).mirror().addBox(-38.0f, -5.0f, -8.0f, 76, 10, 48), PartPose.offset(0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("body2", CubeListBuilder.create().texOffs(0, 406).mirror().addBox(-32.0f, -10.0f, -10.0f, 64, 5, 34), PartPose.offset(0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("leg1", CubeListBuilder.create().texOffs(128, 0).mirror().addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4), PartPose.offsetAndRotation(36.0f, 3.0f, 0.0f, -1.343904f, -1.500983f, 0.0f));
+        root.addOrReplaceChild("body3", CubeListBuilder.create().texOffs(0, 357).mirror().addBox(0.0f, 0.0f, 0.0f, 8, 4, 40), PartPose.offset(38.0f, -5.0f, -6.0f));
+        root.addOrReplaceChild("body4", CubeListBuilder.create().texOffs(100, 357).mirror().addBox(0.0f, 0.0f, 0.0f, 8, 4, 40), PartPose.offset(-46.0f, -5.0f, -6.0f));
+        root.addOrReplaceChild("leg2", CubeListBuilder.create().texOffs(128, 20).mirror().addBox(-1.0f, 10.0f, -6.0f, 3, 16, 3), PartPose.offsetAndRotation(36.0f, 3.0f, 0.0f, -0.9599311f, -1.500983f, 0.0f));
+        root.addOrReplaceChild("leg3", CubeListBuilder.create().texOffs(128, 43).mirror().addBox(0.0f, 21.0f, -15.0f, 2, 16, 2), PartPose.offsetAndRotation(36.0f, 3.0f, 0.0f, -0.5759587f, -1.500983f, 0.0f));
+        root.addOrReplaceChild("body5", CubeListBuilder.create().texOffs(0, 339).mirror().addBox(-25.0f, 0.0f, 0.0f, 50, 4, 10), PartPose.offset(0.0f, -4.0f, 40.0f));
+        root.addOrReplaceChild("body6", CubeListBuilder.create().texOffs(124, 342).mirror().addBox(-14.0f, 0.0f, 0.0f, 28, 3, 4), PartPose.offset(0.0f, -10.0f, -14.0f));
+        root.addOrReplaceChild("Leye1", CubeListBuilder.create().texOffs(62, 0).mirror().addBox(-0.5f, -12.0f, -0.5f, 1, 12, 1), PartPose.offsetAndRotation(9.0f, -9.0f, -11.0f, 0.0f, 0.0f, 0.4886922f));
+        root.addOrReplaceChild("Reye1", CubeListBuilder.create().texOffs(40, 0).mirror().addBox(-0.5f, -12.0f, -0.5f, 1, 12, 1), PartPose.offsetAndRotation(-9.0f, -9.0f, -11.0f, 0.0f, 0.0f, -0.4886922f));
+        root.addOrReplaceChild("Leye2", CubeListBuilder.create().texOffs(50, 0).mirror().addBox(-1.0f, -14.0f, -1.0f, 2, 2, 2), PartPose.offsetAndRotation(9.0f, -9.0f, -11.0f, 0.0f, 0.0f, 0.4886922f));
+        root.addOrReplaceChild("Reye2", CubeListBuilder.create().texOffs(26, 0).mirror().addBox(-1.0f, -14.0f, -1.0f, 2, 2, 2), PartPose.offsetAndRotation(-9.0f, -9.0f, -11.0f, 0.0f, 0.0f, -0.4886922f));
+        root.addOrReplaceChild("Lclaw1", CubeListBuilder.create().texOffs(0, 80).mirror().addBox(-4.0f, 0.0f, -14.0f, 8, 4, 18), PartPose.offsetAndRotation(31.0f, -2.0f, -8.0f, 0.0f, -0.4886922f, 0.0f));
+        root.addOrReplaceChild("Lclaw2", CubeListBuilder.create().texOffs(0, 105).mirror().addBox(-7.0f, -3.0f, -12.0f, 17, 6, 16), PartPose.offsetAndRotation(37.0f, 0.0f, -20.0f, 0.0f, -0.1745329f, 0.0f));
+        root.addOrReplaceChild("Lclaw3", CubeListBuilder.create().texOffs(0, 131).mirror().addBox(0.0f, -5.0f, -25.0f, 17, 10, 30), PartPose.offsetAndRotation(37.0f, 0.0f, -31.0f, 0.0f, -0.4537856f, 0.0f));
+        root.addOrReplaceChild("Lclaw4", CubeListBuilder.create().texOffs(0, 175).mirror().addBox(2.0f, -3.0f, -32.0f, 11, 5, 12), PartPose.offsetAndRotation(37.0f, 0.0f, -31.0f, 0.0f, -0.3490659f, 0.0f));
+        root.addOrReplaceChild("Lclaw5", CubeListBuilder.create().texOffs(0, 197).mirror().addBox(-4.0f, -3.0f, -27.0f, 7, 5, 32), PartPose.offsetAndRotation(36.0f, 0.0f, -31.0f, 0.0f, 0.3839724f, 0.0f));
+        root.addOrReplaceChild("Rclaw1", CubeListBuilder.create().texOffs(102, 78).mirror().addBox(-4.0f, 0.0f, -14.0f, 8, 4, 18), PartPose.offsetAndRotation(-31.0f, -2.0f, -8.0f, 0.0f, 0.4886922f, 0.0f));
+        root.addOrReplaceChild("Rclaw2", CubeListBuilder.create().texOffs(103, 106).mirror().addBox(-10.0f, -3.0f, -12.0f, 17, 6, 16), PartPose.offsetAndRotation(-37.0f, 0.0f, -20.0f, 0.0f, 0.1745329f, 0.0f));
+        root.addOrReplaceChild("Rclaw3", CubeListBuilder.create().texOffs(100, 131).mirror().addBox(-17.0f, -5.0f, -25.0f, 17, 10, 30), PartPose.offsetAndRotation(-37.0f, 0.0f, -31.0f, 0.0f, 0.4537856f, 0.0f));
+        root.addOrReplaceChild("Rclaw4", CubeListBuilder.create().texOffs(101, 175).mirror().addBox(-13.0f, -3.0f, -32.0f, 11, 5, 12), PartPose.offsetAndRotation(-37.0f, 0.0f, -31.0f, 0.0f, 0.3490659f, 0.0f));
+        root.addOrReplaceChild("Rclaw5", CubeListBuilder.create().texOffs(100, 197).mirror().addBox(-4.0f, -3.0f, -27.0f, 7, 5, 32), PartPose.offsetAndRotation(-36.0f, 0.0f, -31.0f, 0.0f, -0.3839724f, 0.0f));
+        root.addOrReplaceChild("Rmouth", CubeListBuilder.create().texOffs(0, 28).mirror().addBox(0.0f, 0.0f, -0.5f, 6, 3, 1), PartPose.offsetAndRotation(-7.0f, 0.0f, -7.5f, 0.0f, 0.3665191f, 0.0f));
+        root.addOrReplaceChild("Lmouth", CubeListBuilder.create().texOffs(0, 19).mirror().addBox(-6.0f, 0.0f, -0.5f, 6, 3, 1), PartPose.offsetAndRotation(7.0f, 0.0f, -7.5f, 0.0f, -0.3665191f, 0.0f));
+        return mesh;
+    }
+
+    @Override
+    public void setupAnim(Crab entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.limbSwingAmountAnim = limbSwingAmount;
+        this.ageInTicksAnim = ageInTicks;
+        if (entity.getAttacking() == 0) {
+            this.Leye1.xRot = this.Leye2.xRot = Mth.cos(ageInTicks * 0.35f) * 3.1415927f * 0.05f;
+            this.Leye1.zRot = this.Leye2.zRot = 0.54f + Mth.cos(ageInTicks * 0.25f) * 3.1415927f * 0.05f;
+            this.Reye1.xRot = this.Reye2.xRot = Mth.cos(ageInTicks * 0.3f) * 3.1415927f * 0.05f;
+            this.Reye1.zRot = this.Reye2.zRot = -0.54f + Mth.cos(ageInTicks * 0.45f) * 3.1415927f * 0.05f;
+            this.Lmouth.yRot = -0.72f + Mth.cos(ageInTicks * 0.25f) * 3.1415927f * 0.05f;
+            this.Rmouth.yRot = 0.72f - Mth.cos(ageInTicks * 0.25f) * 3.1415927f * 0.05f;
+            float newangle = Mth.cos(ageInTicks * 0.15f) * 3.1415927f * 0.03f;
+            this.Lclaw3.yRot = -0.453f + newangle;
+            this.Lclaw4.yRot = -0.349f + newangle;
+            this.Lclaw5.yRot = 0.384f - newangle;
+            newangle = Mth.cos(ageInTicks * 0.13f) * 3.1415927f * 0.02f;
+            this.Rclaw3.yRot = 0.453f + newangle;
+            this.Rclaw4.yRot = 0.349f + newangle;
+            this.Rclaw5.yRot = -0.384f - newangle;
         } else {
-            this.Leye1.rotateAngleX = this.Leye2.rotateAngleX = MathHelper.cos((float)(f2 * 0.45f)) * 3.1415927f * 0.1f;
-            this.Leye1.rotateAngleZ = this.Leye2.rotateAngleZ = 0.54f + MathHelper.cos((float)(f2 * 0.35f)) * 3.1415927f * 0.1f;
-            this.Reye1.rotateAngleX = this.Reye2.rotateAngleX = MathHelper.cos((float)(f2 * 0.4f)) * 3.1415927f * 0.1f;
-            this.Reye1.rotateAngleZ = this.Reye2.rotateAngleZ = -0.54f + MathHelper.cos((float)(f2 * 0.55f)) * 3.1415927f * 0.1f;
-            this.Lmouth.rotateAngleY = -0.72f + MathHelper.cos((float)(f2 * 0.45f)) * 3.1415927f * 0.15f;
-            this.Rmouth.rotateAngleY = 0.72f - MathHelper.cos((float)(f2 * 0.45f)) * 3.1415927f * 0.15f;
-            float newangle = MathHelper.cos((float)(f2 * 0.35f)) * 3.1415927f * 0.13f;
-            this.Lclaw3.rotateAngleY = -0.453f + newangle;
-            this.Lclaw4.rotateAngleY = -0.349f + newangle;
-            this.Lclaw5.rotateAngleY = 0.384f - newangle;
-            newangle = MathHelper.cos((float)(f2 * 0.43f)) * 3.1415927f * 0.12f;
-            this.Rclaw3.rotateAngleY = 0.453f + newangle;
-            this.Rclaw4.rotateAngleY = 0.349f + newangle;
-            this.Rclaw5.rotateAngleY = -0.384f - newangle;
+            this.Leye1.xRot = this.Leye2.xRot = Mth.cos(ageInTicks * 0.45f) * 3.1415927f * 0.1f;
+            this.Leye1.zRot = this.Leye2.zRot = 0.54f + Mth.cos(ageInTicks * 0.35f) * 3.1415927f * 0.1f;
+            this.Reye1.xRot = this.Reye2.xRot = Mth.cos(ageInTicks * 0.4f) * 3.1415927f * 0.1f;
+            this.Reye1.zRot = this.Reye2.zRot = -0.54f + Mth.cos(ageInTicks * 0.55f) * 3.1415927f * 0.1f;
+            this.Lmouth.yRot = -0.72f + Mth.cos(ageInTicks * 0.45f) * 3.1415927f * 0.15f;
+            this.Rmouth.yRot = 0.72f - Mth.cos(ageInTicks * 0.45f) * 3.1415927f * 0.15f;
+            float newangle = Mth.cos(ageInTicks * 0.35f) * 3.1415927f * 0.13f;
+            this.Lclaw3.yRot = -0.453f + newangle;
+            this.Lclaw4.yRot = -0.349f + newangle;
+            this.Lclaw5.yRot = 0.384f - newangle;
+            newangle = Mth.cos(ageInTicks * 0.43f) * 3.1415927f * 0.12f;
+            this.Rclaw3.yRot = 0.453f + newangle;
+            this.Rclaw4.yRot = 0.349f + newangle;
+            this.Rclaw5.yRot = -0.384f - newangle;
         }
-        this.body1.render(f5);
-        this.body2.render(f5);
-        this.body3.render(f5);
-        this.body4.render(f5);
-        this.leg2.render(f5);
-        this.leg3.render(f5);
-        this.body5.render(f5);
-        this.body6.render(f5);
-        this.Leye1.render(f5);
-        this.Reye1.render(f5);
-        this.Leye2.render(f5);
-        this.Reye2.render(f5);
-        this.Lclaw1.render(f5);
-        this.Lclaw2.render(f5);
-        this.Lclaw3.render(f5);
-        this.Lclaw4.render(f5);
-        this.Lclaw5.render(f5);
-        this.Rclaw1.render(f5);
-        this.Rclaw2.render(f5);
-        this.Rclaw3.render(f5);
-        this.Rclaw4.render(f5);
-        this.Rclaw5.render(f5);
-        this.Rmouth.render(f5);
-        this.Lmouth.render(f5);
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
+    private void renderLegPass(
+            PoseStack poseStack,
+            VertexConsumer buffer,
+            int packedLight,
+            int packedOverlay,
+            float red,
+            float green,
+            float blue,
+            float alpha,
+            float legX,
+            float legZ,
+            float f1,
+            float f2,
+            boolean leftSide,
+            boolean plusOsc) {
+        this.leg3.x = legX;
+        this.leg2.x = legX;
+        this.leg1.x = legX;
+        this.leg3.y = 3.0f;
+        this.leg2.y = 3.0f;
+        this.leg1.y = 3.0f;
+        this.leg3.z = legZ;
+        this.leg2.z = legZ;
+        this.leg1.z = legZ;
+        float osc = Mth.cos(f2 * 1.7f) * 3.1415927f * 0.15f * f1;
+        float base = leftSide ? 1.5707963267948966f : -1.5707963267948966f;
+        float legYRot = base + (plusOsc ? osc : -osc);
+        this.leg2.yRot = legYRot;
+        this.leg3.yRot = legYRot;
+        this.leg1.yRot = this.leg3.yRot;
+        this.leg1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.leg2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.leg3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+    private void renderWalkingLegs(
+            PoseStack poseStack,
+            VertexConsumer buffer,
+            int packedLight,
+            int packedOverlay,
+            float red,
+            float green,
+            float blue,
+            float alpha,
+            float f1,
+            float f2) {
+        this.renderLegPass(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, 36.0f, 0.0f, f1, f2, false, true);
+        this.renderLegPass(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, 36.0f, 10.0f, f1, f2, false, false);
+        this.renderLegPass(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, 36.0f, 20.0f, f1, f2, false, true);
+        this.renderLegPass(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, 36.0f, 30.0f, f1, f2, false, false);
+        this.renderLegPass(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, -36.0f, 0.0f, f1, f2, true, true);
+        this.renderLegPass(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, -36.0f, 10.0f, f1, f2, true, false);
+        this.renderLegPass(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, -36.0f, 20.0f, f1, f2, true, true);
+        this.renderLegPass(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, -36.0f, 30.0f, f1, f2, true, false);
+    }
+
+    @Override
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+        float f1 = this.limbSwingAmountAnim;
+        float f2 = this.ageInTicksAnim;
+        this.renderWalkingLegs(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha, f1, f2);
+        this.body1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.body2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.body3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.body4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.leg2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.leg3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.body5.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.body6.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Leye1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Reye1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Leye2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Reye2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Lclaw1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Lclaw2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Lclaw3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Lclaw4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Lclaw5.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Rclaw1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Rclaw2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Rclaw3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Rclaw4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Rclaw5.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Rmouth.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Lmouth.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

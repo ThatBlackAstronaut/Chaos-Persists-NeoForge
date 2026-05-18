@@ -1,25 +1,10 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.ItemCornCob
- *  net.minecraft.block.Block
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.item.ItemSeedFood
- *  net.minecraft.util.IIcon
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraft.block.Block;
-import net.minecraft.item.ItemSeedFood;
+import net.minecraft.world.level.block.Block;
 
-public class ItemCornCob
-extends ItemSeedFood {
-    public ItemCornCob(int par2, float par3, Block par4, Block par5) {
-        super(par2, par3, par4, par5);
-    }}
+public class ItemCornCob extends ItemRadish {
 
+    public ItemCornCob(int nutrition, float saturation, Block cropBlock, Block soilBlock) {
+        super(nutrition, saturation, cropBlock, soilBlock);
+    }
+}

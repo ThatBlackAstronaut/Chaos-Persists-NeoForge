@@ -1,125 +1,129 @@
 package com.astryxion.chaospersists.item;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.projectile.EntityArrow;
-import net.minecraft.init.Enchantments;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.EnumAction;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumHand;
-import net.minecraft.world.World;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
 
 public class SkateBow extends Item {
 
     public SkateBow(int par1) {
-        this.maxStackSize = 1;
-        this.setMaxDamage(300);
-        this.setCreativeTab(CreativeTabs.COMBAT);
+        super(new Item.Properties().stacksTo(1).durability(300));
     }
 
     @Override
-    public int getMaxItemUseDuration(ItemStack stack) {
+    public int getUseDuration(ItemStack stack) {
         return 72000;
     }
 
     @Override
-    public EnumAction getItemUseAction(ItemStack stack) {
-        return EnumAction.BOW;
+    public UseAnim getUseAnimation(ItemStack stack) {
+        return UseAnim.BOW;
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
-        ItemStack stack = player.getHeldItem(hand);
-        player.setActiveHand(hand);
-        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        player.startUsingItem(hand);
+        return InteractionResultHolder.consume(stack);
     }
 
     @Override
-    public void onPlayerStoppedUsing(ItemStack stack, World world, EntityLivingBase entity, int timeLeft) {
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
+        if (!(entity instanceof Player player)) {
+            return;
+        }
 
-        if (!(entity instanceof EntityPlayer)) return;
-
-        EntityPlayer player = (EntityPlayer) entity;
-
-        boolean creative = player.capabilities.isCreativeMode;
+        boolean creative = player.getAbilities().instabuild;
 
         if (!creative && countArrows(player) <= 0) {
             return;
         }
 
-        int charge = this.getMaxItemUseDuration(stack) - timeLeft;
-        // Same pull curve as ItemBow: f in [0, 1], then vanilla passes f * 3.0F to EntityArrow.shoot.
+        int charge = this.getUseDuration(stack) - timeLeft;
         float pull = charge / 20.0F;
         pull = (pull * pull + pull * 2.0F) / 3.0F;
-        if (pull < 0.1F) return;
-        if (pull > 1.0F) pull = 1.0F;
+        if (pull < 0.1F) {
+            return;
+        }
+        if (pull > 1.0F) {
+            pull = 1.0F;
+        }
         float arrowSpeed = pull * 3.0F;
 
-        IrukandjiArrow arrow = new IrukandjiArrow(world, player, arrowSpeed);
-        arrow.pickupStatus = EntityArrow.PickupStatus.ALLOWED;
+        IrukandjiArrow arrow = new IrukandjiArrow(level, player, arrowSpeed);
+        arrow.pickup = AbstractArrow.Pickup.ALLOWED;
 
-        if (world.rand.nextInt(20) == 1) {
-            arrow.setIsCritical(true);
+        if (level.getRandom().nextInt(20) == 1) {
+            arrow.setCritArrow(true);
         }
 
-        int punchLevel = EnchantmentHelper.getEnchantmentLevel(Enchantments.PUNCH, stack);
+        int punchLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.PUNCH_ARROWS, stack);
         if (punchLevel > 0) {
             arrow.setKnockbackStrength(punchLevel);
         }
 
-        if (EnchantmentHelper.getEnchantmentLevel(Enchantments.FLAME, stack) > 0) {
-            arrow.setFire(100);
+        if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FLAMING_ARROWS, stack) > 0) {
+            arrow.setSharedFlagOnFire(true);
         }
 
-        stack.damageItem(1, player);
+        stack.hurtAndBreak(1, player, p -> p.broadcastBreakEvent(player.getUsedItemHand()));
 
-        world.playSound(
+        level.playSound(
                 null,
-                player.posX,
-                player.posY,
-                player.posZ,
-                SoundEvents.ENTITY_ARROW_SHOOT,
-                player.getSoundCategory(),
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.ARROW_SHOOT,
+                SoundSource.PLAYERS,
                 1.0F,
-                1.0F / (itemRand.nextFloat() * 0.4F + 1.2F) + 0.5F
-        );
+                1.0F / (level.getRandom().nextFloat() * 0.4F + 1.2F) + 0.5F);
 
         if (!creative) {
             consumeOneArrow(player);
         }
 
-        if (!world.isRemote) {
-            world.spawnEntity(arrow);
+        if (!level.isClientSide) {
+            level.addFreshEntity(arrow);
         }
     }
 
     @Override
-    public int getItemEnchantability() {
+    public int getEnchantmentValue() {
         return 50;
     }
 
-    private int countArrows(EntityPlayer player) {
+    private static Item irukandjiArrowItem() {
+        return (Item) (Object) ChaosPersists.MyIrukandjiArrow;
+    }
+
+    private int countArrows(Player player) {
         int count = 0;
-        for (int i = 0; i < player.inventory.getSizeInventory(); i++) {
-            ItemStack s = player.inventory.getStackInSlot(i);
-            if (!s.isEmpty() && s.getItem() == ChaosPersists.MyIrukandjiArrow) {
+        Item irukandjiArrow = irukandjiArrowItem();
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack s = player.getInventory().getItem(i);
+            if (!s.isEmpty() && s.getItem() == irukandjiArrow) {
                 count += s.getCount();
             }
         }
         return count;
     }
 
-    private void consumeOneArrow(EntityPlayer player) {
-        for (int i = 0; i < player.inventory.getSizeInventory(); i++) {
-            ItemStack s = player.inventory.getStackInSlot(i);
-            if (!s.isEmpty() && s.getItem() == ChaosPersists.MyIrukandjiArrow) {
+    private void consumeOneArrow(Player player) {
+        Item irukandjiArrow = irukandjiArrowItem();
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack s = player.getInventory().getItem(i);
+            if (!s.isEmpty() && s.getItem() == irukandjiArrow) {
                 s.shrink(1);
                 break;
             }

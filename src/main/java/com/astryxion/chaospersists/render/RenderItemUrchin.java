@@ -2,35 +2,38 @@ package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.BerthaHit;
 import com.astryxion.chaospersists.entity.SunspotUrchin;
-import com.astryxion.chaospersists.item.WaterBall;
 import com.astryxion.chaospersists.item.InkSack;
-import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.entity.Entity;
+import com.astryxion.chaospersists.item.WaterBall;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.world.entity.Entity;
 
-public class RenderItemUrchin extends RenderSpinner
-{
-  public RenderItemUrchin(RenderManager manager) {
-    super(manager);
-  }
+public class RenderItemUrchin extends RenderSpinner {
+    public RenderItemUrchin(EntityRendererProvider.Context context) {
+        super(context);
+    }
 
-  @Override
-  public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9)
-  {
-    if ((par1Entity instanceof BerthaHit)) {
-      return;
+    @Override
+    public void render(
+            Entity entity,
+            float entityYaw,
+            float partialTicks,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight) {
+        if (entity instanceof BerthaHit) {
+            return;
+        }
+        if (entity instanceof SunspotUrchin var2) {
+            this.spinItemIconIndex = var2.getUrchinIndex();
+        }
+        if (entity instanceof WaterBall var2) {
+            this.spinItemIconIndex = var2.getWaterBallIndex();
+        }
+        if (entity instanceof InkSack var2) {
+            this.spinItemIconIndex = var2.getInkSackIndex();
+        }
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
-    if ((par1Entity instanceof SunspotUrchin)) {
-      SunspotUrchin var2 = (SunspotUrchin)par1Entity;
-      this.spinItemIconIndex = var2.getUrchinIndex();
-    }
-    if ((par1Entity instanceof WaterBall)) {
-      WaterBall var2 = (WaterBall)par1Entity;
-      this.spinItemIconIndex = var2.getWaterBallIndex();
-    }
-    if ((par1Entity instanceof InkSack)) {
-      InkSack var2 = (InkSack)par1Entity;
-      this.spinItemIconIndex = var2.getInkSackIndex();
-    }
-    super.doRender(par1Entity, par2, par4, par6, par8, par9);
-  }
 }

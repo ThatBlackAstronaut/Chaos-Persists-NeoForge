@@ -1,292 +1,304 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.GenericTargetSorter
- *  com.astryxion.chaospersists.Kyuubi
- *  com.astryxion.chaospersists.MobStats
- *  com.astryxion.chaospersists.MyUtils
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityCreature
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAIHurtByTarget
- *  net.minecraft.entity.ai.EntityAILookIdle
- *  net.minecraft.entity.ai.EntityAIMoveThroughVillage
- *  net.minecraft.entity.ai.EntityAIPanic
- *  net.minecraft.entity.ai.EntityAISwimming
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.EntityAIWander
- *  net.minecraft.entity.ai.EntityAIWatchClosest
- *  net.minecraft.entity.ai.EntitySenses
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.monster.EntityPigZombie
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.entity.projectile.EntitySmallFireball
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import com.astryxion.chaospersists.util.GenericTargetSorter;
-import com.astryxion.chaospersists.util.MobStats;
-import com.astryxion.chaospersists.util.MyUtils;
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
+import com.astryxion.chaospersists.util.GenericTargetSorter;
+import com.astryxion.chaospersists.util.MyUtils;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAIHurtByTarget;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAIMoveThroughVillage;
-import net.minecraft.entity.ai.EntityAIPanic;
-import net.minecraft.entity.ai.EntityAISwimming;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.EntityAIWander;
-import net.minecraft.entity.ai.EntityAIWatchClosest;
-import net.minecraft.entity.ai.EntitySenses;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.monster.EntityPigZombie;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.entity.projectile.EntitySmallFireball;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import org.joml.Vector3f;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.MoveThroughVillageGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.ZombifiedPiglin;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.SmallFireball;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.core.BlockPos;
 
-public class Kyuubi
-extends EntityMob {
-    private GenericTargetSorter TargetSorter = null;
-    private float moveSpeed = 0.25f;
+public class Kyuubi extends Monster {
+    private final GenericTargetSorter targetSorter;
+    private final float moveSpeed = 0.25f;
 
-    public Kyuubi(World par1World) {
-        super(par1World);
-        this.setSize(0.5f, 1.25f);
-                this.experienceValue = 30;
-                this.isImmuneToFire = true;
-        this.tasks.addTask(0, (EntityAIBase)new EntityAISwimming((EntityLiving)this));
-        this.tasks.addTask(1, (EntityAIBase)new EntityAIPanic((EntityCreature)this, 1.350000023841858));
-        this.tasks.addTask(2, (EntityAIBase)new EntityAIMoveThroughVillage((EntityCreature)this, 1.0, false));
-        this.tasks.addTask(3, (EntityAIBase)new EntityAIWander((EntityCreature)this, 1.0));
-        this.tasks.addTask(4, (EntityAIBase)new EntityAIWatchClosest((EntityLiving)this, EntityPlayer.class, 10.0f));
-        this.tasks.addTask(5, (EntityAIBase)new EntityAILookIdle((EntityLiving)this));
-        this.targetTasks.addTask(1, (EntityAIBase)new EntityAIHurtByTarget((EntityCreature)this, false));
-        this.TargetSorter = new GenericTargetSorter((Entity)this);
+    public Kyuubi(EntityType<? extends Kyuubi> type, Level level) {
+        super(type, level);
+        this.xpReward = 30;
+        this.fireImmune();
+        this.targetSorter = new GenericTargetSorter(this);
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.350000023841858));
+        this.goalSelector.addGoal(2, new MoveThroughVillageGoal(this, 1.0, false, 14, () -> false));
+        this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0));
+        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 10.0f));
+        this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
     }
 
-    protected void entityInit() {
-        super.entityInit();
+    public static AttributeSupplier.Builder createAttributes() {
+        return Monster.createMonsterAttributes()
+                .add(Attributes.MAX_HEALTH, (double) ChaosPersists.Kyuubi_stats.health)
+                .add(Attributes.MOVEMENT_SPEED, 0.25)
+                .add(Attributes.ATTACK_DAMAGE, (double) ChaosPersists.Kyuubi_stats.attack)
+                .add(Attributes.ARMOR, (double) ChaosPersists.Kyuubi_stats.defense);
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue((double)ChaosPersists.Kyuubi_stats.attack);
+    @Override
+    public void tick() {
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
+        super.tick();
+        if (this.getRandom().nextInt(10) == 1) {
+            if (this.level().isClientSide) {
+                this.level()
+                        .addParticle(
+                                new DustParticleOptions(new Vector3f(0.5f, 0.5f, 0.5f), 1.0f),
+                                this.getX(),
+                                this.getY() + 2.0,
+                                this.getZ(),
+                                0.0,
+                                0.0,
+                                0.0);
+                this.level()
+                        .addParticle(
+                                ParticleTypes.LAVA,
+                                this.getX(),
+                                this.getY() + 2.0,
+                                this.getZ(),
+                                0.0,
+                                0.0,
+                                0.0);
+                if (this.isInWater()) {
+                    this.level()
+                            .addParticle(
+                                    ParticleTypes.SMOKE,
+                                    this.getX(),
+                                    this.getY() + 1.75,
+                                    this.getZ(),
+                                    0.0,
+                                    0.0,
+                                    0.0);
+                    this.level()
+                            .addParticle(
+                                    ParticleTypes.LARGE_SMOKE,
+                                    this.getX(),
+                                    this.getY() + 1.75,
+                                    this.getZ(),
+                                    0.0,
+                                    0.0,
+                                    0.0);
+                    this.level()
+                            .addParticle(
+                                    ParticleTypes.SMOKE,
+                                    this.getX(),
+                                    this.getY() + 2.0,
+                                    this.getZ(),
+                                    0.0,
+                                    0.0,
+                                    0.0);
+                    this.level()
+                            .addParticle(
+                                    ParticleTypes.LARGE_SMOKE,
+                                    this.getX(),
+                                    this.getY() + 2.0,
+                                    this.getZ(),
+                                    0.0,
+                                    0.0,
+                                    0.0);
+                }
+            } else {
+                this.setRemainingFireTicks(100);
+                if (this.isInWater()) {
+                    this.hurt(this.damageSources().mobAttack(this), (float) ChaosPersists.Kyuubi_stats.attack);
+                }
+            }
+        }
     }
 
-    protected boolean canDespawn() {
-        if (this.isNoDespawnRequired()) {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        if (this.isPersistenceRequired()) {
             return false;
         }
         return true;
-    }
-
-    public void onUpdate() {
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        super.onUpdate();
     }
 
     public int mygetMaxHealth() {
         return ChaosPersists.Kyuubi_stats.health;
     }
 
-    public int getTotalArmorValue() {
+    @Override
+    public int getArmorValue() {
         return ChaosPersists.Kyuubi_stats.defense;
     }
 
-    protected boolean isAIEnabled() {
-        return true;
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return ChaosSounds.KYUUBI_LIVING;
     }
 
-    public void onLivingUpdate() {
-        super.onLivingUpdate();
-        if (this.world.rand.nextInt(10) == 1) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.REDSTONE, this.posX, this.posY + 2.0, this.posZ, 0.0, 0.0, 0.0);
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.LAVA, this.posX, this.posY + 2.0, this.posZ, 0.0, 0.0, 0.0);
-            this.setFire(5);
-            if (this.isInWater()) {
-                this.attackEntityAsMob((Entity)this);
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, this.posX, this.posY + 1.75, this.posZ, 0.0, 0.0, 0.0);
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_LARGE, this.posX, this.posY + 1.75, this.posZ, 0.0, 0.0, 0.0);
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, this.posX, this.posY + 2.0, this.posZ, 0.0, 0.0, 0.0);
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_LARGE, this.posX, this.posY + 2.0, this.posZ, 0.0, 0.0, 0.0);
-            }
-        }
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return ChaosSounds.ALO_HURT;
     }
 
-    public int getAttackStrength(Entity par1Entity) {
-        return 3;
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ChaosSounds.ALO_DEATH;
     }
 
-    protected net.minecraft.util.SoundEvent getAmbientSound() {
-        return com.astryxion.chaospersists.core.ChaosSounds.KYUUBI_LIVING;
-    }
-
-    protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource damageSource) {
-        return com.astryxion.chaospersists.core.ChaosSounds.ALO_HURT;
-    }
-
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return com.astryxion.chaospersists.core.ChaosSounds.ALO_DEATH;
-    }
-
+    @Override
     protected float getSoundVolume() {
         return 0.75f;
     }
 
-    protected float getSoundPitch() {
-        return 1.0f;
-    }
-
-    protected Item getDropItem() {
-        int i = this.world.rand.nextInt(6);
-        if (i == 0) {
-            return Items.GOLD_NUGGET;
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        int var4;
+        for (var4 = 0; var4 < 10; ++var4) {
+            this.dropItemRand(Items.COAL, 1);
         }
-        if (i == 1) {
-            return ChaosPersists.UraniumNugget;
+        for (var4 = 0; var4 < 3; ++var4) {
+            this.dropItemRand(Items.REDSTONE_BLOCK, 1);
         }
-        if (i == 2) {
-            return ChaosPersists.TitaniumNugget;
+        for (var4 = 0; var4 < 4; ++var4) {
+            this.dropItemRand(Blocks.QUARTZ_BLOCK.asItem(), 1);
         }
-        return null;
     }
 
-    public void initCreature() {
+    private void dropItemRand(Item index, int count) {
+        ItemEntity entityItem =
+                new ItemEntity(
+                        this.level(),
+                        this.getX() + ChaosPersists.ChaosRand.nextInt(4) - ChaosPersists.ChaosRand.nextInt(4),
+                        this.getY() + 1.0,
+                        this.getZ() + ChaosPersists.ChaosRand.nextInt(4) - ChaosPersists.ChaosRand.nextInt(4),
+                        new ItemStack(index, count));
+        this.level().addFreshEntity(entityItem);
     }
 
-    public boolean interact(EntityPlayer par1EntityPlayer) {
-        return false;
-    }
-
-    protected void updateAITasks() {
-        EntityLivingBase e;
-        if (this.isDead) {
+    @Override
+    protected void customServerAiStep() {
+        if (this.isDeadOrDying()) {
             return;
         }
-        if (this.world.rand.nextInt(200) == 1) {
-            this.setRevengeTarget(null);
+        if (this.getRandom().nextInt(200) == 1) {
+            this.setLastHurtByMob(null);
         }
-        super.updateAITasks();
-        if (this.world.rand.nextInt(10) == 1 && (e = this.findSomethingToAttack()) != null) {
-            this.faceEntity((Entity)e, 10.0f, 10.0f);
-            this.getNavigator().tryMoveToEntityLiving((Entity)e, 1.25);
-            if (this.getDistanceSq((Entity)e) < 64.0 && (this.rand.nextInt(6) == 0 || this.rand.nextInt(8) == 1)) {
-                EntitySmallFireball var2 = new EntitySmallFireball(this.world, (EntityLivingBase)this, e.posX - this.posX, e.posY + 0.75 - (this.posY + 1.25), e.posZ - this.posZ);
-                var2.setLocationAndAngles(this.posX, this.posY + 1.25, this.posZ, this.rotationYaw, this.rotationPitch);
-                this.world.playSound(this.posX, this.posY, this.posZ, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("random.bow")), net.minecraft.util.SoundCategory.HOSTILE, 0.75f, 1.0f / (this.getRNG().nextFloat() * 0.4f + 0.8f), false);
-                this.world.spawnEntity((Entity)var2);
+        super.customServerAiStep();
+        LivingEntity target;
+        if (this.getRandom().nextInt(10) == 1 && (target = this.findSomethingToAttack()) != null) {
+            this.getLookControl().setLookAt(target, 10.0f, 10.0f);
+            this.getNavigation().moveTo(target, 1.25);
+            if (this.distanceToSqr(target) < 64.0
+                    && (this.getRandom().nextInt(6) == 0 || this.getRandom().nextInt(8) == 1)) {
+                SmallFireball fireball =
+                        new SmallFireball(
+                                this.level(),
+                                this,
+                                target.getX() - this.getX(),
+                                target.getY() + 0.75 - (this.getY() + 1.25),
+                                target.getZ() - this.getZ());
+                fireball.moveTo(this.getX(), this.getY() + 1.25, this.getZ(), this.getYRot(), this.getXRot());
+                this.level()
+                        .playSound(
+                                null,
+                                this.getX(),
+                                this.getY(),
+                                this.getZ(),
+                                SoundEvents.ARROW_SHOOT,
+                                this.getSoundSource(),
+                                0.75f,
+                                1.0f / (this.getRandom().nextFloat() * 0.4f + 0.8f));
+                this.level().addFreshEntity(fireball);
             }
         }
     }
 
-    private boolean isSuitableTarget(EntityLivingBase par1EntityLiving, boolean par2) {
+    private boolean isSuitableTarget(LivingEntity par1EntityLiving, boolean par2) {
         if (par1EntityLiving == null) {
             return false;
         }
         if (par1EntityLiving == this) {
             return false;
         }
-        if (!par1EntityLiving.isEntityAlive()) {
+        if (!par1EntityLiving.isAlive()) {
             return false;
         }
-        if (MyUtils.isIgnoreable((EntityLivingBase)par1EntityLiving)) {
+        if (MyUtils.isIgnoreable(par1EntityLiving)) {
             return false;
         }
-        if (!this.getEntitySenses().canSee((Entity)par1EntityLiving)) {
+        if (!this.getSensing().hasLineOfSight(par1EntityLiving)) {
             return false;
         }
-        if (par1EntityLiving instanceof EntityMob) {
+        if (par1EntityLiving instanceof Monster) {
             return false;
         }
-        if (par1EntityLiving instanceof EntityPigZombie) {
+        if (par1EntityLiving instanceof ZombifiedPiglin) {
             return false;
         }
-        if (par1EntityLiving instanceof EntityPlayer) {
-            EntityPlayer p = (EntityPlayer)par1EntityLiving;
-            if (p.capabilities.isCreativeMode) {
+        if (par1EntityLiving instanceof Player player) {
+            if (player.getAbilities().instabuild) {
                 return false;
             }
         }
         return true;
     }
 
-    private EntityLivingBase findSomethingToAttack() {
+    private LivingEntity findSomethingToAttack() {
         if (ChaosPersists.PlayNicely != 0) {
             return null;
         }
-        List var5 = this.world.getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox().expand(12.0, 4.0, 12.0));
-        Collections.sort(var5, this.TargetSorter);
-        Iterator var2 = var5.iterator();
-        Entity var3 = null;
-        EntityLivingBase var4 = null;
-        while (var2.hasNext()) {
-            var3 = (Entity)var2.next();
-            var4 = (EntityLivingBase)var3;
-            if (!this.isSuitableTarget(var4, false)) continue;
-            return var4;
+        List<LivingEntity> candidates =
+                this.level()
+                        .getEntitiesOfClass(
+                                LivingEntity.class,
+                                this.getBoundingBox().inflate(12.0, 4.0, 12.0));
+        Collections.sort(candidates, this.targetSorter);
+        Iterator<LivingEntity> it = candidates.iterator();
+        while (it.hasNext()) {
+            LivingEntity candidate = it.next();
+            if (!this.isSuitableTarget(candidate, false)) {
+                continue;
+            }
+            return candidate;
         }
         return null;
     }
 
-    public boolean getCanSpawnHere() {
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
         return true;
     }
 
-    private void dropItemRand(Item index, int par1) {
-        EntityItem var3 = new EntityItem(this.world, this.posX + (double)ChaosPersists.ChaosRand.nextInt(4) - (double)ChaosPersists.ChaosRand.nextInt(4), this.posY + 1.0, this.posZ + (double)ChaosPersists.ChaosRand.nextInt(4) - (double)ChaosPersists.ChaosRand.nextInt(4), new ItemStack(index, par1, 0));
-        this.world.spawnEntity((Entity)var3);
-    }
-
-    protected void dropFewItems(boolean par1, int par2) {
-        int var4;
-        for (var4 = 0; var4 < 10; ++var4) {
-            this.dropItemRand(Items.COAL, 1);
-        }
-        for (var4 = 0; var4 < 3; ++var4) {
-            this.dropItemRand(Item.getItemFromBlock((Block)Blocks.REDSTONE_BLOCK), 1);
-        }
-        for (var4 = 0; var4 < 4; ++var4) {
-            this.dropItemRand(Item.getItemFromBlock((Block)Blocks.QUARTZ_BLOCK), 1);
-        }
+    public static boolean checkKyuubiSpawnRules(
+            EntityType<Kyuubi> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        return Monster.checkMonsterSpawnRules(type, level, spawnType, pos, random);
     }
 }
-

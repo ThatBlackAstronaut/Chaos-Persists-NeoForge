@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "chaospersists:items/oresquid"
+    "layer0": "chaospersists:block/oresquid"
   }
 }

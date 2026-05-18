@@ -1,164 +1,119 @@
 package com.astryxion.chaospersists.block;
 
+import com.astryxion.chaospersists.core.ChaosPersists;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraftforge.common.IForgeShearable;
 
-import com.astryxion.chaospersists.core.ChaosPersists;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockLeaves;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.state.BlockStateContainer;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
-public class BlockScaryLeaves extends BlockLeaves {
+public class BlockScaryLeaves extends LeavesBlock implements IForgeShearable {
 
     public BlockScaryLeaves() {
-        this.setSoundType(SoundType.PLANT);
-        this.setTickRandomly(true);
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
-        this.setDefaultState(
-                this.blockState.getBaseState()
-                        .withProperty(DECAYABLE, true)
-                        .withProperty(CHECK_DECAY, true)
-        );
+        super(net.minecraft.world.level.block.Block.Properties.copy(Blocks.OAK_LEAVES).sound(SoundType.GRASS).randomTicks());
     }
 
     @Override
-    protected BlockStateContainer createBlockState() {
-        return new BlockStateContainer(this, DECAYABLE, CHECK_DECAY);
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        return Collections.singletonList(new ItemStack(this));
     }
 
     @Override
-    public IBlockState getStateFromMeta(int meta) {
-        return this.getDefaultState()
-                .withProperty(DECAYABLE, (meta & 8) != 0)
-                .withProperty(CHECK_DECAY, (meta & 4) != 0);
+    public boolean isShearable(ItemStack item, Level level, BlockPos pos) {
+        return true;
     }
 
     @Override
-    public int getMetaFromState(IBlockState state) {
-        int i = 0;
-        if (state.getValue(CHECK_DECAY)) i |= 4;
-        if (state.getValue(DECAYABLE)) i |= 8;
-        return i;
-    }
-
-    @Override
-    public net.minecraft.block.BlockPlanks.EnumType getWoodType(int meta) {
-        return net.minecraft.block.BlockPlanks.EnumType.OAK;
-    }
-
-    @Override
-    public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> items) {
-        items.add(new ItemStack(this));
-    }
-
-    @Override
-    public List<ItemStack> onSheared(ItemStack item, IBlockAccess world, BlockPos pos, int fortune) {
+    public List<ItemStack> onSheared(
+            net.minecraft.world.entity.player.Player player, ItemStack item, Level level, BlockPos pos, int fortune) {
         return Collections.singletonList(new ItemStack(this));
     }
 
     /** OreSpawn 1.7.10: 1/25 cherry or peach at {@code dropPos}. */
-    private void maybeDropCherryOrPeach(World world, BlockPos dropPos, Random rand) {
-        if (world.isRemote || rand.nextInt(25) != 1) {
+    private void maybeDropCherryOrPeach(ServerLevel level, BlockPos dropPos, RandomSource rand) {
+        if (rand.nextInt(25) != 1) {
             return;
         }
         if (this == ChaosPersists.MyCherryLeaves) {
-            Block.spawnAsEntity(world, dropPos, new ItemStack(ChaosPersists.MyCherry));
+            popResource(level, dropPos, new ItemStack(ChaosPersists.MyCherry));
         } else if (this == ChaosPersists.MyPeachLeaves) {
-            Block.spawnAsEntity(world, dropPos, new ItemStack(ChaosPersists.MyPeach));
+            popResource(level, dropPos, new ItemStack(ChaosPersists.MyPeach));
         }
     }
 
     @Override
-    public void dropBlockAsItemWithChance(World world, BlockPos pos, IBlockState state, float chance, int fortune) {
-        maybeDropCherryOrPeach(world, pos, world.rand);
-        super.dropBlockAsItemWithChance(world, pos, state, chance, fortune);
-    }
-
-    /**
-     * Cherry/peach leaves are not oak: skip vanilla saplings/sticks/apples from {@link BlockLeaves#dropApple}.
-     * Fruit is handled in {@link #dropBlockAsItemWithChance} via {@link #maybeDropCherryOrPeach}.
-     */
-    @Override
-    protected void dropApple(World worldIn, BlockPos pos, IBlockState state, int fortune) {
-        if (this == ChaosPersists.MyCherryLeaves || this == ChaosPersists.MyPeachLeaves) {
-            return;
-        }
-        super.dropApple(worldIn, pos, state, fortune);
+    public void spawnAfterBreak(
+            BlockState state, ServerLevel level, BlockPos pos, ItemStack tool, boolean dropExperience) {
+        maybeDropCherryOrPeach(level, pos, level.getRandom());
+        super.spawnAfterBreak(state, level, pos, tool, dropExperience);
     }
 
     @Override
-    public int quantityDropped(Random random) {
-        return 1;
-    }
-
-    @Override
-    public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) {
-        int par2 = pos.getX(), par3 = pos.getY(), par4 = pos.getZ();
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource rand) {
+        int par2 = pos.getX();
+        int par3 = pos.getY();
+        int par4 = pos.getZ();
         int var7 = 2;
-        if (!world.isRemote && world.isAreaLoaded(pos.add(-var7, -var7, -var7), pos.add(var7, var7, var7))) {
+        if (level.hasChunksAt(
+                new BlockPos(par2 - var7, par3 - var7, par4 - var7),
+                new BlockPos(par2 + var7, par3 + var7, par4 + var7))) {
             for (int var12 = -var7; var12 <= var7; ++var12) {
                 for (int var13 = -var7; var13 <= 0; ++var13) {
                     for (int var14 = -var7; var14 <= var7; ++var14) {
                         Block bid;
                         BlockPos off = new BlockPos(par2 + var12, par3 + var13, par4 + var14);
                         int totaldist = Math.abs(var12) + Math.abs(var13) + Math.abs(var14);
-                        if (totaldist > 3
-                                || (bid = world.getBlockState(off).getBlock()) == null
-                                || !bid.canSustainLeaves(world.getBlockState(off), world, off)) {
+                        BlockState offState = level.getBlockState(off);
+                        bid = offState.getBlock();
+                        if (totaldist > 3 || !offState.isFaceSturdy(level, off, net.minecraft.core.Direction.UP)) {
                             continue;
                         }
-                        long t = world.getWorldTime();
+                        long t = level.getDayTime();
                         if (this == ChaosPersists.MyScaryLeaves && (t %= 24000L) < 12000L) {
-                            ChaosPersists.setBlockFast(world, par2, par3, par4, ChaosPersists.MyAppleLeaves, 0, 3);
+                            level.setBlock(
+                                    new BlockPos(par2, par3, par4),
+                                    ChaosPersists.MyAppleLeaves.defaultBlockState(),
+                                    2);
                         }
-                        if (world.getBlockState(new BlockPos(par2, par3 - 1, par4)).getBlock() == Blocks.AIR
-                                && world.rand.nextInt(20) == 3) {
-                            maybeDropCherryOrPeach(world, new BlockPos(par2, par3 - 1, par4), world.rand);
+                        if (level.getBlockState(new BlockPos(par2, par3 - 1, par4)).isAir()
+                                && level.getRandom().nextInt(20) == 3) {
+                            maybeDropCherryOrPeach(level, new BlockPos(par2, par3 - 1, par4), level.getRandom());
                         }
                         return;
                     }
                 }
             }
-            removeLeaves(world, par2, par3, par4);
+            removeLeaves(level, par2, par3, par4);
         }
     }
 
-    private void removeLeaves(World world, int par2, int par3, int par4) {
-        BlockPos pos = new BlockPos(par2, par3, par4);
-        IBlockState st = world.getBlockState(pos);
-        dropBlockAsItemWithChance(world, pos, st, 1.0F, 0);
-        world.setBlockState(pos, Blocks.AIR.getDefaultState(), 2);
+    private void removeLeaves(ServerLevel level, int par2, int par3, int par4) {
+        BlockPos blockPos = new BlockPos(par2, par3, par4);
+        BlockState st = level.getBlockState(blockPos);
+        spawnAfterBreak(st, level, blockPos, ItemStack.EMPTY, false);
+        level.setBlock(blockPos, Blocks.AIR.defaultBlockState(), 2);
     }
 
     @Override
-    public boolean isOpaqueCube(IBlockState state) {
+    public boolean skipRendering(BlockState state, BlockState adjacentState, Direction side) {
+        if (ChaosPersists.FastGraphicsLeaves == 0 && adjacentState.getBlock() == this) {
+            return true;
+        }
+        return super.skipRendering(state, adjacentState, side);
+    }
+
+    @Override
+    public boolean useShapeForLightOcclusion(BlockState state) {
         return ChaosPersists.FastGraphicsLeaves != 0;
-    }
-
-    @Override
-    public boolean shouldSideBeRendered(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
-        Block block = world.getBlockState(pos.offset(side)).getBlock();
-        return ChaosPersists.FastGraphicsLeaves == 0 || block != this;
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.TRANSLUCENT;
     }
 }

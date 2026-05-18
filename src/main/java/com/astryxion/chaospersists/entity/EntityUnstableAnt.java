@@ -1,95 +1,68 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.EntityAnt
- *  com.astryxion.chaospersists.EntityUnstableAnt
- *  com.astryxion.chaospersists.MyEntityAIWanderALot
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.ChaosTeleporter
- *  net.minecraft.entity.EntityCreature
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAIPanic
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.EntityPlayerMP
- *  net.minecraft.entity.player.InventoryPlayer
- *  net.minecraft.item.ItemStack
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.server.MinecraftServer
- *  net.minecraft.server.management.PlayerList
- *  net.minecraft.world.Teleporter
- *  net.minecraft.world.World
- *  net.minecraft.world.WorldServer
- */
 package com.astryxion.chaospersists.entity;
 
-import com.astryxion.chaospersists.entity.EntityAnt;
-import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import com.astryxion.chaospersists.core.ChaosTeleporter;
-import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAIPanic;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.management.PlayerList;
-import net.minecraft.world.Teleporter;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
+import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
+import com.astryxion.chaospersists.world.dimension.teleporter.UtopiaTeleporter;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
-public class EntityUnstableAnt
-extends EntityAnt {
-    public EntityUnstableAnt(World par1World) {
-        super(par1World);
-        this.setSize(0.1f, 0.1f);
-        this.experienceValue = 0;
-                this.tasks.addTask(0, (EntityAIBase)new EntityAIPanic((EntityCreature)this, 1.399999976158142));
-        this.tasks.addTask(1, (EntityAIBase)new MyEntityAIWanderALot((EntityCreature)this, 9, 1.0));
+public class EntityUnstableAnt extends EntityAnt {
+    public EntityUnstableAnt(EntityType<? extends EntityUnstableAnt> type, Level level) {
+        super(type, level);
+        this.xpReward = 0;
+        this.goalSelector.addGoal(0, new PanicGoal(this, 1.399999976158142));
+        this.goalSelector.addGoal(1, new MyEntityAIWanderALot(this, 9, 1.0));
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(this.moveSpeed);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(0.0);
+    public static AttributeSupplier.Builder createAttributes() {
+        return Animal.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 1.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.15000000596046448)
+                .add(Attributes.ATTACK_DAMAGE, 0.0);
     }
 
-    public boolean interact(EntityPlayer par1EntityPlayer) {
-        if (par1EntityPlayer == null) {
-            return false;
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (hand != InteractionHand.MAIN_HAND) {
+            return InteractionResult.PASS;
         }
-        if (!(par1EntityPlayer instanceof EntityPlayerMP)) {
-            return false;
+        if (player == null) {
+            return InteractionResult.PASS;
         }
-        ItemStack var2 = par1EntityPlayer.inventory.getCurrentItem();
-        if (var2 != null && var2.getCount() <= 0) {
-            par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, ItemStack.EMPTY);
-            var2 = null;
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return InteractionResult.PASS;
         }
-        if (var2 != null) {
-            return false;
+        ItemStack var2 = player.getMainHandItem();
+        if (!var2.isEmpty() && var2.getCount() <= 0) {
+            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            var2 = ItemStack.EMPTY;
         }
-        net.minecraft.server.MinecraftServer server = this.world.getMinecraftServer();
-        if (server != null) {
-            if (par1EntityPlayer.dimension != ChaosPersists.getDimension(4)) {
-                server.getPlayerList().transferPlayerToDimension((EntityPlayerMP)par1EntityPlayer, ChaosPersists.getDimension(4), (Teleporter)new ChaosTeleporter(server.getWorld(ChaosPersists.getDimension(4)), ChaosPersists.getDimension(4), this.world));
-            } else {
-                server.getPlayerList().transferPlayerToDimension((EntityPlayerMP)par1EntityPlayer, 0, (Teleporter)new ChaosTeleporter(server.getWorld(0), 0, this.world));
-            }
+        if (!var2.isEmpty()) {
+            return InteractionResult.PASS;
         }
-        return true;
+        if (serverPlayer.server == null) {
+            return InteractionResult.PASS;
+        }
+        ResourceKey<Level> targetDim =
+                player.level().dimension().equals(ChaosPersists.getDimensionKey(4))
+                        ? Level.OVERWORLD
+                        : ChaosPersists.getDimensionKey(4);
+        ServerLevel world = serverPlayer.server.getLevel(targetDim);
+        if (world == null) {
+            return InteractionResult.FAIL;
+        }
+        serverPlayer.changeDimension(world, new UtopiaTeleporter(serverPlayer.getX(), serverPlayer.getZ()));
+        return InteractionResult.SUCCESS;
     }
 }
-

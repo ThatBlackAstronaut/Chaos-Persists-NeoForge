@@ -1,305 +1,329 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.RockBase
- *  net.minecraft.entity.DataWatcher
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.nbt.NBTTagCompound
- *  net.minecraft.util.DamageSource
- *  net.minecraft.world.World
- *  net.minecraft.world.WorldProvider
- */
 package com.astryxion.chaospersists.entity;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.DamageSource;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldProvider;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
-public class RockBase
-extends EntityLiving {
-    private static final DataParameter<Integer> ROCK_TYPE = EntityDataManager.createKey(RockBase.class, DataSerializers.VARINT);
+public class RockBase extends Mob {
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> ROCK_TYPE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(
+                    RockBase.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     public int rock_type = 0;
     private double dx;
     private double dz;
 
-    public RockBase(World par1World) {
-        super(par1World);
-        this.setSize(0.25f, 0.15f);
-                this.isImmuneToFire = true;
+    public RockBase(EntityType<? extends RockBase> type, Level level) {
+        super(type, level);
         this.dz = 0.0;
         this.dx = 0.0;
     }
 
-    protected void entityInit() {
-        super.entityInit();
-        this.getDataManager().register(ROCK_TYPE, 0);
+    public static AttributeSupplier.Builder createAttributes() {
+        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 1.0);
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
+    @Override
+    public boolean fireImmune() {
+        return true;
     }
 
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-        Entity e = par1DamageSource.getTrueSource();
-        if (par1DamageSource.getDamageType().equals("inWall")) {
+    @Override
+    protected void registerGoals() {
+    }
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(ROCK_TYPE, 0);
+    }
+
+    @Override
+    public boolean hurt(DamageSource par1DamageSource, float par2) {
+        Entity e = par1DamageSource.getEntity();
+        if ("inWall".equals(par1DamageSource.getMsgId())) {
             return false;
         }
-        if (e != null && e instanceof EntityLivingBase) {
-            this.playSound(net.minecraft.init.SoundEvents.ENTITY_ITEM_PICKUP, 0.75f, 2.25f);
+        if (e instanceof LivingEntity) {
+            this.playSound(SoundEvents.ITEM_PICKUP, 0.75f, 2.25f);
         }
-        return super.attackEntityFrom(par1DamageSource, par2);
+        return super.hurt(par1DamageSource, par2);
     }
 
     public int getRockType() {
-        return this.getDataManager().get(ROCK_TYPE).intValue();
+        return this.entityData.get(ROCK_TYPE);
     }
 
     public void setRockType(int par1) {
-        if (this.world == null) {
+        if (this.level() == null) {
             return;
         }
-        if (this.world.isRemote) {
+        if (this.level().isClientSide) {
             return;
         }
-        this.getDataManager().set(ROCK_TYPE, par1);
+        this.entityData.set(ROCK_TYPE, par1);
     }
 
     public void placeRock(int par1) {
         this.rock_type = par1;
         this.setRockType(par1);
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)(1 + this.rock_type / 4));
-        this.setHealth((float)(1 + this.rock_type / 4));
+        this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH)
+                .setBaseValue(1.0 + this.rock_type / 4.0);
+        this.setHealth((float) (1 + this.rock_type / 4));
     }
 
-    public int getTotalArmorValue() {
-        return 0;
+    @Override
+    public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {
+        return false;
     }
 
-    public void fall(float distance, float damageMultiplier) {
+    @Override
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, net.minecraft.core.BlockPos pos) {
+        this.fallDistance = 0.0f;
     }
 
-    protected void updateFallState(double y, boolean onGroundIn, net.minecraft.block.state.IBlockState state, net.minecraft.util.math.BlockPos pos) {
-        fallDistance = 0.0f;
-    }
-
-    public void onUpdate() {
+    @Override
+    public void tick() {
         if (this.dx == 0.0 && this.dz == 0.0) {
-            this.dx = this.posX;
-            this.dz = this.posZ;
+            this.dx = this.getX();
+            this.dz = this.getZ();
         }
-        super.onUpdate();
-        this.rotationPitch = 0.0f;
-        this.rotationYawHead = 0.0f;
-        this.rotationYaw = 0.0f;
-        if (this.world.isRemote) {
+        super.tick();
+        this.setXRot(0.0f);
+        this.setYHeadRot(0.0f);
+        this.setYRot(0.0f);
+        if (this.level().isClientSide) {
             this.rock_type = this.getRockType();
         }
-        if (!this.world.isRemote && this.rock_type == 0) {
-            if (this.world.provider.getDimension() != ChaosPersists.getDimension(5)) {
+        if (!this.level().isClientSide && this.rock_type == 0) {
+            if (!this.level().dimension().equals(ChaosPersists.getDimensionKey(5))) {
                 this.rock_type = 1;
-                if (this.world.rand.nextInt(10) == 0) {
+                if (this.getRandom().nextInt(10) == 0) {
                     this.rock_type = 2;
                 }
-                if (this.world.rand.nextInt(20) == 0) {
+                if (this.getRandom().nextInt(20) == 0) {
                     this.rock_type = 3;
                 }
-                if (this.world.rand.nextInt(30) == 0) {
+                if (this.getRandom().nextInt(30) == 0) {
                     this.rock_type = 4;
                 }
-                if (this.world.rand.nextInt(40) == 0) {
+                if (this.getRandom().nextInt(40) == 0) {
                     this.rock_type = 5;
                 }
-                if (this.world.rand.nextInt(50) == 0) {
+                if (this.getRandom().nextInt(50) == 0) {
                     this.rock_type = 6;
                 }
-                if (this.world.rand.nextInt(100) == 0) {
+                if (this.getRandom().nextInt(100) == 0) {
                     this.rock_type = 7;
                 }
-                if (this.world.rand.nextInt(200) == 0) {
+                if (this.getRandom().nextInt(200) == 0) {
                     this.rock_type = 8;
                 }
-                if (this.world.rand.nextInt(500) == 0) {
+                if (this.getRandom().nextInt(500) == 0) {
                     this.rock_type = 9;
                 }
-                if (this.world.rand.nextInt(500) == 0) {
+                if (this.getRandom().nextInt(500) == 0) {
                     this.rock_type = 10;
                 }
-                if (this.world.rand.nextInt(500) == 0) {
+                if (this.getRandom().nextInt(500) == 0) {
                     this.rock_type = 11;
                 }
-                if (this.world.rand.nextInt(1000) == 0) {
+                if (this.getRandom().nextInt(1000) == 0) {
                     this.rock_type = 12;
                 }
             } else {
                 this.rock_type = 9;
-                if (this.world.rand.nextInt(3) == 0) {
+                if (this.getRandom().nextInt(3) == 0) {
                     this.rock_type = 10;
                 }
-                if (this.world.rand.nextInt(5) == 0) {
+                if (this.getRandom().nextInt(5) == 0) {
                     this.rock_type = 11;
                 }
-                if (this.world.rand.nextInt(10) == 0) {
+                if (this.getRandom().nextInt(10) == 0) {
                     this.rock_type = 12;
                 }
             }
-            this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)(1 + this.rock_type / 4));
-            this.setHealth((float)(1 + this.rock_type / 4));
+            this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH)
+                    .setBaseValue(1.0 + this.rock_type / 4.0);
+            this.setHealth((float) (1 + this.rock_type / 4));
         }
-        if (!this.world.isRemote) {
+        if (!this.level().isClientSide) {
             this.setRockType(this.rock_type);
         }
-        if (this.world.isRemote) {
-            if (this.rock_type == 9 && this.world.rand.nextInt(20) == 0) {
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FLAME, this.posX, this.posY, this.posZ, (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 60.0f), (double)(this.world.rand.nextFloat() / 10.0f), (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 60.0f));
+        if (this.level().isClientSide) {
+            if (this.rock_type == 9 && this.getRandom().nextInt(20) == 0) {
+                this.level()
+                        .addParticle(
+                                ParticleTypes.FLAME,
+                                this.getX(),
+                                this.getY(),
+                                this.getZ(),
+                                (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 60.0f,
+                                this.getRandom().nextFloat() / 10.0f,
+                                (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 60.0f);
             }
-            if (this.rock_type == 10 && this.world.rand.nextInt(20) == 0) {
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.VILLAGER_HAPPY, this.posX, this.posY + 0.25, this.posZ, (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 60.0f), (double)(this.world.rand.nextFloat() / 2.0f), (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 60.0f));
+            if (this.rock_type == 10 && this.getRandom().nextInt(20) == 0) {
+                this.level()
+                        .addParticle(
+                                ParticleTypes.HAPPY_VILLAGER,
+                                this.getX(),
+                                this.getY() + 0.25,
+                                this.getZ(),
+                                (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 60.0f,
+                                this.getRandom().nextFloat() / 2.0f,
+                                (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 60.0f);
             }
-            if (this.rock_type == 11 && this.world.rand.nextInt(20) == 0) {
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, this.posX, this.posY, this.posZ, (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 60.0f), (double)(this.world.rand.nextFloat() / 10.0f), (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 60.0f));
+            if (this.rock_type == 11 && this.getRandom().nextInt(20) == 0) {
+                this.level()
+                        .addParticle(
+                                ParticleTypes.SMOKE,
+                                this.getX(),
+                                this.getY(),
+                                this.getZ(),
+                                (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 60.0f,
+                                this.getRandom().nextFloat() / 10.0f,
+                                (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 60.0f);
             }
-            if (this.rock_type == 12 && this.world.rand.nextInt(20) == 0) {
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FIREWORKS_SPARK, this.posX, this.posY + 0.25, this.posZ, (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 60.0f), (double)(this.world.rand.nextFloat() / 5.0f), (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 60.0f));
+            if (this.rock_type == 12 && this.getRandom().nextInt(20) == 0) {
+                this.level()
+                        .addParticle(
+                                ParticleTypes.FIREWORK,
+                                this.getX(),
+                                this.getY() + 0.25,
+                                this.getZ(),
+                                (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 60.0f,
+                                this.getRandom().nextFloat() / 5.0f,
+                                (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 60.0f);
             }
         }
     }
 
-    protected net.minecraft.util.SoundEvent getAmbientSound() {
-        return null;
-    }
-
-    protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource damageSource) {
-        return null;
-    }
-
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return null;
-    }
-
+    @Override
     protected float getSoundVolume() {
         return 0.65f;
     }
 
-    protected float getSoundPitch() {
+    @Override
+    public float getVoicePitch() {
         return 1.0f;
     }
 
-    protected Item getDropItem() {
-        return null;
-    }
-
-    public boolean canDespawn() {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return false;
     }
 
-    public boolean getCanSpawnHere() {
-        if (this.posY < 50.0) {
-            return false;
-        }
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        return this.getY() >= 50.0;
+    }
+
+    public static boolean checkRockSpawnRules(
+            EntityType<RockBase> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            net.minecraft.core.BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        return pos.getY() >= 50;
+    }
+
+    @Override
+    public boolean isPickable() {
         return true;
     }
 
-    public boolean canBeCollidedWith() {
+    @Override
+    public boolean isPushable() {
         return true;
     }
 
-    public boolean canBePushed() {
-        return true;
-    }
-
-    public void performHurtAnimation() {
-        this.maxHurtTime = 0;
+    @Override
+    public void animateHurt(float yaw) {
+        this.hurtDuration = 0;
         this.hurtTime = 0;
-        this.attackedAtYaw = 0.0f;
     }
 
-    protected void onDeathUpdate() {
-        this.setDead();
-    }
-
-    public void onDeath(DamageSource par1DamageSource) {
-        this.setDead();
+    @Override
+    public void die(DamageSource par1DamageSource) {
         if (this.rock_type == 1) {
-            this.dropItemRand(ChaosPersists.MySmallRock, 1);
+            dropItemRand(ChaosPersists.MySmallRock, 1);
         }
         if (this.rock_type == 2) {
-            this.dropItemRand(ChaosPersists.MyRock, 1);
+            dropItemRand(ChaosPersists.MyRock, 1);
         }
         if (this.rock_type == 3) {
-            this.dropItemRand(ChaosPersists.MyRedRock, 1);
+            dropItemRand(ChaosPersists.MyRedRock, 1);
         }
         if (this.rock_type == 4) {
-            this.dropItemRand(ChaosPersists.MyGreenRock, 1);
+            dropItemRand(ChaosPersists.MyGreenRock, 1);
         }
         if (this.rock_type == 5) {
-            this.dropItemRand(ChaosPersists.MyBlueRock, 1);
+            dropItemRand(ChaosPersists.MyBlueRock, 1);
         }
         if (this.rock_type == 6) {
-            this.dropItemRand(ChaosPersists.MyPurpleRock, 1);
+            dropItemRand(ChaosPersists.MyPurpleRock, 1);
         }
         if (this.rock_type == 7) {
-            this.dropItemRand(ChaosPersists.MySpikeyRock, 1);
+            dropItemRand(ChaosPersists.MySpikeyRock, 1);
         }
         if (this.rock_type == 8) {
-            this.dropItemRand(ChaosPersists.MyTNTRock, 1);
+            dropItemRand(ChaosPersists.MyTNTRock, 1);
         }
         if (this.rock_type == 9) {
-            this.dropItemRand(ChaosPersists.MyCrystalRedRock, 1);
+            dropItemRand(ChaosPersists.MyCrystalRedRock, 1);
         }
         if (this.rock_type == 10) {
-            this.dropItemRand(ChaosPersists.MyCrystalGreenRock, 1);
+            dropItemRand(ChaosPersists.MyCrystalGreenRock, 1);
         }
         if (this.rock_type == 11) {
-            this.dropItemRand(ChaosPersists.MyCrystalBlueRock, 1);
+            dropItemRand(ChaosPersists.MyCrystalBlueRock, 1);
         }
         if (this.rock_type == 12) {
-            this.dropItemRand(ChaosPersists.MyCrystalTNTRock, 1);
+            dropItemRand(ChaosPersists.MyCrystalTNTRock, 1);
         }
+        super.die(par1DamageSource);
     }
 
     private ItemStack dropItemRand(Item index, int par1) {
-        EntityItem var3 = null;
-        ItemStack is = new ItemStack(index, par1, 0);
-        var3 = new EntityItem(this.world, this.posX + (double)((ChaosPersists.ChaosRand.nextFloat() - ChaosPersists.ChaosRand.nextFloat()) / 3.0f), this.posY + 0.25, this.posZ + (double)((ChaosPersists.ChaosRand.nextFloat() - ChaosPersists.ChaosRand.nextFloat()) / 3.0f), is);
-        if (var3 != null) {
-            this.world.spawnEntity((Entity)var3);
+        ItemStack is = new ItemStack(index, par1);
+        if (index == null) {
+            return is;
         }
+        Vec3 pos = this.position();
+        net.minecraft.world.entity.item.ItemEntity entityItem =
+                new net.minecraft.world.entity.item.ItemEntity(
+                        this.level(),
+                        pos.x + (ChaosPersists.ChaosRand.nextFloat() - ChaosPersists.ChaosRand.nextFloat()) / 3.0f,
+                        pos.y + 0.25,
+                        pos.z + (ChaosPersists.ChaosRand.nextFloat() - ChaosPersists.ChaosRand.nextFloat()) / 3.0f,
+                        is);
+        this.level().addFreshEntity(entityItem);
         return is;
     }
 
-    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {
-        super.writeEntityToNBT(par1NBTTagCompound);
-        par1NBTTagCompound.setInteger("ButterflyType", this.rock_type);
+    @Override
+    public void addAdditionalSaveData(CompoundTag par1NBTTagCompound) {
+        super.addAdditionalSaveData(par1NBTTagCompound);
+        par1NBTTagCompound.putInt("ButterflyType", this.rock_type);
     }
 
-    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound) {
-        super.readEntityFromNBT(par1NBTTagCompound);
-        this.rock_type = par1NBTTagCompound.getInteger("ButterflyType");
+    @Override
+    public void readAdditionalSaveData(CompoundTag par1NBTTagCompound) {
+        super.readAdditionalSaveData(par1NBTTagCompound);
+        this.rock_type = par1NBTTagCompound.getInt("ButterflyType");
     }
 }
-

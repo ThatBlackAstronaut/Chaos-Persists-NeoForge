@@ -1,100 +1,51 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.AntRobot
- *  com.astryxion.chaospersists.GenericTargetSorter
- *  com.astryxion.chaospersists.MobStats
- *  com.astryxion.chaospersists.MyUtils
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.RenderSpiderRobotInfo
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockLiquid
- *  net.minecraft.block.BlockPistonBase
- *  net.minecraft.block.material.Material
- *  net.minecraft.entity.DataWatcher
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAILookIdle
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.EntityAIWatchClosest
- *  net.minecraft.entity.ai.EntitySenses
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.InventoryPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.nbt.NBTTagCompound
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.MathHelper
- *  net.minecraft.world.EnumDifficulty
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import com.astryxion.chaospersists.util.GenericTargetSorter;
-import com.astryxion.chaospersists.util.MobStats;
-import com.astryxion.chaospersists.util.MyUtils;
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
 import com.astryxion.chaospersists.render.RenderSpiderRobotInfo;
+import com.astryxion.chaospersists.util.GenericTargetSorter;
+import com.astryxion.chaospersists.util.MyUtils;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockLiquid;
-import net.minecraft.block.BlockPistonBase;
-import net.minecraft.block.material.Material;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.EntityAIWatchClosest;
-import net.minecraft.entity.ai.EntitySenses;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.play.client.CPacketInput;
-import net.minecraft.network.play.client.CPacketPlayer;
-import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.EnumDifficulty;
-import net.minecraft.world.World;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class AntRobot
-extends EntityLiving {
-    private static final DataParameter<Integer> ATTACKING = EntityDataManager.createKey(AntRobot.class, DataSerializers.VARINT);
+public class AntRobot extends Mob {
+    private static final EntityDataAccessor<Integer> ATTACKING =
+            SynchedEntityData.defineId(AntRobot.class, EntityDataSerializers.INT);
     private int boatPosRotationIncrements;
     private double boatX;
     private double boatY;
@@ -109,42 +60,46 @@ extends EntityLiving {
     private int rideTicker = 0;
     private int owned = 0;
 
-    private Entity getRiddenByEntity() {
-        return this.getPassengers().isEmpty() ? null : this.getPassengers().get(0);
+    public AntRobot(EntityType<? extends AntRobot> type, Level level) {
+        super(type, level);
+        this.TargetSorter = new GenericTargetSorter(this);
+        this.goalSelector.addGoal(1, new LookAtPlayerGoal(this, Player.class, 12.0f));
+        this.goalSelector.addGoal(2, new RandomLookAroundGoal(this));
+        this.xpReward = ChaosPersists.AntRobot_stats.health / 2;
+        this.setPersistenceRequired();
     }
 
-    public AntRobot(World par1World) {
-        super(par1World);
-        // Model is long/tall; old 2.75×1.25 made a thin slab — rays aimed at the body missed (mount/heal/wrench).
-        this.setSize(4.0f, 2.5f);
-        this.TargetSorter = new GenericTargetSorter((Entity)this);
-        this.tasks.addTask(1, (EntityAIBase)new EntityAIWatchClosest((EntityLiving)this, EntityPlayer.class, 12.0f));
-        this.tasks.addTask(2, (EntityAIBase)new EntityAILookIdle((EntityLiving)this));
-        this.isImmuneToFire = true;
-        this.experienceValue = ChaosPersists.AntRobot_stats.health / 2;
+    public AntRobot(Level level, double x, double y, double z) {
+        this(ChaosPersists.ENTITY_TYPE_ANT_ROBOT.get(), level);
+        this.moveTo(x, y + this.getMyRidingOffset(), z, 0.0f, 0.0f);
+        this.setDeltaMovement(Vec3.ZERO);
+        this.xo = x;
+        this.yo = y;
+        this.zo = z;
     }
 
-    public AntRobot(World par1World, double par2, double par4, double par6) {
-        this(par1World);
-        this.setPosition(par2, par4 + (double)this.getYOffset(), par6);
-        this.motionX = 0.0;
-        this.motionY = 0.0;
-        this.motionZ = 0.0;
-        this.prevPosX = par2;
-        this.prevPosY = par4;
-        this.prevPosZ = par6;
+    public static AttributeSupplier.Builder createAttributes() {
+        return Mob.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, (double) ChaosPersists.AntRobot_stats.health)
+                .add(Attributes.MOVEMENT_SPEED, 0.3)
+                .add(Attributes.ATTACK_DAMAGE, (double) ChaosPersists.AntRobot_stats.attack);
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)ChaosPersists.AntRobot_stats.health);
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue((double)ChaosPersists.AntRobot_stats.attack);
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(ATTACKING, 0);
+        this.initLegData();
     }
 
-    protected boolean canDespawn() {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return false;
+    }
+
+    @Override
+    public boolean fireImmune() {
+        return true;
     }
 
     public void setOwned() {
@@ -155,53 +110,56 @@ extends EntityLiving {
         return this.owned;
     }
 
-    public int getTotalArmorValue() {
+    @Override
+    public int getArmorValue() {
         return ChaosPersists.AntRobot_stats.defense;
     }
 
-    protected void updateAITasks() {
-        EntityLivingBase e = null;
-        if (this.isDead) {
+    @Override
+    public void aiStep() {
+        LivingEntity e;
+        if (this.isRemoved()) {
             return;
         }
-        if (this.getRiddenByEntity() != null) {
+        if (this.getControllingPassenger() != null) {
             return;
         }
-        super.updateAITasks();
-        if (this.owned == 0 && this.world.getDifficulty() != EnumDifficulty.PEACEFUL) {
-            if (this.world.rand.nextInt(20) == 0) {
+        super.aiStep();
+        if (this.owned == 0 && this.level().getDifficulty() != Difficulty.PEACEFUL) {
+            if (this.level().getRandom().nextInt(20) == 0) {
                 this.feetFindSomethingToHit();
             }
-            if (this.world.rand.nextInt(150) == 0) {
-                this.setAttackTarget(null);
+            if (this.level().getRandom().nextInt(150) == 0) {
+                this.setTarget(null);
             }
-            if ((e = this.getAttackTarget()) != null && !e.isEntityAlive()) {
-                this.setAttackTarget(null);
+            e = this.getTarget();
+            if (e != null && !e.isAlive()) {
+                this.setTarget(null);
                 e = null;
             }
             if (e == null) {
                 e = this.findSomethingToAttack(2.0f, false);
             }
             if (e != null) {
-                this.faceEntity((Entity)e, 10.0f, 10.0f);
-                if (this.getDistanceSq((Entity)e) > 16.0) {
-                    double d1 = e.posZ - this.posZ;
-                    double d2 = e.posX - this.posX;
+                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                if (this.distanceToSqr(e) > 16.0) {
+                    double d1 = e.getZ() - this.getZ();
+                    double d2 = e.getX() - this.getX();
                     double dd = Math.atan2(d1, d2);
                     this.goThisWay(0.2 * Math.cos(dd), 0.2 * Math.sin(dd));
                 }
             } else {
                 this.setAttacking(0);
             }
-            if (e != null && this.world.rand.nextInt(15) == 0) {
-                e = this.getAttackTarget();
+            if (e != null && this.level().getRandom().nextInt(15) == 0) {
+                e = this.getTarget();
                 if (e == null) {
                     e = this.findSomethingToAttack(2.0f, true);
                 }
                 if (e != null) {
-                    if (this.getDistanceSq((Entity)e) < (double)((6.0f + e.width / 2.0f) * (6.0f + e.width / 2.0f))) {
+                    if (this.distanceToSqr(e) < (double) ((6.0f + e.getBbWidth() / 2.0f) * (6.0f + e.getBbWidth() / 2.0f))) {
                         this.setAttacking(1);
-                        this.attackEntityAsMob((Entity)e);
+                        this.attackEntityAsMob(e);
                     } else {
                         this.setAttacking(0);
                     }
@@ -211,7 +169,6 @@ extends EntityLiving {
             }
         }
     }
-
 
     private void initLegData() {
         if (this.renderdata == null) {
@@ -233,9 +190,9 @@ extends EntityLiving {
             this.renderdata.p2xangle[i] = 0.0;
             this.renderdata.p3xangle[i] = -0.7853981633974483;
             this.renderdata.pxvelocity[i] = 0.0f;
-            this.renderdata.foot_xpos[i] = (float)this.posX;
-            this.renderdata.foot_ypos[i] = (float)this.posY;
-            this.renderdata.foot_zpos[i] = (float)this.posZ;
+            this.renderdata.foot_xpos[i] = (float) this.getX();
+            this.renderdata.foot_ypos[i] = (float) this.getY();
+            this.renderdata.foot_zpos[i] = (float) this.getZ();
             this.renderdata.realposx[i] = 0.0f;
             this.renderdata.realposy[i] = 0.0f;
             this.renderdata.realposz[i] = 0.0f;
@@ -297,54 +254,57 @@ extends EntityLiving {
             tv = 8.0f;
         }
         if (diff > 0.0f) {
-            if ((double)diff < 0.008726646259971648 * (double)tv) {
+            if ((double) diff < 0.008726646259971648 * (double) tv) {
                 curval = 0.0f;
             } else {
-                curval = (float)((double)curval + 0.004363323129985824 * (double)tv);
-                if ((double)diff < 0.06981317007977318 * (double)tv) {
-                    curval = (float)(0.017453292519943295 * (double)tv);
+                curval = (float) ((double) curval + 0.004363323129985824 * (double) tv);
+                if ((double) diff < 0.06981317007977318 * (double) tv) {
+                    curval = (float) (0.017453292519943295 * (double) tv);
                 }
-                if ((double)diff < 0.03490658503988659 * (double)tv) {
-                    curval = (float)(0.008726646259971648 * (double)tv);
+                if ((double) diff < 0.03490658503988659 * (double) tv) {
+                    curval = (float) (0.008726646259971648 * (double) tv);
                 }
-                if ((double)curval > 0.06981317007977318 * (double)tv) {
-                    curval = (float)(0.06981317007977318 * (double)tv);
+                if ((double) curval > 0.06981317007977318 * (double) tv) {
+                    curval = (float) (0.06981317007977318 * (double) tv);
                 }
             }
-        } else if ((double)diff > -0.008726646259971648 * (double)tv) {
+        } else if ((double) diff > -0.008726646259971648 * (double) tv) {
             curval = 0.0f;
         } else {
-            curval = (float)((double)curval - 0.004363323129985824 * (double)tv);
-            if ((double)diff > -0.06981317007977318 * (double)tv) {
-                curval = - (float)(0.017453292519943295 * (double)tv);
+            curval = (float) ((double) curval - 0.004363323129985824 * (double) tv);
+            if ((double) diff > -0.06981317007977318 * (double) tv) {
+                curval = -(float) (0.017453292519943295 * (double) tv);
             }
-            if ((double)diff > -0.03490658503988659 * (double)tv) {
-                curval = - (float)(0.008726646259971648 * (double)tv);
+            if ((double) diff > -0.03490658503988659 * (double) tv) {
+                curval = -(float) (0.008726646259971648 * (double) tv);
             }
-            if ((double)curval < -0.06981317007977318 * (double)tv) {
-                curval = - (float)(0.06981317007977318 * (double)tv);
+            if ((double) curval < -0.06981317007977318 * (double) tv) {
+                curval = -(float) (0.06981317007977318 * (double) tv);
             }
         }
         return curval;
     }
 
+    @OnlyIn(Dist.CLIENT)
     public void updateLegs() {
-        if (!this.world.isRemote) {
+        if (!this.level().isClientSide) {
             return;
         }
-        this.rotationYaw %= 360.0f;
-        while (this.rotationYaw < 0.0f) {
-            this.rotationYaw += 360.0f;
+        float legYaw = this.getYRot();
+        legYaw %= 360.0f;
+        while (legYaw < 0.0f) {
+            legYaw += 360.0f;
         }
+        this.setYRot(legYaw);
         ++this.renderdata.gpcounter;
         if (this.didonce == 0) {
             this.didonce = 1;
             this.initLegData();
         }
-        float d1 = (float)(this.prevPosX - this.posX);
-        float d2 = (float)(this.prevPosY - this.posY);
-        float d3 = (float)(this.prevPosZ - this.posZ);
-        float realv = (float)Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+        float d1 = (float) (this.xo - this.getX());
+        float d2 = (float) (this.yo - this.getY());
+        float d3 = (float) (this.zo - this.getZ());
+        float realv = (float) Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
         int i = 0;
         for (i = 0; i < 6; ++i) {
             double rdv;
@@ -352,9 +312,9 @@ extends EntityLiving {
             int[] arrn = this.renderdata.footingticker;
             int n = i;
             arrn[n] = arrn[n] + 1;
-            this.renderdata.realposx[i] = (float)(this.posX - (double)this.renderdata.legoff[i] * Math.sin(Math.toRadians(MathHelper.wrapDegrees((double)(this.rotationYaw + 90.0f))) + (double)this.renderdata.ymid[i]));
-            this.renderdata.realposz[i] = (float)(this.posZ + (double)this.renderdata.legoff[i] * Math.cos(Math.toRadians(MathHelper.wrapDegrees((double)(this.rotationYaw + 90.0f))) + (double)this.renderdata.ymid[i]));
-            this.renderdata.realposy[i] = (float)this.posY + this.renderdata.yoff[i];
+            this.renderdata.realposx[i] = (float) (this.getX() - (double) this.renderdata.legoff[i] * Math.sin(Math.toRadians(Mth.wrapDegrees((double) (this.getYRot() + 90.0f))) + (double) this.renderdata.ymid[i]));
+            this.renderdata.realposz[i] = (float) (this.getZ() + (double) this.renderdata.legoff[i] * Math.cos(Math.toRadians(Mth.wrapDegrees((double) (this.getYRot() + 90.0f))) + (double) this.renderdata.ymid[i]));
+            this.renderdata.realposy[i] = (float) this.getY() + this.renderdata.yoff[i];
             int it = this.renderdata.footingticker[i] + this.renderdata.footingticker[this.renderdata.pairedwith[i]];
             if (it > 50 && this.renderdata.footingticker[i] > this.renderdata.footingticker[this.renderdata.pairedwith[i]]) {
                 this.renderdata.footingticker[i] = 0;
@@ -362,49 +322,49 @@ extends EntityLiving {
             d1 = this.renderdata.realposx[i] - this.renderdata.foot_xpos[i];
             d2 = this.renderdata.realposy[i] - this.renderdata.foot_ypos[i];
             d3 = this.renderdata.realposz[i] - this.renderdata.foot_zpos[i];
-            float dd = (float)Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+            float dd = (float) Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
             dd *= 16.0f;
-            float da = (float)(Math.abs((double)this.renderdata.ycurrentangle[i] - (Math.toRadians(MathHelper.wrapDegrees((double)this.rotationYaw)) + (double)this.renderdata.ymid[i])) % 6.283185307179586);
-            if ((double)da > 3.141592653589793) {
-                da = (float)((double)da - 6.283185307179586);
+            float da = (float) (Math.abs((double) this.renderdata.ycurrentangle[i] - (Math.toRadians(Mth.wrapDegrees((double) this.getYRot())) + (double) this.renderdata.ymid[i])) % 6.283185307179586);
+            if ((double) da > 3.141592653589793) {
+                da = (float) ((double) da - 6.283185307179586);
             }
-            if ((double)da < -3.141592653589793) {
-                da = (float)((double)da + 6.283185307179586);
+            if ((double) da < -3.141592653589793) {
+                da = (float) ((double) da + 6.283185307179586);
             }
             da = Math.abs(da);
-            if (dd > 144.0f || dd < 22.0f || da > Math.abs(this.renderdata.yrange[i]) * 8.0f / 6.0f || (double)Math.abs(this.renderdata.udcurrentangle[i]) > 1.25 || this.renderdata.footingticker[i] == 0) {
+            if (dd > 144.0f || dd < 22.0f || da > Math.abs(this.renderdata.yrange[i]) * 8.0f / 6.0f || (double) Math.abs(this.renderdata.udcurrentangle[i]) > 1.25 || this.renderdata.footingticker[i] == 0) {
                 this.findNewFooting(i);
                 d1 = this.renderdata.realposx[i] - this.renderdata.foot_xpos[i];
                 d2 = this.renderdata.realposy[i] - this.renderdata.foot_ypos[i];
                 d3 = this.renderdata.realposz[i] - this.renderdata.foot_zpos[i];
-                dd = (float)Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+                dd = (float) Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
                 dd *= 16.0f;
             }
-            float c1 = (float)(49.0 * Math.cos(this.renderdata.p2xangle[i] - this.renderdata.p1xangle[i]));
+            float c1 = (float) (49.0 * Math.cos(this.renderdata.p2xangle[i] - this.renderdata.p1xangle[i]));
             float c2 = 49.0f;
-            float c3 = (float)(49.0 * Math.cos(this.renderdata.p2xangle[i] - this.renderdata.p3xangle[i]));
+            float c3 = (float) (49.0 * Math.cos(this.renderdata.p2xangle[i] - this.renderdata.p3xangle[i]));
             float cc = c1 + c2 + c3;
             float diff = cc - dd;
-            this.renderdata.pxvelocity[i] = this.getNewVelocity(realv, (float)((double)diff * 3.141592653589793 / 360.0), this.renderdata.pxvelocity[i]);
+            this.renderdata.pxvelocity[i] = this.getNewVelocity(realv, (float) ((double) diff * 3.141592653589793 / 360.0), this.renderdata.pxvelocity[i]);
             if (this.renderdata.pxvelocity[i] == 0.0f || Math.abs(diff) < 8.0f) {
                 ++fcount;
             }
             double[] arrd = this.renderdata.p1xangle;
             int n2 = i;
-            arrd[n2] = arrd[n2] + (double)this.renderdata.pxvelocity[i];
+            arrd[n2] = arrd[n2] + (double) this.renderdata.pxvelocity[i];
             this.renderdata.p2xangle[i] = 0.0;
-            this.renderdata.p3xangle[i] = - this.renderdata.p1xangle[i];
-            dd = this.renderdata.uppoint[i] != 0.0f ? (float)Math.atan2(dd, (double)(this.renderdata.realposy[i] - this.renderdata.uppoint[i]) * 16.0) : (float)Math.atan2(dd, (double)(this.renderdata.realposy[i] - this.renderdata.foot_ypos[i]) * 16.0);
-            this.renderdata.udwantedangle[i] = (float)((double)dd - 1.5707963267948966);
-            while ((double)this.renderdata.udwantedangle[i] > 3.141592653589793) {
+            this.renderdata.p3xangle[i] = -this.renderdata.p1xangle[i];
+            dd = this.renderdata.uppoint[i] != 0.0f ? (float) Math.atan2(dd, (double) (this.renderdata.realposy[i] - this.renderdata.uppoint[i]) * 16.0) : (float) Math.atan2(dd, (double) (this.renderdata.realposy[i] - this.renderdata.foot_ypos[i]) * 16.0);
+            this.renderdata.udwantedangle[i] = (float) ((double) dd - 1.5707963267948966);
+            while ((double) this.renderdata.udwantedangle[i] > 3.141592653589793) {
                 float[] arrf = this.renderdata.udwantedangle;
                 int n3 = i;
-                arrf[n3] = (float)((double)arrf[n3] - 6.283185307179586);
+                arrf[n3] = (float) ((double) arrf[n3] - 6.283185307179586);
             }
-            while ((double)this.renderdata.udwantedangle[i] < -3.141592653589793) {
+            while ((double) this.renderdata.udwantedangle[i] < -3.141592653589793) {
                 float[] arrf = this.renderdata.udwantedangle;
                 int n4 = i;
-                arrf[n4] = (float)((double)arrf[n4] + 6.283185307179586);
+                arrf[n4] = (float) ((double) arrf[n4] + 6.283185307179586);
             }
             double rhm = this.renderdata.udwantedangle[i];
             double rhdir = this.renderdata.udcurrentangle[i];
@@ -413,56 +373,56 @@ extends EntityLiving {
             while (rdv < -3.141592653589793) {
                 rdv += 6.283185307179586;
             }
-            diff = (float)rdv;
+            diff = (float) rdv;
             this.renderdata.udvelocity[i] = this.getNewVelocity(realv * 2.0f, diff, this.renderdata.udvelocity[i]);
-            if (this.renderdata.udvelocity[i] == 0.0f || (double)Math.abs(diff) < 0.03490658503988659) {
+            if (this.renderdata.udvelocity[i] == 0.0f || (double) Math.abs(diff) < 0.03490658503988659) {
                 this.renderdata.uppoint[i] = 0.0f;
                 ++fcount;
             }
-            rhdir += (double)this.renderdata.udvelocity[i];
+            rhdir += (double) this.renderdata.udvelocity[i];
             while (rhdir > 3.141592653589793) {
                 rhdir -= 6.283185307179586;
             }
             while (rhdir < -3.141592653589793) {
                 rhdir += 6.283185307179586;
             }
-            this.renderdata.uddisplayangle[i] = dd = (this.renderdata.udcurrentangle[i] = (float)rhdir);
+            this.renderdata.uddisplayangle[i] = dd = (this.renderdata.udcurrentangle[i] = (float) rhdir);
             d3 = this.renderdata.realposz[i] - this.renderdata.foot_zpos[i];
             d1 = this.renderdata.realposx[i] - this.renderdata.foot_xpos[i];
-            dd = (float)Math.atan2(d3, d1);
+            dd = (float) Math.atan2(d3, d1);
             this.renderdata.ywantedangle[i] = dd;
             rhm = this.renderdata.ywantedangle[i];
-            rdv = (rhm - (rhdir = (double)this.renderdata.ycurrentangle[i])) % 6.283185307179586;
+            rdv = (rhm - (rhdir = (double) this.renderdata.ycurrentangle[i])) % 6.283185307179586;
             if (rdv > 3.141592653589793) {
                 rdv -= 6.283185307179586;
             }
             if (rdv < -3.141592653589793) {
                 rdv += 6.283185307179586;
             }
-            diff = (float)rdv;
+            diff = (float) rdv;
             this.renderdata.yvelocity[i] = this.getNewVelocity(realv, diff, this.renderdata.yvelocity[i]);
-            if (this.renderdata.yvelocity[i] == 0.0f || (double)Math.abs(diff) < 0.03490658503988659) {
+            if (this.renderdata.yvelocity[i] == 0.0f || (double) Math.abs(diff) < 0.03490658503988659) {
                 ++fcount;
             }
             float[] arrf = this.renderdata.ycurrentangle;
             int n5 = i;
             arrf[n5] = arrf[n5] + this.renderdata.yvelocity[i];
-            while ((double)this.renderdata.ycurrentangle[i] > 3.141592653589793) {
+            while ((double) this.renderdata.ycurrentangle[i] > 3.141592653589793) {
                 float[] arrf2 = this.renderdata.ycurrentangle;
                 int n6 = i;
-                arrf2[n6] = (float)((double)arrf2[n6] - 6.283185307179586);
+                arrf2[n6] = (float) ((double) arrf2[n6] - 6.283185307179586);
             }
-            while ((double)this.renderdata.ycurrentangle[i] < -3.141592653589793) {
+            while ((double) this.renderdata.ycurrentangle[i] < -3.141592653589793) {
                 float[] arrf3 = this.renderdata.ycurrentangle;
                 int n7 = i;
-                arrf3[n7] = (float)((double)arrf3[n7] + 6.283185307179586);
+                arrf3[n7] = (float) ((double) arrf3[n7] + 6.283185307179586);
             }
-            dd = (float)((double)this.renderdata.ycurrentangle[i] - Math.toRadians(MathHelper.wrapDegrees((double)this.rotationYaw)) - 1.5707963267948966);
-            while ((double)dd > 3.141592653589793) {
-                dd = (float)((double)dd - 6.283185307179586);
+            dd = (float) ((double) this.renderdata.ycurrentangle[i] - Math.toRadians(Mth.wrapDegrees((double) this.getYRot())) - 1.5707963267948966);
+            while ((double) dd > 3.141592653589793) {
+                dd = (float) ((double) dd - 6.283185307179586);
             }
-            while ((double)dd < -3.141592653589793) {
-                dd = (float)((double)dd + 6.283185307179586);
+            while ((double) dd < -3.141592653589793) {
+                dd = (float) ((double) dd + 6.283185307179586);
             }
             this.renderdata.ydisplayangle[i] = dd;
             if (fcount != 3) continue;
@@ -479,11 +439,11 @@ extends EntityLiving {
         float f = 9.0f;
         boolean found = false;
         float range = 0.0f;
-        double rhdir = Math.toRadians((this.rotationYaw + 90.0f) % 360.0f);
+        double rhdir = Math.toRadians((this.getYRot() + 90.0f) % 360.0f);
         double pi = 3.1415926545;
         this.renderdata.footingticker[i] = 0;
-        float d1 = (float)(this.posX - this.prevPosX);
-        float d3 = (float)(this.posZ - this.prevPosZ);
+        float d1 = (float) (this.getX() - this.xo);
+        float d3 = (float) (this.getZ() - this.zo);
         double rhm = Math.atan2(d3, d1);
         double velocity = Math.sqrt(d1 * d1 + d3 * d3);
         double rdv = Math.abs(rhm - rhdir) % (pi * 2.0);
@@ -496,14 +456,14 @@ extends EntityLiving {
         }
         range = this.renderdata.yrange[i];
         range *= 0.8f;
-        if (Math.abs((this.prevRotationYaw - this.rotationYaw) % 360.0f) > 0.75f) {
+        if (Math.abs((this.yRotO - this.getYRot()) % 360.0f) > 0.75f) {
             range = 0.0f;
         }
         if (i >= 4) {
             f = 4.0f;
         }
         if (rdv > 1.5) {
-            range = - range;
+            range = -range;
             f = 4.0f;
             if (i >= 4) {
                 f = 9.0f;
@@ -512,29 +472,29 @@ extends EntityLiving {
         if (i == 0 || i == 1) {
             f = 6.0f;
         }
-        float deffx = fx = (float)((double)this.renderdata.realposx[i] - (double)(f / 2.0f) * Math.sin(Math.toRadians(MathHelper.wrapDegrees((double)(this.rotationYaw + 90.0f))) + (double)this.renderdata.ymid[i]));
-        float deffz = fz = (float)((double)this.renderdata.realposz[i] + (double)(f / 2.0f) * Math.cos(Math.toRadians(MathHelper.wrapDegrees((double)(this.rotationYaw + 90.0f))) + (double)this.renderdata.ymid[i]));
+        float deffx = fx = (float) ((double) this.renderdata.realposx[i] - (double) (f / 2.0f) * Math.sin(Math.toRadians(Mth.wrapDegrees((double) (this.getYRot() + 90.0f))) + (double) this.renderdata.ymid[i]));
+        float deffz = fz = (float) ((double) this.renderdata.realposz[i] + (double) (f / 2.0f) * Math.cos(Math.toRadians(Mth.wrapDegrees((double) (this.getYRot() + 90.0f))) + (double) this.renderdata.ymid[i]));
         float deffy = fy = this.renderdata.realposy[i] - 1.0f;
         float oldf = f;
         int span = 1;
         while (!found && f > 2.5f) {
-            fx = (float)((double)this.renderdata.realposx[i] - (double)f * Math.sin(Math.toRadians(MathHelper.wrapDegrees((double)(this.rotationYaw + 90.0f))) + (double)this.renderdata.ymid[i] - (double)range));
-            fz = (float)((double)this.renderdata.realposz[i] + (double)f * Math.cos(Math.toRadians(MathHelper.wrapDegrees((double)(this.rotationYaw + 90.0f))) + (double)this.renderdata.ymid[i] - (double)range));
+            fx = (float) ((double) this.renderdata.realposx[i] - (double) f * Math.sin(Math.toRadians(Mth.wrapDegrees((double) (this.getYRot() + 90.0f))) + (double) this.renderdata.ymid[i] - (double) range));
+            fz = (float) ((double) this.renderdata.realposz[i] + (double) f * Math.cos(Math.toRadians(Mth.wrapDegrees((double) (this.getYRot() + 90.0f))) + (double) this.renderdata.ymid[i] - (double) range));
             fy = this.renderdata.realposy[i];
             for (int j = 8; !found && j > -9; --j) {
-                block2 : for (int m = - span; !found && m <= span; ++m) {
-                    for (int n = - span; !found && n <= span; ++n) {
-                        Block blk = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)fx + m, (int)fy + j, (int)fz + n)).getBlock();
-                        net.minecraft.block.state.IBlockState stateHere = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)fx + m, (int)fy + j, (int)fz + n));
-                        if (blk == Blocks.AIR || !stateHere.getMaterial().isSolid()) continue;
-                        d1 = this.renderdata.realposx[i] - (fx + (float)m);
-                        d2 = this.renderdata.realposy[i] - (fy + (float)j + 1.0f);
-                        d3 = this.renderdata.realposz[i] - (fz + (float)n);
-                        dd = (float)Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+                block2:
+                for (int m = -span; !found && m <= span; ++m) {
+                    for (int n = -span; !found && n <= span; ++n) {
+                        Block blk = this.level().getBlockState(new BlockPos((int) fx + m, (int) fy + j, (int) fz + n)).getBlock();
+                        if (blk == Blocks.AIR || !this.level().getBlockState(new BlockPos((int) fx + m, (int) fy + j, (int) fz + n)).isSolid()) continue;
+                        d1 = this.renderdata.realposx[i] - (fx + (float) m);
+                        d2 = this.renderdata.realposy[i] - (fy + (float) j + 1.0f);
+                        d3 = this.renderdata.realposz[i] - (fz + (float) n);
+                        dd = (float) Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
                         if ((dd *= 16.0f) > 144.0f) continue;
-                        fy += (float)(j + 1);
-                        fx += (float)m;
-                        fz += (float)n;
+                        fy += (float) (j + 1);
+                        fx += (float) m;
+                        fz += (float) n;
                         found = true;
                         continue block2;
                     }
@@ -561,7 +521,7 @@ extends EntityLiving {
             d1 = sfx - fx;
             d2 = sfy - fy;
             d3 = sfz - fz;
-            dd = (float)Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+            dd = (float) Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
             d1 = (sfy + fy) / 2.0f;
             if ((dd *= 16.0f) > 3.0f) {
                 d1 += 0.3f;
@@ -576,6 +536,7 @@ extends EntityLiving {
         }
     }
 
+    @Override
     public boolean shouldRiderSit() {
         return true;
     }
@@ -596,88 +557,68 @@ extends EntityLiving {
         return true;
     }
 
-    protected void entityInit() {
-        super.entityInit();
-        this.enablePersistence();
-        this.initLegData();
-        int i = 0;
-        this.getDataManager().register(ATTACKING, i);
-    }
-
     public RenderSpiderRobotInfo getRenderSpiderRobotInfo() {
         return this.renderdata;
     }
 
-    public boolean canBePushed() {
+    @Override
+    public boolean isPushable() {
         return false;
     }
 
     @Override
-    public boolean canBeSteered() {
-        return true;
-    }
-
-    @Override
-    public boolean canPassengerSteer() {
-        return true;
-    }
-
-    @Override
-    public boolean canFitPassenger(Entity passenger) {
+    public boolean canAddPassenger(Entity passenger) {
         return this.getPassengers().isEmpty();
     }
 
     @Override
-    public Entity getControllingPassenger() {
-        if (this.getPassengers().isEmpty()) {
-            return null;
-        }
-        return this.getPassengers().get(0);
+    public LivingEntity getControllingPassenger() {
+        Entity passenger = this.getFirstPassenger();
+        return passenger instanceof LivingEntity living ? living : null;
     }
 
-    private EntityPlayer getRiderPlayer() {
+    private Player getRiderPlayer() {
         Entity rider = this.getControllingPassenger();
-        if (rider instanceof EntityPlayer) {
-            return (EntityPlayer) rider;
+        if (rider instanceof Player) {
+            return (Player) rider;
         }
-        if (rider != null && !rider.getPassengers().isEmpty() && rider.getPassengers().get(0) instanceof EntityPlayer) {
-            return (EntityPlayer) rider.getPassengers().get(0);
+        if (rider != null && !rider.getPassengers().isEmpty() && rider.getPassengers().get(0) instanceof Player) {
+            return (Player) rider.getPassengers().get(0);
         }
         return null;
     }
 
-    @SideOnly(Side.CLIENT)
-    private EntityPlayerSP getRiderPlayerClient() {
-        EntityPlayer rider = this.getRiderPlayer();
-        return rider instanceof EntityPlayerSP ? (EntityPlayerSP) rider : null;
+    @OnlyIn(Dist.CLIENT)
+    private LocalPlayer getRiderPlayerClient() {
+        Player rider = this.getRiderPlayer();
+        return rider instanceof LocalPlayer local ? local : null;
     }
 
     @Override
-    public void travel(float strafe, float vertical, float forward) {
-        if (!this.isBeingRidden()) {
-            super.travel(strafe, vertical, forward);
+    public void travel(Vec3 travelVector) {
+        if (!this.isVehicle()) {
+            super.travel(travelVector);
             return;
         }
-        Entity controller = this.getControllingPassenger();
-        if (!(controller instanceof EntityLivingBase)) {
-            super.travel(strafe, vertical, forward);
+        LivingEntity rider = this.getControllingPassenger();
+        if (rider == null) {
+            super.travel(travelVector);
             return;
         }
-        EntityLivingBase rider = (EntityLivingBase) controller;
-        float moveStrafe = rider.moveStrafing;
-        float moveForward = rider.moveForward;
-        this.moveStrafing = moveStrafe;
-        this.moveForward = moveForward;
-
-        double velocity = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
+        float moveStrafe = rider.xxa;
+        float moveForward = rider.zza;
+        this.xxa = moveStrafe;
+        this.zza = moveForward;
+        Vec3 dm = this.getDeltaMovement();
+        double velocity = Math.sqrt(dm.x * dm.x + dm.z * dm.z);
         double max_speed = 0.3;
         double relative_g = 0.0;
-        double d4 = (double) rider.rotationYaw;
+        double d4 = rider.getYRot();
         d4 %= 360.0;
         while (d4 < 0.0) {
             d4 += 360.0;
         }
-        double d5 = this.rotationYaw;
+        double d5 = this.getYRot();
         d5 %= 360.0;
         while (d5 < 0.0) {
             d5 += 360.0;
@@ -695,102 +636,97 @@ extends EntityLiving {
             if (d4 > 0.9) {
                 d4 = 0.9;
             }
-            this.rotationYaw = rider.rotationYaw + (float) (relative_g * d4);
+            this.setYRot(rider.getYRot() + (float) (relative_g * d4));
         } else {
-            this.rotationYaw = rider.rotationYaw;
+            this.setYRot(rider.getYRot());
         }
         relative_g = Math.abs(relative_g) * velocity;
         if (relative_g > 50.0) {
             relative_g = 0.0;
         }
-        this.rotationPitch = 0.0f;
-        this.setRotation(this.rotationYaw, this.rotationPitch);
-
+        this.setXRot(0.0f);
+        this.setRot(this.getYRot(), this.getXRot());
         float forwardInput = moveForward;
         float strafeInput = moveStrafe;
         if (forwardInput < 0.0f) {
             max_speed = 0.25;
         }
-        double yawRad = Math.toRadians(this.rotationYaw);
+        double yawRad = Math.toRadians(this.getYRot());
         double sin = Math.sin(yawRad);
         double cos = Math.cos(yawRad);
         double vx = (-sin * (double) forwardInput + cos * (double) strafeInput * 0.5) * max_speed;
         double vz = (cos * (double) forwardInput + sin * (double) strafeInput * 0.5) * max_speed;
+        double mx = dm.x;
+        double mz = dm.z;
         if (Math.abs(forwardInput) > 0.001f || Math.abs(strafeInput) > 0.001f) {
-            this.motionX = vx;
-            this.motionZ = vz;
+            mx = vx;
+            mz = vz;
         } else {
-            this.motionX *= 0.85;
-            this.motionZ *= 0.85;
+            mx *= 0.85;
+            mz *= 0.85;
         }
+        this.setDeltaMovement(mx, dm.y, mz);
     }
 
-    public double getMountedYOffset() {
-        return 0.55 + Math.cos((float)this.rideTicker * 0.19f) * 0.02;
+    @Override
+    public double getPassengersRidingOffset() {
+        return 0.55 + Math.cos((float) this.rideTicker * 0.19f) * 0.02;
     }
 
-    public void updateRiderPosition() {
-        if (this.getRiddenByEntity() != null) {
+    @Override
+    protected void positionRider(Entity passenger, MoveFunction moveFunction) {
+        if (this.hasPassenger(passenger)) {
             float f = -1.25f;
-            f = (float)((double)f + Math.cos((float)this.rideTicker * 0.33f) * 0.05);
-            this.getRiddenByEntity().setPosition(this.posX - (double)f * Math.sin(Math.toRadians(this.rotationYaw)), this.posY + this.getMountedYOffset() + this.getRiddenByEntity().getYOffset(), this.posZ + (double)f * Math.cos(Math.toRadians(this.rotationYaw)));
+            f = (float) ((double) f + Math.cos((float) this.rideTicker * 0.33f) * 0.05);
+            double x = this.getX() - (double) f * Math.sin(Math.toRadians(this.getYRot()));
+            double y = this.getY() + this.getPassengersRidingOffset() + passenger.getMyRidingOffset();
+            double z = this.getZ() + (double) f * Math.cos(Math.toRadians(this.getYRot()));
+            moveFunction.accept(passenger, x, y, z);
         }
     }
 
     @Override
-    public void updatePassenger(Entity passenger) {
-        if (this.isPassenger(passenger)) {
-            this.updateRiderPosition();
-        }
-    }
-
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-        if (par1DamageSource.getDamageType().equals("inWall")) {
+    public boolean hurt(DamageSource par1DamageSource, float par2) {
+        if (par1DamageSource.getMsgId().equals("inWall")) {
             return false;
         }
-        if (par1DamageSource.getDamageType().equals("cactus")) {
+        if (par1DamageSource.getMsgId().equals("cactus")) {
             return false;
         }
-        if (par1DamageSource.getDamageType().equals("inFire")) {
+        if (par1DamageSource.getMsgId().equals("inFire")) {
             return false;
         }
-        if (par1DamageSource.getDamageType().equals("onFire")) {
+        if (par1DamageSource.getMsgId().equals("onFire")) {
             return false;
         }
-        if (par1DamageSource.getDamageType().equals("magic")) {
+        if (par1DamageSource.getMsgId().equals("magic")) {
             return false;
         }
-        if (par1DamageSource.getDamageType().equals("starve")) {
+        if (par1DamageSource.getMsgId().equals("starve")) {
             return false;
         }
-        Entity e = par1DamageSource.getTrueSource();
-        if (e != null && e instanceof EntityLiving) {
-            this.setAttackTarget((EntityLivingBase)((EntityLiving)e));
-            this.faceEntity(e, 20.0f, 20.0f);
+        Entity e = par1DamageSource.getEntity();
+        if (e instanceof LivingEntity living) {
+            this.setTarget(living);
+            this.getLookControl().setLookAt(e, 20.0f, 20.0f);
         }
-        return super.attackEntityFrom(par1DamageSource, par2);
-    }
-
-    public void fall(float distance, float damageMultiplier) {
-    }
-
-    protected void updateFallState(double y, boolean onGroundIn, net.minecraft.block.state.IBlockState state, net.minecraft.util.math.BlockPos pos) {
-        fallDistance = 0.0f;
-    }
-
-    public boolean canBeCollidedWith() {
-        return !this.isDead;
+        return super.hurt(par1DamageSource, par2);
     }
 
     @Override
-    public float getCollisionBorderSize() {
-        return 0.35f;
+    public boolean causeFallDamage(float distance, float multiplier, DamageSource source) {
+        return false;
     }
 
-    @SideOnly(value=Side.CLIENT)
     @Override
-    public void setPositionAndRotationDirect(double x, double y, double z, float yaw, float pitch, int posRotationIncrements, boolean teleport) {
-        this.boatPosRotationIncrements = this.getRiddenByEntity() != null ? posRotationIncrements + 8 : posRotationIncrements + 6;
+    protected void checkFallDamage(double y, boolean onGroundIn, BlockState state, BlockPos pos) {
+        this.fallDistance = 0.0f;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void lerpTo(double x, double y, double z, float yaw, float pitch, int steps, boolean interpolate) {
+        this.boatPosRotationIncrements = this.getControllingPassenger() != null ? steps + 8 : steps + 6;
         this.boatX = x;
         this.boatY = y;
         this.boatZ = z;
@@ -798,262 +734,231 @@ extends EntityLiving {
         this.boatPitch = pitch;
     }
 
-    @SideOnly(value=Side.CLIENT)
-    public void setPositionAndRotation2(double par1, double par3, double par5, float par7, float par8, int par9) {
-        this.boatPosRotationIncrements = this.getRiddenByEntity() != null ? par9 + 8 : par9 + 6;
-        this.boatX = par1;
-        this.boatY = par3;
-        this.boatZ = par5;
-        this.boatYaw = par7;
-        this.boatPitch = par8;
-    }
-
-    @SideOnly(value=Side.CLIENT)
-    public void setVelocity(double par1, double par3, double par5) {
-        if (this.getRiddenByEntity() == null) {
-            super.setVelocity(par1, par3, par5);
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void lerpMotion(double x, double y, double z) {
+        if (this.getControllingPassenger() == null) {
+            super.lerpMotion(x, y, z);
         }
     }
 
-    public void onUpdate() {
-        super.onUpdate();
-        this.setFire(0);
-        if (this.world.getDifficulty() != EnumDifficulty.PEACEFUL && !this.world.isRemote && this.getRiddenByEntity() != null && this.world.rand.nextInt(50) == 0) {
+    @Override
+    public void tick() {
+        super.tick();
+        this.clearFire();
+        if (this.level().getDifficulty() != Difficulty.PEACEFUL && !this.level().isClientSide && this.getControllingPassenger() != null && this.getRandom().nextInt(50) == 0) {
             this.feetFindSomethingToHit();
         }
-        if (this.world.getDifficulty() != EnumDifficulty.PEACEFUL && !this.world.isRemote && this.getRiddenByEntity() != null && this.world.rand.nextInt(9) == 0) {
-            EntityLivingBase e = null;
-            e = this.findSomethingToAttack(1.0f, true);
+        if (this.level().getDifficulty() != Difficulty.PEACEFUL && !this.level().isClientSide && this.getControllingPassenger() != null && this.getRandom().nextInt(9) == 0) {
+            LivingEntity e = this.findSomethingToAttack(1.0f, true);
             if (e != null) {
-                if (this.getDistanceSq((Entity)e) < (double)((6.0f + e.width / 2.0f) * (6.0f + e.width / 2.0f))) {
+                if (this.distanceToSqr(e) < (double) ((6.0f + e.getBbWidth() / 2.0f) * (6.0f + e.getBbWidth() / 2.0f))) {
                     this.setAttacking(1);
-                    this.attackEntityAsMob((Entity)e);
+                    this.attackEntityAsMob(e);
                 }
             } else {
                 this.setAttacking(0);
             }
         }
         float f = 4.0f;
-        float dx = (float)((double)f * Math.cos(Math.toRadians(this.rotationYaw - 80.0f)));
-        float dz = (float)((double)f * Math.sin(Math.toRadians(this.rotationYaw - 80.0f)));
-        float dx2 = (float)((double)f * Math.cos(Math.toRadians(this.rotationYaw - 90.0f)));
-        float dz2 = (float)((double)f * Math.sin(Math.toRadians(this.rotationYaw - 90.0f)));
-        if (this.world.rand.nextInt(18) == 0) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FLAME, this.posX + (double)dx, this.posY + 0.5, this.posZ + (double)dz, (double)(dx2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f), (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 10.0f), (double)(dz2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f));
+        float dx = (float) ((double) f * Math.cos(Math.toRadians(this.getYRot() - 80.0f)));
+        float dz = (float) ((double) f * Math.sin(Math.toRadians(this.getYRot() - 80.0f)));
+        float dx2 = (float) ((double) f * Math.cos(Math.toRadians(this.getYRot() - 90.0f)));
+        float dz2 = (float) ((double) f * Math.sin(Math.toRadians(this.getYRot() - 90.0f)));
+        if (this.getRandom().nextInt(18) == 0) {
+            this.level().addParticle(ParticleTypes.FLAME, this.getX() + (double) dx, this.getY() + 0.5, this.getZ() + (double) dz, (double) (dx2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f), (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 10.0f), (double) (dz2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f));
         }
-        if (this.world.rand.nextInt(7) == 0) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, this.posX + (double)dx, this.posY + 0.5, this.posZ + (double)dz, (double)(dx2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f), (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 10.0f), (double)(dz2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f));
+        if (this.getRandom().nextInt(7) == 0) {
+            this.level().addParticle(ParticleTypes.SMOKE, this.getX() + (double) dx, this.getY() + 0.5, this.getZ() + (double) dz, (double) (dx2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f), (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 10.0f), (double) (dz2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f));
         }
-        if (this.world.rand.nextInt(16) == 0) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FIREWORKS_SPARK, this.posX + (double)dx, this.posY + 0.5, this.posZ + (double)dz, (double)(dx2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f), (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 5.0f), (double)(dz2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f));
+        if (this.getRandom().nextInt(16) == 0) {
+            this.level().addParticle(ParticleTypes.FIREWORK, this.getX() + (double) dx, this.getY() + 0.5, this.getZ() + (double) dz, (double) (dx2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f), (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 5.0f), (double) (dz2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f));
         }
-        dx = (float)((double)f * Math.cos(Math.toRadians(this.rotationYaw - 100.0f)));
-        dz = (float)((double)f * Math.sin(Math.toRadians(this.rotationYaw - 100.0f)));
-        if (this.world.rand.nextInt(18) == 0) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FLAME, this.posX + (double)dx, this.posY + 0.5, this.posZ + (double)dz, (double)(dx2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f), (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 10.0f), (double)(dz2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f));
+        dx = (float) ((double) f * Math.cos(Math.toRadians(this.getYRot() - 100.0f)));
+        dz = (float) ((double) f * Math.sin(Math.toRadians(this.getYRot() - 100.0f)));
+        if (this.getRandom().nextInt(18) == 0) {
+            this.level().addParticle(ParticleTypes.FLAME, this.getX() + (double) dx, this.getY() + 0.5, this.getZ() + (double) dz, (double) (dx2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f), (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 10.0f), (double) (dz2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f));
         }
-        if (this.world.rand.nextInt(7) == 0) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, this.posX + (double)dx, this.posY + 0.5, this.posZ + (double)dz, (double)(dx2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f), (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 10.0f), (double)(dz2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f));
+        if (this.getRandom().nextInt(7) == 0) {
+            this.level().addParticle(ParticleTypes.SMOKE, this.getX() + (double) dx, this.getY() + 0.5, this.getZ() + (double) dz, (double) (dx2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f), (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 10.0f), (double) (dz2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f));
         }
-        if (this.world.rand.nextInt(16) == 0) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FIREWORKS_SPARK, this.posX + (double)dx, this.posY + 0.5, this.posZ + (double)dz, (double)(dx2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f), (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 5.0f), (double)(dz2 / f + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) / 20.0f));
+        if (this.getRandom().nextInt(16) == 0) {
+            this.level().addParticle(ParticleTypes.FIREWORK, this.getX() + (double) dx, this.getY() + 0.5, this.getZ() + (double) dz, (double) (dx2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f), (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 5.0f), (double) (dz2 / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f));
         }
-    }
 
-    public void onLivingUpdate() {
-        Object list = null;
-        double velocity = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
-        double d6 = this.rand.nextFloat() * 2.0f - 1.0f;
-        double d7 = (double)(this.rand.nextInt(2) * 2 - 1) * 0.7;
+        Vec3 motion = this.getDeltaMovement();
+        double mx = motion.x;
+        double my = motion.y;
+        double mz = motion.z;
+        double velocity = Math.sqrt(mx * mx + mz * mz);
         double obstruction_factor = 0.0;
-        double relative_g = 0.0;
-        double max_speed = 0.3;
         double gh = 1.75;
-        int dist = 2;
-        if (this.isDead) {
+        if (this.isRemoved()) {
             return;
         }
-        super.onLivingUpdate();
-        if (this.motionY > 0.8500000238418579) {
-            this.motionY = 0.8500000238418579;
+        if (my > 0.8500000238418579) {
+            my = 0.8500000238418579;
         }
-        if (this.motionY < -0.8500000238418579) {
-            this.motionY = -0.8500000238418579;
+        if (my < -0.8500000238418579) {
+            my = -0.8500000238418579;
         }
-        if (this.motionX < -1.25) {
-            this.motionX = -1.25;
+        if (mx < -1.25) {
+            mx = -1.25;
         }
-        if (this.motionX > 1.25) {
-            this.motionX = 1.25;
+        if (mx > 1.25) {
+            mx = 1.25;
         }
-        if (this.motionZ < -1.25) {
-            this.motionZ = -1.25;
+        if (mz < -1.25) {
+            mz = -1.25;
         }
-        if (this.motionZ > 1.25) {
-            this.motionZ = 1.25;
+        if (mz > 1.25) {
+            mz = 1.25;
         }
-        this.prevPosX = this.posX;
-        this.prevPosY = this.posY;
-        this.prevPosZ = this.posZ;
-        this.rideTicker += this.world.rand.nextInt(3);
+        this.xo = this.getX();
+        this.yo = this.getY();
+        this.zo = this.getZ();
+        this.rideTicker += this.getRandom().nextInt(3);
         if (this.playing > 0) {
             --this.playing;
         }
-        if (this.getRiddenByEntity() != null && this.playing == 0 && this.world.rand.nextInt(80) == 1) {
-            this.world.playSound(this.posX, this.posY, this.posZ, com.astryxion.chaospersists.core.ChaosSounds.ROBOTSPIDER, net.minecraft.util.SoundCategory.NEUTRAL, 0.35f, 1.0f, false);
+        if (this.getControllingPassenger() != null && this.playing == 0 && this.getRandom().nextInt(80) == 1) {
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), ChaosSounds.ROBOTSPIDER, SoundSource.NEUTRAL, 0.35f, 1.0f);
             this.playing = 125;
         }
-        if (this.world.isRemote) {
-            if (this.getRiddenByEntity() == null) {
-                Block bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)((float)this.posY - (float)gh + 1.0f), (int)this.posZ)).getBlock();
+        if (this.level().isClientSide) {
+            if (this.getControllingPassenger() == null) {
+                Block bid = this.level().getBlockState(new BlockPos((int) this.getX(), (int) ((float) this.getY() - (float) gh + 1.0f), (int) this.getZ())).getBlock();
                 if (bid == Blocks.AIR) {
-                    bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)((float)this.posY - (float)gh), (int)this.posZ)).getBlock();
+                    bid = this.level().getBlockState(new BlockPos((int) this.getX(), (int) ((float) this.getY() - (float) gh), (int) this.getZ())).getBlock();
                 }
-                if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.FLOWING_WATER && bid != Blocks.LAVA && bid != Blocks.FLOWING_LAVA) {
-                    this.motionY += 0.12;
-                    this.posY += 0.12;
+                if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.LAVA) {
+                    my += 0.12;
+                    this.setPos(this.getX(), this.getY() + 0.12, this.getZ());
                     this.boatY += 0.12;
                 } else {
-                    this.motionY -= 0.002;
+                    my -= 0.002;
                 }
-            }
-            {
-                EntityPlayerSP pp = this.getRiderPlayerClient();
+            } else {
+                LocalPlayer pp = this.getRiderPlayerClient();
                 if (pp != null) {
-                pp.connection.sendPacket(new CPacketPlayer.Rotation(pp.rotationYaw, pp.rotationPitch, pp.onGround));
-                pp.connection.sendPacket(new CPacketInput(pp.moveStrafing, pp.moveForward, pp.movementInput.jump, pp.movementInput.sneak));
+                    pp.connection.send(new ServerboundMovePlayerPacket.Rot(pp.getYRot(), pp.getXRot(), pp.onGround()));
+                    pp.connection.send(new ServerboundPlayerInputPacket(pp.xxa, pp.zza, pp.input.jumping, pp.input.shiftKeyDown));
                 }
             }
             if (this.boatPosRotationIncrements > 0) {
-                double d4 = this.posX + (this.boatX - this.posX) / (double)this.boatPosRotationIncrements;
-                double d5 = this.posY + (this.boatY - this.posY) / (double)this.boatPosRotationIncrements;
-                double d11 = this.posZ + (this.boatZ - this.posZ) / (double)this.boatPosRotationIncrements;
-                this.setPosition(d4, d5, d11);
-                this.rotationPitch = (float)((double)this.rotationPitch + (this.boatPitch - (double)this.rotationPitch) / (double)this.boatPosRotationIncrements);
-                double d10 = MathHelper.wrapDegrees((double)(this.boatYaw - (double)this.rotationYaw));
-                if (this.getRiddenByEntity() != null) {
-                    d10 = MathHelper.wrapDegrees((double)((double)this.getRiddenByEntity().rotationYaw - (double)this.rotationYaw));
+                double d4 = this.getX() + (this.boatX - this.getX()) / (double) this.boatPosRotationIncrements;
+                double d5 = this.getY() + (this.boatY - this.getY()) / (double) this.boatPosRotationIncrements;
+                double d11 = this.getZ() + (this.boatZ - this.getZ()) / (double) this.boatPosRotationIncrements;
+                this.setPos(d4, d5, d11);
+                this.setXRot((float) ((double) this.getXRot() + (this.boatPitch - (double) this.getXRot()) / (double) this.boatPosRotationIncrements));
+                double d10 = Mth.wrapDegrees(this.boatYaw - (double) this.getYRot());
+                if (this.getControllingPassenger() != null) {
+                    d10 = Mth.wrapDegrees((double) this.getControllingPassenger().getYRot() - (double) this.getYRot());
                 }
-                this.rotationYaw = (float)((double)this.rotationYaw + d10 / (double)this.boatPosRotationIncrements);
-                this.setRotation(this.rotationYaw, this.rotationPitch);
+                this.setYRot((float) ((double) this.getYRot() + d10 / (double) this.boatPosRotationIncrements));
+                this.setRot(this.getYRot(), this.getXRot());
                 --this.boatPosRotationIncrements;
             } else {
-                double d4 = this.posX + this.motionX;
-                double d5 = this.posY + this.motionY;
-                double d11 = this.posZ + this.motionZ;
-                this.setPosition(d4, d5, d11);
-                this.motionX *= 0.99;
-                this.motionY *= 0.95;
-                this.motionZ *= 0.99;
+                double d4 = this.getX() + mx;
+                double d5 = this.getY() + my;
+                double d11 = this.getZ() + mz;
+                this.setPos(d4, d5, d11);
+                mx *= 0.99;
+                my *= 0.95;
+                mz *= 0.99;
             }
             this.updateLegs();
         } else {
             Block bid;
-            if (this.getRiddenByEntity() != null) {
+            if (this.getControllingPassenger() != null) {
                 gh = 2.25;
-                bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)((float)this.posY - (float)gh), (int)this.posZ)).getBlock();
-                if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.FLOWING_WATER && bid != Blocks.LAVA && bid != Blocks.FLOWING_LAVA) {
-                    this.motionY += 0.06;
-                    this.posY += 0.03;
+                bid = this.level().getBlockState(new BlockPos((int) this.getX(), (int) ((float) this.getY() - (float) gh), (int) this.getZ())).getBlock();
+                if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.LAVA) {
+                    my += 0.06;
+                    this.setPos(this.getX(), this.getY() + 0.03, this.getZ());
                 } else {
-                    this.motionY -= 0.02;
+                    my -= 0.02;
                 }
             } else {
-                bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)((float)this.posY - (float)gh + 1.0f), (int)this.posZ)).getBlock();
+                bid = this.level().getBlockState(new BlockPos((int) this.getX(), (int) ((float) this.getY() - (float) gh + 1.0f), (int) this.getZ())).getBlock();
                 if (bid == Blocks.AIR) {
-                    bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)((float)this.posY - (float)gh), (int)this.posZ)).getBlock();
+                    bid = this.level().getBlockState(new BlockPos((int) this.getX(), (int) ((float) this.getY() - (float) gh), (int) this.getZ())).getBlock();
                 }
-                if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.FLOWING_WATER && bid != Blocks.LAVA && bid != Blocks.FLOWING_LAVA) {
-                    this.motionY += 0.15;
-                    this.posY += 0.15;
+                if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.LAVA) {
+                    my += 0.15;
+                    this.setPos(this.getX(), this.getY() + 0.15, this.getZ());
                     this.boatY += 0.15;
                 } else {
-                    this.motionY -= 0.002;
+                    my -= 0.002;
                 }
             }
-            EntityPlayer pp = this.getRiderPlayer();
-            if (pp != null && pp.isSneaking()) {
-                pp.dismountRidingEntity();
+            Player pp = this.getRiderPlayer();
+            if (pp != null && pp.isShiftKeyDown()) {
+                pp.stopRiding();
                 return;
             }
-            if (this.isBeingRidden()) {
+            if (this.isVehicle()) {
                 obstruction_factor = 0.0;
-                int scanDepth = 3 + (int)(Math.max(0.0, velocity) * 6.0);
+                int scanDepth = 3 + (int) (Math.max(0.0, velocity) * 6.0);
                 if (scanDepth > 24) {
                     scanDepth = 24;
                 }
                 for (int k = 1; k < scanDepth; ++k) {
                     for (int i = 1; i < scanDepth * 2; ++i) {
                         for (int j = -90; j <= 90; j += 30) {
-                            double dz;
-                            double dx = (double)i * Math.cos(Math.toRadians(this.rotationYaw + 90.0f + (float)j));
-                            bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)(this.posX + dx), (int)this.posY - k, (int)(this.posZ + (dz = (double)i * Math.sin(Math.toRadians(this.rotationYaw + 90.0f + (float)j)))))).getBlock();
-                            if (bid == Blocks.AIR || bid == Blocks.WATER || bid == Blocks.FLOWING_WATER || bid == Blocks.LAVA || bid == Blocks.FLOWING_LAVA) continue;
+                            double scanDz = (double) i * Math.sin(Math.toRadians(this.getYRot() + 90.0f + (float) j));
+                            double scanDx = (double) i * Math.cos(Math.toRadians(this.getYRot() + 90.0f + (float) j));
+                            bid = this.level().getBlockState(new BlockPos((int) (this.getX() + scanDx), (int) this.getY() - k, (int) (this.getZ() + scanDz))).getBlock();
+                            if (bid == Blocks.AIR || bid == Blocks.WATER || bid == Blocks.LAVA) continue;
                             obstruction_factor += 0.02;
                         }
                     }
                 }
-                this.motionY += obstruction_factor * 0.05;
-                this.posY += obstruction_factor * 0.05;
-                this.move(net.minecraft.entity.MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-                this.motionX *= 0.98;
-                this.motionY *= 0.98;
-                this.motionZ *= 0.98;
+                my += obstruction_factor * 0.05;
+                this.setPos(this.getX(), this.getY() + obstruction_factor * 0.05, this.getZ());
+                this.move(MoverType.SELF, new Vec3(mx, my, mz));
+                mx *= 0.98;
+                my *= 0.98;
+                mz *= 0.98;
             } else {
-                this.move(net.minecraft.entity.MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-                this.motionX *= 0.8;
-                this.motionY *= 0.98;
-                this.motionZ *= 0.8;
+                this.move(MoverType.SELF, new Vec3(mx, my, mz));
+                mx *= 0.8;
+                my *= 0.98;
+                mz *= 0.8;
             }
-            if (this.getRiddenByEntity() != null && this.getRiddenByEntity().isDead) {
-                this.removePassengers();
+            if (this.getControllingPassenger() != null && this.getControllingPassenger().isRemoved()) {
+                this.ejectPassengers();
             }
         }
+        this.setDeltaMovement(mx, my, mz);
     }
 
     public void goThisWay(double mx, double mz) {
-        this.motionX = mx;
-        this.motionZ = mz;
+        Vec3 dm = this.getDeltaMovement();
+        this.setDeltaMovement(mx, dm.y, mz);
     }
 
-    public boolean isAIEnabled() {
-        if (this.getRiddenByEntity() != null) {
-            return false;
-        }
-        return true;
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("AntRobotOwned", this.owned);
     }
 
-    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {
-        super.writeEntityToNBT(par1NBTTagCompound);
-        par1NBTTagCompound.setInteger("AntRobotOwned", this.owned);
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.owned = tag.getInt("AntRobotOwned");
     }
 
-    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound) {
-        super.readEntityFromNBT(par1NBTTagCompound);
-        this.owned = par1NBTTagCompound.getInteger("AntRobotOwned");
-    }
-
-    public float getShadowSize() {
-        return 0.95f;
-    }
-
-    public boolean processInteract(EntityPlayer player, EnumHand hand) {
-        return this.interact(player, hand);
-    }
-
-    /**
-     * 1.7.10 parity: {@code owned == 0} (wild / egg-spawned) returns true immediately — no wheat-style taming here.
-     * Taming is done by placing a {@link com.astryxion.chaospersists.item.ItemSpiderRobotKit Red Ant Robot Kit} on a block,
-     * which calls {@link #setOwned()}. Owned robots: iron ingot heals, empty hand nearby mounts (within 6 blocks).
-     */
-    public boolean interact(EntityPlayer player, EnumHand hand) {
-        ItemStack stack = player.getHeldItem(hand);
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
         if (this.owned == 0) {
-            return true;
+            return InteractionResult.SUCCESS;
         }
         final double interactRangeSq = 36.0;
-        if (!stack.isEmpty() && stack.getItem() == Items.IRON_INGOT && player.getDistanceSq((Entity) this) < interactRangeSq) {
-            if (!this.world.isRemote) {
+        if (!stack.isEmpty() && stack.is(Items.IRON_INGOT) && player.distanceToSqr(this) < interactRangeSq) {
+            if (!this.level().isClientSide) {
                 float healAmount = this.getMaxHealth() - this.getHealth();
                 if (healAmount > 100.0f) {
                     healAmount = 100.0f;
@@ -1062,76 +967,85 @@ extends EntityLiving {
                     this.heal(healAmount);
                 }
             }
-            if (!player.capabilities.isCreativeMode) {
+            if (!player.getAbilities().instabuild) {
                 stack.shrink(1);
                 if (stack.isEmpty()) {
-                    player.setHeldItem(hand, ItemStack.EMPTY);
+                    player.setItemInHand(hand, ItemStack.EMPTY);
                 }
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        Entity rider = getRiddenByEntity();
-        if (rider instanceof EntityPlayer && rider != player) {
-            return true;
+        Entity rider = this.getFirstPassenger();
+        if (rider instanceof Player && rider != player) {
+            return InteractionResult.SUCCESS;
         }
-        if (!this.world.isRemote && rider == null && player.getDistanceSq((Entity) this) < interactRangeSq) {
+        if (!this.level().isClientSide && rider == null && player.distanceToSqr(this) < interactRangeSq) {
             player.startRiding(this);
-            this.world.playSound(this.posX, this.posY, this.posZ, com.astryxion.chaospersists.core.ChaosSounds.ROBOTSPIDERMOUNT, net.minecraft.util.SoundCategory.NEUTRAL, 0.45f, 1.0f, false);
+            this.level()
+                    .playSound(
+                            null,
+                            this.getX(),
+                            this.getY(),
+                            this.getZ(),
+                            ChaosSounds.ROBOTSPIDERMOUNT,
+                            SoundSource.NEUTRAL,
+                            0.45f,
+                            1.0f);
         }
-        return true;
+        return InteractionResult.SUCCESS;
     }
 
     private void feetFindSomethingToHit() {
         if (ChaosPersists.PlayNicely != 0) {
             return;
         }
-        List var5 = this.world.getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox().expand(10.0, 8.0, 10.0));
+        List var5 = this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(10.0, 8.0, 10.0));
         Iterator var2 = var5.iterator();
         Entity var3 = null;
-        EntityLivingBase var4 = null;
+        LivingEntity var4 = null;
         while (var2.hasNext()) {
-            var3 = (Entity)var2.next();
-            var4 = (EntityLivingBase)var3;
+            var3 = (Entity) var2.next();
+            var4 = (LivingEntity) var3;
             if (!this.feetisSuitableTarget(var4, false)) continue;
-            this.feetattackEntityAsMob((Entity)var4);
+            this.feetattackEntityAsMob(var4);
         }
     }
 
-    private boolean feetisSuitableTarget(EntityLivingBase par1EntityLiving, boolean par2) {
+    private boolean feetisSuitableTarget(LivingEntity par1EntityLiving, boolean par2) {
         if (par1EntityLiving == null) {
             return false;
         }
         if (par1EntityLiving == this) {
             return false;
         }
-        if (!par1EntityLiving.isEntityAlive()) {
+        if (!par1EntityLiving.isAlive()) {
             return false;
         }
         if (par1EntityLiving instanceof AntRobot) {
             return false;
         }
-        if (par1EntityLiving == this.getRiddenByEntity()) {
+        if (par1EntityLiving == this.getControllingPassenger()) {
             return false;
         }
-        if (MyUtils.isIgnoreable((EntityLivingBase)par1EntityLiving)) {
+        if (MyUtils.isIgnoreable(par1EntityLiving)) {
             return false;
         }
-        if (!this.getEntitySenses().canSee((Entity)par1EntityLiving)) {
+        if (!this.getSensing().hasLineOfSight(par1EntityLiving)) {
             return false;
         }
-        float d1 = (float)(par1EntityLiving.posX - this.posX);
-        float d2 = (float)(par1EntityLiving.posY - this.posY);
-        float d3 = (float)(par1EntityLiving.posZ - this.posZ);
-        float dd = (float)Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+        float d1 = (float) (par1EntityLiving.getX() - this.getX());
+        float d2 = (float) (par1EntityLiving.getY() - this.getY());
+        float d3 = (float) (par1EntityLiving.getZ() - this.getZ());
+        float dd = (float) Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
         if (dd > 9.0f) {
             return false;
         }
         if (dd < 6.0f) {
             return false;
         }
-        if (par1EntityLiving instanceof EntityPlayer) {
-            EntityPlayer p = (EntityPlayer)par1EntityLiving;
-            if (p.capabilities.isCreativeMode) {
+        if (par1EntityLiving instanceof Player) {
+            Player p = (Player) par1EntityLiving;
+            if (p.getAbilities().instabuild) {
                 return false;
             }
             return true;
@@ -1141,79 +1055,79 @@ extends EntityLiving {
 
     public boolean feetattackEntityAsMob(Entity par1Entity) {
         boolean ret = false;
-        if (par1Entity != null && par1Entity instanceof EntityLivingBase) {
+        if (par1Entity != null && par1Entity instanceof LivingEntity) {
             double ks = 0.6;
             double inair = 0.1;
-            float f3 = (float)Math.atan2(par1Entity.posZ - this.posZ, par1Entity.posX - this.posX);
-            ret = par1Entity.attackEntityFrom(DamageSource.causeMobDamage((EntityLivingBase)this), (float)ChaosPersists.AntRobot_stats.attack / 10.0f);
-            if (par1Entity.isDead || par1Entity instanceof EntityPlayer) {
+            float f3 = (float) Math.atan2(par1Entity.getZ() - this.getZ(), par1Entity.getX() - this.getX());
+            ret = par1Entity.hurt(this.damageSources().mobAttack(this), (float) ChaosPersists.AntRobot_stats.attack / 10.0f);
+            if (par1Entity.isRemoved() || par1Entity instanceof Player) {
                 inair *= 2.0;
             }
             if (ret) {
-                par1Entity.addVelocity(Math.cos(f3) * ks, inair, Math.sin(f3) * ks);
+                ((LivingEntity) par1Entity).push(Math.cos(f3) * ks, inair, Math.sin(f3) * ks);
             }
         }
         return ret;
     }
 
-    private EntityLivingBase findSomethingToAttack(float distmul, boolean dircheck) {
+    private LivingEntity findSomethingToAttack(float distmul, boolean dircheck) {
         if (ChaosPersists.PlayNicely != 0) {
             return null;
         }
-        List var5 = this.world.getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox().expand(12.0 * (double)distmul, 12.0, 12.0 * (double)distmul));
+        List var5 = this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(12.0 * (double) distmul, 12.0, 12.0 * (double) distmul));
         Iterator var2 = var5.iterator();
         Entity var3 = null;
-        EntityLivingBase var4 = null;
+        LivingEntity var4 = null;
         while (var2.hasNext()) {
-            var3 = (Entity)var2.next();
-            var4 = (EntityLivingBase)var3;
+            var3 = (Entity) var2.next();
+            var4 = (LivingEntity) var3;
             if (!this.isSuitableTarget(var4, dircheck)) continue;
             return var4;
         }
         return null;
     }
 
-    private boolean isSuitableTarget(EntityLivingBase par1EntityLiving, boolean par2) {
+    private boolean isSuitableTarget(LivingEntity par1EntityLiving, boolean par2) {
         if (par1EntityLiving == null) {
             return false;
         }
         if (par1EntityLiving == this) {
             return false;
         }
-        if (!par1EntityLiving.isEntityAlive()) {
+        if (!par1EntityLiving.isAlive()) {
             return false;
         }
         if (par1EntityLiving instanceof AntRobot) {
             return false;
         }
-        if (par1EntityLiving == this.getRiddenByEntity()) {
+        if (par1EntityLiving == this.getControllingPassenger()) {
             return false;
         }
-        if (MyUtils.isIgnoreable((EntityLivingBase)par1EntityLiving)) {
+        if (MyUtils.isIgnoreable(par1EntityLiving)) {
             return false;
         }
-        if (!this.getEntitySenses().canSee((Entity)par1EntityLiving)) {
+        if (!this.getSensing().hasLineOfSight(par1EntityLiving)) {
             return false;
         }
         if (par2) {
-            double rr = Math.atan2(par1EntityLiving.posZ - this.posZ, par1EntityLiving.posX - this.posX);
-            double rhdir = Math.toRadians((this.rotationYaw + 90.0f) % 360.0f);
+            double rr = Math.atan2(par1EntityLiving.getZ() - this.getZ(), par1EntityLiving.getX() - this.getX());
+            double rhdir = Math.toRadians((this.getYRot() + 90.0f) % 360.0f);
             double pi = 3.1415926545;
             double rdd = Math.abs(rr - rhdir) % (pi * 2.0);
             if (rdd > pi) {
                 rdd -= pi * 2.0;
             }
             rdd = Math.abs(rdd);
-            if (this.getDistanceSq((Entity)par1EntityLiving) < 36.0) {
+            if (this.distanceToSqr(par1EntityLiving) < 36.0) {
                 return true;
             }
             if (rdd > 0.75) {
                 return false;
             }
         }
-        if (par1EntityLiving instanceof EntityPlayer) {
-            EntityPlayer p = (EntityPlayer)par1EntityLiving;
-            if (p.capabilities.isCreativeMode) {
+        if (par1EntityLiving instanceof Player) {
+            Player p = (Player) par1EntityLiving;
+            if (p.getAbilities().instabuild) {
                 return false;
             }
             return true;
@@ -1223,48 +1137,48 @@ extends EntityLiving {
 
     public boolean attackEntityAsMob(Entity par1Entity) {
         boolean ret = false;
-        if (par1Entity != null && par1Entity instanceof EntityLivingBase) {
+        if (par1Entity != null && par1Entity instanceof LivingEntity) {
             double ks = 0.7;
             double inair = 0.1;
-            float f3 = (float)Math.atan2(par1Entity.posZ - this.posZ, par1Entity.posX - this.posX);
-            ret = par1Entity.attackEntityFrom(DamageSource.causeMobDamage((EntityLivingBase)this), (float)ChaosPersists.AntRobot_stats.attack);
-            if (par1Entity.isDead || par1Entity instanceof EntityPlayer) {
+            float f3 = (float) Math.atan2(par1Entity.getZ() - this.getZ(), par1Entity.getX() - this.getX());
+            ret = par1Entity.hurt(this.damageSources().mobAttack(this), (float) ChaosPersists.AntRobot_stats.attack);
+            if (par1Entity.isRemoved() || par1Entity instanceof Player) {
                 inair *= 2.0;
             }
             if (ret) {
-                par1Entity.addVelocity(Math.cos(f3) * ks, inair, Math.sin(f3) * ks);
+                ((LivingEntity) par1Entity).push(Math.cos(f3) * ks, inair, Math.sin(f3) * ks);
             }
         }
         return ret;
     }
 
     public int getAttacking() {
-        return this.getDataManager().get(ATTACKING).intValue();
+        return this.entityData.get(ATTACKING);
     }
 
     public void setAttacking(int par1) {
-        this.getDataManager().set(ATTACKING, par1);
+        this.entityData.set(ATTACKING, par1);
     }
 
-    protected Item getDropItem() {
-        return null;
-    }
-
-    private ItemStack dropItemRand(Item index, int par1) {
-        EntityItem var3 = null;
-        ItemStack is = new ItemStack(index, par1, 0);
-        var3 = new EntityItem(this.world, this.posX + (double)ChaosPersists.ChaosRand.nextInt(2) - (double)ChaosPersists.ChaosRand.nextInt(2), this.posY + 1.0, this.posZ + (double)ChaosPersists.ChaosRand.nextInt(2) - (double)ChaosPersists.ChaosRand.nextInt(2), is);
-        if (var3 != null) {
-            this.world.spawnEntity((Entity)var3);
-        }
+    private ItemStack dropItemRand(net.minecraft.world.item.Item index, int par1) {
+        ItemEntity var3;
+        ItemStack is = new ItemStack(index, par1);
+        var3 = new ItemEntity(this.level(), this.getX() + (double) ChaosPersists.ChaosRand.nextInt(2) - (double) ChaosPersists.ChaosRand.nextInt(2), this.getY() + 1.0, this.getZ() + (double) ChaosPersists.ChaosRand.nextInt(2) - (double) ChaosPersists.ChaosRand.nextInt(2), is);
+        this.level().addFreshEntity(var3);
         return is;
     }
 
-    protected void dropFewItems(boolean par1, int par2) {
+    @Override
+    public void die(DamageSource source) {
+        super.die(source);
+        if (this.level().isClientSide) {
+            return;
+        }
         ItemStack is = null;
-        int i = 7 + this.world.rand.nextInt(7);
-        block13 : for (int var4 = 0; var4 < i; ++var4) {
-            int var3 = this.world.rand.nextInt(12);
+        int i = 7 + this.getRandom().nextInt(7);
+        block13:
+        for (int var4 = 0; var4 < i; ++var4) {
+            int var3 = this.getRandom().nextInt(12);
             switch (var3) {
                 case 0: {
                     is = this.dropItemRand(Items.REDSTONE, 1);
@@ -1279,31 +1193,31 @@ extends EntityLiving {
                     continue block13;
                 }
                 case 3: {
-                    is = this.dropItemRand(Item.getItemFromBlock((Block)Blocks.REDSTONE_BLOCK), 1);
+                    is = this.dropItemRand(Blocks.REDSTONE_BLOCK.asItem(), 1);
                     continue block13;
                 }
                 case 4: {
-                    is = this.dropItemRand(Item.getItemFromBlock((Block)Blocks.DISPENSER), 1);
+                    is = this.dropItemRand(Blocks.DISPENSER.asItem(), 1);
                     continue block13;
                 }
                 case 5: {
-                    is = this.dropItemRand(Item.getItemFromBlock((Block)Blocks.STICKY_PISTON), 1);
+                    is = this.dropItemRand(Blocks.STICKY_PISTON.asItem(), 1);
                     continue block13;
                 }
                 case 6: {
-                    is = this.dropItemRand(Item.getItemFromBlock((Block)Blocks.PISTON), 1);
+                    is = this.dropItemRand(Blocks.PISTON.asItem(), 1);
                     continue block13;
                 }
                 case 7: {
-                    is = this.dropItemRand(Item.getItemFromBlock((Block)Blocks.LEVER), 1);
+                    is = this.dropItemRand(Blocks.LEVER.asItem(), 1);
                     continue block13;
                 }
                 case 8: {
-                    is = this.dropItemRand(Item.getItemFromBlock((Block)Blocks.REDSTONE_BLOCK), 1);
+                    is = this.dropItemRand(Blocks.REDSTONE_BLOCK.asItem(), 1);
                     continue block13;
                 }
                 case 9: {
-                    is = this.dropItemRand(Item.getItemFromBlock((Block)Blocks.LIGHT_WEIGHTED_PRESSURE_PLATE), 1);
+                    is = this.dropItemRand(Blocks.LIGHT_WEIGHTED_PRESSURE_PLATE.asItem(), 1);
                     continue block13;
                 }
                 case 10: {
@@ -1314,4 +1228,3 @@ extends EntityLiving {
         }
     }
 }
-

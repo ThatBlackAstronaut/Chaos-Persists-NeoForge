@@ -1,87 +1,77 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Girlfriend
- *  com.astryxion.chaospersists.MyEntityAIDance
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.passive.EntityTameable
- *  net.minecraft.init.Blocks
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.util;
 
-import com.astryxion.chaospersists.entity.Girlfriend;
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.entity.Girlfriend;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.Iterator;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.passive.EntityTameable;
-import net.minecraft.init.Blocks;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
-public class MyEntityAIDance
-extends EntityAIBase {
-    private Girlfriend thePet;
-    World theWorld;
+public class MyEntityAIDance extends Goal {
+    private final Girlfriend thePet;
+    private final Level theWorld;
     public int ticker = 0;
     public int dance_move = 0;
     public int is_dancing = 0;
 
     public MyEntityAIDance(Girlfriend par1EntityTameable) {
         this.thePet = par1EntityTameable;
-        this.theWorld = par1EntityTameable.world;
+        this.theWorld = par1EntityTameable.level();
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     public boolean is_dance_block(Block bid) {
-        if (bid == Blocks.GOLD_BLOCK || bid == Blocks.DIAMOND_BLOCK || bid == Blocks.EMERALD_BLOCK || bid == ChaosPersists.MyBlockRubyBlock || bid == ChaosPersists.MyBlockAmethystBlock || bid == ChaosPersists.MyBlockTitaniumBlock || bid == ChaosPersists.MyBlockUraniumBlock) {
-            return true;
-        }
-        return false;
+        return bid == Blocks.GOLD_BLOCK
+                || bid == Blocks.DIAMOND_BLOCK
+                || bid == Blocks.EMERALD_BLOCK
+                || bid == ChaosPersists.MyBlockRubyBlock
+                || bid == ChaosPersists.MyBlockAmethystBlock
+                || bid == ChaosPersists.MyBlockTitaniumBlock
+                || bid == ChaosPersists.MyBlockUraniumBlock;
     }
 
     @Override
-    public boolean shouldExecute() {
-        if (this.thePet.isSitting()) {
+    public boolean canUse() {
+        if (this.thePet.isInSittingPose()) {
             return false;
         }
-        long t = this.theWorld.getWorldTime();
-        if ((t %= 24000L) < 14000L || t > 22000L) {
+        long t = this.theWorld.getDayTime() % 24000L;
+        if (t < 14000L || t > 22000L) {
             return false;
         }
         int ic = 0;
-        int iz = 0;
-        int ix = 0;
         for (int i = -3; i < 4; ++i) {
             for (int j = -3; j < 4; ++j) {
-                Block bid = this.theWorld.getBlockState(new net.minecraft.util.math.BlockPos((int)this.thePet.posX + i, (int)this.thePet.posY - 1, (int)this.thePet.posZ + j)).getBlock();
-                if (!this.is_dance_block(bid)) continue;
-                ++ic;
-                ix += i;
-                iz += j;
+                Block bid =
+                        this.theWorld
+                                .getBlockState(
+                                        new BlockPos(
+                                                Mth.floor(this.thePet.getX()) + i,
+                                                Mth.floor(this.thePet.getY()) - 1,
+                                                Mth.floor(this.thePet.getZ()) + j))
+                                .getBlock();
+                if (this.is_dance_block(bid)) {
+                    ++ic;
+                }
             }
         }
-        if (ic == 0) {
-            return false;
-        }
-        return true;
+        return ic != 0;
     }
 
     @Override
-    public boolean shouldContinueExecuting() {
-        if (this.thePet.isSitting()) {
+    public boolean canContinueToUse() {
+        if (this.thePet.isInSittingPose()) {
             return false;
         }
-        long t = this.theWorld.getWorldTime();
-        if ((t %= 24000L) < 14000L || t > 22000L) {
+        long t = this.theWorld.getDayTime() % 24000L;
+        if (t < 14000L || t > 22000L) {
             return false;
         }
         int ic = 0;
@@ -89,8 +79,17 @@ extends EntityAIBase {
         int ix = 0;
         for (int i = -3; i < 4; ++i) {
             for (int j = -3; j < 4; ++j) {
-                Block bid = this.theWorld.getBlockState(new net.minecraft.util.math.BlockPos((int)this.thePet.posX + i, (int)this.thePet.posY - 1, (int)this.thePet.posZ + j)).getBlock();
-                if (!this.is_dance_block(bid)) continue;
+                Block bid =
+                        this.theWorld
+                                .getBlockState(
+                                        new BlockPos(
+                                                Mth.floor(this.thePet.getX()) + i,
+                                                Mth.floor(this.thePet.getY()) - 1,
+                                                Mth.floor(this.thePet.getZ()) + j))
+                                .getBlock();
+                if (!this.is_dance_block(bid)) {
+                    continue;
+                }
                 ++ic;
                 ix += i;
                 iz += j;
@@ -102,17 +101,29 @@ extends EntityAIBase {
         ix /= ic;
         iz /= ic;
         if (ic < 40) {
-            this.thePet.getNavigator().tryMoveToXYZ((double)((int)this.thePet.posX + ix), (double)((int)this.thePet.posY), (double)((int)this.thePet.posZ + iz), 1.0);
-        } else if (this.theWorld.rand.nextInt(3) == 1) {
-            this.thePet.getNavigator().tryMoveToXYZ((double)((int)this.thePet.posX), (double)((int)this.thePet.posY), (double)((int)this.thePet.posZ), 1.0);
+            this.thePet
+                    .getNavigation()
+                    .moveTo(
+                            (double) (Mth.floor(this.thePet.getX()) + ix),
+                            (double) Mth.floor(this.thePet.getY()),
+                            (double) (Mth.floor(this.thePet.getZ()) + iz),
+                            1.0);
+        } else if (this.theWorld.getRandom().nextInt(3) == 1) {
+            this.thePet
+                    .getNavigation()
+                    .moveTo(
+                            (double) Mth.floor(this.thePet.getX()),
+                            (double) Mth.floor(this.thePet.getY()),
+                            (double) Mth.floor(this.thePet.getZ()),
+                            1.0);
         }
         this.is_dancing = 1;
         return true;
     }
 
     @Override
-    public void startExecuting() {
-        this.thePet.setSneaking(false);
+    public void start() {
+        this.thePet.setShiftKeyDown(false);
         this.ticker = 0;
         this.dance_move = 0;
         this.is_dancing = 1;
@@ -121,8 +132,17 @@ extends EntityAIBase {
         int ix = 0;
         for (int i = -3; i < 4; ++i) {
             for (int j = -3; j < 4; ++j) {
-                Block bid = this.theWorld.getBlockState(new net.minecraft.util.math.BlockPos((int)this.thePet.posX + i, (int)this.thePet.posY - 1, (int)this.thePet.posZ + j)).getBlock();
-                if (!this.is_dance_block(bid)) continue;
+                Block bid =
+                        this.theWorld
+                                .getBlockState(
+                                        new BlockPos(
+                                                Mth.floor(this.thePet.getX()) + i,
+                                                Mth.floor(this.thePet.getY()) - 1,
+                                                Mth.floor(this.thePet.getZ()) + j))
+                                .getBlock();
+                if (!this.is_dance_block(bid)) {
+                    continue;
+                }
                 ++ic;
                 ix += i;
                 iz += j;
@@ -132,184 +152,201 @@ extends EntityAIBase {
             ix /= ic;
             iz /= ic;
             if (ic < 40) {
-                this.thePet.getNavigator().tryMoveToXYZ((double)((int)this.thePet.posX + ix), (double)((int)this.thePet.posY), (double)((int)this.thePet.posZ + iz), 1.0);
+                this.thePet
+                        .getNavigation()
+                        .moveTo(
+                                (double) (Mth.floor(this.thePet.getX()) + ix),
+                                (double) Mth.floor(this.thePet.getY()),
+                                (double) (Mth.floor(this.thePet.getZ()) + iz),
+                                1.0);
             }
         }
     }
 
     @Override
-    public void resetTask() {
-        this.thePet.setSneaking(false);
+    public void stop() {
+        this.thePet.setShiftKeyDown(false);
         this.ticker = 0;
         this.dance_move = 0;
         this.is_dancing = 0;
     }
 
-
     @Override
-    public void updateTask()
-    {
-      int cycle = 20;
-      int halfc = cycle / 2;
-      int mover = cycle * 8;
-      int tempid = this.thePet.getEntityId();
-
-      AxisAlignedBB bb = new AxisAlignedBB(this.thePet.posX - 4.0D, this.thePet.posY - 3.0D, this.thePet.posZ - 4.0D, this.thePet.posX + 4.0D, this.thePet.posY + 3.0D, this.thePet.posZ + 4.0D);
-      List var5 = this.theWorld.getEntitiesWithinAABB(Girlfriend.class, bb);
-      Iterator var2 = var5.iterator();
-      while (var2.hasNext())
-      {
-        Girlfriend var3 = (Girlfriend)var2.next();
-        if (var3.getEntityId() < tempid)
-        {
-          if (var3.Dance.is_dancing == 1) {
-            this.ticker = var3.Dance.ticker;
-            this.dance_move = var3.Dance.dance_move;
-          }
-          tempid = var3.getEntityId();
+    public void tick() {
+        int cycle = 20;
+        int halfc = cycle / 2;
+        int mover = cycle * 8;
+        int tempid = this.thePet.getId();
+        AABB bb =
+                new AABB(
+                        this.thePet.getX() - 4.0,
+                        this.thePet.getY() - 3.0,
+                        this.thePet.getZ() - 4.0,
+                        this.thePet.getX() + 4.0,
+                        this.thePet.getY() + 3.0,
+                        this.thePet.getZ() + 4.0);
+        List<Girlfriend> var5 = this.theWorld.getEntitiesOfClass(Girlfriend.class, bb);
+        for (Girlfriend var3 : var5) {
+            if (var3.getId() < tempid) {
+                if (var3.Dance.is_dancing == 1) {
+                    this.ticker = var3.Dance.ticker;
+                    this.dance_move = var3.Dance.dance_move;
+                }
+                tempid = var3.getId();
+            }
         }
-      }
-
-      this.ticker += 1;
-
-      if (this.dance_move == 0) {
-        this.dance_move = (1 + this.theWorld.rand.nextInt(10));
-        this.thePet.motionX = 0.0D;
-        this.thePet.motionZ = 0.0D;
-        this.ticker = 0;
-        this.thePet.setSneaking(false);
-      }
-
-      switch (this.dance_move) {
-      case 1:
-        move_it(this.thePet, this.ticker, cycle, 0);
-        if (this.ticker <= mover) break; this.dance_move = 0; break;
-      case 2:
-        move_it(this.thePet, this.ticker, cycle, 1);
-        if (this.ticker <= mover) break; this.dance_move = 0; break;
-      case 3:
-        if (this.ticker % cycle < halfc)
-          this.thePet.setSneaking(false);
-        else {
-          this.thePet.setSneaking(true);
+        this.ticker += 1;
+        if (this.dance_move == 0) {
+            this.dance_move = 1 + this.theWorld.getRandom().nextInt(10);
+            this.thePet.setDeltaMovement(Vec3.ZERO);
+            this.ticker = 0;
+            this.thePet.setShiftKeyDown(false);
         }
-        if (this.ticker <= mover) break; this.dance_move = 0; break;
-      case 4:
-        if (this.ticker % halfc == 1) {
-          this.thePet.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
-          this.thePet.motionY = 0.25D;
+        switch (this.dance_move) {
+            case 1:
+                move_it(this.thePet, this.ticker, cycle, 0);
+                if (this.ticker > mover) {
+                    this.dance_move = 0;
+                }
+                break;
+            case 2:
+                move_it(this.thePet, this.ticker, cycle, 1);
+                if (this.ticker > mover) {
+                    this.dance_move = 0;
+                }
+                break;
+            case 3:
+                if (this.ticker % cycle < halfc) {
+                    this.thePet.setShiftKeyDown(false);
+                } else {
+                    this.thePet.setShiftKeyDown(true);
+                }
+                if (this.ticker > mover) {
+                    this.dance_move = 0;
+                }
+                break;
+            case 4:
+                if (this.ticker % halfc == 1) {
+                    this.thePet.swing(InteractionHand.MAIN_HAND);
+                    this.thePet.setDeltaMovement(this.thePet.getDeltaMovement().add(0.0, 0.25, 0.0));
+                }
+                if (this.ticker > mover) {
+                    this.dance_move = 0;
+                }
+                break;
+            case 5:
+                if (this.ticker % halfc == 1) {
+                    this.thePet.swing(InteractionHand.MAIN_HAND);
+                }
+                move_it(this.thePet, this.ticker, cycle, 0);
+                if (this.ticker > mover) {
+                    this.dance_move = 0;
+                }
+                break;
+            case 6:
+                if (this.ticker % halfc == 1) {
+                    this.thePet.swing(InteractionHand.MAIN_HAND);
+                }
+                move_it(this.thePet, this.ticker, cycle, 1);
+                if (this.ticker > mover) {
+                    this.dance_move = 0;
+                }
+                break;
+            case 7:
+                if (this.ticker % cycle < halfc) {
+                    this.thePet.setShiftKeyDown(false);
+                } else {
+                    this.thePet.setShiftKeyDown(true);
+                }
+                move_it(this.thePet, this.ticker, cycle, 0);
+                move_it(this.thePet, this.ticker, cycle, 2);
+                if (this.ticker > mover) {
+                    this.dance_move = 0;
+                }
+                break;
+            case 8:
+                if (this.ticker % cycle < halfc) {
+                    this.thePet.setShiftKeyDown(false);
+                } else {
+                    this.thePet.setShiftKeyDown(true);
+                }
+                move_it(this.thePet, this.ticker, cycle, 1);
+                move_it(this.thePet, this.ticker, cycle, 2);
+                if (this.ticker > mover) {
+                    this.dance_move = 0;
+                }
+                break;
+            case 9:
+                if (this.ticker % cycle < halfc) {
+                    this.thePet.setShiftKeyDown(false);
+                } else {
+                    this.thePet.setShiftKeyDown(true);
+                }
+                if (this.ticker % halfc == 1) {
+                    this.thePet.swing(InteractionHand.MAIN_HAND);
+                }
+                move_it(this.thePet, this.ticker, cycle, 0);
+                move_it(this.thePet, this.ticker, cycle, 3);
+                if (this.ticker > mover) {
+                    this.dance_move = 0;
+                }
+                break;
+            case 10:
+                if (this.ticker % cycle < halfc) {
+                    this.thePet.setShiftKeyDown(false);
+                    this.thePet.setDeltaMovement(this.thePet.getDeltaMovement().add(0.0, 0.25, 0.0));
+                } else {
+                    this.thePet.setShiftKeyDown(true);
+                }
+                if (this.ticker % halfc == 1) {
+                    this.thePet.swing(InteractionHand.MAIN_HAND);
+                }
+                move_it(this.thePet, this.ticker, cycle, 1);
+                move_it(this.thePet, this.ticker, cycle, 3);
+                if (this.ticker > mover) {
+                    this.dance_move = 0;
+                }
+                break;
+            default:
+                this.dance_move = 0;
         }
-
-        if (this.ticker <= mover) break; this.dance_move = 0; break;
-      case 5:
-        if (this.ticker % halfc == 1) {
-          this.thePet.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
-        }
-        move_it(this.thePet, this.ticker, cycle, 0);
-        if (this.ticker <= mover) break; this.dance_move = 0; break;
-      case 6:
-        if (this.ticker % halfc == 1) {
-          this.thePet.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
-        }
-        move_it(this.thePet, this.ticker, cycle, 1);
-        if (this.ticker <= mover) break; this.dance_move = 0; break;
-      case 7:
-        if (this.ticker % cycle < halfc)
-          this.thePet.setSneaking(false);
-        else {
-          this.thePet.setSneaking(true);
-        }
-        move_it(this.thePet, this.ticker, cycle, 0);
-        move_it(this.thePet, this.ticker, cycle, 2);
-        if (this.ticker <= mover) break; this.dance_move = 0; break;
-      case 8:
-        if (this.ticker % cycle < halfc)
-          this.thePet.setSneaking(false);
-        else {
-          this.thePet.setSneaking(true);
-        }
-        move_it(this.thePet, this.ticker, cycle, 1);
-        move_it(this.thePet, this.ticker, cycle, 2);
-        if (this.ticker <= mover) break; this.dance_move = 0; break;
-      case 9:
-        if (this.ticker % cycle < halfc)
-          this.thePet.setSneaking(false);
-        else {
-          this.thePet.setSneaking(true);
-        }
-        if (this.ticker % halfc == 1) {
-          this.thePet.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
-        }
-        move_it(this.thePet, this.ticker, cycle, 0);
-        move_it(this.thePet, this.ticker, cycle, 3);
-        if (this.ticker <= mover) break; this.dance_move = 0; break;
-      case 10:
-        if (this.ticker % cycle < halfc) {
-          this.thePet.setSneaking(false);
-          this.thePet.motionY = 0.25D;
-        } else {
-          this.thePet.setSneaking(true);
-        }
-        if (this.ticker % halfc == 1) {
-          this.thePet.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
-        }
-        move_it(this.thePet, this.ticker, cycle, 1);
-        move_it(this.thePet, this.ticker, cycle, 3);
-        if (this.ticker <= mover) break; this.dance_move = 0; break;
-      default:
-        this.dance_move = 0;
-      }
     }
 
-    private void move_it(EntityTameable et, int t, int cycle, int dir) {
+    private void move_it(Girlfriend et, int t, int cycle, int dir) {
         float dirx = 0.0f;
         float dirz = 0.0f;
         float dirYaw = 0.0f;
         float dirYawH = 0.0f;
         switch (dir) {
-            case 0: {
+            case 0:
                 dirx = 0.02f;
-                dirz = 0.0f;
-                dirYaw = 0.0f;
-                dirYawH = 0.0f;
                 break;
-            }
-            case 1: {
-                dirx = 0.0f;
+            case 1:
                 dirz = 0.02f;
-                dirYaw = 0.0f;
-                dirYawH = 0.0f;
                 break;
-            }
-            case 2: {
-                dirx = 0.0f;
-                dirz = 0.0f;
+            case 2:
                 dirYaw = 10.0f;
-                dirYawH = 0.0f;
                 break;
-            }
-            case 3: {
-                dirx = 0.0f;
-                dirz = 0.0f;
-                dirYaw = 0.0f;
+            case 3:
                 dirYawH = 10.0f;
                 break;
-            }
+            default:
+                break;
         }
-        if ((t %= cycle) >= cycle / 2) {
-            dirx = - dirx;
-            dirz = - dirz;
-            dirYaw = - dirYaw;
-            dirYawH = - dirYawH;
+        int modCycle = t % cycle;
+        if (modCycle >= cycle / 2) {
+            dirx = -dirx;
+            dirz = -dirz;
+            dirYaw = -dirYaw;
+            dirYawH = -dirYawH;
         }
-        if ((t %= cycle / 2) >= cycle / 4) {
-            dirYaw = - dirYaw;
-            dirYawH = - dirYawH;
+        if (modCycle % (cycle / 2) >= cycle / 4) {
+            dirYaw = -dirYaw;
+            dirYawH = -dirYawH;
         }
-        et.motionX += (double)dirx;
-        et.motionZ += (double)dirz;
-        et.rotationYaw += dirYaw;
-        et.rotationYawHead += dirYawH;
+        Vec3 motion = et.getDeltaMovement();
+        et.setDeltaMovement(motion.x + (double) dirx, motion.y, motion.z + (double) dirz);
+        et.setYRot(et.getYRot() + dirYaw);
+        et.setYHeadRot(et.getYHeadRot() + dirYawH);
     }
 }
-

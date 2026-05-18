@@ -1,41 +1,44 @@
 package com.astryxion.chaospersists.item;
 
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.core.ChaosPersists;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
-public class ItemIceBall
-extends Item {
+public class ItemIceBall extends Item {
     public ItemIceBall(int i) {
-        this.maxStackSize = 64;
-        this.setCreativeTab(CreativeTabs.COMBAT);
+        super(new Item.Properties().stacksTo(64));
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
-        ItemStack stack = player.getHeldItem(hand);
-        if (!player.capabilities.isCreativeMode) {
+    public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
-        world.playSound(null, player.posX, player.posY, player.posZ,
-                SoundEvents.ENTITY_SNOWBALL_THROW, SoundCategory.PLAYERS,
-                3.0F, 1.0F);
-        if (!world.isRemote) {
-            IceBall ice = new IceBall(world, (EntityLivingBase) player);
+        world.playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.SNOWBALL_THROW,
+                SoundSource.PLAYERS,
+                3.0f,
+                1.0f);
+        if (!world.isClientSide) {
+            IceBall ice = new IceBall(ChaosPersists.ENTITY_TYPE_ICE_BALL.get(), player, world);
             ice.setIceMaker(1);
-            ice.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 1.5F, 1.0F);
-            world.spawnEntity((Entity) ice);
+            ice.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0f, 1.5f, 1.0f);
+            world.addFreshEntity(ice);
         }
-        player.swingArm(hand);
-        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+        player.swing(hand);
+        player.awardStat(Stats.ITEM_USED.get(this));
+        return InteractionResultHolder.sidedSuccess(stack, world.isClientSide);
     }
 }

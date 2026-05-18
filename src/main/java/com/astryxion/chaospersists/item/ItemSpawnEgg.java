@@ -1,102 +1,72 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.ItemSpawnEgg
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityList
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.monster.EntitySkeleton
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import com.astryxion.chaospersists.entity.PitchBlack;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import java.util.Random;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.monster.EntitySkeleton;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.util.MyUtils;
 
-/*
- * Exception performing whole class analysis ignored.
- */
-public class ItemSpawnEgg
-extends Item {
+import com.astryxion.chaospersists.entity.PitchBlack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.registries.ForgeRegistries;
+
+public class ItemSpawnEgg extends Item {
     public int my_id = 0;
 
     public ItemSpawnEgg(int i, int j) {
+        super(new Properties().stacksTo(64));
         this.my_id = j;
-        this.maxStackSize = 64;
-        this.setCreativeTab(CreativeTabs.MISC);
     }
 
-    /** 1.12.2: Called when right-clicking on a block. */
     @Override
-    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-        ItemStack stack = player.getHeldItem(hand);
-        if (worldIn.isRemote) {
-            return EnumActionResult.SUCCESS;
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
         }
+        BlockPos pos = context.getClickedPos();
         double spawnX = pos.getX() + 0.5;
         double spawnY = pos.getY() + 1.0;
         double spawnZ = pos.getZ() + 0.5;
-        if (doSpawn(stack, player, worldIn, spawnX, spawnY, spawnZ)) {
-            return EnumActionResult.SUCCESS;
+        if (doSpawn(context.getItemInHand(), context.getPlayer(), level, spawnX, spawnY, spawnZ)) {
+            return InteractionResult.SUCCESS;
         }
-        return EnumActionResult.FAIL;
+        return InteractionResult.FAIL;
     }
 
-    /** 1.12.2: Called when right-clicking in air. */
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
-        ItemStack stack = playerIn.getHeldItem(handIn);
-        // 1.7.10 parity: spawn eggs only spawn from block use.
-        // Prevent air right-click from spawning mobs at player position.
-        return new ActionResult<>(EnumActionResult.PASS, stack);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        return InteractionResultHolder.pass(player.getItemInHand(hand));
     }
 
-    /** Shared spawn logic for onItemUse and onItemRightClick. */
-    private boolean doSpawn(ItemStack stack, EntityPlayer player, World world, double spawnX, double spawnY, double spawnZ) {
-        Entity ent = ItemSpawnEgg.spawn_something((int) this.my_id, world, spawnX, spawnY, spawnZ);
+    private boolean doSpawn(ItemStack stack, Player player, Level level, double spawnX, double spawnY, double spawnZ) {
+        Entity ent = ItemSpawnEgg.spawn_something(this.my_id, level, spawnX, spawnY, spawnZ);
         if (ent == null) {
             return false;
         }
-        if (ent instanceof PitchBlack) {
-            ((PitchBlack) ent).setSpawnedFromEgg();
+        if (ent instanceof PitchBlack pitchBlack) {
+            pitchBlack.setSpawnedFromEgg();
         }
-        if (ent instanceof EntityLiving && stack.hasDisplayName()) {
-            ((EntityLiving) ent).setCustomNameTag(stack.getDisplayName());
+        if (ent instanceof LivingEntity living && stack.hasCustomHoverName()) {
+            living.setCustomName(stack.getHoverName());
         }
-        if (!player.capabilities.isCreativeMode) {
+        if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
         return true;
     }
 
-    public static Entity spawn_something(int id, World world, double d0, double d1, double d2) {
+    public static Entity spawn_something(int id, Level level, double d0, double d1, double d2) {
         int entityID = 0;
         int skelly_type = 0;
         String name = null;
@@ -560,23 +530,80 @@ extends Item {
             }
         }
         Entity ent = null;
-        if ((entityID != 0 || name != null) && (ent = ItemSpawnEgg.spawnCreature((World)world, (int)entityID, (String)name, (double)d0, (double)d1, (double)d2)) != null && entityID == 51 && skelly_type != 0) {
-            EntitySkeleton sk = (EntitySkeleton)ent;
-            try { sk.getDataManager().set((net.minecraft.network.datasync.DataParameter<Byte>)net.minecraft.entity.monster.EntitySkeleton.class.getDeclaredField("SKELETON_TYPE").get(null), Byte.valueOf((byte)skelly_type)); } catch (Exception ignored) { }
+        if (entityID == 51 && skelly_type != 0) {
+            ent = spawnVanillaCreature(level, EntityType.WITHER_SKELETON, d0, d1, d2);
+        } else if (entityID != 0 || name != null) {
+            ent = spawnCreature(level, entityID, name, d0, d1, d2);
         }
         return ent;
     }
 
-    public static Entity spawnCreature(World par0World, int par1, String name, double par2, double par4, double par6) {
-        Entity var8 = name == null ? EntityList.createEntityByID((int)par1, (World)par0World) : EntityList.createEntityByIDFromName(new net.minecraft.util.ResourceLocation("chaospersists", (String)name), par0World);
-        if (var8 != null) {
-            var8.setLocationAndAngles(par2, par4, par6, par0World.rand.nextFloat() * 360.0f, 0.0f);
-            par0World.spawnEntity(var8);
-            if (var8 instanceof EntityLiving) {
-                ((EntityLiving)var8).playLivingSound();
+    public static Entity spawnCreature(Level level, int entityId, String name, double x, double y, double z) {
+        EntityType<?> type = null;
+        if (name != null) {
+            ResourceLocation loc = legacySpawnNameToRegistry(name);
+            if (loc != null) {
+                type = ForgeRegistries.ENTITY_TYPES.getValue(loc);
+            }
+        } else if (entityId != 0) {
+            type = legacyVanillaEntityType(entityId);
+        }
+        return spawnEntityType(level, type, x, y, z);
+    }
+
+    private static Entity spawnVanillaCreature(Level level, EntityType<?> type, double x, double y, double z) {
+        return spawnEntityType(level, type, x, y, z);
+    }
+
+    private static Entity spawnEntityType(Level level, EntityType<?> type, double x, double y, double z) {
+        if (type == null || !(level instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        Entity entity = type.create(serverLevel);
+        if (entity != null) {
+            entity.moveTo(x, y, z, level.getRandom().nextFloat() * 360.0F, 0.0F);
+            serverLevel.addFreshEntity(entity);
+            if (entity instanceof Mob mob) {
+                MyUtils.playAmbientSound(mob);
             }
         }
-        return var8;
+        return entity;
+    }
+
+    private static EntityType<?> legacyVanillaEntityType(int legacyId) {
+        switch (legacyId) {
+            case 51:
+                return EntityType.SKELETON;
+            case 63:
+                return EntityType.SLIME;
+            case 97:
+                return EntityType.SILVERFISH;
+            case 99:
+                return EntityType.IRON_GOLEM;
+            case 64:
+                return EntityType.ENDERMAN;
+            default:
+                return null;
+        }
+    }
+
+    private static ResourceLocation legacySpawnNameToRegistry(String legacyName) {
+        if (legacyName == null) {
+            return null;
+        }
+        switch (legacyName) {
+            case "Rat":
+                return ResourceLocation.fromNamespaceAndPath("chaospersists", "rat");
+            case "Fairy":
+                return ResourceLocation.fromNamespaceAndPath("chaospersists", "fairy");
+            case "Red Ant":
+                return ResourceLocation.fromNamespaceAndPath("chaospersists", "red_ant");
+            case "Termite":
+                return ResourceLocation.fromNamespaceAndPath("chaospersists", "termite");
+            default:
+                return ResourceLocation.fromNamespaceAndPath(
+                        "chaospersists", legacyName.toLowerCase(java.util.Locale.ROOT).replace(' ', '_'));
+        }
     }
 }
 

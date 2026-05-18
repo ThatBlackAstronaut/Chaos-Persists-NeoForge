@@ -1,62 +1,45 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Boyfriend
- *  com.astryxion.chaospersists.Girlfriend
- *  com.astryxion.chaospersists.MyEntityAIJealousy
- *  com.astryxion.chaospersists.MyEntityAINearestAttackableTarget
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.passive.EntityTameable
- */
 package com.astryxion.chaospersists.util;
 
 import com.astryxion.chaospersists.entity.Boyfriend;
 import com.astryxion.chaospersists.entity.Girlfriend;
-import com.astryxion.chaospersists.util.MyEntityAINearestAttackableTarget;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.passive.EntityTameable;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.TamableAnimal;
 
-public class MyEntityAIJealousy
-extends MyEntityAINearestAttackableTarget {
-    private EntityTameable theTameable;
+public class MyEntityAIJealousy extends MyEntityAINearestAttackableTarget {
+    private final TamableAnimal theTameable;
 
-    public MyEntityAIJealousy(EntityTameable par1EntityTameable, Class par2Class, float par3, int par4, boolean par5) {
-        super((EntityLiving)par1EntityTameable, par2Class, par3, par4, par5);
+    public MyEntityAIJealousy(
+            TamableAnimal par1EntityTameable, Class<? extends LivingEntity> par2Class, float par3, int par4, boolean par5) {
+        super((Mob) par1EntityTameable, par2Class, par3, par4, par5);
         this.theTameable = par1EntityTameable;
     }
 
-    public boolean shouldExecute() {
-        EntityTameable te = (EntityTameable)this.taskOwner;
-        Girlfriend gf = null;
-        Boyfriend bf = null;
-        EntityLivingBase ep = null;
-        if (te == null) {
+    @Override
+    public boolean canUse() {
+        if (!this.theTameable.isTame()) {
             return false;
         }
-        if (!te.isTamed()) {
+        if (this.theTameable.isInSittingPose()) {
             return false;
         }
-        if (te.isSitting()) {
+        if (!super.canUse()) {
             return false;
         }
-        if (!super.shouldExecute()) {
-            return false;
-        }
-        EntityLiving victim = this.targetEntity;
+        LivingEntity victim = this.targetEntity;
         if (victim == null) {
             return false;
         }
-        if (te instanceof Girlfriend ? victim instanceof Girlfriend && (gf = (Girlfriend)victim).isTamed() : victim instanceof Boyfriend && (bf = (Boyfriend)victim).isTamed()) {
+        if (this.theTameable instanceof Girlfriend) {
+            if (victim instanceof Girlfriend gf && gf.isTame()) {
+                return false;
+            }
+        } else if (victim instanceof Boyfriend bf && bf.isTame()) {
             return false;
         }
-        ep = te.getOwner();
-        if (ep == null) {
+        if (this.theTameable.getOwner() == null) {
             return false;
         }
         return true;
     }
 }
-

@@ -1,112 +1,105 @@
 package com.astryxion.chaospersists.item;
 
+import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.entity.AttackSquid;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.*;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 public class ItemSquidZooka extends Item {
 
     public ItemSquidZooka(int i) {
-        this.maxStackSize = 1;
-        this.setMaxDamage(100);
-        this.setCreativeTab(CreativeTabs.COMBAT);
+        super(new Properties().stacksTo(1).durability(100));
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
 
-        ItemStack stack = player.getHeldItem(hand);
-
-        // Prevent breaking
-        if (stack.getMaxDamage() - stack.getItemDamage() <= 1) {
-            return new ActionResult<>(EnumActionResult.FAIL, stack);
+        if (stack.getMaxDamage() - stack.getDamageValue() <= 1) {
+            return InteractionResultHolder.fail(stack);
         }
 
-        // Play explosion sound
-        world.playSound(
+        level.playSound(
                 player,
-                player.posX,
-                player.posY,
-                player.posZ,
-                net.minecraft.init.SoundEvents.ENTITY_GENERIC_EXPLODE,
-                SoundCategory.PLAYERS,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.GENERIC_EXPLODE,
+                SoundSource.PLAYERS,
                 0.5f,
-                0.5f
-        );
+                0.5f);
 
-        if (!world.isRemote) {
-
+        if (!level.isClientSide) {
             double xzoff = 2.5;
             double yoff = 1.65;
 
-            Entity e = spawnCreature(
-                    world,
-                    player.posX - xzoff * Math.sin(Math.toRadians(player.rotationYawHead + 15.0f)),
-                    player.posY + yoff,
-                    player.posZ + xzoff * Math.cos(Math.toRadians(player.rotationYawHead + 15.0f))
-            );
+            Entity e =
+                    spawnCreature(
+                            level,
+                            player.getX()
+                                    - xzoff
+                                            * Math.sin(
+                                                    Math.toRadians(player.getYHeadRot() + 15.0f)),
+                            player.getY() + yoff,
+                            player.getZ()
+                                    + xzoff
+                                            * Math.cos(
+                                                    Math.toRadians(player.getYHeadRot() + 15.0f)));
 
             if (e != null) {
-
-                if (e instanceof AttackSquid) {
-                    ((AttackSquid) e).setWasShot();
+                if (e instanceof AttackSquid attackSquid) {
+                    attackSquid.setWasShot();
                 }
 
                 float f = 3.6f;
 
-                e.motionX = (-MathHelper.sin(player.rotationYaw * 0.017453292F))
-                        * MathHelper.cos(player.rotationPitch * 0.017453292F) * f;
+                double motionX =
+                        -Mth.sin(player.getYRot() * 0.017453292F)
+                                * Mth.cos(player.getXRot() * 0.017453292F)
+                                * f;
+                double motionZ =
+                        Mth.cos(player.getYRot() * 0.017453292F)
+                                * Mth.cos(player.getXRot() * 0.017453292F)
+                                * f;
+                double motionY = -Mth.sin(player.getXRot() * 0.017453292F) * f;
 
-                e.motionZ = (MathHelper.cos(player.rotationYaw * 0.017453292F))
-                        * MathHelper.cos(player.rotationPitch * 0.017453292F) * f;
+                motionX += (level.random.nextFloat() - level.random.nextFloat()) * 0.05;
+                motionY += (level.random.nextFloat() - level.random.nextFloat()) * 0.05;
+                motionZ += (level.random.nextFloat() - level.random.nextFloat()) * 0.05;
 
-                e.motionY = (-MathHelper.sin(player.rotationPitch * 0.017453292F)) * f;
-
-                // Add slight randomness
-                e.motionX += (world.rand.nextFloat() - world.rand.nextFloat()) * 0.05;
-                e.motionY += (world.rand.nextFloat() - world.rand.nextFloat()) * 0.05;
-                e.motionZ += (world.rand.nextFloat() - world.rand.nextFloat()) * 0.05;
-
-                e.velocityChanged = true;
+                e.setDeltaMovement(motionX, motionY, motionZ);
+                e.hurtMarked = true;
             } else {
                 System.out.println("SquidZooka failed to spawn AttackSquid");
             }
         }
 
-        player.swingArm(hand);
+        player.swing(hand);
 
-        // Apply recoil
-        player.addVelocity(
-                Math.cos(Math.toRadians(player.rotationYawHead - 90.0f)) * 0.45,
+        player.push(
+                Math.cos(Math.toRadians(player.getYHeadRot() - 90.0f)) * 0.45,
                 0.1,
-                Math.sin(Math.toRadians(player.rotationYawHead - 90.0f)) * 0.45
-        );
+                Math.sin(Math.toRadians(player.getYHeadRot() - 90.0f)) * 0.45);
 
-        stack.damageItem(1, player);
+        stack.hurtAndBreak(1, player, p -> p.broadcastBreakEvent(hand));
 
-        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 
-    public static Entity spawnCreature(World world, double x, double y, double z) {
-
-        Entity entity = EntityList.createEntityByIDFromName(
-                new ResourceLocation("chaospersists", "attack_squid"),
-                world
-        );
-
+    public static Entity spawnCreature(Level level, double x, double y, double z) {
+        Entity entity = ChaosPersists.ENTITY_TYPE_ATTACK_SQUID.get().create(level);
         if (entity != null) {
-            entity.setLocationAndAngles(x, y, z, world.rand.nextFloat() * 360.0f, 0.0f);
-            world.spawnEntity(entity);
+            entity.moveTo(x, y, z, level.random.nextFloat() * 360.0f, 0.0f);
+            level.addFreshEntity(entity);
         }
-
         return entity;
     }
 }

@@ -1,122 +1,125 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.EntityThrownRock
- *  com.astryxion.chaospersists.RenderThrownRock
- *  net.minecraft.client.renderer.Tessellator
- *  net.minecraft.client.renderer.entity.Render
- *  net.minecraft.client.renderer.entity.RenderManager
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.ResourceLocation
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import com.astryxion.chaospersists.entity.EntityThrownRock;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.entity.Render;
-import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
-@SideOnly(value=Side.CLIENT)
-public class RenderThrownRock
-extends Render {
-    private static final ResourceLocation texture1 = new ResourceLocation("chaospersists", "textures/items/rocksmall.png");
-    private static final ResourceLocation texture2 = new ResourceLocation("chaospersists", "textures/items/rock.png");
-    private static final ResourceLocation texture3 = new ResourceLocation("chaospersists", "textures/items/rockred.png");
-    private static final ResourceLocation texture4 = new ResourceLocation("chaospersists", "textures/items/rockgreen.png");
-    private static final ResourceLocation texture5 = new ResourceLocation("chaospersists", "textures/items/rockblue.png");
-    private static final ResourceLocation texture6 = new ResourceLocation("chaospersists", "textures/items/rockpurple.png");
-    private static final ResourceLocation texture7 = new ResourceLocation("chaospersists", "textures/items/rockspikey.png");
-    private static final ResourceLocation texture8 = new ResourceLocation("chaospersists", "textures/items/rocktnt.png");
-    private static final ResourceLocation texture9 = new ResourceLocation("chaospersists", "textures/items/rockcrystalred.png");
-    private static final ResourceLocation texture10 = new ResourceLocation("chaospersists", "textures/items/rockcrystalgreen.png");
-    private static final ResourceLocation texture11 = new ResourceLocation("chaospersists", "textures/items/rockcrystalblue.png");
-    private static final ResourceLocation texture12 = new ResourceLocation("chaospersists", "textures/items/rockcrystaltnt.png");
+public class RenderThrownRock extends EntityRenderer<EntityThrownRock> {
+    private static final ResourceLocation TEXTURE1 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rocksmall.png");
+    private static final ResourceLocation TEXTURE2 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rock.png");
+    private static final ResourceLocation TEXTURE3 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rockred.png");
+    private static final ResourceLocation TEXTURE4 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rockgreen.png");
+    private static final ResourceLocation TEXTURE5 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rockblue.png");
+    private static final ResourceLocation TEXTURE6 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rockpurple.png");
+    private static final ResourceLocation TEXTURE7 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rockspikey.png");
+    private static final ResourceLocation TEXTURE8 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rocktnt.png");
+    private static final ResourceLocation TEXTURE9 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rockcrystalred.png");
+    private static final ResourceLocation TEXTURE10 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rockcrystalgreen.png");
+    private static final ResourceLocation TEXTURE11 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rockcrystalblue.png");
+    private static final ResourceLocation TEXTURE12 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/rockcrystaltnt.png");
 
-    public RenderThrownRock(RenderManager manager) {
-        super(manager);
+    public RenderThrownRock(EntityRendererProvider.Context context) {
+        super(context);
     }
 
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-        this.bindTexture(this.getEntityTexture(par1Entity));
-        GL11.glPushMatrix();
-        GL11.glTranslatef((float)((float)par2), (float)((float)par4), (float)((float)par6));
-        GL11.glEnable((int)32826);
-        GL11.glScalef((float)0.5f, (float)0.5f, (float)0.5f);
-        this.func_77026_a(0, par1Entity.rotationPitch);
-        GL11.glDisable((int)32826);
-        GL11.glPopMatrix();
+    @Override
+    public void render(
+            EntityThrownRock entity,
+            float entityYaw,
+            float partialTicks,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight) {
+        poseStack.pushPose();
+        poseStack.translate(0.0, 0.15, 0.0);
+        poseStack.scale(0.5f, 0.5f, 0.5f);
+        float spin = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
+        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+        poseStack.mulPose(Axis.ZP.rotationDegrees(spin));
+        VertexConsumer vertexConsumer =
+                buffer.getBuffer(RenderType.entityCutoutNoCull(this.getTextureLocation(entity)));
+        drawBillboardQuad(poseStack, vertexConsumer, packedLight);
+        poseStack.popPose();
     }
 
-    private void func_77026_a(int par2, float par3) {
-        float var3 = (float)(par2 % 16 * 16 + 0) / 16.0f;
-        float var4 = (float)(par2 % 16 * 16 + 16) / 16.0f;
-        float var5 = (float)(par2 / 16 * 16 + 0) / 16.0f;
-        float var6 = (float)(par2 / 16 * 16 + 16) / 16.0f;
-        float var7 = 1.0f;
-        float var8 = 0.5f;
-        float var9 = 0.25f;
-        GL11.glRotatef((float)(180.0f - this.renderManager.playerViewY), (float)0.0f, (float)1.0f, (float)0.0f);
-        GL11.glRotatef((float)(- this.renderManager.playerViewX), (float)1.0f, (float)0.0f, (float)0.0f);
-        GL11.glRotatef((float)par3, (float)0.0f, (float)0.0f, (float)1.0f);
-        BufferBuilder buf = Tessellator.getInstance().getBuffer();
-        buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        buf.pos((double)(0.0f - var8), (double)(0.0f - var9), 0.0).tex((double)var3, (double)var6).normal(0.0f, 1.0f, 0.0f).endVertex();
-        buf.pos((double)(var7 - var8), (double)(0.0f - var9), 0.0).tex((double)var4, (double)var6).normal(0.0f, 1.0f, 0.0f).endVertex();
-        buf.pos((double)(var7 - var8), (double)(var7 - var9), 0.0).tex((double)var4, (double)var5).normal(0.0f, 1.0f, 0.0f).endVertex();
-        buf.pos((double)(0.0f - var8), (double)(var7 - var9), 0.0).tex((double)var3, (double)var5).normal(0.0f, 1.0f, 0.0f).endVertex();
-        Tessellator.getInstance().draw();
+    private static void drawBillboardQuad(PoseStack poseStack, VertexConsumer buffer, int packedLight) {
+        float u0 = 0.0f;
+        float u1 = 1.0f;
+        float v0 = 0.0f;
+        float v1 = 1.0f;
+        float size = 1.0f;
+        float hx = 0.5f;
+        float hy = 0.25f;
+        PoseStack.Pose pose = poseStack.last();
+        Matrix4f matrix = pose.pose();
+        Matrix3f normal = pose.normal();
+        buffer.vertex(matrix, 0.0f - hx, 0.0f - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u0, v1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
+        buffer.vertex(matrix, size - hx, 0.0f - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u1, v1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
+        buffer.vertex(matrix, size - hx, size - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u1, v0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
+        buffer.vertex(matrix, 0.0f - hx, size - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u0, v0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
     }
 
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        EntityThrownRock r = (EntityThrownRock)entity;
-        if (r.getRockType() == 1) {
-            return texture1;
-        }
-        if (r.getRockType() == 2) {
-            return texture2;
-        }
-        if (r.getRockType() == 3) {
-            return texture3;
-        }
-        if (r.getRockType() == 4) {
-            return texture4;
-        }
-        if (r.getRockType() == 5) {
-            return texture5;
-        }
-        if (r.getRockType() == 6) {
-            return texture6;
-        }
-        if (r.getRockType() == 7) {
-            return texture7;
-        }
-        if (r.getRockType() == 8) {
-            return texture8;
-        }
-        if (r.getRockType() == 9) {
-            return texture9;
-        }
-        if (r.getRockType() == 10) {
-            return texture10;
-        }
-        if (r.getRockType() == 11) {
-            return texture11;
-        }
-        if (r.getRockType() == 12) {
-            return texture12;
-        }
-        return texture1;
+    @Override
+    public ResourceLocation getTextureLocation(EntityThrownRock entity) {
+        return switch (entity.getRockType()) {
+            case 2 -> TEXTURE2;
+            case 3 -> TEXTURE3;
+            case 4 -> TEXTURE4;
+            case 5 -> TEXTURE5;
+            case 6 -> TEXTURE6;
+            case 7 -> TEXTURE7;
+            case 8 -> TEXTURE8;
+            case 9 -> TEXTURE9;
+            case 10 -> TEXTURE10;
+            case 11 -> TEXTURE11;
+            case 12 -> TEXTURE12;
+            default -> TEXTURE1;
+        };
     }
 }
-

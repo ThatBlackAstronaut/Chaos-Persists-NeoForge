@@ -1,6 +1,6 @@
 {
   "parent": "block/crop",
   "textures": {
-    "crop": "chaospersists:blocks/butterfly_plant1"
+    "crop": "chaospersists:block/butterfly_plant1"
   }
 }

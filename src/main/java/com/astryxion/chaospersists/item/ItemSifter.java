@@ -1,20 +1,19 @@
 package com.astryxion.chaospersists.item;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
-import net.minecraft.block.Block;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.compat.forge.common.util.EnumHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
 /**
  * Right-click block with sifter: loot table depends on block below cursor (and water above for
@@ -24,53 +23,52 @@ import net.minecraft.world.World;
 public class ItemSifter extends Item {
 
     public ItemSifter(int i) {
-        this.setMaxStackSize(1);
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
-        this.setMaxDamage(600);
+        super(new Properties().stacksTo(1).durability(600));
+    }
+
+    private static Item modItem(Object item) {
+        return (Item) item;
     }
 
     @Override
-    public EnumActionResult onItemUse(EntityPlayer player,
-                                      World world,
-                                      BlockPos pos,
-                                      EnumHand hand,
-                                      EnumFacing facing,
-                                      float hitX,
-                                      float hitY,
-                                      float hitZ) {
-        if (world.isRemote) {
-            return EnumActionResult.SUCCESS;
+    public InteractionResult useOn(UseOnContext context) {
+        Level world = context.getLevel();
+        Player player = context.getPlayer();
+        if (player == null) {
+            return InteractionResult.FAIL;
         }
-        ItemStack stack = player.getHeldItem(hand);
+        if (world.isClientSide()) {
+            return InteractionResult.SUCCESS;
+        }
+        ItemStack stack = context.getItemInHand();
+        BlockPos pos = context.getClickedPos();
         trySift(stack, player, world, pos.getX(), pos.getY(), pos.getZ());
-        return EnumActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
-    private void dropItemRand(Item index, int par1, World world, int x, int y, int z) {
-        EntityItem entityItem = new EntityItem(
+    private void dropItemRand(Object index, int par1, Level world, int x, int y, int z) {
+        Item item = index instanceof Item i ? i : index instanceof Block b ? EnumHelper.getItemFromBlock(b) : modItem(index);
+        ItemEntity entityItem = new ItemEntity(
                 world,
                 (double) (x + ChaosPersists.ChaosRand.nextInt(2) - ChaosPersists.ChaosRand.nextInt(2)) + 0.5,
                 (double) y + 1.1,
                 (double) (z + ChaosPersists.ChaosRand.nextInt(2) - ChaosPersists.ChaosRand.nextInt(2)) + 0.5,
-                new ItemStack(index, par1, 0));
-        world.spawnEntity(entityItem);
+                new ItemStack(item, par1));
+        world.addFreshEntity(entityItem);
     }
 
-    private void trySift(ItemStack stack, EntityPlayer player, World world, int par4, int par5, int par6) {
+    private void trySift(ItemStack stack, Player player, Level world, int par4, int par5, int par6) {
         int i;
         Block bid = world.getBlockState(new BlockPos(par4, par5, par6)).getBlock();
         Block bid2 = world.getBlockState(new BlockPos(par4, par5 + 1, par6)).getBlock();
-        if (bid2 == Blocks.FLOWING_WATER) {
-            bid = Blocks.WATER;
-        }
         if (bid2 == Blocks.WATER) {
             bid = Blocks.WATER;
         }
         if (bid == Blocks.WATER) {
-            i = world.rand.nextInt(160);
+            i = world.getRandom().nextInt(160);
             switch (i) {
                 case 0:
-                    this.dropItemRand(Items.FISH, 1, world, par4, par5, par6);
+                    this.dropItemRand(Items.COD, 1, world, par4, par5, par6);
                     break;
                 case 1:
                     this.dropItemRand(ChaosPersists.MyGreenFish, 1, world, par4, par5, par6);
@@ -118,7 +116,7 @@ public class ItemSifter extends Item {
                     this.dropItemRand(Items.BONE, 1, world, par4, par5, par6);
                     break;
                 case 16:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.STONE), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.STONE), 1, world, par4, par5, par6);
                     break;
                 case 17:
                     this.dropItemRand(Items.BUCKET, 1, world, par4, par5, par6);
@@ -127,24 +125,24 @@ public class ItemSifter extends Item {
                     this.dropItemRand(Items.WATER_BUCKET, 1, world, par4, par5, par6);
                     break;
                 case 19:
-                    if (world.rand.nextInt(3) == 1) {
+                    if (world.getRandom().nextInt(3) == 1) {
                         this.dropItemRand(Items.EMERALD, 1, world, par4, par5, par6);
                     } else {
-                        this.dropItemRand(Item.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
+                        this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
                     }
                     break;
                 case 20:
-                    if (world.rand.nextInt(3) == 1) {
+                    if (world.getRandom().nextInt(3) == 1) {
                         this.dropItemRand(ChaosPersists.MyRuby, 1, world, par4, par5, par6);
                     } else {
-                        this.dropItemRand(Item.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
+                        this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
                     }
                     break;
                 case 21:
-                    if (world.rand.nextInt(3) == 1) {
+                    if (world.getRandom().nextInt(3) == 1) {
                         this.dropItemRand(ChaosPersists.MyAmethyst, 1, world, par4, par5, par6);
                     } else {
-                        this.dropItemRand(Item.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
+                        this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
                     }
                     break;
                 case 22:
@@ -157,10 +155,10 @@ public class ItemSifter extends Item {
                     this.dropItemRand(ChaosPersists.TitaniumNugget, 1, world, par4, par5, par6);
                     break;
                 case 25:
-                    if (world.rand.nextInt(2) == 1) {
+                    if (world.getRandom().nextInt(2) == 1) {
                         this.dropItemRand(Items.DIAMOND, 1, world, par4, par5, par6);
                     } else {
-                        this.dropItemRand(Item.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
+                        this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
                     }
                     break;
                 case 26:
@@ -188,7 +186,7 @@ public class ItemSifter extends Item {
                     this.dropItemRand(ChaosPersists.MyItemShoes_3, 1, world, par4, par5, par6);
                     break;
                 case 34:
-                    this.dropItemRand(Items.FISH, 1, world, par4, par5, par6);
+                    this.dropItemRand(Items.COD, 1, world, par4, par5, par6);
                     break;
                 case 35:
                     this.dropItemRand(Items.GLASS_BOTTLE, 1, world, par4, par5, par6);
@@ -197,10 +195,10 @@ public class ItemSifter extends Item {
                     this.dropItemRand(Items.BONE, 1, world, par4, par5, par6);
                     break;
                 case 37:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.STONE), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.STONE), 1, world, par4, par5, par6);
                     break;
                 case 38:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.STONE_BUTTON), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.STONE_BUTTON), 1, world, par4, par5, par6);
                     break;
                 case 39:
                     this.dropItemRand(Items.BUCKET, 1, world, par4, par5, par6);
@@ -211,7 +209,7 @@ public class ItemSifter extends Item {
             }
         }
         if (bid == Blocks.SAND) {
-            i = world.rand.nextInt(60);
+            i = world.getRandom().nextInt(60);
             switch (i) {
                 case 0:
                     this.dropItemRand(Items.IRON_HORSE_ARMOR, 1, world, par4, par5, par6);
@@ -253,12 +251,12 @@ public class ItemSifter extends Item {
                     this.dropItemRand(Items.IRON_BOOTS, 1, world, par4, par5, par6);
                     break;
                 case 13:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.SAND), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.SAND), 1, world, par4, par5, par6);
                     break;
             }
         }
         if (bid == Blocks.GRAVEL) {
-            i = world.rand.nextInt(60);
+            i = world.getRandom().nextInt(60);
             switch (i) {
                 case 0:
                     this.dropItemRand(Items.FLINT, 1, world, par4, par5, par6);
@@ -291,15 +289,15 @@ public class ItemSifter extends Item {
                     this.dropItemRand(Items.NAME_TAG, 1, world, par4, par5, par6);
                     break;
                 case 10:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.SAND), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.SAND), 1, world, par4, par5, par6);
                     break;
                 case 11:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
                     break;
             }
         }
         if (bid == Blocks.DIRT) {
-            i = world.rand.nextInt(60);
+            i = world.getRandom().nextInt(60);
             switch (i) {
                 case 0:
                     this.dropItemRand(Items.STRING, 1, world, par4, par5, par6);
@@ -320,7 +318,7 @@ public class ItemSifter extends Item {
                     this.dropItemRand(Items.FLOWER_POT, 1, world, par4, par5, par6);
                     break;
                 case 6:
-                    this.dropItemRand(Items.SIGN, 1, world, par4, par5, par6);
+                    this.dropItemRand(Items.OAK_SIGN, 1, world, par4, par5, par6);
                     break;
                 case 7:
                     this.dropItemRand(Items.BRICK, 1, world, par4, par5, par6);
@@ -335,36 +333,36 @@ public class ItemSifter extends Item {
                     this.dropItemRand(Items.GLASS_BOTTLE, 1, world, par4, par5, par6);
                     break;
                 case 11:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.SAND), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.SAND), 1, world, par4, par5, par6);
                     break;
                 case 12:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
                     break;
                 case 13:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.DIRT), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.DIRT), 1, world, par4, par5, par6);
                     break;
             }
         }
-        if (bid == Blocks.GRASS) {
-            i = world.rand.nextInt(60);
+        if (bid == Blocks.GRASS_BLOCK) {
+            i = world.getRandom().nextInt(60);
             switch (i) {
                 case 0:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.YELLOW_FLOWER), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.DANDELION), 1, world, par4, par5, par6);
                     break;
                 case 1:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.RED_FLOWER), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.POPPY), 1, world, par4, par5, par6);
                     break;
                 case 2:
-                    this.dropItemRand(Item.getItemFromBlock(ChaosPersists.MyFlowerPinkBlock), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock((Block) ChaosPersists.MyFlowerPinkBlock), 1, world, par4, par5, par6);
                     break;
                 case 3:
-                    this.dropItemRand(Item.getItemFromBlock(ChaosPersists.MyFlowerBlueBlock), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock((Block) ChaosPersists.MyFlowerBlueBlock), 1, world, par4, par5, par6);
                     break;
                 case 4:
-                    this.dropItemRand(Item.getItemFromBlock(ChaosPersists.MyFlowerBlackBlock), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock((Block) ChaosPersists.MyFlowerBlackBlock), 1, world, par4, par5, par6);
                     break;
                 case 5:
-                    this.dropItemRand(Item.getItemFromBlock(ChaosPersists.MyFlowerScaryBlock), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock((Block) ChaosPersists.MyFlowerScaryBlock), 1, world, par4, par5, par6);
                     break;
                 case 6:
                     this.dropItemRand(Items.WHEAT, 1, world, par4, par5, par6);
@@ -382,20 +380,20 @@ public class ItemSifter extends Item {
                     this.dropItemRand(Items.POTATO, 1, world, par4, par5, par6);
                     break;
                 case 11:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.DEADBUSH), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.DEAD_BUSH), 1, world, par4, par5, par6);
                     break;
                 case 12:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.GRAVEL), 1, world, par4, par5, par6);
                     break;
                 case 13:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.DIRT), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.DIRT), 1, world, par4, par5, par6);
                     break;
                 case 14:
-                    this.dropItemRand(Item.getItemFromBlock(Blocks.GRASS), 1, world, par4, par5, par6);
+                    this.dropItemRand(EnumHelper.getItemFromBlock(Blocks.GRASS_BLOCK), 1, world, par4, par5, par6);
                     break;
             }
         }
-        stack.damageItem(1, (EntityLivingBase) player);
+        stack.hurtAndBreak(1, player, p -> p.broadcastBreakEvent(EquipmentSlot.MAINHAND));
     }
 
     public String getMaterialName() {

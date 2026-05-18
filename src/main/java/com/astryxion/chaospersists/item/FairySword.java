@@ -1,88 +1,54 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.Fairy
- *  com.astryxion.chaospersists.FairySword
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityList
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.item.Item
- *  net.minecraft.item.Item$ToolMaterial
- *  net.minecraft.item.ItemStack
- *  net.minecraft.item.ItemSword
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import com.astryxion.chaospersists.entity.Fairy;
-import java.util.Random;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tier;
 
-/*
- * Exception performing whole class analysis ignored.
- */
-public class FairySword
-extends ItemSword {
-    private int weaponDamage;
-    private final Item.ToolMaterial toolMaterial;
+public class FairySword extends SwordItem {
+    private static final int WEAPON_DAMAGE = 15;
 
-    public FairySword(Item.ToolMaterial par2EnumToolMaterial) {
-        super(par2EnumToolMaterial);
-        this.toolMaterial = par2EnumToolMaterial;
-        this.weaponDamage = 15;
-        this.maxStackSize = 1;
-        this.setMaxDamage(1300);
-        this.setCreativeTab(CreativeTabs.COMBAT);
+    public FairySword(Tier tier) {
+        super(tier, (int)(WEAPON_DAMAGE - tier.getAttackDamageBonus()), -2.4f, new Properties().stacksTo(1).durability(1300));
     }
 
     public String getMaterialName() {
         return "Fairy";
     }
 
-    public boolean hitEntity(ItemStack par1ItemStack, EntityLivingBase par2EntityLiving, EntityLivingBase par3EntityLiving) {
-        int var2 = 5;
-        if (par2EntityLiving != null && !par2EntityLiving.world.isRemote) {
-            int num = 1 + par2EntityLiving.world.rand.nextInt(3);
+    @Override
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (target != null && !target.level().isClientSide) {
+            int num = 1 + target.getRandom().nextInt(3);
             for (int i = 0; i < num; ++i) {
-                Fairy r = null;
-                r = (Fairy)FairySword.spawnCreature((World)par2EntityLiving.world, (int)0, (String)"Fairy", (double)(par2EntityLiving.posX + (double)(par2EntityLiving.world.rand.nextFloat() - par2EntityLiving.world.rand.nextFloat()) * 0.5), (double)(par2EntityLiving.posY + (double)par2EntityLiving.world.rand.nextFloat() + 0.01), (double)(par2EntityLiving.posZ + (double)(par2EntityLiving.world.rand.nextFloat() - par2EntityLiving.world.rand.nextFloat()) * 0.5));
-                if (r == null) continue;
-                r.setOwner(par3EntityLiving);
+                Entity ent =
+                        ItemSpawnEgg.spawnCreature(
+                                target.level(),
+                                0,
+                                "Fairy",
+                                target.getX()
+                                        + (double) (target.getRandom().nextFloat()
+                                                - target.getRandom().nextFloat())
+                                                * 0.5,
+                                target.getY() + (double) target.getRandom().nextFloat() + 0.01,
+                                target.getZ()
+                                        + (double) (target.getRandom().nextFloat()
+                                                - target.getRandom().nextFloat())
+                                                * 0.5);
+                if (ent instanceof Fairy fairy) {
+                    fairy.setOwner(attacker);
+                }
             }
         }
-        par1ItemStack.damageItem(1, par3EntityLiving);
+        stack.hurtAndBreak(1, attacker, e -> e.broadcastBreakEvent(EquipmentSlot.MAINHAND));
         return true;
     }
 
-    public static Entity spawnCreature(World par0World, int par1, String name, double par2, double par4, double par6) {
-        Entity var8 = null;
-        var8 = name == null ? EntityList.createEntityByID((int)par1, (World)par0World) : EntityList.createEntityByIDFromName(new net.minecraft.util.ResourceLocation("chaospersists", name), par0World);
-        if (var8 != null) {
-            var8.setLocationAndAngles(par2, par4, par6, par0World.rand.nextFloat() * 360.0f, 0.0f);
-            par0World.spawnEntity(var8);
-            ((EntityLiving)var8).playLivingSound();
-        }
-        return var8;
-    }
-
-    public int getMaxItemUseDuration(ItemStack par1ItemStack) {
+    @Override
+    public int getUseDuration(ItemStack stack) {
         return 3000;
-    }}
-
+    }
+}

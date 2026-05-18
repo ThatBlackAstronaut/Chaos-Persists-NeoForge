@@ -1,47 +1,60 @@
 package com.astryxion.chaospersists.client;
 
 import com.astryxion.chaospersists.client.model.ModelChainsaw;
-
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.tileentity.TileEntityItemStackRenderer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * 3D animated chainsaw in first/third person; flat JSON model everywhere else (GUI, ground, frame).
  */
-public class ChainsawItemStackRenderer extends TileEntityItemStackRenderer {
+public class ChainsawItemStackRenderer extends BlockEntityWithoutLevelRenderer {
 
-    /** Same layout as 1.7 orespawn:Chainsawtexture.png — place at assets/chaospersists/textures/entity/chainsawtexture.png */
     private static final ResourceLocation TEXTURE =
-        new ResourceLocation("chaospersists", "textures/entity/chainsawtexture.png");
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/chainsawtexture.png");
 
-    private final IBakedModel flatModel;
+    private final BakedModel flatModel;
     private final ModelChainsaw modelChainsaw = new ModelChainsaw();
 
-    public ChainsawItemStackRenderer(IBakedModel flatModel) {
+    public ChainsawItemStackRenderer(BakedModel flatModel) {
+        super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
+        this.flatModel = flatModel;
+    }
+
+    public ChainsawItemStackRenderer(
+            BakedModel flatModel,
+            BlockEntityRenderDispatcher dispatcher,
+            net.minecraft.client.model.geom.EntityModelSet modelSet) {
+        super(dispatcher, modelSet);
         this.flatModel = flatModel;
     }
 
     @Override
-    public void renderByItem(ItemStack stack) {
-        TransformType transform = TeisrHandTransformHolder.get();
-        try {
-            Minecraft mc = Minecraft.getMinecraft();
-            if (transform == TransformType.FIRST_PERSON_LEFT_HAND
-                || transform == TransformType.FIRST_PERSON_RIGHT_HAND) {
-                renderFirstPerson(transform == TransformType.FIRST_PERSON_LEFT_HAND);
-            } else if (transform == TransformType.THIRD_PERSON_LEFT_HAND
-                || transform == TransformType.THIRD_PERSON_RIGHT_HAND) {
-                renderThirdPerson(transform == TransformType.THIRD_PERSON_LEFT_HAND);
-            } else {
-                renderFlat(mc, stack);
-            }
-        } finally {
-            TeisrHandTransformHolder.clear();
+    public void renderByItem(
+            ItemStack stack,
+            ItemDisplayContext ctx,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight,
+            int packedOverlay) {
+        if (ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND) {
+            renderFirstPerson(ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND, poseStack, buffer, packedLight, packedOverlay);
+        } else if (ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND || ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
+            renderThirdPerson(ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND, poseStack, buffer, packedLight, packedOverlay);
+        } else {
+            Minecraft.getInstance()
+                    .getItemRenderer()
+                    .render(stack, ctx, false, poseStack, buffer, packedLight, packedOverlay, this.flatModel);
         }
     }
 
@@ -49,88 +62,58 @@ public class ChainsawItemStackRenderer extends TileEntityItemStackRenderer {
      * Hand pose for first person (after vanilla in-hand matrix). Shared with {@link StaticBigWeaponItemStackRenderer}
      * for non-sword weapons (axes, zooka, hammy, chainsaw).
      */
-    public static void applyHandFirstPersonTransforms() {
-        GlStateManager.rotate(180.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.rotate(110.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager.scale(0.18f, 0.18f, 0.18f);
-        GlStateManager.translate(0.8f, -0.2f, 0.2f);
+    public static void applyHandFirstPersonTransforms(PoseStack poseStack) {
+        poseStack.translate(0.8f, -0.2f, 0.2f);
+        poseStack.scale(0.18f, 0.18f, 0.18f);
+        poseStack.mulPose(Axis.XP.rotationDegrees(110.0f));
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
     }
 
     /**
-     * First person for {@link com.astryxion.chaospersists.model.ModelBertha}. Shallow pitch + strong roll so the
-     * blade reads vertical (not a flat banner across the view); scale 0.12 limits FOV blockage vs. chainsaw 0.18.
+     * First person for Attitude Adjuster ({@link com.astryxion.chaospersists.model.ModelHammy}).
      */
-    public static void applyBerthaSwordFirstPersonTransforms() {
-        GlStateManager.rotate(180.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.rotate(50.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager.rotate(52.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager.rotate(-22.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.scale(0.12f, 0.12f, 0.12f);
-        GlStateManager.translate(0.4f, 0.02f, 0.1f);
-    }
-
-    /**
-     * First person for {@link com.astryxion.chaospersists.model.ModelSlice} (Slice + Royal Guardian): offset pieces
-     * need a touch more yaw than Bertha so the flat faces are not edge-on.
-     */
-    public static void applySliceStyleSwordFirstPersonTransforms() {
-        GlStateManager.rotate(180.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.rotate(54.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager.rotate(50.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager.rotate(-26.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.scale(0.12f, 0.12f, 0.12f);
-        GlStateManager.translate(0.44f, 0.0f, 0.12f);
-    }
-
-    /**
-     * First person for Attitude Adjuster ({@link com.astryxion.chaospersists.model.ModelHammy}): the chainsaw pose
-     * scales the huge hammer toward the camera and fills the screen; use a smaller scale and upright-style roll.
-     */
-    public static void applyHammyFirstPersonTransforms() {
-        GlStateManager.rotate(180.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.rotate(46.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager.rotate(48.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager.rotate(-24.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.scale(0.09f, 0.09f, 0.09f);
-        GlStateManager.translate(0.36f, 0.02f, 0.1f);
+    public static void applyHammyFirstPersonTransforms(PoseStack poseStack) {
+        poseStack.translate(0.36f, 0.02f, 0.1f);
+        poseStack.scale(0.09f, 0.09f, 0.09f);
+        poseStack.mulPose(Axis.YP.rotationDegrees(-24.0f));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(48.0f));
+        poseStack.mulPose(Axis.XP.rotationDegrees(46.0f));
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
     }
 
     /**
      * Hand pose for third person (after vanilla equipped matrix). Shared with {@link StaticBigWeaponItemStackRenderer}.
      */
-    public static void applyHandThirdPersonTransforms() {
-        GlStateManager.rotate(180.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager.rotate(-35.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.rotate(-15.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager.scale(0.18f, 0.18f, 0.18f);
-        GlStateManager.translate(0.5f, -0.4f, 0.0f);
+    public static void applyHandThirdPersonTransforms(PoseStack poseStack) {
+        poseStack.translate(0.5f, -0.4f, 0.0f);
+        poseStack.scale(0.18f, 0.18f, 0.18f);
+        poseStack.mulPose(Axis.XP.rotationDegrees(-15.0f));
+        poseStack.mulPose(Axis.YP.rotationDegrees(-35.0f));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
     }
 
-    /** 1.7 {@code RenderChainsaw} case EQUIPPED_FIRST_PERSON → {@code renderSword}. */
-    private void renderFirstPerson(boolean leftHand) {
-        GlStateManager.pushMatrix();
+    private void renderFirstPerson(boolean leftHand, PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
+        poseStack.pushPose();
         if (leftHand) {
-            GlStateManager.scale(-1.0f, 1.0f, 1.0f);
+            poseStack.scale(-1.0f, 1.0f, 1.0f);
         }
-        applyHandFirstPersonTransforms();
-        Minecraft.getMinecraft().getTextureManager().bindTexture(TEXTURE);
-        modelChainsaw.render();
-        GlStateManager.popMatrix();
+        applyHandFirstPersonTransforms(poseStack);
+        drawModel(poseStack, buffer, light, overlay);
+        poseStack.popPose();
     }
 
-    /** 1.7 {@code RenderChainsaw} case EQUIPPED → {@code renderSwordF5}. */
-    private void renderThirdPerson(boolean leftHand) {
-        GlStateManager.pushMatrix();
+    private void renderThirdPerson(boolean leftHand, PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
+        poseStack.pushPose();
         if (leftHand) {
-            GlStateManager.scale(-1.0f, 1.0f, 1.0f);
+            poseStack.scale(-1.0f, 1.0f, 1.0f);
         }
-        applyHandThirdPersonTransforms();
-        Minecraft.getMinecraft().getTextureManager().bindTexture(TEXTURE);
-        modelChainsaw.render();
-        GlStateManager.popMatrix();
+        applyHandThirdPersonTransforms(poseStack);
+        drawModel(poseStack, buffer, light, overlay);
+        poseStack.popPose();
     }
 
-    private void renderFlat(Minecraft mc, ItemStack stack) {
-        mc.getRenderItem().renderItem(stack, flatModel);
+    private void drawModel(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+        this.modelChainsaw.render(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY);
     }
 }

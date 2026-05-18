@@ -1,46 +1,27 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.KingHead
- *  com.astryxion.chaospersists.MobStats
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.TheKing
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.MathHelper
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import com.astryxion.chaospersists.util.MobStats;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import com.astryxion.chaospersists.entity.TheKing;
-import java.util.Iterator;
 import java.util.List;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class KingHead
-extends EntityLiving {
+public class KingHead extends LivingEntity {
     private int boatPosRotationIncrements;
     private double boatX;
     private double boatY;
@@ -51,135 +32,159 @@ extends EntityLiving {
     private double velocityY;
     private double velocityZ;
 
-    public KingHead(World par1World) {
-        super(par1World);
-        this.setSize(19.9f, 10.0f);
-        this.noClip = true;
-                this.isImmuneToFire = true;
+    public KingHead(EntityType<? extends KingHead> type, Level level) {
+        super(type, level);
+        this.fireImmune();
+        this.noPhysics = true;
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)ChaosPersists.TheKing_stats.health);
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(1.3300000429153442);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(0.0);
+    public static AttributeSupplier.Builder createAttributes() {
+        return LivingEntity.createLivingAttributes()
+                .add(Attributes.MAX_HEALTH, (double) ChaosPersists.TheKing_stats.health)
+                .add(Attributes.MOVEMENT_SPEED, 1.3300000429153442)
+                .add(Attributes.ATTACK_DAMAGE, 0.0);
     }
 
-    protected boolean canDespawn() {
-        return false;
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+        return EntityDimensions.scalable(19.9f, 10.0f);
     }
 
-    public void fall(float distance, float damageMultiplier) {
-    }
-
-    protected void updateFallState(double y, boolean onGroundIn, net.minecraft.block.state.IBlockState state, net.minecraft.util.math.BlockPos pos) {
-        fallDistance = 0.0f;
-    }
-
-    protected boolean canTriggerWalking() {
-        return false;
-    }
-
-    protected void entityInit() {
-        super.entityInit();
-    }
-
-    public boolean canBePushed() {
+    @Override
+    public boolean isPushable() {
         return true;
     }
 
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-        boolean ret = false;
-        if (par1DamageSource.getDamageType().equals("inWall")) {
-            return false;
-        }
-        Entity e = par1DamageSource.getTrueSource();
-        if (e != null && (e instanceof TheKing || e instanceof KingHead)) {
-            return false;
-        }
-        e = par1DamageSource.getImmediateSource();
-        if (e != null && (e instanceof TheKing || e instanceof KingHead)) {
-            return false;
-        }
-        List var5 = this.world.getEntitiesWithinAABB(TheKing.class, this.getEntityBoundingBox().expand(48.0, 32.0, 48.0));
-        Iterator var2 = var5.iterator();
-        Entity var3 = null;
-        TheKing var4 = null;
-        if (var2.hasNext()) {
-            var3 = (Entity)var2.next();
-            var4 = (TheKing)var3;
-            ret = var4.attackEntityFrom(par1DamageSource, par2);
-        }
-        return ret;
+    @Override
+    public boolean isPickable() {
+        return true;
     }
 
+    @Override
     public boolean canBeCollidedWith() {
         return true;
     }
 
-    @SideOnly(value=Side.CLIENT)
-    public void setPositionAndRotation2(double par1, double par3, double par5, float par7, float par8, int par9) {
-        this.boatPosRotationIncrements = this.getControllingPassenger() != null ? par9 + 8 : 6;
-        this.boatX = par1;
-        this.boatY = par3;
-        this.boatZ = par5;
-        this.boatYaw = par7;
-        this.boatPitch = par8;
-        this.motionX = this.velocityX;
-        this.motionY = this.velocityY;
-        this.motionZ = this.velocityZ;
+    @Override
+    public HumanoidArm getMainArm() {
+        return HumanoidArm.RIGHT;
     }
 
-    @SideOnly(value=Side.CLIENT)
-    public void setVelocity(double par1, double par3, double par5) {
-        this.velocityX = this.motionX = par1;
-        this.velocityY = this.motionY = par3;
-        this.velocityZ = this.motionZ = par5;
+    @Override
+    public void setItemSlot(EquipmentSlot slot, ItemStack stack) {
     }
 
-    public void onUpdate() {
-        if (this.isDead) {
+    @Override
+    public ItemStack getItemBySlot(EquipmentSlot slot) {
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public Iterable<ItemStack> getArmorSlots() {
+        return java.util.Collections.emptyList();
+    }
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource source) {
+        return false;
+    }
+
+    @Override
+    protected void checkFallDamage(double y, boolean onGround, net.minecraft.world.level.block.state.BlockState state, net.minecraft.core.BlockPos pos) {
+        this.fallDistance = 0.0f;
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (source.is(DamageTypes.IN_WALL)) {
+            return false;
+        }
+        Entity e = source.getEntity();
+        if (e instanceof TheKing || e instanceof KingHead) {
+            return false;
+        }
+        e = source.getDirectEntity();
+        if (e instanceof TheKing || e instanceof KingHead) {
+            return false;
+        }
+        AABB box = this.getBoundingBox().inflate(48.0, 32.0, 48.0);
+        List<TheKing> kings = this.level().getEntitiesOfClass(TheKing.class, box);
+        if (!kings.isEmpty()) {
+            return kings.get(0).hurt(source, amount);
+        }
+        return false;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, boolean teleport) {
+        this.boatPosRotationIncrements = this.getControllingPassenger() != null ? steps + 8 : 6;
+        this.boatX = x;
+        this.boatY = y;
+        this.boatZ = z;
+        this.boatYaw = yRot;
+        this.boatPitch = xRot;
+        Vec3 dm = this.getDeltaMovement();
+        this.velocityX = dm.x;
+        this.velocityY = dm.y;
+        this.velocityZ = dm.z;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void lerpMotion(double x, double y, double z) {
+        this.velocityX = x;
+        this.velocityY = y;
+        this.velocityZ = z;
+        this.setDeltaMovement(x, y, z);
+    }
+
+    @Override
+    public void tick() {
+        if (!this.isAlive()) {
             return;
         }
-        this.isAirBorne = true;
-        this.setFire(0);
-        if (this.world.isRemote) {
+        this.setOnGround(false);
+        this.clearFire();
+        if (this.level().isClientSide) {
             if (this.boatPosRotationIncrements > 0) {
-                double d4 = this.posX + (this.boatX - this.posX) / (double)this.boatPosRotationIncrements;
-                double d5 = this.posY + (this.boatY - this.posY) / (double)this.boatPosRotationIncrements;
-                double d11 = this.posZ + (this.boatZ - this.posZ) / (double)this.boatPosRotationIncrements;
-                this.setPosition(d4, d5, d11);
-                this.rotationPitch = (float)((double)this.rotationPitch + (this.boatPitch - (double)this.rotationPitch) / (double)this.boatPosRotationIncrements);
-                double d10 = MathHelper.wrapDegrees(this.boatYaw - (double)this.rotationYaw);
-                if (this.getControllingPassenger() != null) {
-                    d10 = MathHelper.wrapDegrees((double)this.getControllingPassenger().rotationYaw - (double)this.rotationYaw);
+                double d4 = this.getX() + (this.boatX - this.getX()) / (double) this.boatPosRotationIncrements;
+                double d5 = this.getY() + (this.boatY - this.getY()) / (double) this.boatPosRotationIncrements;
+                double d11 = this.getZ() + (this.boatZ - this.getZ()) / (double) this.boatPosRotationIncrements;
+                this.setPos(d4, d5, d11);
+                this.setXRot(
+                        (float)
+                                ((double) this.getXRot()
+                                        + (this.boatPitch - (double) this.getXRot())
+                                                / (double) this.boatPosRotationIncrements));
+                double d10 = Mth.wrapDegrees(this.boatYaw - (double) this.getYRot());
+                Entity rider = this.getControllingPassenger();
+                if (rider != null) {
+                    d10 = Mth.wrapDegrees((double) rider.getYRot() - (double) this.getYRot());
                 }
-                this.rotationYaw = (float)((double)this.rotationYaw + d10 / (double)this.boatPosRotationIncrements);
-                this.setRotation(this.rotationYaw, this.rotationPitch);
+                this.setYRot(
+                        (float)
+                                ((double) this.getYRot()
+                                        + d10 / (double) this.boatPosRotationIncrements));
+                this.setRot(this.getYRot(), this.getXRot());
                 --this.boatPosRotationIncrements;
             }
         } else {
-            List var5 = this.world.getEntitiesWithinAABB(TheKing.class, this.getEntityBoundingBox().expand(32.0, 32.0, 32.0));
-            Iterator var2 = var5.iterator();
-            Entity var3 = null;
-            TheKing var4 = null;
-            if (var2.hasNext()) {
-                var3 = (Entity)var2.next();
-                var4 = (TheKing)var3;
-                this.posY = var4.posY + 12.0;
-                this.posX = var4.posX - 30.0 * Math.sin(Math.toRadians(var4.rotationYawHead));
-                this.posZ = var4.posZ + 30.0 * Math.cos(Math.toRadians(var4.rotationYawHead));
-                this.rotationYaw = var4.rotationYaw;
-                this.rotationYawHead = var4.rotationYawHead;
-                this.motionX = var4.motionX;
-                this.motionY = var4.motionY;
-                this.motionZ = var4.motionZ;
-                this.setHealth(var4.getHealth());
+            AABB box = this.getBoundingBox().inflate(32.0, 32.0, 32.0);
+            List<TheKing> kings = this.level().getEntitiesOfClass(TheKing.class, box);
+            if (!kings.isEmpty()) {
+                TheKing king = kings.get(0);
+                this.setPos(
+                        king.getX() - 30.0 * Math.sin(Math.toRadians(king.getYHeadRot())),
+                        king.getY() + 12.0,
+                        king.getZ() + 30.0 * Math.cos(Math.toRadians(king.getYHeadRot())));
+                this.setYRot(king.getYRot());
+                this.setYHeadRot(king.getYHeadRot());
+                this.setDeltaMovement(king.getDeltaMovement());
+                this.setHealth(king.getHealth());
             } else {
-                this.setDead();
+                this.discard();
             }
         }
     }
 }
-

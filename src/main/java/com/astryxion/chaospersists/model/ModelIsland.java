@@ -1,76 +1,60 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelIsland
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- */
 package com.astryxion.chaospersists.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
-
-public class ModelIsland
-extends ModelBase {
-    private float wingspeed = 1.0f;
-    ModelRenderer Shape1;
-    ModelRenderer Shape2;
-    ModelRenderer Shape3;
+import com.astryxion.chaospersists.entity.Island;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.util.Mth;
+public class ModelIsland<T extends net.minecraft.world.entity.Entity> extends EntityModel<T> {
+    private final float wingspeed;
+    private final ModelPart shape1;
+    private final ModelPart shape2;
+    private final ModelPart shape3;
 
     public ModelIsland(float f) {
-        this.textureWidth = 64;
-        this.textureHeight = 32;
-        this.Shape1 = new ModelRenderer((ModelBase)this, 0, 0);
-        this.Shape1.addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8);
-        this.Shape1.setRotationPoint(0.0f, 16.0f, 0.0f);
-        this.Shape1.setTextureSize(64, 32);
-        this.Shape1.mirror = true;
-        this.setRotation(this.Shape1, 0.0f, 0.0f, 0.0f);
-        this.Shape2 = new ModelRenderer((ModelBase)this, 32, 0);
-        this.Shape2.addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8);
-        this.Shape2.setRotationPoint(0.0f, 16.0f, 0.0f);
-        this.Shape2.setTextureSize(64, 32);
-        this.Shape2.mirror = true;
-        this.setRotation(this.Shape2, 0.7853982f, 0.7853982f, 0.7853982f);
-        this.Shape3 = new ModelRenderer((ModelBase)this, 32, 16);
-        this.Shape3.addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8);
-        this.Shape3.setRotationPoint(0.0f, 16.0f, 0.0f);
-        this.Shape3.setTextureSize(64, 32);
-        this.Shape3.mirror = true;
-        this.setRotation(this.Shape3, 0.7853982f, 0.7853982f, 0.7853982f);
+        this(LayerDefinition.create(createMesh(), 64, 32).bakeRoot(), f);
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        float newangle = 0.0f;
-        this.Shape1.rotateAngleX = newangle = MathHelper.cos((float)(f2 * 0.05f * this.wingspeed)) * 3.1415927f;
-        this.Shape1.rotateAngleY = newangle = MathHelper.cos((float)(f2 * 0.051f * this.wingspeed)) * 3.1415927f;
-        this.Shape1.rotateAngleZ = newangle = MathHelper.cos((float)(f2 * 0.052f * this.wingspeed)) * 3.1415927f;
-        this.Shape2.rotateAngleX = newangle = MathHelper.cos((float)(f2 * 0.053f * this.wingspeed)) * 3.1415927f;
-        this.Shape2.rotateAngleY = newangle = MathHelper.cos((float)(f2 * 0.054f * this.wingspeed)) * 3.1415927f;
-        this.Shape2.rotateAngleZ = newangle = MathHelper.cos((float)(f2 * 0.055f * this.wingspeed)) * 3.1415927f;
-        this.Shape3.rotateAngleX = newangle = MathHelper.cos((float)(f2 * 0.056f * this.wingspeed)) * 3.1415927f;
-        this.Shape3.rotateAngleY = newangle = MathHelper.cos((float)(f2 * 0.057f * this.wingspeed)) * 3.1415927f;
-        this.Shape3.rotateAngleZ = newangle = MathHelper.cos((float)(f2 * 0.058f * this.wingspeed)) * 3.1415927f;
-        this.Shape1.render(f5);
-        this.Shape2.render(f5);
-        this.Shape3.render(f5);
+    public ModelIsland(ModelPart root, float wingspeed) {
+        this.wingspeed = wingspeed;
+        this.shape1 = root.getChild("Shape1");
+        this.shape2 = root.getChild("Shape2");
+        this.shape3 = root.getChild("Shape3");
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
+    public static MeshDefinition createMesh() {
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
+        partdefinition.addOrReplaceChild("Shape1", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8), PartPose.offset(0.0f, 16.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Shape2", CubeListBuilder.create().texOffs(32, 0).mirror().addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8), PartPose.offsetAndRotation(0.0f, 16.0f, 0.0f, 0.7853982f, 0.7853982f, 0.7853982f));
+        partdefinition.addOrReplaceChild("Shape3", CubeListBuilder.create().texOffs(32, 16).mirror().addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8), PartPose.offsetAndRotation(0.0f, 16.0f, 0.0f, 0.7853982f, 0.7853982f, 0.7853982f));
+        return meshdefinition;
     }
 
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+    @Override
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        float newangle = Mth.cos(ageInTicks * 0.05f * this.wingspeed) * (float) Math.PI;
+        this.shape1.xRot = newangle;
+        this.shape1.yRot = newangle = Mth.cos(ageInTicks * 0.051f * this.wingspeed) * (float) Math.PI;
+        this.shape1.zRot = newangle = Mth.cos(ageInTicks * 0.052f * this.wingspeed) * (float) Math.PI;
+        this.shape2.xRot = newangle = Mth.cos(ageInTicks * 0.053f * this.wingspeed) * (float) Math.PI;
+        this.shape2.yRot = newangle = Mth.cos(ageInTicks * 0.054f * this.wingspeed) * (float) Math.PI;
+        this.shape2.zRot = newangle = Mth.cos(ageInTicks * 0.055f * this.wingspeed) * (float) Math.PI;
+        this.shape3.xRot = newangle = Mth.cos(ageInTicks * 0.056f * this.wingspeed) * (float) Math.PI;
+        this.shape3.yRot = newangle = Mth.cos(ageInTicks * 0.057f * this.wingspeed) * (float) Math.PI;
+        this.shape3.zRot = newangle = Mth.cos(ageInTicks * 0.058f * this.wingspeed) * (float) Math.PI;
+    }
+
+    @Override
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+        this.shape1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.shape2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.shape3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

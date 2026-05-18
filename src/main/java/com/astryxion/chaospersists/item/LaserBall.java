@@ -1,55 +1,23 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Dragon
- *  com.astryxion.chaospersists.GiantRobot
- *  com.astryxion.chaospersists.LaserBall
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.Robot2
- *  com.astryxion.chaospersists.Robot3
- *  com.astryxion.chaospersists.Robot4
- *  com.astryxion.chaospersists.Robot5
- *  com.astryxion.chaospersists.SpitBug
- *  com.astryxion.chaospersists.TrooperBug
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.projectile.EntityThrowable
- *  net.minecraft.item.Item
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.math.RayTraceResult
- *  net.minecraft.world.Explosion
- *  net.minecraft.world.GameRules
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import com.astryxion.chaospersists.entity.Dragon;
-import com.astryxion.chaospersists.entity.GiantRobot;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import com.astryxion.chaospersists.entity.Robot2;
-import com.astryxion.chaospersists.entity.Robot3;
-import com.astryxion.chaospersists.entity.Robot4;
-import com.astryxion.chaospersists.entity.Robot5;
-import com.astryxion.chaospersists.entity.SpitBug;
-import com.astryxion.chaospersists.entity.TrooperBug;
-import java.util.Random;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.projectile.EntityThrowable;
-import net.minecraft.item.Item;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.world.Explosion;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import org.joml.Vector3f;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.Level.ExplosionInteraction;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
-public class LaserBall
-extends EntityThrowable {
+public class LaserBall extends ThrowableProjectile {
     private float my_rotation = 0.0f;
     private int my_index = 81;
     private int is_special = 0;
@@ -58,24 +26,24 @@ extends EntityThrowable {
     private int is_irukandji = 0;
     private int ticksalive = 0;
 
-    public LaserBall(World par1World) {
-        super(par1World);
+    public LaserBall(EntityType<? extends LaserBall> type, Level level) {
+        super(type, level);
     }
 
-    public LaserBall(World par1World, int par2) {
-        super(par1World);
+    public LaserBall(EntityType<? extends LaserBall> type, Level level, int par2) {
+        super(type, level);
     }
 
-    public LaserBall(World par1World, EntityLivingBase par2EntityLiving) {
-        super(par1World, par2EntityLiving);
+    public LaserBall(EntityType<? extends LaserBall> type, LivingEntity shooter, Level level) {
+        super(type, shooter, level);
     }
 
-    public LaserBall(World par1World, EntityLivingBase par2EntityLiving, int par3) {
-        super(par1World, par2EntityLiving);
+    public LaserBall(EntityType<? extends LaserBall> type, LivingEntity shooter, Level level, int par3) {
+        super(type, shooter, level);
     }
 
-    public LaserBall(World par1World, double par2, double par4, double par6) {
-        super(par1World, par2, par4, par6);
+    public LaserBall(EntityType<? extends LaserBall> type, double x, double y, double z, Level level) {
+        super(type, x, y, z, level);
     }
 
     public int getLaserBallIndex() {
@@ -99,122 +67,149 @@ extends EntityThrowable {
         this.is_acid = 1;
     }
 
-    protected void onImpact(RayTraceResult par1MovingObjectPosition)
-    {
-      if (this.world.isRemote) {
-        return;
-      }
-      if (par1MovingObjectPosition.entityHit != null)
-      {
-        float var2 = 16.0F;
+    @Override
+    protected void onHit(HitResult result) {
+        if (this.level().isClientSide) {
+            return;
+        }
+        if (result.getType() == HitResult.Type.ENTITY) {
+            EntityHitResult entityHit = (EntityHitResult) result;
+            Entity hit = entityHit.getEntity();
+            float var2 = 16.0f;
 
-        if (this.is_irukandji != 0) {
-          par1MovingObjectPosition.entityHit.attackEntityFrom(DamageSource.causeThrownDamage(this, getThrower()), 100.0F);
-          setDead();
-          return;
+            if (this.is_irukandji != 0) {
+                hit.hurt(this.damageSources().thrown(this, this.getOwner()), 100.0f);
+                this.discard();
+                return;
+            }
+
+            if (this.is_acid != 0) {
+                if (isEntityClass(hit, "TrooperBug")) {
+                    this.discard();
+                    return;
+                }
+                if (isEntityClass(hit, "SpitBug")) {
+                    this.discard();
+                    return;
+                }
+            }
+            if (this.is_iceball == 0 && this.is_acid == 0) {
+                if (isEntityClass(hit, "Robot2")) {
+                    this.discard();
+                    return;
+                }
+                if (isEntityClass(hit, "Robot3")) {
+                    this.discard();
+                    return;
+                }
+                if (isEntityClass(hit, "Robot4")) {
+                    this.discard();
+                    return;
+                }
+                if (isEntityClass(hit, "Robot5")) {
+                    this.discard();
+                    return;
+                }
+                if (isEntityClass(hit, "GiantRobot")) {
+                    this.discard();
+                    return;
+                }
+            }
+            if (isEntityClass(hit, "Dragon") && this.is_acid == 0) {
+                if (!hit.getPassengers().isEmpty()) {
+                    this.discard();
+                    return;
+                }
+
+                if (getDragonTypeFrom(hit) != 0 && this.is_iceball != 0) {
+                    this.discard();
+                    return;
+                }
+            }
+
+            if (hit instanceof Player player && this.is_acid == 0) {
+                if (player.getVehicle() != null) {
+                    this.discard();
+                    return;
+                }
+            }
+
+            hit.hurt(this.damageSources().thrown(this, this.getOwner()), var2);
+            if (this.is_iceball == 0 && hit instanceof net.minecraft.world.entity.LivingEntity living) {
+                living.setSecondsOnFire(8);
+            }
+        } else if (this.is_irukandji != 0) {
+            if (ChaosPersists.MyIrukandji != null) {
+                this.spawnAtLocation(new ItemStack(ChaosPersists.MyIrukandji, 1));
+            }
         }
 
-        if (this.is_acid != 0) {
-          if ((par1MovingObjectPosition.entityHit instanceof TrooperBug))
-          {
-            setDead();
-            return;
-          }
-          if ((par1MovingObjectPosition.entityHit instanceof SpitBug))
-          {
-            setDead();
-            return;
-          }
-        }
-        if ((this.is_iceball == 0) && (this.is_acid == 0)) {
-          if ((par1MovingObjectPosition.entityHit instanceof Robot2))
-          {
-            setDead();
-            return;
-          }
-          if ((par1MovingObjectPosition.entityHit instanceof Robot3))
-          {
-            setDead();
-            return;
-          }
-          if ((par1MovingObjectPosition.entityHit instanceof Robot4))
-          {
-            setDead();
-            return;
-          }
-          if ((par1MovingObjectPosition.entityHit instanceof Robot5))
-          {
-            setDead();
-            return;
-          }
-          if ((par1MovingObjectPosition.entityHit instanceof GiantRobot))
-          {
-            setDead();
-            return;
-          }
-        }
-        if (((par1MovingObjectPosition.entityHit instanceof Dragon)) && (this.is_acid == 0))
-        {
-          Dragon d = (Dragon)par1MovingObjectPosition.entityHit;
-          if (!d.getPassengers().isEmpty()) {
-            setDead();
-            return;
-          }
+        if (this.is_acid == 0) {
+            int mx = 10;
+            if (this.is_special != 0) {
+                mx = 20;
+            }
+            for (int var3 = 0; var3 < mx; ++var3) {
+                this.level()
+                        .addParticle(
+                                ParticleTypes.SMOKE,
+                                this.getX() + this.random.nextFloat() - this.random.nextFloat(),
+                                this.getY() + this.random.nextFloat() - this.random.nextFloat(),
+                                this.getZ() + this.random.nextFloat(),
+                                0.0,
+                                0.0,
+                                0.0);
+                this.level()
+                        .addParticle(
+                                ParticleTypes.LARGE_SMOKE,
+                                this.getX() + this.random.nextFloat() - this.random.nextFloat(),
+                                this.getY() + this.random.nextFloat() - this.random.nextFloat(),
+                                this.getZ() + this.random.nextFloat(),
+                                0.0,
+                                0.0,
+                                0.0);
+                this.level()
+                        .addParticle(
+                                ParticleTypes.FIREWORK,
+                                this.getX(),
+                                this.getY(),
+                                this.getZ(),
+                                this.random.nextGaussian(),
+                                this.random.nextGaussian(),
+                                this.random.nextGaussian());
+            }
 
-          if ((d.getDragonType() != 0) && (this.is_iceball != 0)) {
-            setDead();
-            return;
-          }
+            this.playSound(SoundEvents.GENERIC_EXPLODE, 0.5f, 1.0f + (this.random.nextFloat() - this.random.nextFloat()) * 0.5f);
+            if (this.is_special != 0 || this.is_iceball != 0) {
+                this.level()
+                        .explode(
+                                this,
+                                this.getX(),
+                                this.getY(),
+                                this.getZ(),
+                                3.0f,
+                                this.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)
+                                        ? ExplosionInteraction.MOB
+                                        : ExplosionInteraction.NONE);
+            }
         }
-
-        if (((par1MovingObjectPosition.entityHit instanceof EntityPlayer)) && (this.is_acid == 0))
-        {
-          EntityPlayer d = (EntityPlayer)par1MovingObjectPosition.entityHit;
-          if (d.getRidingEntity() != null) {
-            setDead();
-            return;
-          }
-        }
-
-        par1MovingObjectPosition.entityHit.attackEntityFrom(DamageSource.causeThrownDamage(this, getThrower()), var2);
-        if (this.is_iceball == 0) par1MovingObjectPosition.entityHit.setFire(1);
-
-      }
-      else if ((this.is_irukandji != 0) && 
-        (!this.world.isRemote)) {
-        dropItem(ChaosPersists.MyIrukandji, 1);
-      }
-
-      if (this.is_acid == 0) {
-        int mx = 10;
-        if (this.is_special != 0) mx = 20;
-        for (int var3 = 0; var3 < mx; var3++)
-        {
-          this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, this.posX + this.rand.nextFloat() - this.rand.nextFloat(), this.posY + this.rand.nextFloat() - this.rand.nextFloat(), this.posZ + this.rand.nextFloat(), 0.0D, 0.0D, 0.0D);
-          this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_LARGE, this.posX + this.rand.nextFloat() - this.rand.nextFloat(), this.posY + this.rand.nextFloat() - this.rand.nextFloat(), this.posZ + this.rand.nextFloat() - this.rand.nextFloat(), 0.0D, 0.0D, 0.0D);
-          this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FIREWORKS_SPARK, this.posX, this.posY, this.posZ, this.world.rand.nextGaussian(), this.world.rand.nextGaussian(), this.world.rand.nextGaussian());
-        }
-
-        playSound(net.minecraft.init.SoundEvents.ENTITY_GENERIC_EXPLODE, 0.5F, 1.0F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.5F);
-        if ((!this.world.isRemote) && ((this.is_special != 0) || (this.is_iceball != 0))) {
-          this.world.createExplosion(this, this.posX, this.posY, this.posZ, 3.0F, this.world.getGameRules().getBoolean("mobGriefing"));
-        }
-      }
-      setDead();
+        this.discard();
     }
 
-    public void onUpdate() {
+    @Override
+    public void tick() {
         ++this.ticksalive;
         if (this.ticksalive > 200) {
-            this.setDead();
+            this.discard();
             return;
         }
-        super.onUpdate();
+        super.tick();
         this.my_rotation += 50.0f;
         while (this.my_rotation > 360.0f) {
             this.my_rotation -= 360.0f;
         }
-        this.rotationPitch = this.prevRotationPitch = this.my_rotation;
+        this.setXRot(this.my_rotation);
+        this.xRotO = this.my_rotation;
         if (this.is_acid != 0) {
             return;
         }
@@ -226,10 +221,47 @@ extends EntityThrowable {
             mx = 2;
         }
         for (int i = 0; i < mx; ++i) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FIREWORKS_SPARK, this.posX, this.posY, this.posZ, this.world.rand.nextGaussian() / 2.0, this.world.rand.nextGaussian() / 2.0, this.world.rand.nextGaussian() / 2.0);
-            if (this.is_iceball != 0) continue;
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.REDSTONE, this.posX, this.posY, this.posZ, this.world.rand.nextGaussian() / 10.0, this.world.rand.nextGaussian() / 10.0, this.world.rand.nextGaussian() / 10.0);
+            this.level()
+                    .addParticle(
+                            ParticleTypes.FIREWORK,
+                            this.getX(),
+                            this.getY(),
+                            this.getZ(),
+                            this.random.nextGaussian() / 2.0,
+                            this.random.nextGaussian() / 2.0,
+                            this.random.nextGaussian() / 2.0);
+            if (this.is_iceball != 0) {
+                continue;
+            }
+            ParticleOptions dust = new DustParticleOptions(new Vector3f(1.0f, 0.0f, 0.0f), 1.0f);
+            this.level()
+                    .addParticle(
+                            dust,
+                            this.getX(),
+                            this.getY(),
+                            this.getZ(),
+                            this.random.nextGaussian() / 10.0,
+                            this.random.nextGaussian() / 10.0,
+                            this.random.nextGaussian() / 10.0);
         }
     }
-}
 
+    private static boolean isEntityClass(Entity hit, String simpleName) {
+        return hit.getClass().getSimpleName().equals(simpleName);
+    }
+
+    private static int getDragonTypeFrom(Entity hit) {
+        if (!isEntityClass(hit, "Dragon")) {
+            return 0;
+        }
+        try {
+            return (Integer) hit.getClass().getMethod("getDragonType").invoke(hit);
+        } catch (ReflectiveOperationException ex) {
+            return 0;
+        }
+    }
+
+    @Override
+    protected void defineSynchedData() {
+    }
+}

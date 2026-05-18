@@ -1,6 +1,6 @@
 {
   "parent": "block/cross",
   "textures": {
-    "cross": "chaospersists:blocks/crystalsapling2"
+    "cross": "chaospersists:block/crystalsapling2"
   }
 }

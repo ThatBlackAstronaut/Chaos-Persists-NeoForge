@@ -1,64 +1,45 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.GhostSkelly
- *  com.astryxion.chaospersists.ModelGhostSkelly
- *  com.astryxion.chaospersists.RenderGhostSkelly
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.renderer.entity.RenderLiving
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.util.ResourceLocation
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.GhostSkelly;
 import com.astryxion.chaospersists.model.ModelGhostSkelly;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.entity.RenderLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
 
-public class RenderGhostSkelly
-extends RenderLiving {
-    protected ModelGhostSkelly model;
-    private float scale = 1.0f;
-    private static final ResourceLocation texture = new ResourceLocation("chaospersists", "textures/entity/ghostskellytexture.png");
+public class RenderGhostSkelly extends MobRenderer<GhostSkelly, ModelGhostSkelly> {
+    private static final net.minecraft.resources.ResourceLocation TEXTURE =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                    "chaospersists", "textures/entity/ghostskellytexture.png");
+    private final float scale;
 
-    public RenderGhostSkelly(net.minecraft.client.renderer.entity.RenderManager manager, ModelGhostSkelly par1ModelBase, float par2, float par3) {
-        super(manager, (ModelBase)par1ModelBase, par2 * par3);
-        this.model = (ModelGhostSkelly)this.mainModel;
-        this.scale = par3;
+    public RenderGhostSkelly(EntityRendererProvider.Context context, ModelGhostSkelly model, float shadow, float scale) {
+        super(context, model, shadow * scale);
+        this.scale = scale;
     }
 
-    public void renderGhostSkelly(GhostSkelly par1GhostSkelly, double par2, double par4, double par6, float par8, float par9) {
-        super.doRender((EntityLiving)par1GhostSkelly, par2, par4, par6, par8, par9);
+    @Override
+    protected void scale(GhostSkelly entity, PoseStack poseStack, float partialTick) {
+        poseStack.scale(this.scale, this.scale, this.scale);
     }
 
-    public void doRender(EntityLiving par1EntityLiving, double par2, double par4, double par6, float par8, float par9) {
-        this.renderGhostSkelly((GhostSkelly)par1EntityLiving, par2, par4, par6, par8, par9);
+    @Override
+    public net.minecraft.resources.ResourceLocation getTextureLocation(GhostSkelly entity) {
+        return TEXTURE;
     }
 
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-        this.renderGhostSkelly((GhostSkelly)par1Entity, par2, par4, par6, par8, par9);
-    }
-
-    protected void preRenderScale(GhostSkelly par1Entity, float par2) {
-        GL11.glScalef((float)this.scale, (float)this.scale, (float)this.scale);
-    }
-
-    protected void preRenderCallback(EntityLivingBase par1EntityLiving, float par2) {
-        this.preRenderScale((GhostSkelly)par1EntityLiving, par2);
-    }
-
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        return texture;
+    @Override
+    public void render(
+            GhostSkelly entity,
+            float entityYaw,
+            float partialTicks,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight) {
+        VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.entityTranslucent(this.getTextureLocation(entity)));
+        this.model.renderToBuffer(
+                poseStack, vertexconsumer, packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, 0.75F, 0.75F, 0.75F, 0.25F);
     }
 }
-

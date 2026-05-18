@@ -1,187 +1,169 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Coin
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityAgeable
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAILookIdle
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.passive.EntityAnimal
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
+import com.astryxion.chaospersists.util.MyUtils;
+
 import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityAgeable;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.passive.EntityAnimal;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.world.World;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
 
-public class Coin
-extends EntityAnimal {
-    private float moveSpeed = 0.0f;
+public class Coin extends Animal {
+    private final float moveSpeed = 0.0f;
 
-    public Coin(World par1World) {
-        super(par1World);
-        this.setSize(1.5f, 1.5f);
-        this.experienceValue = 10;
-                this.tasks.addTask(0, (EntityAIBase)new EntityAILookIdle((EntityLiving)this));
+    public Coin(EntityType<? extends Coin> type, Level level) {
+        super(type, level);
+        this.xpReward = 10;
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(0.0);
+    public static AttributeSupplier.Builder createAttributes() {
+        return Animal.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 1.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.0)
+                .add(Attributes.ATTACK_DAMAGE, 0.0);
     }
 
-    protected void entityInit() {
-        super.entityInit();
-    }
-
-    protected boolean canDespawn() {
-        if (this.isNoDespawnRequired()) {
-            return false;
-        }
-        return true;
-    }
-
-    public void onUpdate() {
-        super.onUpdate();
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new RandomLookAroundGoal(this));
     }
 
     public int mygetMaxHealth() {
         return 1;
     }
 
-    public int getTotalArmorValue() {
+    @Override
+    public int getArmorValue() {
         return 0;
     }
 
-    protected boolean isAIEnabled() {
-        return true;
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return !this.isPersistenceRequired();
     }
 
-    public void onLivingUpdate() {
-        super.onLivingUpdate();
-    }
-
-    protected String getLivingSound() {
-        return null;
-    }
-
-    protected net.minecraft.util.SoundEvent getHurtSound() {
-        return null;
-    }
-
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return null;
-    }
-
+    @Override
     protected float getSoundVolume() {
         return 1.0f;
     }
 
-    protected float getSoundPitch() {
+    @Override
+    public float getVoicePitch() {
         return 1.0f;
     }
 
-    protected Item getDropItem() {
+    @Override
+    protected net.minecraft.sounds.SoundEvent getAmbientSound() {
         return null;
     }
 
-    private void dropItemRand(Item index, int par1) {
-        EntityItem var3 = new EntityItem(this.world, this.posX + (double)ChaosPersists.ChaosRand.nextInt(2) - (double)ChaosPersists.ChaosRand.nextInt(2), this.posY + 1.0, this.posZ + (double)ChaosPersists.ChaosRand.nextInt(2) - (double)ChaosPersists.ChaosRand.nextInt(2), new ItemStack(index, par1, 0));
-        this.world.spawnEntity((Entity)var3);
+    @Override
+    protected net.minecraft.sounds.SoundEvent getHurtSound(DamageSource damageSource) {
+        return null;
     }
 
-    protected void dropFewItems(boolean par1, int par2) {
-        int i = this.world.rand.nextInt(10);
-        Item j = ChaosPersists.MyEmeraldSword;
+    @Override
+    protected net.minecraft.sounds.SoundEvent getDeathSound() {
+        return null;
+    }
+
+    private void dropItemRand(Item item, int count) {
+        if (item == null) {
+            return;
+        }
+        double ox = ChaosPersists.ChaosRand.nextInt(2) - ChaosPersists.ChaosRand.nextInt(2);
+        double oz = ChaosPersists.ChaosRand.nextInt(2) - ChaosPersists.ChaosRand.nextInt(2);
+        ItemEntity drop = new ItemEntity(
+                this.level(),
+                this.getX() + ox,
+                this.getY() + 1.0,
+                this.getZ() + oz,
+                new ItemStack(item, count));
+        this.level().addFreshEntity(drop);
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        int i = this.random.nextInt(10);
+        Item drop = ChaosPersists.MyEmeraldSword;
         if (i == 0) {
-            j = Items.DIAMOND;
+            drop = Items.DIAMOND;
+        } else if (i == 1) {
+            drop = ChaosPersists.UraniumNugget;
+        } else if (i == 2) {
+            drop = ChaosPersists.TitaniumNugget;
+        } else if (i == 3) {
+            drop = Items.EMERALD;
+        } else if (i == 4) {
+            drop = ChaosPersists.MyEmeraldAxe;
+        } else if (i == 5) {
+            drop = ChaosPersists.MyEmeraldShovel;
+        } else if (i == 6) {
+            drop = ChaosPersists.MyEmeraldPickaxe;
+        } else if (i == 7) {
+            drop = ChaosPersists.MyEmeraldHoe;
+        } else if (i == 8) {
+            drop = ChaosPersists.CoinEgg;
         }
-        if (i == 1) {
-            j = ChaosPersists.UraniumNugget;
-        }
-        if (i == 2) {
-            j = ChaosPersists.TitaniumNugget;
-        }
-        if (i == 3) {
-            j = Items.EMERALD;
-        }
-        if (i == 4) {
-            j = ChaosPersists.MyEmeraldAxe;
-        }
-        if (i == 5) {
-            j = ChaosPersists.MyEmeraldShovel;
-        }
-        if (i == 6) {
-            j = ChaosPersists.MyEmeraldPickaxe;
-        }
-        if (i == 7) {
-            j = ChaosPersists.MyEmeraldHoe;
-        }
-        if (i == 8) {
-            j = ChaosPersists.CoinEgg;
-        }
-        this.dropItemRand(j, 1);
+        this.dropItemRand(drop, 1);
     }
 
-    public void initCreature() {
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        return InteractionResult.PASS;
     }
 
-    public boolean interact(EntityPlayer par1EntityPlayer) {
-        return false;
-    }
-
-    public boolean getCanSpawnHere() {
-        if (!this.world.isDaytime()) {
-            return false;
-        }
-        if (this.posY < 50.0) {
-            return false;
-        }
-        Coin target = null;
-        target = (Coin)this.world.findNearestEntityWithinAABB(Coin.class, this.getEntityBoundingBox().expand(20.0, 8.0, 20.0), (Entity)this);
-        if (target != null) {
-            return false;
-        }
-        return true;
-    }
-
-    public EntityAgeable createChild(EntityAgeable entityageable) {
+    @Override
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob partner) {
         return null;
+    }
+
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+        return EntityDimensions.scalable(1.5f, 1.5f);
+    }
+
+    public static boolean checkCoinSpawnRules(
+            EntityType<Coin> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            net.minecraft.core.BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        if (!MyUtils.isDay(level)) {
+            return false;
+        }
+        if (pos.getY() < 50) {
+            return false;
+        }
+        AABB box = new AABB(pos).inflate(20.0, 8.0, 20.0);
+        return level.getEntitiesOfClass(Coin.class, box, Entity::isAlive).isEmpty();
+    }
+
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        if (!(level instanceof ServerLevelAccessor serverLevel)) {
+            return false;
+        }
+        return checkCoinSpawnRules(
+                (EntityType<Coin>) this.getType(), serverLevel, spawnReason, this.blockPosition(), this.getRandom());
     }
 }
-

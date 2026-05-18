@@ -1,249 +1,207 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Cryolophosaurus
- *  com.astryxion.chaospersists.GenericTargetSorter
- *  com.astryxion.chaospersists.MobStats
- *  com.astryxion.chaospersists.MyEntityAIWanderALot
- *  com.astryxion.chaospersists.MyUtils
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.TRex
- *  com.astryxion.chaospersists.VelocityRaptor
- *  net.minecraft.block.Block
- *  net.minecraft.entity.DataWatcher
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityCreature
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAIHurtByTarget
- *  net.minecraft.entity.ai.EntityAILookIdle
- *  net.minecraft.entity.ai.EntityAIMoveThroughVillage
- *  net.minecraft.entity.ai.EntityAISwimming
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.EntityAIWatchClosest
- *  net.minecraft.entity.ai.EntitySenses
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.tileentity.MobSpawnerBaseLogic
- *  net.minecraft.tileentity.TileEntity
- *  net.minecraft.tileentity.TileEntityMobSpawner
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.DamageSource
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import com.astryxion.chaospersists.entity.Cryolophosaurus;
+import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
-import com.astryxion.chaospersists.util.MobStats;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
-import com.astryxion.chaospersists.core.ChaosPersists;
-import com.astryxion.chaospersists.entity.VelocityRaptor;
+import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAIHurtByTarget;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAIMoveThroughVillage;
-import net.minecraft.entity.ai.EntityAISwimming;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.EntityAIWatchClosest;
-import net.minecraft.entity.ai.EntitySenses;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.DamageSource;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MoveThroughVillageGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.phys.AABB;
 
-import com.astryxion.chaospersists.util.SpawnerFixHelper;
-
-public class TRex
-extends EntityMob {
-    private static final DataParameter<Byte> ATTACKING = EntityDataManager.createKey(TRex.class, DataSerializers.BYTE);
-    private GenericTargetSorter TargetSorter = null;
+public class TRex extends Monster {
+    private static final EntityDataAccessor<Byte> ATTACKING =
+            SynchedEntityData.defineId(TRex.class, EntityDataSerializers.BYTE);
+    private final GenericTargetSorter targetSorter;
     private float moveSpeed = 0.38f;
-    private EntityLivingBase rt = null;
+    private LivingEntity rt = null;
 
-    public TRex(World par1World) {
-        super(par1World);
-        this.setSize(2.0f, 4.2f);
-                this.experienceValue = 150;
-                this.TargetSorter = new GenericTargetSorter((Entity)this);
-        this.tasks.addTask(0, (EntityAIBase)new EntityAISwimming((EntityLiving)this));
-        this.tasks.addTask(1, (EntityAIBase)new EntityAIMoveThroughVillage((EntityCreature)this, 1.0, false));
-        this.tasks.addTask(2, (EntityAIBase)new MyEntityAIWanderALot((EntityCreature)this, 16, 1.0));
-        this.tasks.addTask(3, (EntityAIBase)new EntityAIWatchClosest((EntityLiving)this, EntityPlayer.class, 8.0f));
-        this.tasks.addTask(4, (EntityAIBase)new EntityAILookIdle((EntityLiving)this));
-        this.targetTasks.addTask(1, (EntityAIBase)new EntityAIHurtByTarget((EntityCreature)this, false));
+    public TRex(EntityType<? extends TRex> type, Level level) {
+        super(type, level);
+        this.xpReward = 150;
+        this.targetSorter = new GenericTargetSorter(this);
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new MoveThroughVillageGoal(this, 1.0, false, 4, () -> false));
+        this.goalSelector.addGoal(2, new MyEntityAIWanderALot(this, 16, 1.0));
+        this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 8.0f));
+        this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue((double)ChaosPersists.TRex_stats.attack);
+    public static AttributeSupplier.Builder createAttributes() {
+        return Monster.createMonsterAttributes()
+                .add(Attributes.MAX_HEALTH, (double) ChaosPersists.TRex_stats.health)
+                .add(Attributes.MOVEMENT_SPEED, 0.38)
+                .add(Attributes.ATTACK_DAMAGE, (double) ChaosPersists.TRex_stats.attack)
+                .add(Attributes.ARMOR, (double) ChaosPersists.TRex_stats.defense);
     }
 
-    protected void entityInit() {
-        super.entityInit();
-        this.getDataManager().register(ATTACKING, (byte)0);
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(ATTACKING, (byte) 0);
     }
 
-    protected boolean canDespawn() {
-        if (this.isNoDespawnRequired()) {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        if (this.isPersistenceRequired()) {
             return false;
         }
         return true;
     }
 
-    public void onUpdate() {
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        super.onUpdate();
+    @Override
+    public void tick() {
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
+        super.tick();
     }
 
     public int mygetMaxHealth() {
         return ChaosPersists.TRex_stats.health;
     }
 
-    public int getTotalArmorValue() {
-        return ChaosPersists.TRex_stats.defense;
+    public int getAttacking() {
+        return this.entityData.get(ATTACKING);
     }
 
-    protected boolean isAIEnabled() {
-        return true;
+    public void setAttacking(int par1) {
+        this.entityData.set(ATTACKING, (byte) par1);
     }
 
-    public void onLivingUpdate() {
-        super.onLivingUpdate();
-    }
-
-    protected net.minecraft.util.SoundEvent getAmbientSound() {
-        if (this.rand.nextInt(4) == 0) {
-            return com.astryxion.chaospersists.core.ChaosSounds.TREX_LIVING;
+    @Override
+    protected SoundEvent getAmbientSound() {
+        if (this.getRandom().nextInt(4) == 0) {
+            return ChaosSounds.TREX_LIVING;
         }
         return null;
     }
 
-    protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource damageSource) {
-        return com.astryxion.chaospersists.core.ChaosSounds.ALO_HURT;
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return ChaosSounds.ALO_HURT;
     }
 
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return com.astryxion.chaospersists.core.ChaosSounds.TREX_DEATH;
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ChaosSounds.TREX_DEATH;
     }
 
+    @Override
     protected float getSoundVolume() {
         return 1.5f;
     }
 
-    protected float getSoundPitch() {
+    @Override
+    public float getVoicePitch() {
         return 1.0f;
     }
 
-    protected Item getDropItem() {
-        return Items.BEEF;
-    }
-
     private void dropItemRand(Item index, int par1) {
-        EntityItem var3 = new EntityItem(this.world, this.posX + (double)ChaosPersists.ChaosRand.nextInt(4) - (double)ChaosPersists.ChaosRand.nextInt(4), this.posY + 1.0, this.posZ + (double)ChaosPersists.ChaosRand.nextInt(4) - (double)ChaosPersists.ChaosRand.nextInt(4), new ItemStack(index, par1, 0));
-        this.world.spawnEntity((Entity)var3);
+        if (index == null) {
+            return;
+        }
+        ItemStack is = new ItemStack(index, par1);
+        ItemEntity entityItem =
+                new ItemEntity(
+                        this.level(),
+                        this.getX() + ChaosPersists.ChaosRand.nextInt(4) - ChaosPersists.ChaosRand.nextInt(4),
+                        this.getY() + 1.0,
+                        this.getZ() + ChaosPersists.ChaosRand.nextInt(4) - ChaosPersists.ChaosRand.nextInt(4),
+                        is);
+        this.level().addFreshEntity(entityItem);
     }
 
-    protected void dropFewItems(boolean par1, int par2) {
-        int var4;
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
         this.dropItemRand(ChaosPersists.TRexTooth, 1);
         this.dropItemRand(Items.ITEM_FRAME, 1);
-        for (var4 = 0; var4 < 7; ++var4) {
+        for (int var4 = 0; var4 < 7; ++var4) {
             this.dropItemRand(Items.BEEF, 1);
         }
-        var4 = 2 + this.world.rand.nextInt(4);
+        int var4 = 2 + this.getRandom().nextInt(4);
         for (int i = 0; i < var4; ++i) {
             this.dropItemRand(ChaosPersists.UraniumNugget, 1);
             this.dropItemRand(ChaosPersists.TitaniumNugget, 1);
         }
     }
 
-    public void initCreature() {
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        return InteractionResult.PASS;
     }
 
-    public boolean interact(EntityPlayer par1EntityPlayer) {
-        return false;
-    }
-
-    public boolean attackEntityAsMob(Entity par1Entity) {
-        if (super.attackEntityAsMob(par1Entity)) {
-            if (par1Entity != null && par1Entity instanceof EntityLivingBase) {
+    @Override
+    public boolean doHurtTarget(Entity par1Entity) {
+        if (super.doHurtTarget(par1Entity)) {
+            if (par1Entity instanceof LivingEntity living) {
                 double ks = 1.2;
                 double inair = 0.1;
-                float f3 = (float)Math.atan2(par1Entity.posZ - this.posZ, par1Entity.posX - this.posX);
-                if (par1Entity.isDead || par1Entity instanceof EntityPlayer) {
+                float f3 = (float) Mth.atan2(par1Entity.getZ() - this.getZ(), par1Entity.getX() - this.getX());
+                if (!par1Entity.isAlive() || par1Entity instanceof Player) {
                     inair *= 2.0;
                 }
-                par1Entity.addVelocity(Math.cos(f3) * ks, inair, Math.sin(f3) * ks);
+                living.push(Math.cos(f3) * ks, inair, Math.sin(f3) * ks);
             }
             return true;
         }
         return false;
     }
 
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-        boolean ret = false;
-        if (!par1DamageSource.getDamageType().equals("cactus")) {
-            ret = super.attackEntityFrom(par1DamageSource, par2);
-            Entity e = par1DamageSource.getTrueSource();
-            if (e != null && e instanceof EntityLivingBase) {
-                this.rt = (EntityLivingBase)e;
-            }
+    @Override
+    public boolean hurt(DamageSource par1DamageSource, float par2) {
+        if ("cactus".equals(par1DamageSource.getMsgId())) {
+            return false;
+        }
+        boolean ret = super.hurt(par1DamageSource, par2);
+        Entity e = par1DamageSource.getEntity();
+        if (e instanceof LivingEntity living) {
+            this.rt = living;
         }
         return ret;
     }
 
-    protected void updateAITasks() {
-        if (this.isDead) {
+    @Override
+    protected void customServerAiStep() {
+        if (this.isDeadOrDying()) {
             return;
         }
-        super.updateAITasks();
-        if (this.world.rand.nextInt(5) == 1) {
-            EntityLivingBase e = null;
-            e = this.getAttackTarget();
+        super.customServerAiStep();
+        if (this.getRandom().nextInt(5) == 1) {
+            LivingEntity e = this.getTarget();
             if (e == null) {
                 e = this.rt;
             }
@@ -251,30 +209,31 @@ extends EntityMob {
                 e = null;
             }
             if (e != null) {
-                if (e.isDead || this.world.rand.nextInt(200) == 1) {
+                if (!e.isAlive() || this.getRandom().nextInt(200) == 1) {
                     e = null;
                     this.rt = null;
-                    this.setAttackTarget(null);
+                    this.setTarget(null);
                 }
-                if (e != null && !this.getEntitySenses().canSee((Entity)e)) {
+                if (e != null && !this.hasLineOfSight(e)) {
                     e = null;
                 }
             }
             if (e == null) {
                 e = this.findSomethingToAttack();
                 if (e != null) {
-                    this.setAttackTarget(e);
+                    this.setTarget(e);
                 }
             }
             if (e != null) {
-                this.faceEntity((Entity)e, 10.0f, 10.0f);
-                if (this.getDistanceSq((Entity)e) < (double)((4.0f + e.width / 2.0f) * (4.0f + e.width / 2.0f))) {
+                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                float reach = 4.0f + e.getBbWidth() / 2.0f;
+                if (this.distanceToSqr(e) < (double) (reach * reach)) {
                     this.setAttacking(1);
-                    if (this.world.rand.nextInt(4) == 0 || this.world.rand.nextInt(5) == 1) {
-                        this.attackEntityAsMob((Entity)e);
+                    if (this.getRandom().nextInt(4) == 0 || this.getRandom().nextInt(5) == 1) {
+                        this.doHurtTarget(e);
                     }
                 } else {
-                    this.getNavigator().tryMoveToEntityLiving((Entity)e, 1.25);
+                    this.getNavigation().moveTo(e, 1.25);
                 }
             } else {
                 this.setAttacking(0);
@@ -282,20 +241,20 @@ extends EntityMob {
         }
     }
 
-    private boolean isSuitableTarget(EntityLivingBase par1EntityLiving, boolean par2) {
+    private boolean isSuitableTarget(LivingEntity par1EntityLiving, boolean par2) {
         if (par1EntityLiving == null) {
             return false;
         }
         if (par1EntityLiving == this) {
             return false;
         }
-        if (!par1EntityLiving.isEntityAlive()) {
+        if (!par1EntityLiving.isAlive()) {
             return false;
         }
-        if (MyUtils.isIgnoreable((EntityLivingBase)par1EntityLiving)) {
+        if (MyUtils.isIgnoreable(par1EntityLiving)) {
             return false;
         }
-        if (!this.getEntitySenses().canSee((Entity)par1EntityLiving)) {
+        if (!this.hasLineOfSight(par1EntityLiving)) {
             return false;
         }
         if (par1EntityLiving instanceof TRex) {
@@ -307,63 +266,49 @@ extends EntityMob {
         if (par1EntityLiving instanceof VelocityRaptor) {
             return false;
         }
-        if (par1EntityLiving instanceof EntityPlayer) {
-            EntityPlayer p = (EntityPlayer)par1EntityLiving;
-            if (p.capabilities.isCreativeMode) {
-                return false;
-            }
+        if (par1EntityLiving instanceof Player player) {
+            return !player.isCreative();
         }
         return true;
     }
 
-    private EntityLivingBase findSomethingToAttack() {
+    private LivingEntity findSomethingToAttack() {
         if (ChaosPersists.PlayNicely != 0) {
             return null;
         }
-        List var5 = this.world.getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox().expand(20.0, 6.0, 20.0));
-        Collections.sort(var5, this.TargetSorter);
-        Iterator var2 = var5.iterator();
-        Entity var3 = null;
-        EntityLivingBase var4 = null;
+        List<LivingEntity> var5 =
+                this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(20.0, 6.0, 20.0));
+        Collections.sort(var5, this.targetSorter);
+        Iterator<LivingEntity> var2 = var5.iterator();
         while (var2.hasNext()) {
-            var3 = (Entity)var2.next();
-            var4 = (EntityLivingBase)var3;
-            if (!this.isSuitableTarget(var4, false)) continue;
+            LivingEntity var4 = var2.next();
+            if (!this.isSuitableTarget(var4, false)) {
+                continue;
+            }
             return var4;
         }
         return null;
     }
 
-    public final int getAttacking() {
-        return this.getDataManager().get(ATTACKING).intValue();
-    }
-
-    public final void setAttacking(int par1) {
-        this.getDataManager().set(ATTACKING, (byte)par1);
-    }
-
-    public boolean getCanSpawnHere() {
-        Block bid;
-        int j;
-        int i;
-        int k;
-        // Same search volume as ChaosPersists.hasNearbyMatchingSpawner: large mobs can sit above/beside the spawner.
-        int baseX = MathHelper.floor(this.posX);
-        int baseY = MathHelper.floor(this.posY);
-        int baseZ = MathHelper.floor(this.posZ);
-        ResourceLocation trexId = new ResourceLocation("chaospersists", "trex");
+    public static boolean checkTRexSpawnRules(
+            EntityType<TRex> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        ResourceLocation trexId = ResourceLocation.fromNamespaceAndPath("chaospersists", "trex");
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
         for (int dz = -8; dz <= 8; ++dz) {
             for (int dx = -8; dx <= 8; ++dx) {
                 for (int dy = -4; dy <= 8; ++dy) {
-                    BlockPos bp = new BlockPos(baseX + dx, baseY + dy, baseZ + dz);
-                    if (this.world.getBlockState(bp).getBlock() != Blocks.MOB_SPAWNER) {
+                    checkPos.set(pos.getX() + dx, pos.getY() + dy, pos.getZ() + dz);
+                    if (MyUtils.getBlockStateForSpawnRules(level, checkPos).getBlock() != Blocks.SPAWNER) {
                         continue;
                     }
-                    TileEntity te = this.world.getTileEntity(bp);
-                    if (!(te instanceof TileEntityMobSpawner)) {
+                    if (!(MyUtils.getBlockEntityForSpawnRules(level, checkPos) instanceof SpawnerBlockEntity spawner)) {
                         continue;
                     }
-                    ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityId(((TileEntityMobSpawner)te).getSpawnerBaseLogic());
+                    ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityIdFromBlockEntity(spawner);
                     if (id == null) {
                         continue;
                     }
@@ -374,30 +319,79 @@ extends EntityMob {
                 }
             }
         }
-        if (!this.isValidLightLevel()) {
+        if (level.getMaxLocalRawBrightness(pos) > 7) {
             return false;
         }
-        if (this.posY < 50.0) {
+        if (pos.getY() < 50) {
             return false;
         }
-        if (this.world.isDaytime()) {
+        if (MyUtils.isDay(level)) {
             return false;
         }
-        for (k = -1; k <= 1; ++k) {
-            for (j = -1; j <= 1; ++j) {
-                for (i = 1; i < 6; ++i) {
-                    bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k)).getBlock();
-                    if (bid == Blocks.AIR) continue;
-                    return false;
+        for (int k = -1; k <= 1; ++k) {
+            for (int j = -1; j <= 1; ++j) {
+                for (int i = 1; i < 6; ++i) {
+                    if (!MyUtils.getBlockStateForSpawnRules(level, pos.offset(j, i, k)).isAir()) {
+                        return false;
+                    }
                 }
             }
         }
-        TRex target = null;
-        target = (TRex)this.world.findNearestEntityWithinAABB(TRex.class, this.getEntityBoundingBox().expand(24.0, 12.0, 24.0), (Entity)this);
-        if (target != null) {
+        List<TRex> nearby =
+                level.getLevel().getEntitiesOfClass(TRex.class, new AABB(pos).inflate(24.0, 12.0, 24.0));
+        return nearby.isEmpty();
+    }
+
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        BlockPos pos = this.blockPosition();
+        ResourceLocation trexId = ResourceLocation.fromNamespaceAndPath("chaospersists", "trex");
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
+        for (int dz = -8; dz <= 8; ++dz) {
+            for (int dx = -8; dx <= 8; ++dx) {
+                for (int dy = -4; dy <= 8; ++dy) {
+                    checkPos.set(pos.getX() + dx, pos.getY() + dy, pos.getZ() + dz);
+                    if (MyUtils.getBlockStateForSpawnRules(level, checkPos).getBlock() != Blocks.SPAWNER) {
+                        continue;
+                    }
+                    if (!(MyUtils.getBlockEntityForSpawnRules(level, checkPos) instanceof SpawnerBlockEntity spawner)) {
+                        continue;
+                    }
+                    ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityIdFromBlockEntity(spawner);
+                    if (id == null) {
+                        continue;
+                    }
+                    ResourceLocation norm = SpawnerFixHelper.normalizeSpawnerEntityId(id);
+                    if (SpawnerFixHelper.entityIdsMatchForSpawner(norm, trexId)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        if (level.getMaxLocalRawBrightness(pos) > 7) {
             return false;
+        }
+        if (this.getY() < 50.0) {
+            return false;
+        }
+        if (this.level().isDay()) {
+            return false;
+        }
+        for (int k = -1; k <= 1; ++k) {
+            for (int j = -1; j <= 1; ++j) {
+                for (int i = 1; i < 6; ++i) {
+                    if (!MyUtils.getBlockStateForSpawnRules(level, pos.offset(j, i, k)).isAir()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        for (TRex other :
+                this.level().getEntitiesOfClass(TRex.class, this.getBoundingBox().inflate(24.0, 12.0, 24.0))) {
+            if (other != this) {
+                return false;
+            }
         }
         return true;
     }
 }
-

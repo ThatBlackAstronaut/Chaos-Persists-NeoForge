@@ -1,97 +1,123 @@
 package com.astryxion.chaospersists.item;
 
 import com.astryxion.chaospersists.entity.EntityAnt;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockTorch;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.monster.EntityCreeper;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
 import java.util.List;
-import java.util.Random;
+import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.WallTorchBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import org.joml.Vector3f;
 
-public class CreeperRepellent extends BlockTorch {
+public class CreeperRepellent extends WallTorchBlock {
+    private static final int TICK_RATE = 10;
+    private static final DustParticleOptions RED_DUST =
+            new DustParticleOptions(new Vector3f(1.0f, 0.0f, 0.0f), 1.0f);
 
     public CreeperRepellent() {
         this(0);
     }
 
     public CreeperRepellent(int par1) {
-        this.setCreativeTab(CreativeTabs.REDSTONE);
+        super(
+                Block.Properties.of()
+                        .noCollission()
+                        .instabreak()
+                        .lightLevel(state -> 14)
+                        .sound(SoundType.WOOD),
+                ParticleTypes.FLAME);
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    public void randomDisplayTick(IBlockState stateIn, World worldIn, BlockPos pos, Random rand) {
-        EnumFacing f = stateIn.getValue(FACING);
+    public String getDescriptionId() {
+        return Util.makeDescriptionId("block", BuiltInRegistries.BLOCK.getKey(this));
+    }
+
+    @Override
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource rand) {
+        findSomethingToRepell(level, pos);
+        level.scheduleTick(pos, this, TICK_RATE);
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!level.isClientSide()) {
+            level.scheduleTick(pos, this, TICK_RATE);
+        }
+    }
+
+    @Override
+    public void neighborChanged(
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Block block,
+            BlockPos fromPos,
+            boolean isMoving) {
+        if (!level.isClientSide()) {
+            level.scheduleTick(pos, this, TICK_RATE);
+        }
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource rand) {
+        Direction f = state.getValue(FACING);
         double var7 = pos.getX() + 0.5D;
         double var9 = pos.getY() + 0.7D;
         double var11 = pos.getZ() + 0.5D;
         double var13 = 0.413D;
         double var15 = 0.271D;
 
-        if (f == EnumFacing.EAST) {
-            this.spawnRepellentParticles(worldIn, var7 - var15, var9 + var13, var11);
-        } else if (f == EnumFacing.WEST) {
-            this.spawnRepellentParticles(worldIn, var7 + var15, var9 + var13, var11);
-        } else if (f == EnumFacing.NORTH) {
-            this.spawnRepellentParticles(worldIn, var7, var9 + var13, var11 - var15);
-        } else if (f == EnumFacing.SOUTH) {
-            this.spawnRepellentParticles(worldIn, var7, var9 + var13, var11 + var15);
+        if (f == Direction.EAST) {
+            this.spawnRepellentParticles(level, var7 - var15, var9 + var13, var11);
+        } else if (f == Direction.WEST) {
+            this.spawnRepellentParticles(level, var7 + var15, var9 + var13, var11);
+        } else if (f == Direction.NORTH) {
+            this.spawnRepellentParticles(level, var7, var9 + var13, var11 - var15);
+        } else if (f == Direction.SOUTH) {
+            this.spawnRepellentParticles(level, var7, var9 + var13, var11 + var15);
         } else {
-            this.spawnRepellentParticles(worldIn, var7, var9 + 0.21D, var11);
+            this.spawnRepellentParticles(level, var7, var9 + 0.21D, var11);
         }
     }
 
-    @SideOnly(Side.CLIENT)
-    private void spawnRepellentParticles(World worldIn, double x, double y, double z) {
-        worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, x, y, z, 0.0D, 0.0D, 0.0D);
-        worldIn.spawnParticle(EnumParticleTypes.FLAME, x, y, z, 0.0D, 0.0D, 0.0D);
-        worldIn.spawnParticle(EnumParticleTypes.REDSTONE, x, y, z, 0.0D, 0.0D, 0.0D);
-    }
-
-    @Override
-    public int tickRate(World worldIn) {
-        return 10;
-    }
-
-    @Override
-    public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-        if (!worldIn.isRemote) {
-            this.findSomethingToRepell(worldIn, pos);
-            worldIn.scheduleUpdate(pos, this, this.tickRate(worldIn));
-        }
-    }
-
-    @Override
-    public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state) {
-        worldIn.scheduleUpdate(pos, this, this.tickRate(worldIn));
-    }
-
-    @Override
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos) {
-        worldIn.scheduleUpdate(pos, this, this.tickRate(worldIn));
+    @OnlyIn(Dist.CLIENT)
+    private void spawnRepellentParticles(Level worldIn, double x, double y, double z) {
+        worldIn.addParticle(ParticleTypes.SMOKE, x, y, z, 0.0D, 0.0D, 0.0D);
+        worldIn.addParticle(ParticleTypes.FLAME, x, y, z, 0.0D, 0.0D, 0.0D);
+        worldIn.addParticle(RED_DUST, x, y, z, 0.0D, 0.0D, 0.0D);
     }
 
     /** 1.7.10: repell Creepers, Ants, and PurplePower mobs (except type 10). */
-    private void findSomethingToRepell(World world, BlockPos pos) {
+    private void findSomethingToRepell(Level world, BlockPos pos) {
         int par2 = pos.getX();
         int par3 = pos.getY();
         int par4 = pos.getZ();
-        AxisAlignedBB bb = new AxisAlignedBB(
-                (double) par2 - 20.0D, (double) par3 - 10.0D, (double) par4 - 20.0D,
-                (double) par2 + 20.0D, (double) par3 + 10.0D, (double) par4 + 20.0D);
-        List<EntityLivingBase> list = world.getEntitiesWithinAABB(EntityLivingBase.class, bb);
-        for (EntityLivingBase var3 : list) {
-            if (var3 != null && var3 instanceof EntityCreeper) {
+        AABB bb = new AABB(
+                (double) par2 - 20.0D,
+                (double) par3 - 10.0D,
+                (double) par4 - 20.0D,
+                (double) par2 + 20.0D,
+                (double) par3 + 10.0D,
+                (double) par4 + 20.0D);
+        List<LivingEntity> list = world.getEntitiesOfClass(LivingEntity.class, bb);
+        for (LivingEntity var3 : list) {
+            if (var3 != null && var3 instanceof Creeper) {
                 this.applyRepelPush(var3, par2, par3, par4);
             }
             if (var3 != null && var3 instanceof EntityAnt) {
@@ -107,10 +133,10 @@ public class CreeperRepellent extends BlockTorch {
         }
     }
 
-    private void applyRepelPush(EntityLivingBase var3, int par2, int par3, int par4) {
-        double d1 = var3.posX - (double) par2;
-        double d2 = var3.posY - (double) par3;
-        double d3 = var3.posZ - (double) par4;
+    private void applyRepelPush(LivingEntity var3, int par2, int par3, int par4) {
+        double d1 = var3.getX() - (double) par2;
+        double d2 = var3.getY() - (double) par3;
+        double d3 = var3.getZ() - (double) par4;
         double f = d1 * d1 + d2 * d2 + d3 * d3;
         f = Math.sqrt(f);
         f = 20.0D - f;
@@ -120,9 +146,9 @@ public class CreeperRepellent extends BlockTorch {
         if (f < 0.0D) {
             f = 0.0D;
         }
-        double dir = Math.atan2(var3.posX - (double) par2, var3.posZ - (double) par4);
+        double dir = Math.atan2(var3.getX() - (double) par2, var3.getZ() - (double) par4);
         f *= 0.4D;
-        var3.motionX += f * Math.sin(dir);
-        var3.motionZ += f * Math.cos(dir);
+        Vec3 motion = var3.getDeltaMovement();
+        var3.setDeltaMovement(motion.x + f * Math.sin(dir), motion.y, motion.z + f * Math.cos(dir));
     }
 }

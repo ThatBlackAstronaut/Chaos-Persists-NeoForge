@@ -1,40 +1,44 @@
 package com.astryxion.chaospersists.item;
 
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.core.ChaosPersists;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
-public class ItemWaterBall
-extends Item {
+public class ItemWaterBall extends Item {
+
     public ItemWaterBall(int i) {
-        this.maxStackSize = 64;
-        this.setCreativeTab(CreativeTabs.COMBAT);
+        super(new Properties().stacksTo(64));
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
-        ItemStack stack = player.getHeldItem(hand);
-        if (!player.capabilities.isCreativeMode) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
-        world.playSound(null, player.posX, player.posY, player.posZ,
-                SoundEvents.ENTITY_SNOWBALL_THROW, SoundCategory.PLAYERS,
-                0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
-        if (!world.isRemote) {
-            WaterBall e = new WaterBall(world, (EntityLivingBase) player);
-            e.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 1.5F, 1.0F);
-            world.spawnEntity((Entity) e);
+        level.playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.SNOWBALL_THROW,
+                SoundSource.PLAYERS,
+                0.5F,
+                0.4F / (level.getRandom().nextFloat() * 0.4F + 0.8F));
+        if (!level.isClientSide) {
+            WaterBall e = new WaterBall(ChaosPersists.ENTITY_TYPE_WATER_BALL.get(), player, level);
+            e.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
+            level.addFreshEntity(e);
         }
-        player.swingArm(hand);
-        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+        player.awardStat(Stats.ITEM_USED.get(this));
+        player.swing(hand);
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 }

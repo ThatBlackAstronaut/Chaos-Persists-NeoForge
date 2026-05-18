@@ -1,166 +1,169 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.ExperienceSword
- *  com.astryxion.chaospersists.ItemChaosArmor
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.enchantment.Enchantment
- *  net.minecraft.enchantment.EnchantmentHelper
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.item.Item
- *  net.minecraft.item.Item$ToolMaterial
- *  net.minecraft.item.ItemStack
- *  net.minecraft.item.ItemSword
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import com.astryxion.chaospersists.item.ItemChaosArmor;
-import java.util.Random;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
-import net.minecraft.util.DamageSource;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
 
-public class ExperienceSword
-extends ItemSword {
-    private int weaponDamage;
-    private final Item.ToolMaterial toolMaterial;
-    private World worldObj = null;
-    private World worldObjr = null;
+public class ExperienceSword extends SwordItem {
+    private static final int WEAPON_DAMAGE = 15;
+    private Level worldObj = null;
+    private Level worldObjr = null;
 
-    public ExperienceSword(Item.ToolMaterial par2EnumToolMaterial) {
-        super(par2EnumToolMaterial);
-        this.toolMaterial = par2EnumToolMaterial;
-        this.weaponDamage = 15;
-        this.maxStackSize = 1;
-        this.setMaxDamage(1400);
-        this.setCreativeTab(CreativeTabs.COMBAT);
+    public ExperienceSword(Tier tier) {
+        super(tier, (int)(WEAPON_DAMAGE - tier.getAttackDamageBonus()), -2.4f, new Properties().stacksTo(1).durability(1400));
     }
 
-    public void onCreated(ItemStack par1ItemStack, World par2World, EntityPlayer par3EntityPlayer) {
-        par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(16), 2);
-        par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(34), 3);
+    @Override
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
+        stack.enchant(Enchantments.SHARPNESS, 2);
+        stack.enchant(Enchantments.MOB_LOOTING, 3);
     }
 
-    public void onUsingTick(ItemStack stack, EntityPlayer player, int count) {
-        int lvl = EnchantmentHelper.getEnchantmentLevel(Enchantment.getEnchantmentByID(16), stack);
-        if (lvl <= 0) {
-            stack.addEnchantment(Enchantment.getEnchantmentByID(16), 2);
-            stack.addEnchantment(Enchantment.getEnchantmentByID(34), 3);
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SHARPNESS, stack) <= 0) {
+            stack.enchant(Enchantments.SHARPNESS, 2);
+            stack.enchant(Enchantments.MOB_LOOTING, 3);
         }
-    }
-
-    public void onUpdate(ItemStack stack, World par2World, Entity par3Entity, int par4, boolean par5) {
-        EntityLivingBase e = null;
+        LivingEntity e = null;
         ItemChaosArmor ia = null;
-        EntityPlayer p = null;
-        this.onUsingTick(stack, (EntityPlayer)null, 0);
-        if (!par2World.isRemote) {
-            this.worldObj = par2World;
+        Player p = null;
+        if (!level.isClientSide) {
+            this.worldObj = level;
         }
-        if (par2World.isRemote) {
-            this.worldObjr = par2World;
+        if (level.isClientSide) {
+            this.worldObjr = level;
         }
-        if (par2World.rand.nextInt(60) == 1 && par3Entity != null && par3Entity instanceof EntityLivingBase) {
-            e = (EntityLivingBase)par3Entity;
-            if (e instanceof EntityPlayer) {
-                p = (EntityPlayer)e;
+        if (level.getRandom().nextInt(60) == 1 && entity instanceof LivingEntity living) {
+            e = living;
+            if (e instanceof Player player) {
+                p = player;
             }
-            block6 : for (int i = 1; i < 5 && p != null; ++i) {
+            for (int i = 1; i < 5 && p != null; ++i) {
                 Item it;
-                net.minecraft.inventory.EntityEquipmentSlot[] armorSlots = new net.minecraft.inventory.EntityEquipmentSlot[]{net.minecraft.inventory.EntityEquipmentSlot.FEET, net.minecraft.inventory.EntityEquipmentSlot.LEGS, net.minecraft.inventory.EntityEquipmentSlot.CHEST, net.minecraft.inventory.EntityEquipmentSlot.HEAD};
-                ItemStack is = p.getItemStackFromSlot(armorSlots[i - 1]);
-                if (is == null || (it = is.getItem()) == null || !(it instanceof ItemChaosArmor) || (ia = (ItemChaosArmor)it).get_armor_material() != 4) continue;
+                EquipmentSlot armorSlot =
+                        switch (i) {
+                            case 1 -> EquipmentSlot.FEET;
+                            case 2 -> EquipmentSlot.LEGS;
+                            case 3 -> EquipmentSlot.CHEST;
+                            default -> EquipmentSlot.HEAD;
+                        };
+                ItemStack is = p.getItemBySlot(armorSlot);
+                if (is.isEmpty()
+                        || !((it = is.getItem()) instanceof ItemChaosArmor armor)
+                        || armor.get_armor_material() != 4) {
+                    continue;
+                }
+                ia = armor;
                 switch (ia.get_armor_type()) {
-                    case 0: {
-                        if (!par2World.isRemote && p != null && par2World.rand.nextInt(10) == 1) {
-                            p.addExperience(1);
+                    case 0 -> {
+                        if (!level.isClientSide && level.getRandom().nextInt(10) == 1) {
+                            p.giveExperiencePoints(1);
                         }
-                        par2World.spawnParticle(net.minecraft.util.EnumParticleTypes.PORTAL, e.posX, e.posY + 1.5, e.posZ, par2World.rand.nextGaussian(), par2World.rand.nextGaussian(), par2World.rand.nextGaussian());
-                        continue block6;
+                        level.addParticle(
+                                ParticleTypes.PORTAL,
+                                e.getX(),
+                                e.getY() + 1.5,
+                                e.getZ(),
+                                level.getRandom().nextGaussian(),
+                                level.getRandom().nextGaussian(),
+                                level.getRandom().nextGaussian());
                     }
-                    case 1: {
-                        if (!par2World.isRemote && p != null && par2World.rand.nextInt(20) == 1) {
-                            p.addExperience(1);
+                    case 1 -> {
+                        if (!level.isClientSide && level.getRandom().nextInt(20) == 1) {
+                            p.giveExperiencePoints(1);
                         }
-                        par2World.spawnParticle(net.minecraft.util.EnumParticleTypes.PORTAL, e.posX, e.posY + 1.25, e.posZ, par2World.rand.nextGaussian(), par2World.rand.nextGaussian(), par2World.rand.nextGaussian());
-                        continue block6;
+                        level.addParticle(
+                                ParticleTypes.PORTAL,
+                                e.getX(),
+                                e.getY() + 1.25,
+                                e.getZ(),
+                                level.getRandom().nextGaussian(),
+                                level.getRandom().nextGaussian(),
+                                level.getRandom().nextGaussian());
                     }
-                    case 2: {
-                        if (!par2World.isRemote && p != null && par2World.rand.nextInt(30) == 1) {
-                            p.addExperience(1);
+                    case 2 -> {
+                        if (!level.isClientSide && level.getRandom().nextInt(30) == 1) {
+                            p.giveExperiencePoints(1);
                         }
-                        par2World.spawnParticle(net.minecraft.util.EnumParticleTypes.PORTAL, e.posX, e.posY + 0.75, e.posZ, par2World.rand.nextGaussian(), par2World.rand.nextGaussian(), par2World.rand.nextGaussian());
-                        continue block6;
+                        level.addParticle(
+                                ParticleTypes.PORTAL,
+                                e.getX(),
+                                e.getY() + 0.75,
+                                e.getZ(),
+                                level.getRandom().nextGaussian(),
+                                level.getRandom().nextGaussian(),
+                                level.getRandom().nextGaussian());
                     }
-                    case 3: {
-                        if (!par2World.isRemote && p != null && par2World.rand.nextInt(40) == 1) {
-                            p.addExperience(1);
+                    case 3 -> {
+                        if (!level.isClientSide && level.getRandom().nextInt(40) == 1) {
+                            p.giveExperiencePoints(1);
                         }
-                        par2World.spawnParticle(net.minecraft.util.EnumParticleTypes.PORTAL, e.posX, e.posY + 0.25, e.posZ, par2World.rand.nextGaussian(), par2World.rand.nextGaussian(), par2World.rand.nextGaussian());
-                        break;
+                        level.addParticle(
+                                ParticleTypes.PORTAL,
+                                e.getX(),
+                                e.getY() + 0.25,
+                                e.getZ(),
+                                level.getRandom().nextGaussian(),
+                                level.getRandom().nextGaussian(),
+                                level.getRandom().nextGaussian());
                     }
+                    default -> {}
                 }
             }
         }
-    }
-
-    public int getDamageVsEntity(Entity par1Entity) {
-        return this.weaponDamage;
     }
 
     public String getMaterialName() {
         return "Emerald";
     }
 
-    public boolean hitEntity(ItemStack par1ItemStack, EntityLivingBase par2EntityLiving, EntityLivingBase par3EntityLiving) {
+    @Override
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         float i = 0.0f;
-        EntityPlayer p = null;
-        java.lang.Object l = null;
-        if (par3EntityLiving instanceof EntityPlayer) {
-            p = (EntityPlayer)par3EntityLiving;
+        Player p = null;
+        if (attacker instanceof Player player) {
+            p = player;
         }
-        if (par2EntityLiving != null && par2EntityLiving instanceof EntityLiving) {
+        if (target != null && target instanceof Mob) {
             i = 10.0f;
         }
         if (i > 0.0f && p != null) {
-            p.addExperience((int)i);
+            p.giveExperiencePoints((int) i);
         }
-        if (p != null && (i = (float)(p.experienceLevel / 2)) > 0.0f && par2EntityLiving != null) {
-            par2EntityLiving.attackEntityFrom(DamageSource.causePlayerDamage((EntityPlayer)p), i);
+        if (p != null && (i = (float) (p.experienceLevel / 2)) > 0.0f && target != null) {
+            target.hurt(p.damageSources().playerAttack(p), i);
         }
-        if (this.worldObjr != null && par2EntityLiving != null) {
+        if (this.worldObjr != null && target != null) {
             int j = 0;
-            while ((float)j <= i / 2.0f) {
-                this.worldObjr.spawnParticle(net.minecraft.util.EnumParticleTypes.PORTAL, par2EntityLiving.posX, par2EntityLiving.posY + 1.0, par2EntityLiving.posZ, this.worldObjr.rand.nextGaussian(), this.worldObjr.rand.nextGaussian(), this.worldObjr.rand.nextGaussian());
+            while ((float) j <= i / 2.0f) {
+                this.worldObjr.addParticle(
+                        ParticleTypes.PORTAL,
+                        target.getX(),
+                        target.getY() + 1.0,
+                        target.getZ(),
+                        this.worldObjr.getRandom().nextGaussian(),
+                        this.worldObjr.getRandom().nextGaussian(),
+                        this.worldObjr.getRandom().nextGaussian());
                 ++j;
             }
         }
-        par1ItemStack.damageItem(1, par3EntityLiving);
+        stack.hurtAndBreak(1, attacker, e -> e.broadcastBreakEvent(EquipmentSlot.MAINHAND));
         return true;
     }
 
-    public int getMaxItemUseDuration(ItemStack par1ItemStack) {
+    @Override
+    public int getUseDuration(ItemStack stack) {
         return 3000;
-    }}
-
+    }
+}

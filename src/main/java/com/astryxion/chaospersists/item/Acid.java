@@ -1,44 +1,34 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Acid
- *  com.astryxion.chaospersists.LaserBall
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import com.astryxion.chaospersists.item.LaserBall;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 
-public class Acid
-extends LaserBall {
+public class Acid extends LaserBall {
     private int my_index = 85;
 
-    public Acid(World par1World) {
-        super(par1World);
+    public Acid(EntityType<? extends Acid> type, Level level) {
+        super(type, level);
         super.setAcid();
     }
 
-    public Acid(World par1World, int par2) {
-        super(par1World);
+    public Acid(EntityType<? extends Acid> type, Level level, int par2) {
+        super(type, level, par2);
         super.setAcid();
     }
 
-    public Acid(World par1World, EntityLivingBase par2EntityLiving) {
-        super(par1World, par2EntityLiving);
+    public Acid(EntityType<? extends Acid> type, LivingEntity shooter, Level level) {
+        super(type, shooter, level);
         super.setAcid();
     }
 
-    public Acid(World par1World, EntityLivingBase par2EntityLiving, int par3) {
-        super(par1World, par2EntityLiving);
+    public Acid(EntityType<? extends Acid> type, LivingEntity shooter, Level level, int par3) {
+        super(type, shooter, level, par3);
         super.setAcid();
     }
 
-    public Acid(World par1World, double par2, double par4, double par6) {
-        super(par1World, par2, par4, par6);
+    public Acid(EntityType<? extends Acid> type, double x, double y, double z, Level level) {
+        super(type, x, y, z, level);
         super.setAcid();
     }
 
@@ -46,4 +36,3 @@ extends LaserBall {
         return this.my_index;
     }
 }
-

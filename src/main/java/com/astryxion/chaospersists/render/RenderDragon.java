@@ -1,69 +1,35 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Dragon
- *  com.astryxion.chaospersists.ModelDragon
- *  com.astryxion.chaospersists.RenderDragon
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.renderer.entity.RenderLiving
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.util.ResourceLocation
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.Dragon;
 import com.astryxion.chaospersists.model.ModelDragon;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.entity.RenderLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.resources.ResourceLocation;
 
-public class RenderDragon
-extends RenderLiving {
-    protected ModelDragon model;
-    private float scale = 1.0f;
-    private static final ResourceLocation texture = new ResourceLocation("chaospersists", "textures/entity/dragon.png");
-    private static final ResourceLocation texture2 = new ResourceLocation("chaospersists", "textures/entity/whitedragon.png");
+public class RenderDragon extends MobRenderer<Dragon, ModelDragon> {
+    private static final ResourceLocation TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/dragon.png");
+    private static final ResourceLocation TEXTURE_WHITE =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/whitedragon.png");
+    private final float scale;
 
-    public RenderDragon(net.minecraft.client.renderer.entity.RenderManager manager, ModelDragon par1ModelBase, float par2, float par3) {
-        super(manager, (ModelBase)par1ModelBase, par2 * par3);
-        this.model = (ModelDragon)this.mainModel;
-        this.scale = par3;
+    public RenderDragon(EntityRendererProvider.Context context, ModelDragon model, float shadow, float scale) {
+        super(context, model, shadow * scale);
+        this.scale = scale;
     }
 
-    public void renderDragon(Dragon par1EntityDragon, double par2, double par4, double par6, float par8, float par9) {
-        super.doRender((EntityLiving)par1EntityDragon, par2, par4, par6, par8, par9);
+    @Override
+    protected void scale(Dragon entity, PoseStack poseStack, float partialTick) {
+        float s = this.scale;
+        poseStack.scale(s, s, s);
     }
 
-    public void doRender(EntityLiving par1EntityLiving, double par2, double par4, double par6, float par8, float par9) {
-        this.renderDragon((Dragon)par1EntityLiving, par2, par4, par6, par8, par9);
-    }
-
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-        this.renderDragon((Dragon)par1Entity, par2, par4, par6, par8, par9);
-    }
-
-    protected void preRenderScale(Dragon par1Entity, float par2) {
-        GL11.glScalef((float)this.scale, (float)this.scale, (float)this.scale);
-    }
-
-    protected void preRenderCallback(EntityLivingBase par1EntityLiving, float par2) {
-        this.preRenderScale((Dragon)par1EntityLiving, par2);
-    }
-
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        Dragon d = (Dragon)entity;
-        if (d.getDragonType() != 0) {
-            return texture2;
+    @Override
+    public ResourceLocation getTextureLocation(Dragon entity) {
+        if (entity.getDragonType() != 0) {
+            return TEXTURE_WHITE;
         }
-        return texture;
+        return TEXTURE;
     }
 }
-

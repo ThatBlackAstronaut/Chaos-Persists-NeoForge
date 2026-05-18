@@ -1,228 +1,191 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.EntityAnt
- *  com.astryxion.chaospersists.EntityButterfly
- *  com.astryxion.chaospersists.EntityLunaMoth
- *  com.astryxion.chaospersists.GenericTargetSorter
- *  com.astryxion.chaospersists.LeafMonster
- *  com.astryxion.chaospersists.MobStats
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockLeaves
- *  net.minecraft.entity.DataWatcher
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityCreature
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAIHurtByTarget
- *  net.minecraft.entity.ai.EntityAIPanic
- *  net.minecraft.entity.ai.EntityAISwimming
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.EntitySenses
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.tileentity.MobSpawnerBaseLogic
- *  net.minecraft.tileentity.TileEntity
- *  net.minecraft.tileentity.TileEntityMobSpawner
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.MathHelper
- *  net.minecraft.world.World
- *  net.minecraft.world.WorldProvider
- */
 package com.astryxion.chaospersists.entity;
 
-import com.astryxion.chaospersists.entity.EntityAnt;
-import com.astryxion.chaospersists.entity.EntityButterfly;
-import com.astryxion.chaospersists.entity.EntityLunaMoth;
-import com.astryxion.chaospersists.util.GenericTargetSorter;
-import com.astryxion.chaospersists.util.MobStats;
+import com.astryxion.chaospersists.util.MyUtils;
+
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
+import com.astryxion.chaospersists.util.GenericTargetSorter;
+import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockLeaves;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAIHurtByTarget;
-import net.minecraft.entity.ai.EntityAIPanic;
-import net.minecraft.entity.ai.EntityAISwimming;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.EntitySenses;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.tileentity.MobSpawnerBaseLogic;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
-public class LeafMonster
-extends EntityMob {
-    private static final DataParameter<Byte> ATTACKING = EntityDataManager.createKey(LeafMonster.class, DataSerializers.BYTE);
-    private GenericTargetSorter TargetSorter = null;
+public class LeafMonster extends Monster {
+    private static final EntityDataAccessor<Byte> ATTACKING =
+            SynchedEntityData.defineId(LeafMonster.class, EntityDataSerializers.BYTE);
+    private final GenericTargetSorter targetSorter;
     private float moveSpeed = 0.25f;
 
-    public LeafMonster(World par1World) {
-        super(par1World);
-        this.setSize(1.0f, 2.5f);
-                this.experienceValue = 5;
-                this.tasks.addTask(0, (EntityAIBase)new EntityAISwimming((EntityLiving)this));
-        this.tasks.addTask(1, (EntityAIBase)new EntityAIPanic((EntityCreature)this, 1.350000023841858));
-        this.targetTasks.addTask(1, (EntityAIBase)new EntityAIHurtByTarget((EntityCreature)this, false));
-        this.TargetSorter = new GenericTargetSorter((Entity)this);
+    public LeafMonster(EntityType<? extends LeafMonster> type, Level level) {
+        super(type, level);
+        this.xpReward = 5;
+        this.targetSorter = new GenericTargetSorter(this);
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.350000023841858));
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue((double)ChaosPersists.LeafMonster_stats.attack);
+    public static AttributeSupplier.Builder createAttributes() {
+        return Monster.createMonsterAttributes()
+                .add(Attributes.MAX_HEALTH, (double) ChaosPersists.LeafMonster_stats.health)
+                .add(Attributes.MOVEMENT_SPEED, 0.25)
+                .add(Attributes.ATTACK_DAMAGE, (double) ChaosPersists.LeafMonster_stats.attack)
+                .add(Attributes.ARMOR, (double) ChaosPersists.LeafMonster_stats.defense);
     }
 
-    protected void entityInit() {
-        super.entityInit();
-        this.getDataManager().register(ATTACKING, (byte)0);
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(ATTACKING, (byte) 0);
     }
 
-    public final int getAttacking() {
-        return this.getDataManager().get(ATTACKING).intValue();
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        if (this.isPersistenceRequired()) {
+            return false;
+        }
+        return true;
     }
 
-    public final void setAttacking(int par1) {
-        this.getDataManager().set(ATTACKING, (byte)par1);
+    public int getAttacking() {
+        return this.entityData.get(ATTACKING);
+    }
+
+    public void setAttacking(int par1) {
+        this.entityData.set(ATTACKING, (byte) par1);
     }
 
     public int mygetMaxHealth() {
         return ChaosPersists.LeafMonster_stats.health;
     }
 
-    public int getTotalArmorValue() {
-        return ChaosPersists.LeafMonster_stats.defense;
+    @Override
+    public void tick() {
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
+        super.tick();
+        if (this.getAttacking() == 0) {
+            int px = Mth.floor(this.getX());
+            int py = Mth.floor(this.getY());
+            int pz = Mth.floor(this.getZ());
+            this.setPos(px + (this.getX() > 0.0 ? 0.5 : -0.5), py, pz + (this.getZ() > 0.0 ? 0.5 : -0.5));
+            this.setXRot(0.0f);
+            int head = Mth.floor(this.getYRot());
+            head = head / 90 * 90;
+            this.setYRot(head);
+            this.yHeadRot = head;
+        }
     }
 
-    protected boolean isAIEnabled() {
-        return true;
+    @Override
+    protected void playStepSound(BlockPos pos, BlockState state) {
+        if (this.getAttacking() != 0) {
+            super.playStepSound(pos, state);
+        }
     }
 
-    protected void fall(float par1) {
-        float i = (float)MathHelper.ceil((double)(par1 - 3.0f));
+    @Override
+    public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {
+        float i = distance - 3.0f;
         if (i > 0.0f) {
             if (i > 2.0f) {
-                this.playSound(net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("entity.generic.big_fall")), 1.0f, 1.0f);
+                this.playSound(SoundEvents.GENERIC_BIG_FALL, 1.0f, 1.0f);
                 i = 2.0f;
             } else {
-                this.playSound(net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("entity.generic.small_fall")), 1.0f, 1.0f);
+                this.playSound(SoundEvents.GENERIC_SMALL_FALL, 1.0f, 1.0f);
             }
-            this.attackEntityFrom(DamageSource.FALL, i);
+            this.hurt(this.damageSources().fall(), i);
         }
+        return false;
     }
 
-    public void onUpdate() {
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        super.onUpdate();
-        if (this.getAttacking() == 0) {
-            int px = (int)this.posX;
-            int py = (int)this.posY;
-            int pz = (int)this.posZ;
-            this.posX = px;
-            this.posY = py;
-            this.posZ = pz;
-            if (this.posX > 0.0) {
-                this.posX += 0.5;
-            }
-            if (this.posZ > 0.0) {
-                this.posZ += 0.5;
-            }
-            if (this.posX < 0.0) {
-                this.posX -= 0.5;
-            }
-            if (this.posZ < 0.0) {
-                this.posZ -= 0.5;
-            }
-            this.rotationPitch = 0.0f;
-            px = (int)this.rotationYawHead;
-            this.rotationYaw = this.rotationYawHead = (float)((px /= 90) * 90);
-        }
-    }
-
-    protected net.minecraft.util.SoundEvent getAmbientSound() {
+    @Override
+    protected SoundEvent getAmbientSound() {
         return null;
     }
 
-    protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource damageSource) {
-        return com.astryxion.chaospersists.core.ChaosSounds.LEAVES_HIT;
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return ChaosSounds.LEAVES_HIT;
     }
 
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return com.astryxion.chaospersists.core.ChaosSounds.LEAVES_DEATH;
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ChaosSounds.LEAVES_DEATH;
     }
 
+    @Override
     protected float getSoundVolume() {
         return 0.65f;
     }
 
-    protected float getSoundPitch() {
+    @Override
+    public float getVoicePitch() {
         return 1.0f;
     }
 
-    protected Item getDropItem() {
-        int i = this.world.rand.nextInt(3);
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        int i = this.getRandom().nextInt(3);
+        Item drop = null;
         if (i == 0) {
-            return Item.getItemFromBlock((Block)Blocks.LOG);
+            drop = Items.OAK_LOG;
+        } else if (i == 1) {
+            drop = Items.OAK_LEAVES.asItem();
+        } else if (i == 2) {
+            drop = Items.ROTTEN_FLESH;
         }
-        if (i == 1) {
-            return Item.getItemFromBlock((Block)Blocks.LEAVES);
+        if (drop != null) {
+            this.spawnAtLocation(drop);
         }
-        return Items.ROTTEN_FLESH;
     }
 
-    protected void updateAITasks() {
-        super.updateAITasks();
-        if (this.isDead) {
+    @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        if (this.isDeadOrDying()) {
             return;
         }
-        if (this.world.rand.nextInt(100) == 1) {
-            this.setRevengeTarget(null);
+        if (this.getRandom().nextInt(100) == 1) {
+            this.setLastHurtByMob(null);
         }
-        if (this.world.rand.nextInt(4) == 1) {
-            EntityLivingBase e = this.findSomethingToAttack();
+        if (this.getRandom().nextInt(4) == 1) {
+            LivingEntity e = this.findSomethingToAttack();
             if (e != null) {
-                this.faceEntity((Entity)e, 10.0f, 10.0f);
+                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
                 this.setAttacking(1);
-                this.getNavigator().tryMoveToEntityLiving((Entity)e, 1.25);
-                if (this.getDistanceSq((Entity)e) < 5.0 && (this.rand.nextInt(8) == 0 || this.rand.nextInt(10) == 1)) {
-                    this.attackEntityAsMob((Entity)e);
+                this.getNavigation().moveTo(e, 1.25);
+                if (this.distanceToSqr(e) < 25.0
+                        && (this.getRandom().nextInt(8) == 0 || this.getRandom().nextInt(10) == 1)) {
+                    this.doHurtTarget(e);
                 }
             } else {
                 this.setAttacking(0);
@@ -230,17 +193,17 @@ extends EntityMob {
         }
     }
 
-    private boolean isSuitableTarget(EntityLivingBase par1EntityLiving, boolean par2) {
+    private boolean isSuitableTarget(LivingEntity par1EntityLiving, boolean par2) {
         if (par1EntityLiving == null) {
             return false;
         }
         if (par1EntityLiving == this) {
             return false;
         }
-        if (!par1EntityLiving.isEntityAlive()) {
+        if (!par1EntityLiving.isAlive()) {
             return false;
         }
-        if (!this.getEntitySenses().canSee((Entity)par1EntityLiving)) {
+        if (!this.getSensing().hasLineOfSight(par1EntityLiving)) {
             return false;
         }
         if (par1EntityLiving instanceof EntityAnt) {
@@ -252,74 +215,123 @@ extends EntityMob {
         if (par1EntityLiving instanceof EntityLunaMoth) {
             return true;
         }
-        if (par1EntityLiving instanceof EntityPlayer) {
-            EntityPlayer p = (EntityPlayer)par1EntityLiving;
-            if (!p.capabilities.isCreativeMode) {
-                return true;
-            }
+        if (par1EntityLiving instanceof Player player) {
+            return !player.isCreative();
         }
         return false;
     }
 
-    private EntityLivingBase findSomethingToAttack() {
+    private LivingEntity findSomethingToAttack() {
         if (ChaosPersists.PlayNicely != 0) {
             return null;
         }
-        List var5 = this.world.getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox().expand(4.0, 6.0, 4.0));
-        Collections.sort(var5, this.TargetSorter);
-        Iterator var2 = var5.iterator();
-        Entity var3 = null;
-        EntityLivingBase var4 = null;
+        List<LivingEntity> var5 =
+                this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(4.0, 6.0, 4.0));
+        Collections.sort(var5, this.targetSorter);
+        Iterator<LivingEntity> var2 = var5.iterator();
         while (var2.hasNext()) {
-            var3 = (Entity)var2.next();
-            var4 = (EntityLivingBase)var3;
-            if (!this.isSuitableTarget(var4, false)) continue;
+            LivingEntity var4 = var2.next();
+            if (!this.isSuitableTarget(var4, false)) {
+                continue;
+            }
             return var4;
         }
         return null;
     }
 
-    public boolean getCanSpawnHere() {
+    public static boolean checkLeafMonsterSpawnRules(
+            EntityType<LeafMonster> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
         for (int k = -3; k < 3; ++k) {
             for (int j = -3; j < 3; ++j) {
                 for (int i = 0; i < 5; ++i) {
-                    Block bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k)).getBlock();
-                    if (bid != Blocks.MOB_SPAWNER) continue;
-                    TileEntityMobSpawner tileentitymobspawner = null;
-                    tileentitymobspawner = (TileEntityMobSpawner)this.world.getTileEntity(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k));
-                                        String s = null;
-                    net.minecraft.util.ResourceLocation id = com.astryxion.chaospersists.util.SpawnerFixHelper.getMobSpawnerEntityId(tileentitymobspawner.getSpawnerBaseLogic());
-                    if (id != null) s = id.getPath();
-                    if (s == null || !s.equals("Leaf Monster")) continue;
-                    return true;
+                    checkPos.set(pos.getX() + j, pos.getY() + i, pos.getZ() + k);
+                    if (MyUtils.getBlockStateForSpawnRules(level, checkPos).getBlock() != Blocks.SPAWNER) {
+                        continue;
+                    }
+                    if (!(MyUtils.getBlockEntityForSpawnRules(level, checkPos) instanceof SpawnerBlockEntity spawner)) {
+                        continue;
+                    }
+                    ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityIdFromBlockEntity(spawner);
+                    if (id == null) {
+                        continue;
+                    }
+                    ResourceLocation leafId =
+                            ResourceLocation.fromNamespaceAndPath("chaospersists", "leaf_monster");
+                    ResourceLocation norm = SpawnerFixHelper.normalizeSpawnerEntityId(id);
+                    if (SpawnerFixHelper.entityIdsMatchForSpawner(norm, leafId)
+                            || "Leaf Monster".equals(id.getPath())) {
+                        return true;
+                    }
                 }
             }
         }
-        if (!this.isValidLightLevel()) {
+        if (level.getMaxLocalRawBrightness(pos) > 7) {
             return false;
         }
-        if (this.world.isDaytime()) {
+        if (MyUtils.isDay(level)) {
             return false;
         }
-        if (this.world.provider.getDimension() == ChaosPersists.getDimension(4) ? this.posY > 20.0 : this.posY < 50.0) {
+        if (level.getLevel().dimension().equals(ChaosPersists.getDimensionKey(4))) {
+            if (pos.getY() > 20) {
+                return false;
+            }
+        } else if (pos.getY() < 50) {
             return false;
         }
-        if (this.findBuddies() > 4) {
-            return false;
-        }
-        return true;
+        List<LeafMonster> buddies =
+                level.getLevel().getEntitiesOfClass(LeafMonster.class, new AABB(pos).inflate(20.0, 10.0, 20.0));
+        return buddies.size() <= 4;
     }
 
-    private int findBuddies() {
-        List var5 = this.world.getEntitiesWithinAABB(LeafMonster.class, this.getEntityBoundingBox().expand(20.0, 10.0, 20.0));
-        return var5.size();
-    }
-
-    protected boolean canDespawn() {
-        if (this.isNoDespawnRequired()) {
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        BlockPos pos = this.blockPosition();
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
+        for (int k = -3; k < 3; ++k) {
+            for (int j = -3; j < 3; ++j) {
+                for (int i = 0; i < 5; ++i) {
+                    checkPos.set(pos.getX() + j, pos.getY() + i, pos.getZ() + k);
+                    if (MyUtils.getBlockStateForSpawnRules(level, checkPos).getBlock() != Blocks.SPAWNER) {
+                        continue;
+                    }
+                    if (!(MyUtils.getBlockEntityForSpawnRules(level, checkPos) instanceof SpawnerBlockEntity spawner)) {
+                        continue;
+                    }
+                    ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityIdFromBlockEntity(spawner);
+                    if (id == null) {
+                        continue;
+                    }
+                    ResourceLocation leafId =
+                            ResourceLocation.fromNamespaceAndPath("chaospersists", "leaf_monster");
+                    ResourceLocation norm = SpawnerFixHelper.normalizeSpawnerEntityId(id);
+                    if (SpawnerFixHelper.entityIdsMatchForSpawner(norm, leafId)
+                            || "Leaf Monster".equals(id.getPath())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        if (level.getMaxLocalRawBrightness(pos) > 7) {
             return false;
         }
-        return true;
+        if (this.level().isDay()) {
+            return false;
+        }
+        if (this.level().dimension().equals(ChaosPersists.getDimensionKey(4))) {
+            if (this.getY() > 20.0) {
+                return false;
+            }
+        } else if (this.getY() < 50.0) {
+            return false;
+        }
+        return this.level()
+                        .getEntitiesOfClass(LeafMonster.class, this.getBoundingBox().inflate(20.0, 10.0, 20.0))
+                        .size()
+                <= 4;
     }
 }
-

@@ -1,78 +1,66 @@
 package com.astryxion.chaospersists.item;
 
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.core.ChaosPersists;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public class ItemThunderStaff extends Item {
 
     private int ticker = 50;
 
     public ItemThunderStaff(int i) {
-        this.maxStackSize = 1;
-        this.setMaxDamage(50);
-        this.setCreativeTab(CreativeTabs.COMBAT);
+        super(new Properties().stacksTo(1).durability(50));
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
 
-        ItemStack stack = player.getHeldItem(hand);
-
-        // Prevent use if almost broken (same logic)
-        if (stack.getMaxDamage() - stack.getItemDamage() <= 1) {
-            return new ActionResult<>(EnumActionResult.FAIL, stack);
+        if (stack.getMaxDamage() - stack.getDamageValue() <= 1) {
+            return InteractionResultHolder.fail(stack);
         }
 
-        if (!world.isRemote) {
-            ThunderBolt lb = new ThunderBolt(world, player);
-            Vec3d look = player.getLookVec();
+        if (!level.isClientSide) {
+            ThunderBolt lb =
+                    new ThunderBolt(ChaosPersists.ENTITY_TYPE_THUNDER_BOLT.get(), player, level);
+            Vec3 look = player.getLookAngle();
             double spawnDist = 0.65;
-            double px = player.posX + look.x * spawnDist;
-            double py = player.posY + player.getEyeHeight() + look.y * spawnDist;
-            double pz = player.posZ + look.z * spawnDist;
-            lb.setPosition(px, py, pz);
+            double px = player.getX() + look.x * spawnDist;
+            double py = player.getY() + player.getEyeHeight() + look.y * spawnDist;
+            double pz = player.getZ() + look.z * spawnDist;
+            lb.setPos(px, py, pz);
             double speed = 1.85;
-            lb.motionX = look.x * speed;
-            lb.motionY = look.y * speed;
-            lb.motionZ = look.z * speed;
-            world.spawnEntity(lb);
+            lb.setDeltaMovement(look.x * speed, look.y * speed, look.z * speed);
+            level.addFreshEntity(lb);
         }
 
-        // Swing animation (correct hand)
-        player.swingArm(hand);
+        player.swing(hand);
 
-        // Player knockback boost (same math)
-        player.addVelocity(
-                Math.cos(Math.toRadians(player.rotationYaw - 90.0f)) * 0.5,
+        player.push(
+                Mth.cos((player.getYRot() - 90.0f) * Mth.DEG_TO_RAD) * 0.5,
                 0.15,
-                Math.sin(Math.toRadians(player.rotationYaw - 90.0f)) * 0.5
-        );
+                Mth.sin((player.getYRot() - 90.0f) * Mth.DEG_TO_RAD) * 0.5);
 
-        // Damage item
-        stack.damageItem(1, player);
+        stack.hurtAndBreak(1, player, e -> e.broadcastBreakEvent(hand));
 
-        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 
     @Override
-    public void onUpdate(ItemStack stack, World world, Entity entity, int slot, boolean isSelected) {
-
-        if (world.isRaining() && world.isThundering()) {
-
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        if (level.isRaining() && level.isThundering()) {
             if (this.ticker > 0) {
                 --this.ticker;
             }
-
-            if (this.ticker <= 0 && stack.getItemDamage() > 0) {
-                stack.setItemDamage(stack.getItemDamage() - 1);
+            if (this.ticker <= 0 && stack.getDamageValue() > 0) {
+                stack.setDamageValue(stack.getDamageValue() - 1);
                 this.ticker = 50;
             }
         }

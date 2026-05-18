@@ -1,337 +1,228 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelPointysaurus
- *  com.astryxion.chaospersists.Pointysaurus
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- */
 package com.astryxion.chaospersists.model;
 
 import com.astryxion.chaospersists.entity.Pointysaurus;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.util.Mth;
 
-public class ModelPointysaurus
-extends ModelBase {
-    private float wingspeed = 1.0f;
-    ModelRenderer lfleg;
-    ModelRenderer rfleg;
-    ModelRenderer lrleg;
-    ModelRenderer rrleg;
-    ModelRenderer body1;
-    ModelRenderer head;
-    ModelRenderer body2;
-    ModelRenderer body3;
-    ModelRenderer guard;
-    ModelRenderer nose;
-    ModelRenderer lhorn;
-    ModelRenderer rhorn;
-    ModelRenderer chorn;
-    ModelRenderer tail;
-    ModelRenderer bump1;
-    ModelRenderer bump2;
-    ModelRenderer bump3;
-    ModelRenderer bump4;
-    ModelRenderer bump5;
-    ModelRenderer bump6;
-    ModelRenderer bump7;
-    ModelRenderer bump8;
-    ModelRenderer bump9;
-    ModelRenderer bump10;
-    ModelRenderer bump11;
-    ModelRenderer bump12;
-    ModelRenderer bump13;
-    ModelRenderer bump14;
-    ModelRenderer bump15;
-    ModelRenderer bump16;
-
+public class ModelPointysaurus extends EntityModel<Pointysaurus> {
+    private final float wingspeed;
+    private final ModelPart lfleg;
+    private final ModelPart rfleg;
+    private final ModelPart lrleg;
+    private final ModelPart rrleg;
+    private final ModelPart body1;
+    private final ModelPart head;
+    private final ModelPart body2;
+    private final ModelPart body3;
+    private final ModelPart guard;
+    private final ModelPart nose;
+    private final ModelPart lhorn;
+    private final ModelPart rhorn;
+    private final ModelPart chorn;
+    private final ModelPart tail;
+    private final ModelPart bump1;
+    private final ModelPart bump2;
+    private final ModelPart bump3;
+    private final ModelPart bump4;
+    private final ModelPart bump5;
+    private final ModelPart bump6;
+    private final ModelPart bump7;
+    private final ModelPart bump8;
+    private final ModelPart bump9;
+    private final ModelPart bump10;
+    private final ModelPart bump11;
+    private final ModelPart bump12;
+    private final ModelPart bump13;
+    private final ModelPart bump14;
+    private final ModelPart bump15;
+    private final ModelPart bump16;
     public ModelPointysaurus(float f1) {
-        this.wingspeed = f1;
-        this.textureWidth = 128;
-        this.textureHeight = 128;
-        this.lfleg = new ModelRenderer((ModelBase)this, 102, 66);
-        this.lfleg.addBox(-3.0f, 0.0f, -3.0f, 6, 8, 6);
-        this.lfleg.setRotationPoint(9.0f, 16.0f, -8.0f);
-        this.lfleg.setTextureSize(128, 128);
-        this.lfleg.mirror = true;
-        this.setRotation(this.lfleg, 0.0f, 0.0f, 0.0f);
-        this.rfleg = new ModelRenderer((ModelBase)this, 102, 66);
-        this.rfleg.addBox(-3.0f, 0.0f, -3.0f, 6, 8, 6);
-        this.rfleg.setRotationPoint(-9.0f, 16.0f, -8.0f);
-        this.rfleg.setTextureSize(128, 128);
-        this.rfleg.mirror = true;
-        this.setRotation(this.rfleg, 0.0f, 0.0f, 0.0f);
-        this.lrleg = new ModelRenderer((ModelBase)this, 0, 0);
-        this.lrleg.addBox(-4.0f, 0.0f, -4.0f, 8, 8, 8);
-        this.lrleg.setRotationPoint(9.0f, 16.0f, 12.0f);
-        this.lrleg.setTextureSize(128, 128);
-        this.lrleg.mirror = true;
-        this.setRotation(this.lrleg, 0.0f, 0.0f, 0.0f);
-        this.rrleg = new ModelRenderer((ModelBase)this, 0, 0);
-        this.rrleg.addBox(-4.0f, 0.0f, -4.0f, 8, 8, 8);
-        this.rrleg.setRotationPoint(-9.0f, 16.0f, 12.0f);
-        this.rrleg.setTextureSize(128, 128);
-        this.rrleg.mirror = true;
-        this.setRotation(this.rrleg, 0.0f, 0.0f, 0.0f);
-        this.body1 = new ModelRenderer((ModelBase)this, 0, 87);
-        this.body1.addBox(-4.0f, 0.0f, 0.0f, 22, 9, 30);
-        this.body1.setRotationPoint(-7.0f, 9.0f, -12.0f);
-        this.body1.setTextureSize(128, 128);
-        this.body1.mirror = true;
-        this.setRotation(this.body1, 0.0f, 0.0f, 0.0f);
-        this.head = new ModelRenderer((ModelBase)this, 70, 0);
-        this.head.addBox(-6.0f, -10.0f, -12.0f, 12, 10, 12);
-        this.head.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.head.setTextureSize(128, 128);
-        this.head.mirror = true;
-        this.setRotation(this.head, -0.1919862f, 0.0f, 0.0f);
-        this.body2 = new ModelRenderer((ModelBase)this, 0, 63);
-        this.body2.addBox(-9.0f, 0.0f, 0.0f, 18, 7, 15);
-        this.body2.setRotationPoint(0.0f, 2.0f, -9.0f);
-        this.body2.setTextureSize(128, 128);
-        this.body2.mirror = true;
-        this.setRotation(this.body2, 0.0f, 0.0f, 0.0f);
-        this.body3 = new ModelRenderer((ModelBase)this, 0, 44);
-        this.body3.addBox(-8.0f, 0.0f, 0.0f, 16, 6, 11);
-        this.body3.setRotationPoint(0.0f, 3.0f, 6.0f);
-        this.body3.setTextureSize(128, 128);
-        this.body3.mirror = true;
-        this.setRotation(this.body3, 0.0f, 0.0f, 0.0f);
-        this.guard = new ModelRenderer((ModelBase)this, 60, 34);
-        this.guard.addBox(-14.0f, -20.0f, -8.0f, 28, 23, 3);
-        this.guard.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.guard.setTextureSize(128, 128);
-        this.guard.mirror = true;
-        this.setRotation(this.guard, -0.2617994f, 0.0f, 0.0f);
-        this.nose = new ModelRenderer((ModelBase)this, 39, 0);
-        this.nose.addBox(-5.0f, -9.0f, -15.0f, 10, 6, 5);
-        this.nose.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.nose.setTextureSize(128, 128);
-        this.nose.mirror = true;
-        this.setRotation(this.nose, 0.0f, 0.0f, 0.0f);
-        this.lhorn = new ModelRenderer((ModelBase)this, 0, 18);
-        this.lhorn.addBox(8.0f, -16.0f, -29.0f, 2, 2, 23);
-        this.lhorn.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.lhorn.setTextureSize(128, 128);
-        this.lhorn.mirror = true;
-        this.setRotation(this.lhorn, -0.1570796f, -0.1396263f, 0.0f);
-        this.rhorn = new ModelRenderer((ModelBase)this, 0, 18);
-        this.rhorn.addBox(-9.0f, -16.0f, -29.0f, 2, 2, 23);
-        this.rhorn.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.rhorn.setTextureSize(128, 128);
-        this.rhorn.mirror = true;
-        this.setRotation(this.rhorn, -0.1570796f, 0.1396263f, 0.0f);
-        this.chorn = new ModelRenderer((ModelBase)this, 52, 13);
-        this.chorn.addBox(-1.5f, -9.0f, -20.0f, 3, 3, 5);
-        this.chorn.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.chorn.setTextureSize(128, 128);
-        this.chorn.mirror = true;
-        this.setRotation(this.chorn, 0.0f, 0.0f, 0.0f);
-        this.tail = new ModelRenderer((ModelBase)this, 68, 70);
-        this.tail.addBox(-3.0f, -3.0f, 0.0f, 6, 6, 9);
-        this.tail.setRotationPoint(0.0f, 7.0f, 15.0f);
-        this.tail.setTextureSize(128, 128);
-        this.tail.mirror = true;
-        this.setRotation(this.tail, 0.2792527f, 0.0f, 0.0f);
-        this.bump1 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump1.addBox(14.0f, -20.0f, -8.0f, 2, 2, 2);
-        this.bump1.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump1.setTextureSize(128, 128);
-        this.bump1.mirror = true;
-        this.setRotation(this.bump1, -0.2617994f, 0.0f, 0.0f);
-        this.bump2 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump2.addBox(14.0f, -15.0f, -8.0f, 2, 2, 2);
-        this.bump2.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump2.setTextureSize(128, 128);
-        this.bump2.mirror = true;
-        this.setRotation(this.bump2, -0.2617994f, 0.0f, 0.0f);
-        this.bump3 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump3.addBox(14.0f, -10.0f, -8.0f, 2, 2, 2);
-        this.bump3.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump3.setTextureSize(128, 128);
-        this.bump3.mirror = true;
-        this.setRotation(this.bump3, -0.2617994f, 0.0f, 0.0f);
-        this.bump4 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump4.addBox(14.0f, -5.0f, -8.0f, 2, 2, 2);
-        this.bump4.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump4.setTextureSize(128, 128);
-        this.bump4.mirror = true;
-        this.setRotation(this.bump4, -0.2617994f, 0.0f, 0.0f);
-        this.bump5 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump5.addBox(14.0f, 0.0f, -8.0f, 2, 2, 2);
-        this.bump5.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump5.setTextureSize(128, 128);
-        this.bump5.mirror = true;
-        this.setRotation(this.bump5, -0.2617994f, 0.0f, 0.0f);
-        this.bump6 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump6.addBox(-16.0f, -20.0f, -8.0f, 2, 2, 2);
-        this.bump6.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump6.setTextureSize(128, 128);
-        this.bump6.mirror = true;
-        this.setRotation(this.bump6, -0.2617994f, 0.0f, 0.0f);
-        this.bump7 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump7.addBox(-16.0f, -15.0f, -8.0f, 2, 2, 2);
-        this.bump7.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump7.setTextureSize(128, 128);
-        this.bump7.mirror = true;
-        this.setRotation(this.bump7, -0.2617994f, 0.0f, 0.0f);
-        this.bump8 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump8.addBox(-16.0f, -10.0f, -8.0f, 2, 2, 2);
-        this.bump8.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump8.setTextureSize(128, 128);
-        this.bump8.mirror = true;
-        this.setRotation(this.bump8, -0.2617994f, 0.0f, 0.0f);
-        this.bump9 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump9.addBox(-16.0f, -5.0f, -8.0f, 2, 2, 2);
-        this.bump9.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump9.setTextureSize(128, 128);
-        this.bump9.mirror = true;
-        this.setRotation(this.bump9, -0.2617994f, 0.0f, 0.0f);
-        this.bump10 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump10.addBox(-16.0f, 0.0f, -8.0f, 2, 2, 2);
-        this.bump10.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump10.setTextureSize(128, 128);
-        this.bump10.mirror = true;
-        this.setRotation(this.bump10, -0.2617994f, 0.0f, 0.0f);
-        this.bump11 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump11.addBox(12.0f, -22.0f, -8.0f, 2, 2, 2);
-        this.bump11.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump11.setTextureSize(128, 128);
-        this.bump11.mirror = true;
-        this.setRotation(this.bump11, -0.2617994f, 0.0f, 0.0f);
-        this.bump12 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump12.addBox(7.0f, -22.0f, -8.0f, 2, 2, 2);
-        this.bump12.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump12.setTextureSize(128, 128);
-        this.bump12.mirror = true;
-        this.setRotation(this.bump12, -0.2617994f, 0.0f, 0.0f);
-        this.bump13 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump13.addBox(2.0f, -22.0f, -8.0f, 2, 2, 2);
-        this.bump13.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump13.setTextureSize(128, 128);
-        this.bump13.mirror = true;
-        this.setRotation(this.bump13, -0.2617994f, 0.0f, 0.0f);
-        this.bump14 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump14.addBox(-4.0f, -22.0f, -8.0f, 2, 2, 2);
-        this.bump14.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump14.setTextureSize(128, 128);
-        this.bump14.mirror = true;
-        this.setRotation(this.bump14, -0.2617994f, 0.0f, 0.0f);
-        this.bump15 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump15.addBox(-9.0f, -22.0f, -8.0f, 2, 2, 2);
-        this.bump15.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump15.setTextureSize(128, 128);
-        this.bump15.mirror = true;
-        this.setRotation(this.bump15, -0.2617994f, 0.0f, 0.0f);
-        this.bump16 = new ModelRenderer((ModelBase)this, 57, 17);
-        this.bump16.addBox(-14.0f, -22.0f, -8.0f, 2, 2, 2);
-        this.bump16.setRotationPoint(0.0f, 11.0f, -7.0f);
-        this.bump16.setTextureSize(128, 128);
-        this.bump16.mirror = true;
-        this.setRotation(this.bump16, -0.2617994f, 0.0f, 0.0f);
+        this(f1, LayerDefinition.create(createMesh(), 128, 128).bakeRoot());
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        Pointysaurus e = (Pointysaurus)entity;
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        float newangle = 0.0f;
-        newangle = (double)f1 > 0.1 ? MathHelper.cos((float)(f2 * 1.3f * this.wingspeed)) * 3.1415927f * 0.25f * f1 : 0.0f;
-        this.lfleg.rotateAngleX = newangle;
-        this.rrleg.rotateAngleX = newangle;
-        this.rfleg.rotateAngleX = - newangle;
-        this.lrleg.rotateAngleX = - newangle;
-        this.nose.rotateAngleY = this.head.rotateAngleY = (float)Math.toRadians(f3) * 0.45f;
-        this.chorn.rotateAngleY = this.head.rotateAngleY;
-        this.lhorn.rotateAngleY = this.head.rotateAngleY - 0.14f;
-        this.rhorn.rotateAngleY = this.head.rotateAngleY + 0.14f;
-        this.guard.rotateAngleY = this.head.rotateAngleY;
-        this.bump1.rotateAngleY = this.head.rotateAngleY;
-        this.bump2.rotateAngleY = this.head.rotateAngleY;
-        this.bump3.rotateAngleY = this.head.rotateAngleY;
-        this.bump4.rotateAngleY = this.head.rotateAngleY;
-        this.bump5.rotateAngleY = this.head.rotateAngleY;
-        this.bump6.rotateAngleY = this.head.rotateAngleY;
-        this.bump7.rotateAngleY = this.head.rotateAngleY;
-        this.bump8.rotateAngleY = this.head.rotateAngleY;
-        this.bump9.rotateAngleY = this.head.rotateAngleY;
-        this.bump10.rotateAngleY = this.head.rotateAngleY;
-        this.bump11.rotateAngleY = this.head.rotateAngleY;
-        this.bump12.rotateAngleY = this.head.rotateAngleY;
-        this.bump13.rotateAngleY = this.head.rotateAngleY;
-        this.bump14.rotateAngleY = this.head.rotateAngleY;
-        this.bump15.rotateAngleY = this.head.rotateAngleY;
-        this.bump16.rotateAngleY = this.head.rotateAngleY;
-        this.nose.rotateAngleX = this.head.rotateAngleX = (float)Math.toRadians(f4) * 0.45f;
-        this.chorn.rotateAngleX = this.head.rotateAngleX;
-        this.lhorn.rotateAngleX = this.head.rotateAngleX - 0.16f;
-        this.rhorn.rotateAngleX = this.head.rotateAngleX - 0.16f;
-        this.bump1.rotateAngleX = this.guard.rotateAngleX = this.head.rotateAngleX - 0.262f;
-        this.bump2.rotateAngleX = this.guard.rotateAngleX;
-        this.bump3.rotateAngleX = this.guard.rotateAngleX;
-        this.bump4.rotateAngleX = this.guard.rotateAngleX;
-        this.bump5.rotateAngleX = this.guard.rotateAngleX;
-        this.bump6.rotateAngleX = this.guard.rotateAngleX;
-        this.bump7.rotateAngleX = this.guard.rotateAngleX;
-        this.bump8.rotateAngleX = this.guard.rotateAngleX;
-        this.bump9.rotateAngleX = this.guard.rotateAngleX;
-        this.bump10.rotateAngleX = this.guard.rotateAngleX;
-        this.bump11.rotateAngleX = this.guard.rotateAngleX;
-        this.bump12.rotateAngleX = this.guard.rotateAngleX;
-        this.bump13.rotateAngleX = this.guard.rotateAngleX;
-        this.bump14.rotateAngleX = this.guard.rotateAngleX;
-        this.bump15.rotateAngleX = this.guard.rotateAngleX;
-        this.bump16.rotateAngleX = this.guard.rotateAngleX;
-        newangle = e.getAttacking() != 0 ? MathHelper.cos((float)(f2 * 1.3f * this.wingspeed)) * 3.1415927f * 0.25f : MathHelper.cos((float)(f2 * 0.3f * this.wingspeed)) * 3.1415927f * 0.05f;
-        this.tail.rotateAngleY = newangle;
-        newangle = MathHelper.cos((float)(f2 * 0.02f * this.wingspeed)) * 3.1415927f * 0.15f;
-        this.tail.rotateAngleX = newangle + 0.28f;
-        this.lfleg.render(f5);
-        this.rfleg.render(f5);
-        this.lrleg.render(f5);
-        this.rrleg.render(f5);
-        this.body1.render(f5);
-        this.head.render(f5);
-        this.body2.render(f5);
-        this.body3.render(f5);
-        this.guard.render(f5);
-        this.nose.render(f5);
-        this.lhorn.render(f5);
-        this.rhorn.render(f5);
-        this.chorn.render(f5);
-        this.tail.render(f5);
-        this.bump1.render(f5);
-        this.bump2.render(f5);
-        this.bump3.render(f5);
-        this.bump4.render(f5);
-        this.bump5.render(f5);
-        this.bump6.render(f5);
-        this.bump7.render(f5);
-        this.bump8.render(f5);
-        this.bump9.render(f5);
-        this.bump10.render(f5);
-        this.bump11.render(f5);
-        this.bump12.render(f5);
-        this.bump13.render(f5);
-        this.bump14.render(f5);
-        this.bump15.render(f5);
-        this.bump16.render(f5);
+    public ModelPointysaurus(float wingspeed, ModelPart root) {
+        this.wingspeed = wingspeed;
+        this.lfleg = root.getChild("lfleg");
+        this.rfleg = root.getChild("rfleg");
+        this.lrleg = root.getChild("lrleg");
+        this.rrleg = root.getChild("rrleg");
+        this.body1 = root.getChild("body1");
+        this.head = root.getChild("head");
+        this.body2 = root.getChild("body2");
+        this.body3 = root.getChild("body3");
+        this.guard = root.getChild("guard");
+        this.nose = root.getChild("nose");
+        this.lhorn = root.getChild("lhorn");
+        this.rhorn = root.getChild("rhorn");
+        this.chorn = root.getChild("chorn");
+        this.tail = root.getChild("tail");
+        this.bump1 = root.getChild("bump1");
+        this.bump2 = root.getChild("bump2");
+        this.bump3 = root.getChild("bump3");
+        this.bump4 = root.getChild("bump4");
+        this.bump5 = root.getChild("bump5");
+        this.bump6 = root.getChild("bump6");
+        this.bump7 = root.getChild("bump7");
+        this.bump8 = root.getChild("bump8");
+        this.bump9 = root.getChild("bump9");
+        this.bump10 = root.getChild("bump10");
+        this.bump11 = root.getChild("bump11");
+        this.bump12 = root.getChild("bump12");
+        this.bump13 = root.getChild("bump13");
+        this.bump14 = root.getChild("bump14");
+        this.bump15 = root.getChild("bump15");
+        this.bump16 = root.getChild("bump16");
+    }
+    public static MeshDefinition createMesh() {
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
+        partdefinition.addOrReplaceChild("lfleg", CubeListBuilder.create().texOffs(102, 66).mirror().addBox(-3.0f, 0.0f, -3.0f, 6, 8, 6), PartPose.offsetAndRotation(9.0f, 16.0f, -8.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("rfleg", CubeListBuilder.create().texOffs(102, 66).mirror().addBox(-3.0f, 0.0f, -3.0f, 6, 8, 6), PartPose.offsetAndRotation(-9.0f, 16.0f, -8.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("lrleg", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-4.0f, 0.0f, -4.0f, 8, 8, 8), PartPose.offsetAndRotation(9.0f, 16.0f, 12.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("rrleg", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-4.0f, 0.0f, -4.0f, 8, 8, 8), PartPose.offsetAndRotation(-9.0f, 16.0f, 12.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("body1", CubeListBuilder.create().texOffs(0, 87).mirror().addBox(-4.0f, 0.0f, 0.0f, 22, 9, 30), PartPose.offsetAndRotation(-7.0f, 9.0f, -12.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("head", CubeListBuilder.create().texOffs(70, 0).mirror().addBox(-6.0f, -10.0f, -12.0f, 12, 10, 12), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.1919862f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("body2", CubeListBuilder.create().texOffs(0, 63).mirror().addBox(-9.0f, 0.0f, 0.0f, 18, 7, 15), PartPose.offsetAndRotation(0.0f, 2.0f, -9.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("body3", CubeListBuilder.create().texOffs(0, 44).mirror().addBox(-8.0f, 0.0f, 0.0f, 16, 6, 11), PartPose.offsetAndRotation(0.0f, 3.0f, 6.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("guard", CubeListBuilder.create().texOffs(60, 34).mirror().addBox(-14.0f, -20.0f, -8.0f, 28, 23, 3), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("nose", CubeListBuilder.create().texOffs(39, 0).mirror().addBox(-5.0f, -9.0f, -15.0f, 10, 6, 5), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("lhorn", CubeListBuilder.create().texOffs(0, 18).mirror().addBox(8.0f, -16.0f, -29.0f, 2, 2, 23), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.1570796f, -0.1396263f, 0.0f));
+        partdefinition.addOrReplaceChild("rhorn", CubeListBuilder.create().texOffs(0, 18).mirror().addBox(-9.0f, -16.0f, -29.0f, 2, 2, 23), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.1570796f, 0.1396263f, 0.0f));
+        partdefinition.addOrReplaceChild("chorn", CubeListBuilder.create().texOffs(52, 13).mirror().addBox(-1.5f, -9.0f, -20.0f, 3, 3, 5), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(68, 70).mirror().addBox(-3.0f, -3.0f, 0.0f, 6, 6, 9), PartPose.offsetAndRotation(0.0f, 7.0f, 15.0f, 0.2792527f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump1", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(14.0f, -20.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump2", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(14.0f, -15.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump3", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(14.0f, -10.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump4", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(14.0f, -5.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump5", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(14.0f, 0.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump6", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(-16.0f, -20.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump7", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(-16.0f, -15.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump8", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(-16.0f, -10.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump9", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(-16.0f, -5.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump10", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(-16.0f, 0.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump11", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(12.0f, -22.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump12", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(7.0f, -22.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump13", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(2.0f, -22.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump14", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(-4.0f, -22.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump15", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(-9.0f, -22.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bump16", CubeListBuilder.create().texOffs(57, 17).mirror().addBox(-14.0f, -22.0f, -8.0f, 2, 2, 2), PartPose.offsetAndRotation(0.0f, 11.0f, -7.0f, -0.2617994f, 0.0f, 0.0f));
+        return meshdefinition;
+    }
+    @Override
+    public void setupAnim(Pointysaurus entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+float newangle = 0.0f;
+        newangle = limbSwingAmount > 0.1f ? Mth.cos((float)(ageInTicks * 1.3f * this.wingspeed)) * 3.1415927f * 0.25f * limbSwingAmount : 0.0f;
+        this.lfleg.xRot = newangle;
+        this.rrleg.xRot = newangle;
+        this.rfleg.xRot = - newangle;
+        this.lrleg.xRot = - newangle;
+        this.nose.yRot = this.head.yRot = (float) Math.toRadians(netHeadYaw) * 0.45f;
+        this.chorn.yRot = this.head.yRot;
+        this.lhorn.yRot = this.head.yRot - 0.14f;
+        this.rhorn.yRot = this.head.yRot + 0.14f;
+        this.guard.yRot = this.head.yRot;
+        this.bump1.yRot = this.head.yRot;
+        this.bump2.yRot = this.head.yRot;
+        this.bump3.yRot = this.head.yRot;
+        this.bump4.yRot = this.head.yRot;
+        this.bump5.yRot = this.head.yRot;
+        this.bump6.yRot = this.head.yRot;
+        this.bump7.yRot = this.head.yRot;
+        this.bump8.yRot = this.head.yRot;
+        this.bump9.yRot = this.head.yRot;
+        this.bump10.yRot = this.head.yRot;
+        this.bump11.yRot = this.head.yRot;
+        this.bump12.yRot = this.head.yRot;
+        this.bump13.yRot = this.head.yRot;
+        this.bump14.yRot = this.head.yRot;
+        this.bump15.yRot = this.head.yRot;
+        this.bump16.yRot = this.head.yRot;
+        this.nose.xRot = this.head.xRot = (float) Math.toRadians(headPitch) * 0.45f;
+        this.chorn.xRot = this.head.xRot;
+        this.lhorn.xRot = this.head.xRot - 0.16f;
+        this.rhorn.xRot = this.head.xRot - 0.16f;
+        this.bump1.xRot = this.guard.xRot = this.head.xRot - 0.262f;
+        this.bump2.xRot = this.guard.xRot;
+        this.bump3.xRot = this.guard.xRot;
+        this.bump4.xRot = this.guard.xRot;
+        this.bump5.xRot = this.guard.xRot;
+        this.bump6.xRot = this.guard.xRot;
+        this.bump7.xRot = this.guard.xRot;
+        this.bump8.xRot = this.guard.xRot;
+        this.bump9.xRot = this.guard.xRot;
+        this.bump10.xRot = this.guard.xRot;
+        this.bump11.xRot = this.guard.xRot;
+        this.bump12.xRot = this.guard.xRot;
+        this.bump13.xRot = this.guard.xRot;
+        this.bump14.xRot = this.guard.xRot;
+        this.bump15.xRot = this.guard.xRot;
+        this.bump16.xRot = this.guard.xRot;
+        newangle = entity.getAttacking() != 0 ? Mth.cos((float)(ageInTicks * 1.3f * this.wingspeed)) * 3.1415927f * 0.25f : Mth.cos((float)(ageInTicks * 0.3f * this.wingspeed)) * 3.1415927f * 0.05f;
+        this.tail.yRot = newangle;
+        newangle = Mth.cos((float)(ageInTicks * 0.02f * this.wingspeed)) * 3.1415927f * 0.15f;
+        this.tail.xRot = newangle + 0.28f;
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
-    }
 
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @Override
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+        this.lfleg.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rfleg.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.lrleg.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rrleg.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.body1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.head.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.body2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.body3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.guard.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.nose.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.lhorn.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rhorn.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.chorn.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.tail.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump5.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump6.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump7.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump8.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump9.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump10.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump11.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump12.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump13.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump14.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump15.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.bump16.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

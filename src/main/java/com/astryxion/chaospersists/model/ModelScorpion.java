@@ -1,223 +1,138 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelScorpion
- *  com.astryxion.chaospersists.RenderInfo
- *  com.astryxion.chaospersists.Scorpion
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.model;
 
-import com.astryxion.chaospersists.render.RenderInfo;
 import com.astryxion.chaospersists.entity.Scorpion;
-import java.util.Random;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.render.RenderInfo;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.util.Mth;
 
-public class ModelScorpion
-extends ModelBase {
-    private float wingspeed = 1.0f;
-    ModelRenderer body;
-    ModelRenderer tail1;
-    ModelRenderer tail2;
-    ModelRenderer tail3;
-    ModelRenderer tail4;
-    ModelRenderer tail5;
-    ModelRenderer tail6;
-    ModelRenderer lleg1;
-    ModelRenderer rleg1;
-    ModelRenderer rleg2;
-    ModelRenderer lleg3;
-    ModelRenderer rleg4;
-    ModelRenderer rleg3;
-    ModelRenderer lleg4;
-    ModelRenderer lleg2;
-    ModelRenderer head;
-    ModelRenderer larm2;
-    ModelRenderer rarm2;
-    ModelRenderer larm1;
-    ModelRenderer rarm1;
-    ModelRenderer lclaw;
-    ModelRenderer rclaw;
+public class ModelScorpion extends EntityModel<Scorpion> {
+    private final float wingspeed;
+    private final ModelPart body;
+    private final ModelPart tail1;
+    private final ModelPart tail2;
+    private final ModelPart tail3;
+    private final ModelPart tail4;
+    private final ModelPart tail5;
+    private final ModelPart tail6;
+    private final ModelPart lleg1;
+    private final ModelPart rleg1;
+    private final ModelPart rleg2;
+    private final ModelPart lleg3;
+    private final ModelPart rleg4;
+    private final ModelPart rleg3;
+    private final ModelPart lleg4;
+    private final ModelPart lleg2;
+    private final ModelPart head;
+    private final ModelPart larm2;
+    private final ModelPart rarm2;
+    private final ModelPart larm1;
+    private final ModelPart rarm1;
+    private final ModelPart lclaw;
+    private final ModelPart rclaw;
 
-    public ModelScorpion(float f1) {
-        this.wingspeed = f1;
-        this.textureWidth = 88;
-        this.textureHeight = 24;
-        this.body = new ModelRenderer((ModelBase)this, 0, 0);
-        this.body.addBox(0.0f, 0.0f, 0.0f, 6, 4, 8);
-        this.body.setRotationPoint(-3.0f, 17.0f, -4.0f);
-        this.body.setTextureSize(88, 24);
-        this.body.mirror = true;
-        this.setRotation(this.body, 0.0f, 0.0f, 0.0f);
-        this.tail1 = new ModelRenderer((ModelBase)this, 28, 0);
-        this.tail1.addBox(0.0f, 0.0f, 0.0f, 4, 4, 5);
-        this.tail1.setRotationPoint(-2.0f, 17.0f, 3.0f);
-        this.tail1.setTextureSize(88, 24);
-        this.tail1.mirror = true;
-        this.setRotation(this.tail1, 0.2617994f, 0.0f, 0.0f);
-        this.tail2 = new ModelRenderer((ModelBase)this, 46, 0);
-        this.tail2.addBox(0.0f, 0.0f, 0.0f, 3, 3, 5);
-        this.tail2.setRotationPoint(-1.5f, 16.8f, 6.0f);
-        this.tail2.setTextureSize(88, 24);
-        this.tail2.mirror = true;
-        this.setRotation(this.tail2, 1.029744f, 0.0f, 0.0f);
-        this.tail3 = new ModelRenderer((ModelBase)this, 62, 0);
-        this.tail3.addBox(0.0f, 0.0f, 0.0f, 3, 3, 4);
-        this.tail3.setRotationPoint(-1.5f, 14.5f, 8.0f);
-        this.tail3.setTextureSize(88, 24);
-        this.tail3.mirror = true;
-        this.setRotation(this.tail3, 1.727876f, 0.0f, 0.0f);
-        this.tail4 = new ModelRenderer((ModelBase)this, 0, 17);
-        this.tail4.addBox(0.0f, 0.0f, 0.0f, 2, 2, 5);
-        this.tail4.setRotationPoint(-1.0f, 12.0f, 9.0f);
-        this.tail4.setTextureSize(88, 24);
-        this.tail4.mirror = true;
-        this.setRotation(this.tail4, 2.513274f, 0.0f, 0.0f);
-        this.tail5 = new ModelRenderer((ModelBase)this, 70, 7);
-        this.tail5.addBox(0.0f, 0.0f, 0.0f, 2, 2, 4);
-        this.tail5.setRotationPoint(-1.0f, 9.0f, 6.0f);
-        this.tail5.setTextureSize(88, 24);
-        this.tail5.mirror = true;
-        this.setRotation(this.tail5, 3.141593f, 0.0f, 0.0f);
-        this.tail6 = new ModelRenderer((ModelBase)this, 62, 7);
-        this.tail6.addBox(0.0f, 0.0f, 0.0f, 1, 1, 3);
-        this.tail6.setRotationPoint(-0.5f, 8.0f, 2.0f);
-        this.tail6.setTextureSize(88, 24);
-        this.tail6.mirror = true;
-        this.setRotation(this.tail6, 3.141593f, 0.0f, 0.0f);
-        this.lleg1 = new ModelRenderer((ModelBase)this, 0, 12);
-        this.lleg1.addBox(0.0f, 0.0f, 0.0f, 11, 2, 2);
-        this.lleg1.setRotationPoint(2.0f, 18.0f, -3.0f);
-        this.lleg1.setTextureSize(88, 24);
-        this.lleg1.mirror = true;
-        this.setRotation(this.lleg1, 0.0f, 0.4886922f, 0.3665191f);
-        this.rleg1 = new ModelRenderer((ModelBase)this, 0, 12);
-        this.rleg1.addBox(0.0f, 0.0f, 0.0f, 11, 2, 2);
-        this.rleg1.setRotationPoint(-2.0f, 18.0f, -1.0f);
-        this.rleg1.setTextureSize(88, 24);
-        this.rleg1.mirror = true;
-        this.setRotation(this.rleg1, 0.0f, 2.6529f, -0.3665191f);
-        this.rleg2 = new ModelRenderer((ModelBase)this, 0, 12);
-        this.rleg2.addBox(0.0f, 0.0f, 0.0f, 11, 2, 2);
-        this.rleg2.setRotationPoint(-2.0f, 18.0f, 1.0f);
-        this.rleg2.setTextureSize(88, 24);
-        this.rleg2.mirror = true;
-        this.setRotation(this.rleg2, 0.0f, 2.897247f, -0.3665191f);
-        this.lleg3 = new ModelRenderer((ModelBase)this, 0, 12);
-        this.lleg3.addBox(0.0f, 0.0f, 0.0f, 11, 2, 2);
-        this.lleg3.setRotationPoint(2.0f, 18.0f, 1.0f);
-        this.lleg3.setTextureSize(88, 24);
-        this.lleg3.mirror = true;
-        this.setRotation(this.lleg3, 0.0f, -0.2443461f, 0.3665191f);
-        this.rleg4 = new ModelRenderer((ModelBase)this, 0, 12);
-        this.rleg4.addBox(0.0f, 0.0f, 0.0f, 11, 2, 2);
-        this.rleg4.setRotationPoint(-2.0f, 18.0f, 5.0f);
-        this.rleg4.setTextureSize(88, 24);
-        this.rleg4.mirror = true;
-        this.setRotation(this.rleg4, 0.0f, -2.6529f, -0.3665191f);
-        this.rleg3 = new ModelRenderer((ModelBase)this, 0, 12);
-        this.rleg3.addBox(0.0f, 0.0f, 0.0f, 11, 2, 2);
-        this.rleg3.setRotationPoint(-2.0f, 18.0f, 3.0f);
-        this.rleg3.setTextureSize(88, 24);
-        this.rleg3.mirror = true;
-        this.setRotation(this.rleg3, 0.0f, -2.897247f, -0.3665191f);
-        this.lleg4 = new ModelRenderer((ModelBase)this, 0, 12);
-        this.lleg4.addBox(0.0f, 0.0f, 0.0f, 11, 2, 2);
-        this.lleg4.setRotationPoint(2.0f, 18.0f, 3.0f);
-        this.lleg4.setTextureSize(88, 24);
-        this.lleg4.mirror = true;
-        this.setRotation(this.lleg4, 0.0f, -0.4886922f, 0.3665191f);
-        this.lleg2 = new ModelRenderer((ModelBase)this, 0, 12);
-        this.lleg2.addBox(0.0f, 0.0f, 0.0f, 11, 2, 2);
-        this.lleg2.setRotationPoint(2.0f, 18.0f, -1.0f);
-        this.lleg2.setTextureSize(88, 24);
-        this.lleg2.mirror = true;
-        this.setRotation(this.lleg2, 0.0f, 0.2443461f, 0.3665191f);
-        this.head = new ModelRenderer((ModelBase)this, 28, 9);
-        this.head.addBox(0.0f, 0.0f, 0.0f, 5, 3, 4);
-        this.head.setRotationPoint(-2.5f, 17.5f, -8.0f);
-        this.head.setTextureSize(88, 24);
-        this.head.mirror = true;
-        this.setRotation(this.head, 0.0f, 0.0f, 0.0f);
-        this.larm2 = new ModelRenderer((ModelBase)this, 46, 8);
-        this.larm2.addBox(0.0f, 0.0f, 0.0f, 6, 2, 2);
-        this.larm2.setRotationPoint(1.0f, 18.0f, -6.0f);
-        this.larm2.setTextureSize(88, 24);
-        this.larm2.mirror = true;
-        this.setRotation(this.larm2, 0.0f, 0.5235988f, 0.1745329f);
-        this.rarm2 = new ModelRenderer((ModelBase)this, 46, 8);
-        this.rarm2.addBox(0.0f, 0.0f, -2.0f, 6, 2, 2);
-        this.rarm2.setRotationPoint(-1.0f, 18.0f, -6.0f);
-        this.rarm2.setTextureSize(88, 24);
-        this.rarm2.mirror = true;
-        this.setRotation(this.rarm2, 0.0f, 2.617994f, -0.1745329f);
-        this.larm1 = new ModelRenderer((ModelBase)this, 70, 13);
-        this.larm1.addBox(-2.0f, 0.0f, -3.0f, 2, 2, 3);
-        this.larm1.setRotationPoint(7.0f, 19.0f, -7.2f);
-        this.larm1.setTextureSize(88, 24);
-        this.larm1.mirror = true;
-        this.setRotation(this.larm1, 0.1745329f, 0.1745329f, 0.0f);
-        this.rarm1 = new ModelRenderer((ModelBase)this, 70, 13);
-        this.rarm1.addBox(0.0f, 0.0f, -3.0f, 2, 2, 3);
-        this.rarm1.setRotationPoint(-7.0f, 19.0f, -7.2f);
-        this.rarm1.setTextureSize(88, 24);
-        this.rarm1.mirror = true;
-        this.setRotation(this.rarm1, 0.1745329f, -0.1745329f, 0.0f);
-        this.lclaw = new ModelRenderer((ModelBase)this, 46, 12);
-        this.lclaw.addBox(-3.0f, 0.0f, -4.0f, 3, 2, 4);
-        this.lclaw.setRotationPoint(7.0f, 19.0f, -10.0f);
-        this.lclaw.setTextureSize(88, 24);
-        this.lclaw.mirror = true;
-        this.setRotation(this.lclaw, 0.0174533f, 0.3839724f, 0.1396263f);
-        this.rclaw = new ModelRenderer((ModelBase)this, 46, 12);
-        this.rclaw.addBox(0.0f, 0.0f, -4.0f, 3, 2, 4);
-        this.rclaw.setRotationPoint(-7.0f, 19.0f, -10.0f);
-        this.rclaw.setTextureSize(88, 24);
-        this.rclaw.mirror = true;
-        this.setRotation(this.rclaw, 0.0174533f, -0.3839724f, 0.1396263f);
+    public ModelScorpion() {
+        this(1.0f);
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        Scorpion e = (Scorpion)entity;
-        RenderInfo r = null;
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
+    public ModelScorpion(float wingspeed) {
+        this(wingspeed, LayerDefinition.create(createMesh(), 88, 24).bakeRoot());
+    }
+
+    public ModelScorpion(ModelPart root) {
+        this(1.0f, root);
+    }
+
+    public ModelScorpion(float wingspeed, ModelPart root) {
+        this.wingspeed = wingspeed;
+        this.body = root.getChild("body");
+        this.tail1 = root.getChild("tail1");
+        this.tail2 = root.getChild("tail2");
+        this.tail3 = root.getChild("tail3");
+        this.tail4 = root.getChild("tail4");
+        this.tail5 = root.getChild("tail5");
+        this.tail6 = root.getChild("tail6");
+        this.lleg1 = root.getChild("lleg1");
+        this.rleg1 = root.getChild("rleg1");
+        this.rleg2 = root.getChild("rleg2");
+        this.lleg3 = root.getChild("lleg3");
+        this.rleg4 = root.getChild("rleg4");
+        this.rleg3 = root.getChild("rleg3");
+        this.lleg4 = root.getChild("lleg4");
+        this.lleg2 = root.getChild("lleg2");
+        this.head = root.getChild("head");
+        this.larm2 = root.getChild("larm2");
+        this.rarm2 = root.getChild("rarm2");
+        this.larm1 = root.getChild("larm1");
+        this.rarm1 = root.getChild("rarm1");
+        this.lclaw = root.getChild("lclaw");
+        this.rclaw = root.getChild("rclaw");
+    }
+
+    private static MeshDefinition createMesh() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 6, 4, 8), PartPose.offset(-3.0f, 17.0f, -4.0f));
+        root.addOrReplaceChild("tail1", CubeListBuilder.create().texOffs(28, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 4, 4, 5), PartPose.offsetAndRotation(-2.0f, 17.0f, 3.0f, 0.2617994f, 0.0f, 0.0f));
+        root.addOrReplaceChild("tail2", CubeListBuilder.create().texOffs(46, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 3, 3, 5), PartPose.offsetAndRotation(-1.5f, 16.8f, 6.0f, 1.029744f, 0.0f, 0.0f));
+        root.addOrReplaceChild("tail3", CubeListBuilder.create().texOffs(62, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 3, 3, 4), PartPose.offsetAndRotation(-1.5f, 14.5f, 8.0f, 1.727876f, 0.0f, 0.0f));
+        root.addOrReplaceChild("tail4", CubeListBuilder.create().texOffs(0, 17).mirror().addBox(0.0f, 0.0f, 0.0f, 2, 2, 5), PartPose.offsetAndRotation(-1.0f, 12.0f, 9.0f, 2.513274f, 0.0f, 0.0f));
+        root.addOrReplaceChild("tail5", CubeListBuilder.create().texOffs(70, 7).mirror().addBox(0.0f, 0.0f, 0.0f, 2, 2, 4), PartPose.offsetAndRotation(-1.0f, 9.0f, 6.0f, 3.141593f, 0.0f, 0.0f));
+        root.addOrReplaceChild("tail6", CubeListBuilder.create().texOffs(62, 7).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 1, 3), PartPose.offsetAndRotation(-0.5f, 8.0f, 2.0f, 3.141593f, 0.0f, 0.0f));
+        root.addOrReplaceChild("lleg1", CubeListBuilder.create().texOffs(0, 12).mirror().addBox(0.0f, 0.0f, 0.0f, 11, 2, 2), PartPose.offsetAndRotation(2.0f, 18.0f, -3.0f, 0.0f, 0.4886922f, 0.3665191f));
+        root.addOrReplaceChild("rleg1", CubeListBuilder.create().texOffs(0, 12).mirror().addBox(0.0f, 0.0f, 0.0f, 11, 2, 2), PartPose.offsetAndRotation(-2.0f, 18.0f, -1.0f, 0.0f, 2.6529f, -0.3665191f));
+        root.addOrReplaceChild("rleg2", CubeListBuilder.create().texOffs(0, 12).mirror().addBox(0.0f, 0.0f, 0.0f, 11, 2, 2), PartPose.offsetAndRotation(-2.0f, 18.0f, 1.0f, 0.0f, 2.897247f, -0.3665191f));
+        root.addOrReplaceChild("lleg3", CubeListBuilder.create().texOffs(0, 12).mirror().addBox(0.0f, 0.0f, 0.0f, 11, 2, 2), PartPose.offsetAndRotation(2.0f, 18.0f, 1.0f, 0.0f, -0.2443461f, 0.3665191f));
+        root.addOrReplaceChild("rleg4", CubeListBuilder.create().texOffs(0, 12).mirror().addBox(0.0f, 0.0f, 0.0f, 11, 2, 2), PartPose.offsetAndRotation(-2.0f, 18.0f, 5.0f, 0.0f, -2.6529f, -0.3665191f));
+        root.addOrReplaceChild("rleg3", CubeListBuilder.create().texOffs(0, 12).mirror().addBox(0.0f, 0.0f, 0.0f, 11, 2, 2), PartPose.offsetAndRotation(-2.0f, 18.0f, 3.0f, 0.0f, -2.897247f, -0.3665191f));
+        root.addOrReplaceChild("lleg4", CubeListBuilder.create().texOffs(0, 12).mirror().addBox(0.0f, 0.0f, 0.0f, 11, 2, 2), PartPose.offsetAndRotation(2.0f, 18.0f, 3.0f, 0.0f, -0.4886922f, 0.3665191f));
+        root.addOrReplaceChild("lleg2", CubeListBuilder.create().texOffs(0, 12).mirror().addBox(0.0f, 0.0f, 0.0f, 11, 2, 2), PartPose.offsetAndRotation(2.0f, 18.0f, -1.0f, 0.0f, 0.2443461f, 0.3665191f));
+        root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(28, 9).mirror().addBox(0.0f, 0.0f, 0.0f, 5, 3, 4), PartPose.offset(-2.5f, 17.5f, -8.0f));
+        root.addOrReplaceChild("larm2", CubeListBuilder.create().texOffs(46, 8).mirror().addBox(0.0f, 0.0f, 0.0f, 6, 2, 2), PartPose.offsetAndRotation(1.0f, 18.0f, -6.0f, 0.0f, 0.5235988f, 0.1745329f));
+        root.addOrReplaceChild("rarm2", CubeListBuilder.create().texOffs(46, 8).mirror().addBox(0.0f, 0.0f, -2.0f, 6, 2, 2), PartPose.offsetAndRotation(-1.0f, 18.0f, -6.0f, 0.0f, 2.617994f, -0.1745329f));
+        root.addOrReplaceChild("larm1", CubeListBuilder.create().texOffs(70, 13).mirror().addBox(-2.0f, 0.0f, -3.0f, 2, 2, 3), PartPose.offsetAndRotation(7.0f, 19.0f, -7.2f, 0.1745329f, 0.1745329f, 0.0f));
+        root.addOrReplaceChild("rarm1", CubeListBuilder.create().texOffs(70, 13).mirror().addBox(0.0f, 0.0f, -3.0f, 2, 2, 3), PartPose.offsetAndRotation(-7.0f, 19.0f, -7.2f, 0.1745329f, -0.1745329f, 0.0f));
+        root.addOrReplaceChild("lclaw", CubeListBuilder.create().texOffs(46, 12).mirror().addBox(-3.0f, 0.0f, -4.0f, 3, 2, 4), PartPose.offsetAndRotation(7.0f, 19.0f, -10.0f, 0.0174533f, 0.3839724f, 0.1396263f));
+        root.addOrReplaceChild("rclaw", CubeListBuilder.create().texOffs(46, 12).mirror().addBox(0.0f, 0.0f, -4.0f, 3, 2, 4), PartPose.offsetAndRotation(-7.0f, 19.0f, -10.0f, 0.0174533f, -0.3839724f, 0.1396263f));
+        return mesh;
+    }
+
+    @Override
+    public void setupAnim(Scorpion entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         float newangle = 0.0f;
         float upangle = 0.0f;
         float nextangle = 0.0f;
         float pi4 = 1.570795f;
-        newangle = MathHelper.cos((float)(f2 * 2.0f * this.wingspeed)) * 3.1415927f * 0.12f * f1;
-        this.lleg1.rotateAngleY = newangle + 0.49f;
-        this.rleg1.rotateAngleY = - newangle + 2.65f;
-        newangle = MathHelper.cos((float)(f2 * 2.0f * this.wingspeed - 1.0f * pi4)) * 3.1415927f * 0.12f * f1;
-        this.lleg2.rotateAngleY = newangle + 0.24f;
-        this.rleg2.rotateAngleY = - newangle + 2.9f;
-        newangle = MathHelper.cos((float)(f2 * 2.0f * this.wingspeed - 2.0f * pi4)) * 3.1415927f * 0.12f * f1;
-        this.lleg3.rotateAngleY = newangle - 0.24f;
-        this.rleg3.rotateAngleY = - newangle - 2.9f;
-        newangle = MathHelper.cos((float)(f2 * 2.0f * this.wingspeed - 3.0f * pi4)) * 3.1415927f * 0.12f * f1;
-        this.lleg4.rotateAngleY = newangle - 0.49f;
-        this.rleg4.rotateAngleY = - newangle - 2.65f;
-        r = e.getRenderInfo();
-        newangle = MathHelper.cos((float)(f2 * 3.0f * this.wingspeed)) * 3.1415927f * 0.15f;
-        nextangle = MathHelper.cos((float)((f2 + 0.1f) * 3.0f * this.wingspeed)) * 3.1415927f * 0.15f;
+        newangle = Mth.cos((float)(ageInTicks * 2.0f * this.wingspeed)) * 3.1415927f * 0.12f * limbSwingAmount;
+        this.lleg1.yRot = newangle + 0.49f;
+        this.rleg1.yRot = - newangle + 2.65f;
+        newangle = Mth.cos((float)(ageInTicks * 2.0f * this.wingspeed - 1.0f * pi4)) * 3.1415927f * 0.12f * limbSwingAmount;
+        this.lleg2.yRot = newangle + 0.24f;
+        this.rleg2.yRot = - newangle + 2.9f;
+        newangle = Mth.cos((float)(ageInTicks * 2.0f * this.wingspeed - 2.0f * pi4)) * 3.1415927f * 0.12f * limbSwingAmount;
+        this.lleg3.yRot = newangle - 0.24f;
+        this.rleg3.yRot = - newangle - 2.9f;
+        newangle = Mth.cos((float)(ageInTicks * 2.0f * this.wingspeed - 3.0f * pi4)) * 3.1415927f * 0.12f * limbSwingAmount;
+        this.lleg4.yRot = newangle - 0.49f;
+        this.rleg4.yRot = - newangle - 2.65f;
+        RenderInfo r = entity.getRenderInfo();
+        newangle = Mth.cos(ageInTicks * 3.0f * this.wingspeed) * (float) Math.PI * 0.15f;
+        nextangle = Mth.cos((ageInTicks + 0.1f) * 3.0f * this.wingspeed) * (float) Math.PI * 0.15f;
         if (nextangle > 0.0f && newangle < 0.0f) {
             r.ri1 = 0;
-            if (e.getAttacking() == 0) {
-                r.ri1 = e.world.rand.nextInt(20);
-                r.ri2 = e.world.rand.nextInt(25);
+            if (entity.getAttacking() == 0) {
+                r.ri1 = entity.getRandom().nextInt(20);
+                r.ri2 = entity.getRandom().nextInt(25);
             } else {
-                r.ri1 = e.world.rand.nextInt(4);
-                r.ri2 = e.world.rand.nextInt(3);
+                r.ri1 = entity.getRandom().nextInt(4);
+                r.ri2 = entity.getRandom().nextInt(3);
             }
         }
         if (r.ri1 == 1 || r.ri1 == 3) {
@@ -235,70 +150,63 @@ extends ModelBase {
         } else {
             this.doTail(0.0f);
         }
-        e.setRenderInfo(r);
-        this.body.render(f5);
-        this.tail1.render(f5);
-        this.tail2.render(f5);
-        this.tail3.render(f5);
-        this.tail4.render(f5);
-        this.tail5.render(f5);
-        this.tail6.render(f5);
-        this.lleg1.render(f5);
-        this.rleg1.render(f5);
-        this.rleg2.render(f5);
-        this.lleg3.render(f5);
-        this.rleg4.render(f5);
-        this.rleg3.render(f5);
-        this.lleg4.render(f5);
-        this.lleg2.render(f5);
-        this.head.render(f5);
-        this.larm2.render(f5);
-        this.rarm2.render(f5);
-        this.larm1.render(f5);
-        this.rarm1.render(f5);
-        this.lclaw.render(f5);
-        this.rclaw.render(f5);
-    }
-
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
-    }
-
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+        entity.setRenderInfo(r);
     }
 
     private void doLeftClaw(float angle) {
-        this.larm2.rotateAngleY = 0.52f + angle;
-        this.larm1.rotationPointZ = (float)((double)this.larm2.rotationPointZ - Math.sin(this.larm2.rotateAngleY) * 4.5);
-        this.lclaw.rotationPointZ = this.larm1.rotationPointZ - 3.0f;
-        this.lclaw.rotateAngleY = 0.381f - angle;
+        this.larm2.yRot = 0.52f + angle;
+        this.larm1.z = (float) ((double) this.larm2.z - Math.sin(this.larm2.yRot) * 4.5);
+        this.lclaw.z = this.larm1.z - 3.0f;
+        this.lclaw.yRot = 0.381f - angle;
     }
 
     private void doRightClaw(float angle) {
-        this.rarm2.rotateAngleY = 2.61f - angle;
-        this.rarm1.rotationPointZ = (float)((double)this.rarm2.rotationPointZ - Math.sin(this.rarm2.rotateAngleY) * 4.5);
-        this.rclaw.rotationPointZ = this.rarm1.rotationPointZ - 3.0f;
-        this.rclaw.rotateAngleY = -0.381f + angle;
+        this.rarm2.yRot = 2.61f - angle;
+        this.rarm1.z = (float) ((double) this.rarm2.z - Math.sin(this.rarm2.yRot) * 4.5);
+        this.rclaw.z = this.rarm1.z - 3.0f;
+        this.rclaw.yRot = -0.381f + angle;
     }
 
     private void doTail(float angle) {
-        this.tail1.rotateAngleX = 0.26f + angle;
-        this.tail2.rotateAngleX = this.tail1.rotateAngleX + 0.76900005f + angle;
-        this.tail2.rotationPointY = (float)((double)this.tail1.rotationPointY - Math.sin(this.tail1.rotateAngleX) * 4.0);
-        this.tail2.rotationPointZ = (float)((double)this.tail1.rotationPointZ + Math.cos(this.tail1.rotateAngleX) * 4.0);
-        this.tail3.rotateAngleX = this.tail2.rotateAngleX + 0.701f + angle;
-        this.tail3.rotationPointY = (float)((double)this.tail2.rotationPointY - Math.sin(this.tail2.rotateAngleX) * 4.0);
-        this.tail3.rotationPointZ = (float)((double)this.tail2.rotationPointZ + Math.cos(this.tail2.rotateAngleX) * 4.0);
-        this.tail4.rotateAngleX = this.tail3.rotateAngleX + -5.501f - angle * 3.0f / 2.0f - 0.4f;
-        this.tail4.rotationPointY = (float)((double)this.tail3.rotationPointY - Math.sin(this.tail3.rotateAngleX) * 3.0);
-        this.tail4.rotationPointZ = (float)((double)this.tail3.rotationPointZ + Math.cos(this.tail3.rotateAngleX) * 3.0);
-        this.tail5.rotationPointY = (float)((double)this.tail4.rotationPointY - Math.sin(this.tail4.rotateAngleX) * 4.0);
-        this.tail5.rotationPointZ = (float)((double)this.tail4.rotationPointZ + Math.cos(this.tail4.rotateAngleX) * 4.0);
-        this.tail6.rotationPointY = (float)((double)this.tail5.rotationPointY - Math.sin(this.tail5.rotateAngleX) * 4.0);
-        this.tail6.rotationPointZ = (float)((double)this.tail5.rotationPointZ + Math.cos(this.tail5.rotateAngleX) * 4.0);
+        this.tail1.xRot = 0.26f + angle;
+        this.tail2.xRot = this.tail1.xRot + 0.76900005f + angle;
+        this.tail2.y = (float) ((double) this.tail1.y - Math.sin(this.tail1.xRot) * 4.0);
+        this.tail2.z = (float) ((double) this.tail1.z + Math.cos(this.tail1.xRot) * 4.0);
+        this.tail3.xRot = this.tail2.xRot + 0.701f + angle;
+        this.tail3.y = (float) ((double) this.tail2.y - Math.sin(this.tail2.xRot) * 4.0);
+        this.tail3.z = (float) ((double) this.tail2.z + Math.cos(this.tail2.xRot) * 4.0);
+        this.tail4.xRot = this.tail3.xRot + -5.501f - angle * 3.0f / 2.0f - 0.4f;
+        this.tail4.y = (float) ((double) this.tail3.y - Math.sin(this.tail3.xRot) * 3.0);
+        this.tail4.z = (float) ((double) this.tail3.z + Math.cos(this.tail3.xRot) * 3.0);
+        this.tail5.y = (float) ((double) this.tail4.y - Math.sin(this.tail4.xRot) * 4.0);
+        this.tail5.z = (float) ((double) this.tail4.z + Math.cos(this.tail4.xRot) * 4.0);
+        this.tail6.y = (float) ((double) this.tail5.y - Math.sin(this.tail5.xRot) * 4.0);
+        this.tail6.z = (float) ((double) this.tail5.z + Math.cos(this.tail5.xRot) * 4.0);
+    }
+
+    @Override
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+        this.body.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.tail1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.tail2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.tail3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.tail4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.tail5.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.tail6.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.lleg1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rleg1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rleg2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.lleg3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rleg4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rleg3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.lleg4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.lleg2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.head.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.larm2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rarm2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.larm1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rarm1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.lclaw.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rclaw.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

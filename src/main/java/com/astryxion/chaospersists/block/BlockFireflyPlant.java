@@ -1,78 +1,61 @@
 package com.astryxion.chaospersists.block;
 
+import com.astryxion.chaospersists.util.MyUtils;
+
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.entity.Firefly;
 import java.util.List;
-import java.util.Random;
-import net.minecraft.block.BlockCrops;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
-public class BlockFireflyPlant extends BlockCrops {
+public class BlockFireflyPlant extends CropBlock {
 
     public BlockFireflyPlant() {
-        setDefaultState(blockState.getBaseState().withProperty(BlockCrops.AGE, Integer.valueOf(0)));
+        super(net.minecraft.world.level.block.Block.Properties.copy(Blocks.WHEAT).noOcclusion());
     }
 
     @Override
-    public EnumBlockRenderType getRenderType(IBlockState state) {
-        return EnumBlockRenderType.MODEL;
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
+    protected ItemLike getBaseSeedId() {
+        return ChaosPersists.MyFireflySeed;
     }
 
     @Override
-    public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-        super.updateTick(worldIn, pos, state, rand);
-
-        if (worldIn.isRemote)
-            return;
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource rand) {
+        super.randomTick(state, level, pos, rand);
 
         float radius = 50.0F;
-        AxisAlignedBB aabb = new AxisAlignedBB((pos.getX() - radius), 0.0D, (pos.getZ() - radius), (pos.getX() + radius), 200.0D, (pos.getZ() + radius));
-        List<Firefly> fireflyList = worldIn.getEntitiesWithinAABB(Firefly.class, aabb);
-        if (fireflyList.size() > 15)
+        AABB aabb = new AABB(
+                pos.getX() - radius,
+                0.0D,
+                pos.getZ() - radius,
+                pos.getX() + radius,
+                200.0D,
+                pos.getZ() + radius);
+        List<? extends Mob> fireflyList = level.getEntitiesOfClass(Firefly.class, aabb);
+        if (fireflyList.size() > 15) {
             return;
-
-        IBlockState st = worldIn.getBlockState(pos);
-        int rate = st.getBlock().getMetaFromState(st);
-        rate &= 0x7;
-        rate = 6 - rate;
-        if (rate > 1 && ChaosPersists.ChaosRand.nextInt(rate) != 0)
-            return;
-
-        if (worldIn.getBlockState(pos.up()).getBlock() == Blocks.AIR && !worldIn.isDaytime()) {
-            Entity firefly = new Firefly(worldIn);
-            firefly.setPosition(pos.getX(), pos.getY() + 1, pos.getZ());
-            worldIn.spawnEntity(firefly);
         }
-    }
 
-    @Override
-    public Item getItemDropped(IBlockState state, Random rand, int fortune) {
-        return ChaosPersists.MyFireflySeed;
-    }
+        int rate = state.getValue(AGE) & 0x7;
+        rate = 6 - rate;
+        if (rate > 1 && ChaosPersists.ChaosRand.nextInt(rate) != 0) {
+            return;
+        }
 
-    @Override
-    protected Item getSeed() {
-        return ChaosPersists.MyFireflySeed;
-    }
-
-    @Override
-    protected Item getCrop() {
-        return ChaosPersists.MyFireflySeed;
+        if (level.getBlockState(pos.above()).isAir() && !MyUtils.isDay(level)) {
+            Mob firefly = ChaosPersists.ENTITY_TYPE_FIREFLY.get().create(level);
+            if (firefly != null) {
+                firefly.setPos(pos.getX(), pos.getY() + 1, pos.getZ());
+                level.addFreshEntity(firefly);
+            }
+        }
     }
 }

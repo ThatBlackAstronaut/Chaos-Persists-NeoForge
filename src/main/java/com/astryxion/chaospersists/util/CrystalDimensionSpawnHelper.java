@@ -1,18 +1,17 @@
 package com.astryxion.chaospersists.util;
 
-import com.astryxion.chaospersists.core.ChaosPersists;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 
-/**
- * Spawn checks shared by mobs that should naturally appear in the crystal dimension (dim 5).
- */
+/** Crystal dimension removed; spawn checks always false until dimension 5 returns. */
 public final class CrystalDimensionSpawnHelper {
+    private CrystalDimensionSpawnHelper() {}
 
-    private CrystalDimensionSpawnHelper() {
+    public static boolean isCrystalDimension(Level world) {
+        return false;
     }
 
-    public static boolean isCrystalDimension(World world) {
-        return world != null && world.provider != null
-            && world.provider.getDimension() == ChaosPersists.getDimension(5);
+    public static boolean isCrystalDimension(LevelAccessor world) {
+        return false;
     }
 }

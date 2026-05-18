@@ -1,49 +1,53 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelVortex
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- */
 package com.astryxion.chaospersists.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import com.astryxion.chaospersists.entity.Vortex;
 
-public class ModelVortex
-extends ModelBase {
-    float wingspeed = 1.0f;
-    ModelRenderer Shape1;
+public class ModelVortex extends EntityModel<Vortex> {
+    private final float wingspeed;
+    private final ModelPart shape1;
 
     public ModelVortex(float f1) {
-        this.wingspeed = f1;
-        this.textureWidth = 256;
-        this.textureHeight = 128;
-        this.Shape1 = new ModelRenderer((ModelBase)this, 0, 0);
-        this.Shape1.addBox(-64.0f, -64.0f, 0.0f, 128, 64, 0);
-        this.Shape1.setRotationPoint(0.0f, 22.0f, 0.0f);
-        this.Shape1.setTextureSize(256, 128);
-        this.Shape1.mirror = true;
-        this.setRotation(this.Shape1, 0.0f, 0.0f, 0.0f);
+        this(LayerDefinition.create(createMesh(), 256, 128).bakeRoot(), f1);
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        this.Shape1.render(f5);
+    public ModelVortex(ModelPart root, float wingspeed) {
+        this.wingspeed = wingspeed;
+        this.shape1 = root.getChild("shape1");
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
+    private static MeshDefinition createMesh() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild(
+                "shape1",
+                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-64.0f, -64.0f, 0.0f, 128, 64, 0),
+                PartPose.offset(0.0f, 22.0f, 0.0f));
+        return mesh;
     }
 
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+    @Override
+    public void setupAnim(Vortex entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    }
+
+    @Override
+    public void renderToBuffer(
+            PoseStack poseStack,
+            VertexConsumer buffer,
+            int packedLight,
+            int packedOverlay,
+            float red,
+            float green,
+            float blue,
+            float alpha) {
+        this.shape1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

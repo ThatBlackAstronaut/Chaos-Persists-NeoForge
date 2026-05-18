@@ -1,68 +1,29 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Hydrolisc
- *  com.astryxion.chaospersists.ModelHydrolisc
- *  com.astryxion.chaospersists.RenderHydrolisc
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.renderer.entity.RenderLiving
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.util.ResourceLocation
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.Hydrolisc;
 import com.astryxion.chaospersists.model.ModelHydrolisc;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.entity.RenderLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.resources.ResourceLocation;
 
-public class RenderHydrolisc
-extends RenderLiving {
-    protected ModelHydrolisc model;
-    private float scale = 1.0f;
-    private static final ResourceLocation texture = new ResourceLocation("chaospersists", "textures/entity/hydrolisc.png");
+public class RenderHydrolisc extends MobRenderer<Hydrolisc, ModelHydrolisc> {
+    private static final ResourceLocation TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/hydrolisc.png");
+    private final float scale;
 
-    public RenderHydrolisc(net.minecraft.client.renderer.entity.RenderManager manager, ModelHydrolisc par1ModelBase, float par2, float par3) {
-        super(manager, (ModelBase)par1ModelBase, par2 * par3);
-        this.model = (ModelHydrolisc)this.mainModel;
-        this.scale = par3;
+    public RenderHydrolisc(EntityRendererProvider.Context context, ModelHydrolisc model, float shadow, float scale) {
+        super(context, model, shadow * scale);
+        this.scale = scale;
     }
 
-    public void renderHydrolisc(Hydrolisc par1EntityHydrolisc, double par2, double par4, double par6, float par8, float par9) {
-        super.doRender((EntityLiving)par1EntityHydrolisc, par2, par4, par6, par8, par9);
+    @Override
+    protected void scale(Hydrolisc entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
+        float s = entity.isBaby() ? this.scale / 2.0f : this.scale;
+        poseStack.scale(s, s, s);
     }
 
-    public void doRender(EntityLiving par1EntityLiving, double par2, double par4, double par6, float par8, float par9) {
-        this.renderHydrolisc((Hydrolisc)par1EntityLiving, par2, par4, par6, par8, par9);
-    }
-
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-        this.renderHydrolisc((Hydrolisc)par1Entity, par2, par4, par6, par8, par9);
-    }
-
-    protected void preRenderScale(Hydrolisc par1Entity, float par2) {
-        if (par1Entity != null && par1Entity.isChild()) {
-            GL11.glScalef((float)(this.scale / 2.0f), (float)(this.scale / 2.0f), (float)(this.scale / 2.0f));
-            return;
-        }
-        GL11.glScalef((float)this.scale, (float)this.scale, (float)this.scale);
-    }
-
-    protected void preRenderCallback(EntityLivingBase par1EntityLiving, float par2) {
-        this.preRenderScale((Hydrolisc)par1EntityLiving, par2);
-    }
-
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        return texture;
+    @Override
+    public ResourceLocation getTextureLocation(Hydrolisc entity) {
+        return TEXTURE;
     }
 }
-

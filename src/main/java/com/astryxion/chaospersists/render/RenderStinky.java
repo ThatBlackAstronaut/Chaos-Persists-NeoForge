@@ -1,138 +1,119 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelStinky
- *  com.astryxion.chaospersists.RenderStinky
- *  com.astryxion.chaospersists.Stinky
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.renderer.entity.RenderLiving
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.util.ResourceLocation
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
-import com.astryxion.chaospersists.model.ModelStinky;
 import com.astryxion.chaospersists.entity.Stinky;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.entity.RenderLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import com.astryxion.chaospersists.model.ModelStinky;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.resources.ResourceLocation;
 
-public class RenderStinky
-extends RenderLiving {
-    protected ModelStinky model;
-    private float scale = 1.0f;
-    private static final ResourceLocation texture1 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture1.png");
-    private static final ResourceLocation texture2 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture2.png");
-    private static final ResourceLocation texture3 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture3.png");
-    private static final ResourceLocation texture4 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture4.png");
-    private static final ResourceLocation texture5 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture5.png");
-    private static final ResourceLocation texture6 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture6.png");
-    private static final ResourceLocation texture7 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture7.png");
-    private static final ResourceLocation texture8 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture8.png");
-    private static final ResourceLocation texture9 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture9.png");
-    private static final ResourceLocation texture10 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture10.png");
-    private static final ResourceLocation texture11 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture11.png");
-    private static final ResourceLocation texture12 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture12.png");
-    private static final ResourceLocation texture13 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture13.png");
-    private static final ResourceLocation texture14 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture14.png");
-    private static final ResourceLocation texture15 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture15.png");
-    private static final ResourceLocation texture16 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture16.png");
-    private static final ResourceLocation texture17 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture17.png");
-    private static final ResourceLocation texture18 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture18.png");
-    private static final ResourceLocation texture19 = new ResourceLocation("chaospersists", "textures/entity/stinkytexture19.png");
+public class RenderStinky extends MobRenderer<Stinky, ModelStinky> {
+    private static final ResourceLocation TEXTURE1 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture1.png");
+    private static final ResourceLocation TEXTURE2 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture2.png");
+    private static final ResourceLocation TEXTURE3 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture3.png");
+    private static final ResourceLocation TEXTURE4 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture4.png");
+    private static final ResourceLocation TEXTURE5 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture5.png");
+    private static final ResourceLocation TEXTURE6 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture6.png");
+    private static final ResourceLocation TEXTURE7 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture7.png");
+    private static final ResourceLocation TEXTURE8 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture8.png");
+    private static final ResourceLocation TEXTURE9 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture9.png");
+    private static final ResourceLocation TEXTURE10 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture10.png");
+    private static final ResourceLocation TEXTURE11 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture11.png");
+    private static final ResourceLocation TEXTURE12 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture12.png");
+    private static final ResourceLocation TEXTURE13 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture13.png");
+    private static final ResourceLocation TEXTURE14 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture14.png");
+    private static final ResourceLocation TEXTURE15 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture15.png");
+    private static final ResourceLocation TEXTURE16 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture16.png");
+    private static final ResourceLocation TEXTURE17 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture17.png");
+    private static final ResourceLocation TEXTURE18 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture18.png");
+    private static final ResourceLocation TEXTURE19 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/stinkytexture19.png");
+    private final float scale;
 
-    public RenderStinky(net.minecraft.client.renderer.entity.RenderManager manager, ModelStinky par1ModelBase, float par2, float par3) {
-        super(manager, (ModelBase)par1ModelBase, par2 * par3);
-        this.model = (ModelStinky)this.mainModel;
-        this.scale = par3;
+    public RenderStinky(EntityRendererProvider.Context context, ModelStinky model, float shadow, float scale) {
+        super(context, model, shadow * scale);
+        this.scale = scale;
     }
 
-    public void renderStinky(Stinky par1EntityStinky, double par2, double par4, double par6, float par8, float par9) {
-        super.doRender((EntityLiving)par1EntityStinky, par2, par4, par6, par8, par9);
+    @Override
+    protected void scale(Stinky entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
+        poseStack.scale(this.scale, this.scale, this.scale);
     }
 
-    public void doRender(EntityLiving par1EntityLiving, double par2, double par4, double par6, float par8, float par9) {
-        this.renderStinky((Stinky)par1EntityLiving, par2, par4, par6, par8, par9);
-    }
-
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-        this.renderStinky((Stinky)par1Entity, par2, par4, par6, par8, par9);
-    }
-
-    protected void preRenderScale(Stinky par1Entity, float par2) {
-        GL11.glScalef((float)this.scale, (float)this.scale, (float)this.scale);
-    }
-
-    protected void preRenderCallback(EntityLivingBase par1EntityLiving, float par2) {
-        this.preRenderScale((Stinky)par1EntityLiving, par2);
-    }
-
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        Stinky s = (Stinky)entity;
-        int i = s.getSkin();
+    @Override
+    public ResourceLocation getTextureLocation(Stinky entity) {
+        int i = entity.getSkin();
         if (i == 1) {
-            return texture2;
+            return TEXTURE2;
         }
         if (i == 2) {
-            return texture3;
+            return TEXTURE3;
         }
         if (i == 3) {
-            return texture4;
+            return TEXTURE4;
         }
         if (i == 4) {
-            return texture5;
+            return TEXTURE5;
         }
         if (i == 5) {
-            return texture6;
+            return TEXTURE6;
         }
         if (i == 6) {
-            return texture7;
+            return TEXTURE7;
         }
         if (i == 7) {
-            return texture8;
+            return TEXTURE8;
         }
         if (i == 8) {
-            return texture9;
+            return TEXTURE9;
         }
         if (i == 9) {
-            return texture10;
+            return TEXTURE10;
         }
         if (i == 10) {
-            return texture11;
+            return TEXTURE11;
         }
         if (i == 11) {
-            return texture12;
+            return TEXTURE12;
         }
         if (i == 12) {
-            return texture13;
+            return TEXTURE13;
         }
         if (i == 13) {
-            return texture14;
+            return TEXTURE14;
         }
         if (i == 14) {
-            return texture15;
+            return TEXTURE15;
         }
         if (i == 15) {
-            return texture16;
+            return TEXTURE16;
         }
         if (i == 16) {
-            return texture17;
+            return TEXTURE17;
         }
         if (i == 17) {
-            return texture18;
+            return TEXTURE18;
         }
         if (i == 18) {
-            return texture19;
+            return TEXTURE19;
         }
-        return texture1;
+        return TEXTURE1;
     }
 }
-

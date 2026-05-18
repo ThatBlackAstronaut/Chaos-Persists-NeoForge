@@ -1,102 +1,77 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.AntRobot
- *  com.astryxion.chaospersists.ItemSpiderRobotKit
- *  com.astryxion.chaospersists.MobStats
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityList
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import com.astryxion.chaospersists.entity.AntRobot;
-import com.astryxion.chaospersists.util.MobStats;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.entity.AntRobot;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
 
-/*
- * Exception performing whole class analysis ignored.
- */
-public class ItemSpiderRobotKit
-extends Item {
+public class ItemSpiderRobotKit extends Item {
     public ItemSpiderRobotKit(int i) {
-        this.maxStackSize = 1;
-        this.setCreativeTab(CreativeTabs.TOOLS);
-        if (i == ChaosPersists.BaseItemID + 471) {
-            this.setMaxDamage(ChaosPersists.SpiderRobot_stats.health);
-        } else {
-            this.setMaxDamage(ChaosPersists.AntRobot_stats.health);
-        }
+        super(
+                new Properties()
+                        .stacksTo(1)
+                        .durability(
+                                i == ChaosPersists.BaseItemID + 471
+                                        ? ChaosPersists.SpiderRobot_stats.health
+                                        : ChaosPersists.AntRobot_stats.health));
     }
 
     @Override
-    public EnumActionResult onItemUse(EntityPlayer par2EntityPlayer, World par3World, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-        ItemStack par1ItemStack = par2EntityPlayer.getHeldItem(hand);
-        int par4 = pos.getX();
-        int par5 = pos.getY();
-        int par6 = pos.getZ();
-        Entity ent;
-        if (par3World.isRemote) {
-            return EnumActionResult.SUCCESS;
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
         }
+        Player player = context.getPlayer();
+        if (player == null) {
+            return InteractionResult.PASS;
+        }
+        ItemStack stack = context.getItemInHand();
+        BlockPos pos = context.getClickedPos();
+        double spawnX = pos.getX() + 0.5;
+        double spawnY = pos.getY() + 1.01;
+        double spawnZ = pos.getZ() + 0.5;
         String name = "robot_spider";
-        if (par1ItemStack.getItem() == ChaosPersists.AntRobotKit) {
+        if (stack.getItem() == ChaosPersists.AntRobotKit) {
             name = "robot_red_ant";
         }
-        if ((ent = ItemSpiderRobotKit.spawnCreature((World)par3World, (int)0, (String)name, (double)((double)par4 + 0.5), (double)((double)par5 + 1.01), (double)((double)par6 + 0.5))) != null) {
-            EntityLiving e = (EntityLiving)ent;
-            e.setHealth((float)(this.getMaxDamage() - this.getDamage(par1ItemStack)));
-            if (ent instanceof EntityLiving && par1ItemStack.hasDisplayName()) {
-                ((EntityLiving)ent).setCustomNameTag(par1ItemStack.getDisplayName());
+        Entity ent = ItemSpawnEgg.spawnCreature(level, 0, name, spawnX, spawnY, spawnZ);
+        if (ent != null) {
+            if (ent instanceof LivingEntity living) {
+                living.setHealth((float) (stack.getMaxDamage() - stack.getDamageValue()));
+                if (stack.hasCustomHoverName()) {
+                    living.setCustomName(stack.getHoverName());
+                }
             }
-            par3World.playSound(par2EntityPlayer.posX, par2EntityPlayer.posY, par2EntityPlayer.posZ, net.minecraft.init.SoundEvents.ENTITY_GENERIC_EXPLODE, net.minecraft.util.SoundCategory.PLAYERS, 1.0f, par3World.rand.nextFloat() * 0.2f + 0.9f, false);
-            if (ent instanceof AntRobot) {
-                AntRobot a = (AntRobot)ent;
-                a.setOwned();
+            level.playSound(
+                    null,
+                    player.getX(),
+                    player.getY(),
+                    player.getZ(),
+                    SoundEvents.GENERIC_EXPLODE,
+                    SoundSource.PLAYERS,
+                    1.0f,
+                    level.getRandom().nextFloat() * 0.2f + 0.9f);
+            if (ent instanceof AntRobot antRobot) {
+                antRobot.setOwned();
             }
         }
-        if (!par2EntityPlayer.capabilities.isCreativeMode) {
-            par1ItemStack.shrink(1);
+        if (!player.getAbilities().instabuild) {
+            stack.shrink(1);
         }
-        return EnumActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
-    public static Entity spawnCreature(World par0World, int par1, String name, double par2, double par4, double par6) {
-        Entity var8 = null;
-        var8 = name == null ? EntityList.createEntityByID((int)par1, (World)par0World) : EntityList.createEntityByIDFromName(new net.minecraft.util.ResourceLocation("chaospersists", (String)name), par0World);
-        if (var8 != null) {
-            var8.setLocationAndAngles(par2, par4, par6, par0World.rand.nextFloat() * 360.0f, 0.0f);
-            par0World.spawnEntity(var8);
-            ((EntityLiving)var8).playLivingSound();
-        }
-        return var8;
-    }}
-
+    public static Entity spawnCreature(Level level, int par1, String name, double x, double y, double z) {
+        return ItemSpawnEgg.spawnCreature(level, par1, name, x, y, z);
+    }
+}

@@ -1,51 +1,29 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.GodzillaHead
- *  com.astryxion.chaospersists.ModelGodzilla
- *  com.astryxion.chaospersists.RenderGodzillaHead
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.renderer.entity.RenderLiving
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.util.ResourceLocation
- */
 package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.GodzillaHead;
-import com.astryxion.chaospersists.model.ModelGodzilla;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.entity.RenderLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 
-public class RenderGodzillaHead
-extends RenderLiving {
-    public RenderGodzillaHead(net.minecraft.client.renderer.entity.RenderManager manager, ModelGodzilla par1ModelBase, float par2, float par3) {
-        super(manager, (ModelBase)par1ModelBase, par2 * par3);
+public class RenderGodzillaHead extends EntityRenderer<GodzillaHead> {
+    private static final ResourceLocation TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/godzillatexture.png");
+
+    public RenderGodzillaHead(EntityRendererProvider.Context context) {
+        super(context);
     }
 
-    public void renderGodzillaHead(GodzillaHead par1EntityGodzillaHead, double par2, double par4, double par6, float par8, float par9) {
-    }
+    @Override
+    public void render(
+            GodzillaHead entity,
+            float entityYaw,
+            float partialTicks,
+            com.mojang.blaze3d.vertex.PoseStack poseStack,
+            net.minecraft.client.renderer.MultiBufferSource buffer,
+            int packedLight) {}
 
-    public void doRender(EntityLiving par1EntityLiving, double par2, double par4, double par6, float par8, float par9) {
-    }
-
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-    }
-
-    protected void preRenderScale(GodzillaHead par1Entity, float par2) {
-    }
-
-    protected void preRenderCallback(EntityLivingBase par1EntityLiving, float par2) {
-    }
-
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        return null;
+    @Override
+    public ResourceLocation getTextureLocation(GodzillaHead entity) {
+        return TEXTURE;
     }
 }
-

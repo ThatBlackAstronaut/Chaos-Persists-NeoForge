@@ -6,63 +6,63 @@
  *  net.minecraftforge.fml.relauncher.SideOnly
  *  com.astryxion.chaospersists.InstantShelter
  *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockChest
+ *  com.astryxion.chaospersists.compat.minecraft.block.Block
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockChest
  *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
+ *  com.astryxion.chaospersists.compat.minecraft.creativetab.CreativeTabs
  *  net.minecraft.entity.Entity
  *  net.minecraft.entity.player.EntityPlayer
  *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
+ *  com.astryxion.chaospersists.compat.minecraft.init.Blocks
+ *  com.astryxion.chaospersists.compat.minecraft.init.Items
  *  net.minecraft.item.Item
  *  net.minecraft.item.ItemEmptyMap
  *  net.minecraft.item.ItemStack
  *  net.minecraft.tileentity.TileEntity
  *  net.minecraft.tileentity.TileEntityChest
  *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
+ *  com.astryxion.chaospersists.compat.minecraft.world.World
  */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockChest;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemEmptyMap;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityChest;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
-public class InstantShelter
-extends Item {
+public class InstantShelter extends Item {
+
     public InstantShelter(int i) {
-        this.maxStackSize = 16;
-        this.setCreativeTab(CreativeTabs.REDSTONE);
+        super(new Properties().stacksTo(16));
     }
 
     @Override
-    public EnumActionResult onItemUse(EntityPlayer Player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-        ItemStack par1ItemStack = Player.getHeldItem(hand);
+    public InteractionResult useOn(UseOnContext context) {
+        Player player = context.getPlayer();
+        Level world = context.getLevel();
+        if (player == null) {
+            return InteractionResult.FAIL;
+        }
+        ItemStack par1ItemStack = context.getItemInHand();
+        BlockPos pos = context.getClickedPos();
         int cposx = pos.getX();
         int cposy = pos.getY();
         int cposz = pos.getZ();
         int deltax = 0;
         int deltaz = 0;
-        boolean bid = false;
         int dirx = 0;
         int dirz = 0;
         int stuffdir = 0;
@@ -75,9 +75,9 @@ extends Item {
         if (cposz < 0) {
             dirz = -1;
         }
-        int pposx = (int)(Player.posX + 0.99 * (double)dirx);
-        int pposy = (int)Player.posY;
-        int pposz = (int)(Player.posZ + 0.99 * (double)dirz);
+        int pposx = (int) (player.getX() + 0.99 * (double) dirx);
+        int pposy = (int) player.getY();
+        int pposz = (int) (player.getZ() + 0.99 * (double) dirz);
         if (cposx - pposx == 0 || cposz - pposz == 0) {
             int j;
             int i;
@@ -102,74 +102,96 @@ extends Item {
                 stuffdir = 4;
             }
             if (deltax == 0 && deltaz == 0) {
-                return EnumActionResult.FAIL;
+                return InteractionResult.FAIL;
             }
             if (deltax != 0 && deltaz != 0) {
-                return EnumActionResult.FAIL;
+                return InteractionResult.FAIL;
             }
             x = pposx;
             z = pposz;
-            Player.world.playSound(Player.posX, Player.posY, Player.posZ, net.minecraft.init.SoundEvents.ENTITY_GENERIC_EXPLODE, net.minecraft.util.SoundCategory.PLAYERS, 1.0f, 1.5f, false);
-            if (world.isRemote) {
-                return EnumActionResult.SUCCESS;
+            world.playSound(
+                    player,
+                    player.blockPosition(),
+                    SoundEvents.GENERIC_EXPLODE,
+                    SoundSource.PLAYERS,
+                    1.0f,
+                    1.5f);
+            if (world.isClientSide()) {
+                return InteractionResult.SUCCESS;
             }
-            for (i = - width; i <= width; ++i) {
-                for (j = - length; j <= length; ++j) {
+            Direction facing = Direction.from2DDataValue(stuffdir % 4);
+            for (i = -width; i <= width; ++i) {
+                for (j = -length; j <= length; ++j) {
                     for (k = 0; k <= height + 1; ++k) {
+                        BlockPos placePos = new BlockPos(x + i, y + k, z + j);
                         if (k == height + 1) {
-                            world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.PLANKS.getDefaultState(), 3);
+                            world.setBlock(placePos, Blocks.OAK_PLANKS.defaultBlockState(), 3);
                             continue;
                         }
                         if (k == 0) {
-                            world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.COBBLESTONE.getDefaultState(), 3);
+                            world.setBlock(placePos, Blocks.COBBLESTONE.defaultBlockState(), 3);
                             continue;
                         }
-                        if (i == width || j == length || i == - width || j == - length) {
+                        if (i == width || j == length || i == -width || j == -length) {
                             if (k == height) {
-                                world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.GLASS.getDefaultState(), 3);
+                                world.setBlock(placePos, Blocks.GLASS.defaultBlockState(), 3);
                                 continue;
                             }
                             if ((k == 1 || k == 2) && i == deltax * width && j == deltaz * length) {
-                                world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.AIR.getDefaultState(), 3);
+                                world.setBlock(placePos, Blocks.AIR.defaultBlockState(), 3);
                                 continue;
                             }
-                            world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.PLANKS.getDefaultState(), 3);
+                            world.setBlock(placePos, Blocks.OAK_PLANKS.defaultBlockState(), 3);
                             continue;
                         }
-                        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.AIR.getDefaultState(), 3);
+                        world.setBlock(placePos, Blocks.AIR.defaultBlockState(), 3);
                     }
                 }
             }
             i = 2;
             k = 1;
             j = length - 1;
-            world.setBlockState(new net.minecraft.util.math.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax), Blocks.FURNACE.getDefaultState().withProperty(net.minecraft.block.BlockHorizontal.FACING, net.minecraft.util.EnumFacing.byHorizontalIndex(stuffdir)), 3);
+            BlockState furnaceState =
+                    Blocks.FURNACE.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, facing);
+            world.setBlock(
+                    new BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax),
+                    furnaceState,
+                    3);
             i = 1;
-            world.setBlockState(new net.minecraft.util.math.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax), Blocks.CRAFTING_TABLE.getDefaultState(), 3);
+            world.setBlock(
+                    new BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax),
+                    Blocks.CRAFTING_TABLE.defaultBlockState(),
+                    3);
             i = 0;
-            world.setBlockState(new net.minecraft.util.math.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax), Blocks.CHEST.getDefaultState().withProperty(net.minecraft.block.BlockHorizontal.FACING, net.minecraft.util.EnumFacing.byHorizontalIndex(stuffdir)), 3);
-            TileEntityChest chest = (TileEntityChest)world.getTileEntity(new net.minecraft.util.math.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax));
-            if (chest != null) {
-                chest.setInventorySlotContents(0, new ItemStack(Items.COMPASS));
-                chest.setInventorySlotContents(1, new ItemStack((Item)Items.MAP));
-                chest.setInventorySlotContents(2, new ItemStack(Items.PORKCHOP, 8));
-                chest.setInventorySlotContents(3, new ItemStack(Blocks.TORCH, 32));
-                chest.setInventorySlotContents(4, new ItemStack(Items.COAL, 16));
-                chest.setInventorySlotContents(5, new ItemStack(Items.BED));
-                chest.setInventorySlotContents(6, new ItemStack(Items.BED));
-                chest.setInventorySlotContents(7, new ItemStack(Items.OAK_DOOR));
-                chest.setInventorySlotContents(8, new ItemStack(Items.IRON_PICKAXE));
-                chest.setInventorySlotContents(9, new ItemStack(Items.IRON_SWORD));
-                chest.setInventorySlotContents(10, new ItemStack(Items.IRON_AXE));
-                chest.setInventorySlotContents(11, new ItemStack(Items.BUCKET));
-                chest.setInventorySlotContents(12, new ItemStack(ChaosPersists.MyOreSaltBlock, 4));
-                chest.setInventorySlotContents(13, new ItemStack((Block)Blocks.CHEST));
+            BlockPos chestPos = new BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax);
+            BlockState chestState =
+                    Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, facing);
+            world.setBlock(chestPos, chestState, 3);
+            if (world.getBlockEntity(chestPos) instanceof ChestBlockEntity chest) {
+                chest.setItem(0, new ItemStack(Items.COMPASS));
+                chest.setItem(1, new ItemStack(Items.MAP));
+                chest.setItem(2, new ItemStack(Items.PORKCHOP, 8));
+                chest.setItem(3, new ItemStack(Items.TORCH, 32));
+                chest.setItem(4, new ItemStack(Items.COAL, 16));
+                chest.setItem(5, new ItemStack(Items.RED_BED));
+                chest.setItem(6, new ItemStack(Items.RED_BED));
+                chest.setItem(7, new ItemStack(Items.OAK_DOOR));
+                chest.setItem(8, new ItemStack(Items.IRON_PICKAXE));
+                chest.setItem(9, new ItemStack(Items.IRON_SWORD));
+                chest.setItem(10, new ItemStack(Items.IRON_AXE));
+                chest.setItem(11, new ItemStack(Items.BUCKET));
+                chest.setItem(
+                        12,
+                        new ItemStack(
+                                (net.minecraft.world.level.ItemLike) (Object) ChaosPersists.MyOreSaltBlock,
+                                4));
+                chest.setItem(13, new ItemStack(Blocks.CHEST.asItem()));
             }
-            if (!Player.capabilities.isCreativeMode) {
+            if (!player.getAbilities().instabuild) {
                 par1ItemStack.shrink(1);
             }
-            return EnumActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
-        return EnumActionResult.FAIL;
-    }}
-
+        return InteractionResult.FAIL;
+    }
+}

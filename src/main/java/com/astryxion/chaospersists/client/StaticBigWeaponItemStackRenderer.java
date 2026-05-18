@@ -1,18 +1,24 @@
 package com.astryxion.chaospersists.client;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.tileentity.TileEntityItemStackRenderer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * 3D orespawn weapons in hand: Bertha / Slice / Royal use sword-tuned first- and third-person transforms;
  * other styles reuse {@link ChainsawItemStackRenderer} hand poses (hammy, axes, zooka).
  */
-public class StaticBigWeaponItemStackRenderer extends TileEntityItemStackRenderer {
+public class StaticBigWeaponItemStackRenderer extends BlockEntityWithoutLevelRenderer {
 
     public enum Style {
         BERTHA,
@@ -24,13 +30,36 @@ public class StaticBigWeaponItemStackRenderer extends TileEntityItemStackRendere
         SQUID_ZOOKA
     }
 
-    private final IBakedModel flatModel;
-    private final Runnable renderModel;
+    @FunctionalInterface
+    public interface WeaponModelDraw {
+        void render(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay);
+    }
+
+    private final BakedModel flatModel;
+    private final WeaponModelDraw renderModel;
     private final ResourceLocation texture;
     private final Style style;
 
-    /** {@code renderModel} should invoke the weapon model's no-arg {@code render()} method. */
-    public StaticBigWeaponItemStackRenderer(IBakedModel flatModel, ResourceLocation texture, Style style, Runnable renderModel) {
+    public StaticBigWeaponItemStackRenderer(
+            BakedModel flatModel,
+            ResourceLocation texture,
+            Style style,
+            WeaponModelDraw renderModel) {
+        super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
+        this.flatModel = flatModel;
+        this.renderModel = renderModel;
+        this.texture = texture;
+        this.style = style;
+    }
+
+    public StaticBigWeaponItemStackRenderer(
+            BakedModel flatModel,
+            ResourceLocation texture,
+            Style style,
+            WeaponModelDraw renderModel,
+            BlockEntityRenderDispatcher dispatcher,
+            net.minecraft.client.model.geom.EntityModelSet modelSet) {
+        super(dispatcher, modelSet);
         this.flatModel = flatModel;
         this.renderModel = renderModel;
         this.texture = texture;
@@ -38,83 +67,80 @@ public class StaticBigWeaponItemStackRenderer extends TileEntityItemStackRendere
     }
 
     @Override
-    public void renderByItem(ItemStack stack) {
-        TransformType transform = TeisrHandTransformHolder.get();
-        try {
-            Minecraft mc = Minecraft.getMinecraft();
-            if (transform == TransformType.FIRST_PERSON_LEFT_HAND
-                || transform == TransformType.FIRST_PERSON_RIGHT_HAND) {
-                renderHand(true, transform == TransformType.FIRST_PERSON_LEFT_HAND);
-            } else if (transform == TransformType.THIRD_PERSON_LEFT_HAND
-                || transform == TransformType.THIRD_PERSON_RIGHT_HAND) {
-                renderHand(false, transform == TransformType.THIRD_PERSON_LEFT_HAND);
-            } else {
-                mc.getRenderItem().renderItem(stack, flatModel);
-            }
-        } finally {
-            TeisrHandTransformHolder.clear();
+    public void renderByItem(
+            ItemStack stack,
+            ItemDisplayContext ctx,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight,
+            int packedOverlay) {
+        if (ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND) {
+            renderHand(true, ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND, poseStack, buffer, packedLight, packedOverlay);
+        } else if (ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND || ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
+            renderHand(false, ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND, poseStack, buffer, packedLight, packedOverlay);
+        } else {
+            Minecraft.getInstance()
+                    .getItemRenderer()
+                    .render(stack, ctx, false, poseStack, buffer, packedLight, packedOverlay, this.flatModel);
         }
     }
 
-    private void renderHand(boolean firstPerson, boolean leftHand) {
-        GlStateManager.pushMatrix();
+    private void renderHand(
+            boolean firstPerson,
+            boolean leftHand,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight,
+            int packedOverlay) {
+        poseStack.pushPose();
         if (leftHand) {
-            GlStateManager.scale(-1.0f, 1.0f, 1.0f);
+            poseStack.scale(-1.0f, 1.0f, 1.0f);
         }
         if (firstPerson) {
             if (style == Style.BERTHA) {
-                applyBerthaSwordFirstPersonTransformsTuned();
+                applyBerthaSwordFirstPersonTransformsTuned(poseStack);
             } else if (style == Style.SLICE || style == Style.ROYAL) {
-                applySliceRoyalFirstPersonTransformsTuned();
+                applySliceRoyalFirstPersonTransformsTuned(poseStack);
             } else if (style == Style.HAMMY) {
-                ChainsawItemStackRenderer.applyHammyFirstPersonTransforms();
+                ChainsawItemStackRenderer.applyHammyFirstPersonTransforms(poseStack);
             } else {
-                ChainsawItemStackRenderer.applyHandFirstPersonTransforms();
+                ChainsawItemStackRenderer.applyHandFirstPersonTransforms(poseStack);
             }
         } else {
             if (style == Style.BERTHA || style == Style.SLICE || style == Style.ROYAL) {
-                applySwordThirdPersonTransformsTuned();
+                applySwordThirdPersonTransformsTuned(poseStack);
             } else {
-                ChainsawItemStackRenderer.applyHandThirdPersonTransforms();
+                ChainsawItemStackRenderer.applyHandThirdPersonTransforms(poseStack);
             }
         }
-        Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
-        renderModel.run();
-        GlStateManager.popMatrix();
+        VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(texture));
+        this.renderModel.render(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
     }
 
-    /**
-     * Sword-only first-person tuning for 1.12.2 TEISR hand matrices.
-     * Keep blade visible (not buried at lower-right) while preserving a heavy two-handed feel.
-     */
-    private static void applyBerthaSwordFirstPersonTransformsTuned() {
-        GlStateManager.rotate(180.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.rotate(58.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager.rotate(58.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager.rotate(-20.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.scale(0.19f, 0.19f, 0.19f);
-        GlStateManager.translate(0.72f, -0.12f, 0.16f);
+    private static void applyBerthaSwordFirstPersonTransformsTuned(PoseStack poseStack) {
+        poseStack.translate(0.72f, -0.12f, 0.16f);
+        poseStack.scale(0.19f, 0.19f, 0.19f);
+        poseStack.mulPose(Axis.YP.rotationDegrees(-20.0f));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(58.0f));
+        poseStack.mulPose(Axis.XP.rotationDegrees(58.0f));
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
     }
 
-    private static void applySliceRoyalFirstPersonTransformsTuned() {
-        GlStateManager.rotate(180.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.rotate(60.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager.rotate(56.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager.rotate(-24.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.scale(0.19f, 0.19f, 0.19f);
-        GlStateManager.translate(0.74f, -0.12f, 0.16f);
+    private static void applySliceRoyalFirstPersonTransformsTuned(PoseStack poseStack) {
+        poseStack.translate(0.74f, -0.12f, 0.16f);
+        poseStack.scale(0.19f, 0.19f, 0.19f);
+        poseStack.mulPose(Axis.YP.rotationDegrees(-24.0f));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(56.0f));
+        poseStack.mulPose(Axis.XP.rotationDegrees(60.0f));
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
     }
 
-    /**
-     * Sword-only third-person tuning so giant blades sit out to the side like OreSpawn,
-     * instead of drooping behind the leg.
-     * Extra pitch lifts long blades off the ground (they otherwise read as stabbing the floor).
-     */
-    private static void applySwordThirdPersonTransformsTuned() {
-        GlStateManager.rotate(180.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager.rotate(-68.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager.rotate(-46.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager.scale(0.24f, 0.24f, 0.24f);
-        GlStateManager.translate(0.85f, -0.06f, -0.14f);
+    private static void applySwordThirdPersonTransformsTuned(PoseStack poseStack) {
+        poseStack.translate(0.85f, -0.06f, -0.14f);
+        poseStack.scale(0.24f, 0.24f, 0.24f);
+        poseStack.mulPose(Axis.XP.rotationDegrees(-46.0f));
+        poseStack.mulPose(Axis.YP.rotationDegrees(-68.0f));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
     }
 }

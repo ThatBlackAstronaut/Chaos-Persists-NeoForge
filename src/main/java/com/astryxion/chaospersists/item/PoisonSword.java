@@ -1,85 +1,57 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.PoisonSword
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.enchantment.Enchantment
- *  net.minecraft.enchantment.EnchantmentHelper
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.item.Item
- *  net.minecraft.item.Item$ToolMaterial
- *  net.minecraft.item.ItemStack
- *  net.minecraft.item.ItemSword
- *  net.minecraft.potion.Potion
- *  net.minecraft.potion.PotionEffect
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import java.util.Random;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
-import net.minecraft.potion.Potion;
-import net.minecraft.potion.PotionEffect;
-import net.minecraft.world.World;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
 
-public class PoisonSword
-extends ItemSword {
-    private int weaponDamage;
-    private final Item.ToolMaterial toolMaterial;
+public class PoisonSword extends SwordItem {
+    private static final int WEAPON_DAMAGE = 15;
 
-    public PoisonSword(Item.ToolMaterial par2EnumToolMaterial) {
-        super(par2EnumToolMaterial);
-        this.toolMaterial = par2EnumToolMaterial;
-        this.weaponDamage = 15;
-        this.maxStackSize = 1;
-        this.setMaxDamage(1300);
-        this.setCreativeTab(CreativeTabs.COMBAT);
-    }
-
-    public void onCreated(ItemStack par1ItemStack, World par2World, EntityPlayer par3EntityPlayer) {
-        par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(16), 1);
-    }
-
-    public void onUsingTick(ItemStack stack, EntityPlayer player, int count) {
-        int lvl = EnchantmentHelper.getEnchantmentLevel(Enchantment.getEnchantmentByID(16), stack);
-        if (lvl <= 0) {
-            stack.addEnchantment(Enchantment.getEnchantmentByID(16), 1);
-        }
+    public PoisonSword(Tier tier) {
+        super(tier, (int)(WEAPON_DAMAGE - tier.getAttackDamageBonus()), -2.4f, new Properties().stacksTo(1).durability(1300));
     }
 
     public String getMaterialName() {
         return "Emerald";
     }
 
-    public boolean hitEntity(ItemStack par1ItemStack, EntityLivingBase par2EntityLiving, EntityLivingBase par3EntityLiving) {
-        int var2 = 5;
-        if (par2EntityLiving != null) {
-            var2 = 10 + par2EntityLiving.world.rand.nextInt(10);
-            par2EntityLiving.addPotionEffect(new PotionEffect(Potion.getPotionById(19), var2 * 20, 0));
-            var2 = 10 + par2EntityLiving.world.rand.nextInt(10);
-            par2EntityLiving.addPotionEffect(new PotionEffect(Potion.getPotionById(20), var2 * 20, 0));
-            var2 = 10 + par2EntityLiving.world.rand.nextInt(10);
-            par2EntityLiving.addPotionEffect(new PotionEffect(Potion.getPotionById(18), var2 * 20, 0));
+    @Override
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
+        stack.enchant(Enchantments.SHARPNESS, 1);
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SHARPNESS, stack) <= 0) {
+            stack.enchant(Enchantments.SHARPNESS, 1);
         }
-        par1ItemStack.damageItem(1, par3EntityLiving);
+    }
+
+    @Override
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (target != null) {
+            int var2 = 10 + target.getRandom().nextInt(10);
+            target.addEffect(new MobEffectInstance(MobEffects.POISON, var2 * 20, 0));
+            var2 = 10 + target.getRandom().nextInt(10);
+            target.addEffect(new MobEffectInstance(MobEffects.WITHER, var2 * 20, 0));
+            var2 = 10 + target.getRandom().nextInt(10);
+            target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, var2 * 20, 0));
+        }
+        stack.hurtAndBreak(1, attacker, e -> e.broadcastBreakEvent(EquipmentSlot.MAINHAND));
         return true;
     }
 
-    public int getMaxItemUseDuration(ItemStack par1ItemStack) {
+    @Override
+    public int getUseDuration(ItemStack stack) {
         return 3000;
-    }}
+    }
+}

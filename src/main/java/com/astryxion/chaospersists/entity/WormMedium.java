@@ -1,255 +1,269 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.MobStats
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.WormMedium
- *  com.astryxion.chaospersists.WormSmall
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockGrass
- *  net.minecraft.block.BlockTallGrass
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.DamageSource
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import com.astryxion.chaospersists.util.MobStats;
-import com.astryxion.chaospersists.core.ChaosPersists;
-import com.astryxion.chaospersists.entity.WormSmall;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockGrass;
-import net.minecraft.block.BlockTallGrass;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.DamageSource;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.util.MyUtils;
 
-public class WormMedium
-extends EntityMob {
+import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.registries.ForgeRegistries;
+
+public class WormMedium extends Monster {
     public int upcount = 0;
     public int downcount = 0;
 
-    public WormMedium(World par1World) {
-        super(par1World);
-        this.setSize(0.5f, 2.0f);
-                this.experienceValue = 0;
-        this.noClip = true;
+    public WormMedium(EntityType<? extends WormMedium> type, Level level) {
+        super(type, level);
+        this.xpReward = 0;
+        this.noPhysics = true;
+        this.setMaxUpStep(0.0f);
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.10000000149011612);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue((double)ChaosPersists.WormMedium_stats.attack);
+    public static AttributeSupplier.Builder createAttributes() {
+        return Monster.createMonsterAttributes()
+                .add(Attributes.MAX_HEALTH, (double) ChaosPersists.WormMedium_stats.health)
+                .add(Attributes.MOVEMENT_SPEED, 0.10000000149011612)
+                .add(Attributes.ATTACK_DAMAGE, (double) ChaosPersists.WormMedium_stats.attack)
+                .add(Attributes.ARMOR, (double) ChaosPersists.WormMedium_stats.defense);
     }
 
-    protected void entityInit() {
-        super.entityInit();
-    }
-
-    protected boolean canDespawn() {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return false;
     }
 
+    @Override
     protected float getSoundVolume() {
         return 0.5f;
     }
 
-    protected float getSoundPitch() {
+    @Override
+    public float getVoicePitch() {
         return 1.5f;
     }
 
-    protected net.minecraft.util.SoundEvent getAmbientSound() {
+    @Override
+    protected SoundEvent getAmbientSound() {
         return null;
     }
 
-    protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource damageSource) {
-        return com.astryxion.chaospersists.core.ChaosSounds.LITTLE_SPLAT;
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return ChaosSounds.LITTLE_SPLAT;
     }
 
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return com.astryxion.chaospersists.core.ChaosSounds.BIG_SPLAT;
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ChaosSounds.BIG_SPLAT;
     }
 
-    public boolean canBePushed() {
-        return true;
+    @Override
+    public boolean isPushable() {
+        return false;
     }
 
-    protected void collideWithEntity(Entity par1Entity) {
+    @Override
+    public void push(Entity par1Entity) {
     }
 
-    protected void collideWithNearbyEntities() {
+    @Override
+    protected void pushEntities() {
     }
 
     public int mygetMaxHealth() {
         return ChaosPersists.WormMedium_stats.health;
     }
 
-    protected boolean isAIEnabled() {
-        return true;
+    @Override
+    public int getArmorValue() {
+        return ChaosPersists.WormMedium_stats.defense;
     }
 
-    public void onLivingUpdate() {
-        Block bid = Blocks.AIR;
-        EntityPlayer target = null;
-        WormSmall worms = null;
-        super.onLivingUpdate();
-        if (this.world.isRemote) {
+    @Override
+    public void tick() {
+        if (this.isPersistenceRequired()) {
+            this.noPhysics = false;
+        }
+        super.tick();
+        this.wormLivingUpdate();
+        Vec3 motion = this.getDeltaMovement();
+        this.setDeltaMovement(motion.x, motion.y * 0.65, motion.z);
+    }
+
+    private void wormLivingUpdate() {
+        if (this.level().isClientSide) {
             return;
         }
-        worms = (WormSmall)this.world.findNearestEntityWithinAABB(WormSmall.class, this.getEntityBoundingBox().expand(8.0, 8.0, 8.0), (Entity)this);
+        Block bid = Blocks.AIR;
+        Player target = null;
+        WormSmall worms = this.findNearestWormSmallInBox(8.0, 8.0, 8.0);
         if (worms == null) {
-            target = (EntityPlayer)this.world.findNearestEntityWithinAABB(EntityPlayer.class, this.getEntityBoundingBox().expand(8.0, 8.0, 8.0), (Entity)this);
+            target = this.findNearestPlayerInBox(8.0, 8.0, 8.0);
         }
         if (worms == null && target != null || ChaosPersists.PlayNicely != 0) {
             if (this.upcount > 0) {
                 --this.upcount;
                 if (this.upcount == 0) {
-                    this.downcount = 100 + this.world.rand.nextInt(150);
+                    this.downcount = 100 + this.getRandom().nextInt(150);
                 }
                 if (target != null) {
-                    this.pointAtEntity((EntityLivingBase)target);
+                    this.pointAtEntity(target);
                 }
-                if ((bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)(this.posY + 0.25), (int)this.posZ)).getBlock()) == Blocks.TALLGRASS) {
+                bid = this.level()
+                        .getBlockState(
+                                new BlockPos((int) this.getX(), (int) (this.getY() + 0.25), (int) this.getZ()))
+                        .getBlock();
+                if (bid == Blocks.TALL_GRASS) {
                     bid = Blocks.AIR;
                 }
                 if (bid != Blocks.AIR) {
-                    if (bid != Blocks.GRASS && bid != Blocks.DIRT && bid != Blocks.STONE) {
-                        this.setDead();
+                    if (bid != Blocks.GRASS_BLOCK && bid != Blocks.DIRT && bid != Blocks.STONE) {
+                        this.discard();
                     }
-                    this.motionY += 0.20000000298023224;
-                    this.posY += 0.10000000149011612;
+                    Vec3 motion = this.getDeltaMovement();
+                    this.setDeltaMovement(motion.x, motion.y + 0.20000000298023224, motion.z);
+                    this.setPos(this.getX(), this.getY() + 0.10000000149011612, this.getZ());
                 }
             } else {
                 if (this.downcount > 0) {
                     --this.downcount;
                 } else {
-                    this.upcount = 25 + this.world.rand.nextInt(75);
+                    this.upcount = 25 + this.getRandom().nextInt(75);
                 }
-                bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)this.posY + 3, (int)this.posZ)).getBlock();
-                if (bid == Blocks.TALLGRASS) {
+                bid = this.level()
+                        .getBlockState(new BlockPos((int) this.getX(), (int) this.getY() + 3, (int) this.getZ()))
+                        .getBlock();
+                if (bid == Blocks.TALL_GRASS) {
                     bid = Blocks.AIR;
                 }
                 if (bid != Blocks.AIR) {
-                    if (bid != Blocks.GRASS && bid != Blocks.DIRT && bid != Blocks.STONE) {
-                        this.setDead();
+                    if (bid != Blocks.GRASS_BLOCK && bid != Blocks.DIRT && bid != Blocks.STONE) {
+                        this.discard();
                     }
-                    this.motionY += 0.10000000149011612;
-                    this.posY += 0.05000000074505806;
+                    Vec3 motion = this.getDeltaMovement();
+                    this.setDeltaMovement(motion.x, motion.y + 0.10000000149011612, motion.z);
+                    this.setPos(this.getX(), this.getY() + 0.05000000074505806, this.getZ());
                 }
             }
         } else {
-            this.upcount = this.world.rand.nextInt(50);
+            this.upcount = this.getRandom().nextInt(50);
             this.downcount = 0;
-            bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)this.posY + 3, (int)this.posZ)).getBlock();
-            if (bid == Blocks.TALLGRASS) {
+            bid = this.level()
+                    .getBlockState(new BlockPos((int) this.getX(), (int) this.getY() + 3, (int) this.getZ()))
+                    .getBlock();
+            if (bid == Blocks.TALL_GRASS) {
                 bid = Blocks.AIR;
             }
             if (bid != Blocks.AIR) {
-                if (bid != Blocks.GRASS && bid != Blocks.DIRT && bid != Blocks.STONE) {
-                    this.setDead();
+                if (bid != Blocks.GRASS_BLOCK && bid != Blocks.DIRT && bid != Blocks.STONE) {
+                    this.discard();
                 }
-                this.motionY += 0.10000000149011612;
-                this.posY += 0.05000000074505806;
+                Vec3 motion = this.getDeltaMovement();
+                this.setDeltaMovement(motion.x, motion.y + 0.10000000149011612, motion.z);
+                this.setPos(this.getX(), this.getY() + 0.05000000074505806, this.getZ());
             }
         }
-        this.motionY -= 0.01;
-        this.motionX = 0.0;
-        this.motionZ = 0.0;
-        this.moveForward = 0.0f;
+        Vec3 motion = this.getDeltaMovement();
+        this.setDeltaMovement(motion.x, motion.y - 0.01, motion.z);
+        this.setDeltaMovement(0.0, this.getDeltaMovement().y, 0.0);
+        this.setZza(0.0f);
     }
 
-    public void onUpdate() {
-        if (this.isNoDespawnRequired()) {
-            this.noClip = false;
-        }
-        super.onUpdate();
-        this.motionY *= 0.65;
+    public void pointAtEntity(LivingEntity e) {
+        double d1 = e.getX() - this.getX();
+        double d2 = e.getZ() - this.getZ();
+        float d = (float) Math.atan2(d2, d1);
+        float f2 = (float) ((double) d * 180.0 / 3.141592653589793) - 90.0f;
+        this.setYRot(f2);
+        this.setYHeadRot(f2);
     }
 
-    public void pointAtEntity(EntityLivingBase e) {
-        float f2;
-        double d1 = e.posX - this.posX;
-        double d2 = e.posZ - this.posZ;
-        float d = (float)Math.atan2(d2, d1);
-        this.rotationYaw = this.rotationYawHead = (f2 = (float)((double)d * 180.0 / 3.141592653589793) - 90.0f);
-    }
-
-    public int getTotalArmorValue() {
-        return ChaosPersists.WormMedium_stats.defense;
-    }
-
-    protected void updateAITasks() {
+    @Override
+    protected void customServerAiStep() {
         int bid = 0;
-        EntityPlayer target = null;
-        WormSmall worms = null;
-        if (this.isDead) {
+        Player target = null;
+        if (this.isDeadOrDying()) {
             return;
         }
-        super.updateAITasks();
+        super.customServerAiStep();
         if (ChaosPersists.PlayNicely != 0) {
             return;
         }
-        worms = (WormSmall)this.world.findNearestEntityWithinAABB(WormSmall.class, this.getEntityBoundingBox().expand(8.0, 8.0, 8.0), (Entity)this);
+        WormSmall worms = this.findNearestWormSmallInBox(8.0, 8.0, 8.0);
         if (worms != null) {
             return;
         }
-        target = (EntityPlayer)this.world.findNearestEntityWithinAABB(EntityPlayer.class, this.getEntityBoundingBox().expand(2.25, 8.0, 2.25), (Entity)this);
-        if (target != null && target.capabilities.isCreativeMode) {
+        target = this.findNearestPlayerInBox(2.25, 8.0, 2.25);
+        if (target != null && target.isCreative()) {
             target = null;
         }
         if (target != null) {
-            this.pointAtEntity((EntityLivingBase)target);
-            if (this.upcount > 0 && this.world.rand.nextInt(15) == 1 && !target.capabilities.isCreativeMode) {
-                super.attackEntityAsMob((Entity)target);
-                if (this.world.rand.nextInt(6) == 1) {
-                    ItemStack boots = target.getItemStackFromSlot(net.minecraft.inventory.EntityEquipmentSlot.FEET);
-                    if (boots != null && !boots.isEmpty()) {
-                        target.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.FEET, ItemStack.EMPTY);
-                        bid = boots.getMaxDamage() - boots.getItemDamage();
+            this.pointAtEntity(target);
+            if (this.upcount > 0 && this.getRandom().nextInt(15) == 1 && !target.isCreative()) {
+                ItemStack boots;
+                this.doHurtTarget(target);
+                if (this.getRandom().nextInt(6) == 1) {
+                    boots = target.getItemBySlot(EquipmentSlot.FEET);
+                    if (!boots.isEmpty()) {
+                        target.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
+                        bid = boots.getMaxDamage() - boots.getDamageValue();
                         bid = bid > 15 ? (bid /= 15) : 1;
-                        boots.damageItem(bid, (EntityLivingBase)this);
-                        EntityItem var3 = new EntityItem(this.world, this.posX + (double)ChaosPersists.ChaosRand.nextInt(5) - (double)ChaosPersists.ChaosRand.nextInt(5), this.posY + 3.0, this.posZ + (double)ChaosPersists.ChaosRand.nextInt(5) - (double)ChaosPersists.ChaosRand.nextInt(5), boots);
-                        this.world.spawnEntity((Entity)var3);
+                        boots.hurtAndBreak(bid, this, e -> e.broadcastBreakEvent(EquipmentSlot.FEET));
+                        ItemEntity dropped = new ItemEntity(
+                                this.level(),
+                                this.getX()
+                                        + (double) ChaosPersists.ChaosRand.nextInt(5)
+                                        - (double) ChaosPersists.ChaosRand.nextInt(5),
+                                this.getY() + 3.0,
+                                this.getZ()
+                                        + (double) ChaosPersists.ChaosRand.nextInt(5)
+                                        - (double) ChaosPersists.ChaosRand.nextInt(5),
+                                boots);
+                        this.level().addFreshEntity(dropped);
                     } else {
-                        boots = target.getItemStackFromSlot(net.minecraft.inventory.EntityEquipmentSlot.LEGS);
-                        if (boots != null && !boots.isEmpty()) {
-                            target.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.LEGS, ItemStack.EMPTY);
-                            bid = boots.getMaxDamage() - boots.getItemDamage();
+                        boots = target.getItemBySlot(EquipmentSlot.LEGS);
+                        if (!boots.isEmpty()) {
+                            target.setItemSlot(EquipmentSlot.LEGS, ItemStack.EMPTY);
+                            bid = boots.getMaxDamage() - boots.getDamageValue();
                             bid = bid > 15 ? (bid /= 15) : 1;
-                            boots.damageItem(bid, (EntityLivingBase)this);
-                            EntityItem var3 = new EntityItem(this.world, this.posX + (double)ChaosPersists.ChaosRand.nextInt(5) - (double)ChaosPersists.ChaosRand.nextInt(5), this.posY + 3.0, this.posZ + (double)ChaosPersists.ChaosRand.nextInt(5) - (double)ChaosPersists.ChaosRand.nextInt(5), boots);
-                            this.world.spawnEntity((Entity)var3);
+                            boots.hurtAndBreak(bid, this, e -> e.broadcastBreakEvent(EquipmentSlot.LEGS));
+                            ItemEntity dropped = new ItemEntity(
+                                    this.level(),
+                                    this.getX()
+                                            + (double) ChaosPersists.ChaosRand.nextInt(5)
+                                            - (double) ChaosPersists.ChaosRand.nextInt(5),
+                                    this.getY() + 3.0,
+                                    this.getZ()
+                                            + (double) ChaosPersists.ChaosRand.nextInt(5)
+                                            - (double) ChaosPersists.ChaosRand.nextInt(5),
+                                    boots);
+                            this.level().addFreshEntity(dropped);
                         }
                     }
                 }
@@ -257,57 +271,117 @@ extends EntityMob {
         }
     }
 
-    protected boolean canTriggerWalking() {
+    @Override
+    protected void playStepSound(BlockPos pos, BlockState state) {
+    }
+
+    @Override
+    public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {
         return false;
     }
 
-    public void fall(float distance, float damageMultiplier) {
+    @Override
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
+        this.fallDistance = 0.0f;
     }
 
-    protected void updateFallState(double y, boolean onGroundIn, net.minecraft.block.state.IBlockState state, net.minecraft.util.math.BlockPos pos) {
-        fallDistance = 0.0f;
-    }
-
-    public boolean doesEntityNotTriggerPressurePlate() {
-        return true;
-    }
-
-    public boolean getCanSpawnHere() {
-        if (this.world.isDaytime()) {
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        if (level instanceof Level world && world.isDay()) {
             return false;
         }
         return true;
     }
 
-    public void initCreature() {
+    public static boolean checkWormMediumSpawnRules(
+            EntityType<WormMedium> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        return !MyUtils.isDay(level);
     }
 
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-        boolean ret = false;
-        if (par1DamageSource.getDamageType().equals("inWall")) {
-            return ret;
-        }
-        ret = super.attackEntityFrom(par1DamageSource, par2);
-        return ret;
-    }
-
-    protected Item getDropItem() {
-        return Items.ROTTEN_FLESH;
-    }
-
-    private void dropItemRand(Item index, int par1) {
-        EntityItem var3 = new EntityItem(this.world, this.posX + (double)ChaosPersists.ChaosRand.nextInt(3) - (double)ChaosPersists.ChaosRand.nextInt(3), this.posY + 2.5 + (double)this.world.rand.nextInt(3), this.posZ + (double)ChaosPersists.ChaosRand.nextInt(3) - (double)ChaosPersists.ChaosRand.nextInt(3), new ItemStack(index, par1, 0));
-        this.world.spawnEntity((Entity)var3);
-    }
-
-    protected void dropFewItems(boolean par1, int par2) {
-        int var4;
-        for (var4 = 0; var4 < 2; ++var4) {
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        for (int var4 = 0; var4 < 2; ++var4) {
             this.dropItemRand(Items.ROTTEN_FLESH, 1);
         }
-        for (var4 = 0; var4 < 2; ++var4) {
+        for (int var4 = 0; var4 < 2; ++var4) {
             this.dropItemRand(Items.LEATHER, 1);
         }
     }
-}
 
+    private void dropItemRand(Item index, int par1) {
+        ItemEntity itemEntity =
+                new ItemEntity(
+                        this.level(),
+                        this.getX()
+                                + (double) ChaosPersists.ChaosRand.nextInt(3)
+                                - (double) ChaosPersists.ChaosRand.nextInt(3),
+                        this.getY() + 2.5 + (double) this.getRandom().nextInt(3),
+                        this.getZ()
+                                + (double) ChaosPersists.ChaosRand.nextInt(3)
+                                - (double) ChaosPersists.ChaosRand.nextInt(3),
+                        new ItemStack(index, par1));
+        this.level().addFreshEntity(itemEntity);
+    }
+
+    @Override
+    public boolean hurt(DamageSource par1DamageSource, float par2) {
+        if (par1DamageSource.is(DamageTypes.IN_WALL)) {
+            return false;
+        }
+        return super.hurt(par1DamageSource, par2);
+    }
+
+    public static Entity spawnCreature(Level level, String par1, double x, double y, double z) {
+        ResourceLocation res = par1.contains(":")
+                ? ResourceLocation.parse(par1)
+                : ResourceLocation.fromNamespaceAndPath("chaospersists", par1.toLowerCase().replace(" ", "_"));
+        EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(res);
+        if (type == null || !(level instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        Entity entity = type.create(serverLevel);
+        if (entity == null) {
+            return null;
+        }
+        entity.moveTo(x, y, z, level.getRandom().nextFloat() * 360.0f, 0.0f);
+        serverLevel.addFreshEntity(entity);
+        return entity;
+    }
+
+    private WormSmall findNearestWormSmallInBox(double expandX, double expandY, double expandZ) {
+        AABB box = this.getBoundingBox().inflate(expandX, expandY, expandZ);
+        List<WormSmall> worms = this.level().getEntitiesOfClass(WormSmall.class, box);
+        WormSmall nearest = null;
+        double best = Double.MAX_VALUE;
+        for (WormSmall worm : worms) {
+            if (!worm.isAlive()) {
+                continue;
+            }
+            double dist = this.distanceToSqr(worm);
+            if (dist < best) {
+                best = dist;
+                nearest = worm;
+            }
+        }
+        return nearest;
+    }
+
+    private Player findNearestPlayerInBox(double expandX, double expandY, double expandZ) {
+        AABB box = this.getBoundingBox().inflate(expandX, expandY, expandZ);
+        List<Player> players = this.level().getEntitiesOfClass(Player.class, box);
+        Player nearest = null;
+        double best = Double.MAX_VALUE;
+        for (Player player : players) {
+            double dist = this.distanceToSqr(player);
+            if (dist < best) {
+                best = dist;
+                nearest = player;
+            }
+        }
+        return nearest;
+    }
+}

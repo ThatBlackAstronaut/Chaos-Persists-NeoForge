@@ -1,133 +1,71 @@
 package com.astryxion.chaospersists.block;
 
+import com.astryxion.chaospersists.core.ChaosPersists;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraftforge.common.IForgeShearable;
 
-import com.astryxion.chaospersists.core.ChaosPersists;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockLeaves;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.state.BlockStateContainer;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
-public class BlockAppleLeaves extends BlockLeaves {
+public class BlockAppleLeaves extends LeavesBlock implements IForgeShearable {
 
     public BlockAppleLeaves() {
-        this.setSoundType(SoundType.PLANT);
-        this.setTickRandomly(true);
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
-
-        this.setDefaultState(
-                this.blockState.getBaseState()
-                        .withProperty(DECAYABLE, true)
-                        .withProperty(CHECK_DECAY, true)
-        );
-    }
-
-    // ===== STATE =====
-
-    @Override
-    protected BlockStateContainer createBlockState() {
-        return new BlockStateContainer(this, DECAYABLE, CHECK_DECAY);
+        super(net.minecraft.world.level.block.Block.Properties.copy(Blocks.OAK_LEAVES).sound(SoundType.GRASS).randomTicks());
     }
 
     @Override
-    public IBlockState getStateFromMeta(int meta) {
-        return this.getDefaultState()
-                .withProperty(DECAYABLE, (meta & 8) != 0)
-                .withProperty(CHECK_DECAY, (meta & 4) != 0);
-    }
-
-    @Override
-    public int getMetaFromState(IBlockState state) {
-        int i = 0;
-        if (state.getValue(CHECK_DECAY)) i |= 4;
-        if (state.getValue(DECAYABLE)) i |= 8;
-        return i;
-    }
-
-    @Override
-    public net.minecraft.block.BlockPlanks.EnumType getWoodType(int meta) {
-        return net.minecraft.block.BlockPlanks.EnumType.OAK;
-    }
-
-    // ===== CREATIVE TAB FIX (1.12.2 REQUIRED SIGNATURE) =====
-
-    @Override
-    public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> items) {
-        items.add(new ItemStack(this));
-    }
-
-    // ===== SHEARING =====
-
-    @Override
-    public List<ItemStack> onSheared(ItemStack item, IBlockAccess world, BlockPos pos, int fortune) {
-        return Collections.singletonList(new ItemStack(this));
-    }
-
-    // ===== DROPS =====
-
-    @Override
-    public void dropBlockAsItemWithChance(World world, BlockPos pos, IBlockState state, float chance, int fortune) {
-
-        if (!world.isRemote) {
-
-            if (world.rand.nextInt(25) == 1) {
-                spawnAsEntity(world, pos, new ItemStack(Items.APPLE));
-            }
-
-            if (world.rand.nextInt(500) == 2) {
-                spawnAsEntity(world, pos, new ItemStack(Items.GOLDEN_APPLE));
-            }
-
-            if (world.rand.nextInt(1000) == 3) {
-                spawnAsEntity(world, pos, new ItemStack(Items.GOLDEN_APPLE, 1, 1));
-            }
-
-            if (world.rand.nextInt(10000) == 4) {
-                spawnAsEntity(world, pos, new ItemStack(ChaosPersists.MagicApple));
-            }
+    public void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack tool, boolean dropExperience) {
+        RandomSource random = level.getRandom();
+        if (random.nextInt(25) == 1) {
+            popResource(level, pos, new ItemStack(Items.APPLE));
+        }
+        if (random.nextInt(500) == 2) {
+            popResource(level, pos, new ItemStack(Items.GOLDEN_APPLE));
+        }
+        if (random.nextInt(1000) == 3) {
+            popResource(level, pos, new ItemStack(Items.ENCHANTED_GOLDEN_APPLE));
+        }
+        if (random.nextInt(10000) == 4) {
+            popResource(level, pos, new ItemStack(ChaosPersists.MagicApple));
         }
     }
 
     @Override
-    public int quantityDropped(Random random) {
-        return 1;
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        return Collections.singletonList(new ItemStack(this));
     }
 
-    // ===== GRAPHICS =====
+    @Override
+    public boolean isShearable(ItemStack item, Level level, BlockPos pos) {
+        return true;
+    }
 
     @Override
-    public boolean isOpaqueCube(IBlockState state) {
+    public List<ItemStack> onSheared(net.minecraft.world.entity.player.Player player, ItemStack item, Level level, BlockPos pos, int fortune) {
+        return Collections.singletonList(new ItemStack(this));
+    }
+
+    @Override
+    public boolean skipRendering(BlockState state, BlockState adjacentState, Direction side) {
+        if (ChaosPersists.FastGraphicsLeaves == 0 && adjacentState.getBlock() == this) {
+            return true;
+        }
+        return super.skipRendering(state, adjacentState, side);
+    }
+
+    @Override
+    public boolean useShapeForLightOcclusion(BlockState state) {
         return ChaosPersists.FastGraphicsLeaves != 0;
     }
-
-    @Override
-    public boolean shouldSideBeRendered(IBlockState state, IBlockAccess world, BlockPos pos,
-                                        net.minecraft.util.EnumFacing side) {
-        Block block = world.getBlockState(pos.offset(side)).getBlock();
-        return ChaosPersists.FastGraphicsLeaves == 0 || block != this;
-    }
-
-    /** Modded leaves never receive vanilla {@code BlockLeaves#setGraphicsLevel}; force fancy cutout. */
-    @SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.TRANSLUCENT;
-    }
-
 }

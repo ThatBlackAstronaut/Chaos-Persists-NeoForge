@@ -1,140 +1,98 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.BandP
- *  com.astryxion.chaospersists.Boyfriend
- *  com.astryxion.chaospersists.GenericTargetSorter
- *  com.astryxion.chaospersists.Girlfriend
- *  com.astryxion.chaospersists.MobStats
- *  com.astryxion.chaospersists.MyEntityAIWanderALot
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.entity.DataWatcher
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityCreature
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAILookIdle
- *  net.minecraft.entity.ai.EntityAIMoveIndoors
- *  net.minecraft.entity.ai.EntityAIMoveThroughVillage
- *  net.minecraft.entity.ai.EntityAIOpenDoor
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.EntityAIWatchClosest
- *  net.minecraft.entity.ai.EntitySenses
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.passive.EntityVillager
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.InventoryPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.nbt.NBTBase
- *  net.minecraft.nbt.NBTTagCompound
- *  net.minecraft.nbt.NBTTagList
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.tileentity.MobSpawnerBaseLogic
- *  net.minecraft.tileentity.TileEntity
- *  net.minecraft.tileentity.TileEntityMobSpawner
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import com.astryxion.chaospersists.entity.Boyfriend;
-import com.astryxion.chaospersists.util.GenericTargetSorter;
-import com.astryxion.chaospersists.entity.Girlfriend;
-import com.astryxion.chaospersists.util.MobStats;
-import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
+import com.astryxion.chaospersists.util.MyUtils;
+
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.entity.Boyfriend;
+import com.astryxion.chaospersists.entity.Girlfriend;
+import com.astryxion.chaospersists.util.GenericTargetSorter;
+import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
+import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAIMoveIndoors;
-import net.minecraft.entity.ai.EntityAIMoveThroughVillage;
-import net.minecraft.entity.ai.EntityAIOpenDoor;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.EntityAIWatchClosest;
-import net.minecraft.entity.ai.EntitySenses;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.passive.EntityVillager;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.world.World;
 import java.util.Locale;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MoveThroughVillageGoal;
+import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.phys.AABB;
 
-public class BandP
-extends EntityMob {
-    private static final DataParameter<Byte> ATTACKING = EntityDataManager.createKey(BandP.class, DataSerializers.BYTE);
-    private GenericTargetSorter TargetSorter = null;
-    private float moveSpeed = 0.32f;
+public class BandP extends Monster {
+    private static final EntityDataAccessor<Byte> ATTACKING =
+            SynchedEntityData.defineId(BandP.class, EntityDataSerializers.BYTE);
+    private final GenericTargetSorter targetSorter;
+    private final float moveSpeed = 0.32f;
     private int whatset = 0;
     private int whatami = 0;
     public ItemStack[] MymainInventory = new ItemStack[100];
     int got_stuff = 0;
 
-    public BandP(World par1World) {
-        super(par1World);
-        this.setSize(0.75f, 1.75f);
-        this.experienceValue = 1000;
-        this.isImmuneToFire = true;
-        this.TargetSorter = new GenericTargetSorter((Entity)this);
-        this.tasks.addTask(0, (EntityAIBase)new EntityAIMoveThroughVillage((EntityCreature)this, 0.5, false));
-        this.tasks.addTask(1, (EntityAIBase)new MyEntityAIWanderALot((EntityCreature)this, 16, 0.5));
-        this.tasks.addTask(2, (EntityAIBase)new EntityAIWatchClosest((EntityLiving)this, EntityPlayer.class, 10.0f));
-        this.tasks.addTask(3, (EntityAIBase)new EntityAILookIdle((EntityLiving)this));
-        this.tasks.addTask(4, (EntityAIBase)new EntityAIOpenDoor((EntityLiving)this, true));
-        this.tasks.addTask(5, (EntityAIBase)new EntityAIMoveIndoors((EntityCreature)this));
+    public BandP(EntityType<? extends BandP> type, Level level) {
+        super(type, level);
+        this.xpReward = 1000;
+        this.targetSorter = new GenericTargetSorter(this);
+        this.goalSelector.addGoal(0, new MoveThroughVillageGoal(this, 0.5, false, 4, () -> false));
+        this.goalSelector.addGoal(1, new MyEntityAIWanderALot(this, 16, 0.5));
+        this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 10.0f));
+        this.goalSelector.addGoal(3, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(4, new OpenDoorGoal(this, true));
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue((double)ChaosPersists.BandP_stats.attack);
+    public static AttributeSupplier.Builder createAttributes() {
+        int health = ChaosPersists.BandP_stats != null ? ChaosPersists.BandP_stats.health : 100;
+        double attack = ChaosPersists.BandP_stats != null ? ChaosPersists.BandP_stats.attack : 1.0;
+        double defense = ChaosPersists.BandP_stats != null ? ChaosPersists.BandP_stats.defense : 18.0;
+        return Monster.createMonsterAttributes()
+                .add(Attributes.MAX_HEALTH, (double) health)
+                .add(Attributes.MOVEMENT_SPEED, 0.32)
+                .add(Attributes.ATTACK_DAMAGE, attack)
+                .add(Attributes.ARMOR, defense);
     }
 
-    protected void entityInit() {
-        super.entityInit();
-        this.getDataManager().register(ATTACKING, (byte)0);
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(ATTACKING, (byte) 0);
     }
 
-    protected boolean canDespawn() {
-        if (this.isNoDespawnRequired()) {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        if (this.isPersistenceRequired()) {
             return false;
         }
         if (this.got_stuff != 0) {
@@ -143,170 +101,180 @@ extends EntityMob {
         return true;
     }
 
-    public void onUpdate() {
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        super.onUpdate();
-        if (!this.world.isRemote && this.whatset == 0) {
+    @Override
+    public void tick() {
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
+        super.tick();
+        if (!this.level().isClientSide && this.whatset == 0) {
             this.whatset = 1;
-            this.whatami = this.world.rand.nextInt(2);
+            this.whatami = this.getRandom().nextInt(2);
             this.setWhat(this.whatami);
         }
     }
 
     public int mygetMaxHealth() {
-        return ChaosPersists.BandP_stats.health;
+        return ChaosPersists.BandP_stats != null ? ChaosPersists.BandP_stats.health : 100;
     }
 
-    public int getTotalArmorValue() {
-        return ChaosPersists.BandP_stats.defense;
+    @Override
+    public int getArmorValue() {
+        return ChaosPersists.BandP_stats != null ? ChaosPersists.BandP_stats.defense : 18;
     }
 
-    protected boolean isAIEnabled() {
+    @Override
+    public boolean fireImmune() {
         return true;
     }
 
-    public void onLivingUpdate() {
-        super.onLivingUpdate();
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return SoundEvents.VILLAGER_AMBIENT;
     }
 
-    protected String getLivingSound() {
-        return "mob.villager.idle";
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return SoundEvents.VILLAGER_HURT;
     }
 
-    protected String getHurtSound() {
-        return "mob.villager.hit";
+    @Override
+    protected SoundEvent getDeathSound() {
+        return SoundEvents.VILLAGER_DEATH;
     }
 
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("entity.villager.death"));
-    }
-
+    @Override
     protected float getSoundVolume() {
         return 1.5f;
     }
 
-    protected float getSoundPitch() {
+    @Override
+    public float getVoicePitch() {
         return 1.0f;
     }
 
-    protected Item getDropItem() {
-        return Items.EMERALD;
-    }
-
-    private ItemStack dropItemRand(Item index, int par1) {
-        EntityItem var3 = null;
+    private ItemStack dropItemRand(Item index, int count) {
         if (index == null) {
             return null;
         }
-        ItemStack is = new ItemStack(index, par1, 0);
-        var3 = new EntityItem(this.world, this.posX + (double)ChaosPersists.ChaosRand.nextInt(2) - (double)ChaosPersists.ChaosRand.nextInt(2), this.posY + 1.0, this.posZ + (double)ChaosPersists.ChaosRand.nextInt(2) - (double)ChaosPersists.ChaosRand.nextInt(2), is);
-        if (var3 != null) {
-            this.world.spawnEntity((Entity)var3);
-        }
+        ItemStack is = new ItemStack(index, count);
+        ItemEntity drop =
+                new ItemEntity(
+                        this.level(),
+                        this.getX() + (double) ChaosPersists.ChaosRand.nextInt(2)
+                                - (double) ChaosPersists.ChaosRand.nextInt(2),
+                        this.getY() + 1.0,
+                        this.getZ() + (double) ChaosPersists.ChaosRand.nextInt(2)
+                                - (double) ChaosPersists.ChaosRand.nextInt(2),
+                        is);
+        this.level().addFreshEntity(drop);
         return is;
     }
 
-    protected void dropFewItems(boolean par1, int par2) {
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        int var4 = 10 + this.random.nextInt(5);
         int i;
-        int var4 = 10 + this.world.rand.nextInt(5);
         for (i = 0; i < var4; ++i) {
             this.dropItemRand(Items.EMERALD, 1);
         }
         if (this.getWhat() == 0) {
-            var4 = 2 + this.world.rand.nextInt(3);
+            var4 = 2 + this.random.nextInt(3);
             for (i = 0; i < var4; ++i) {
                 this.dropItemRand(ChaosPersists.UraniumNugget, 1);
                 this.dropItemRand(ChaosPersists.TitaniumNugget, 1);
             }
         }
         for (i = 0; i < this.MymainInventory.length; ++i) {
-            if (this.MymainInventory[i] == null || this.MymainInventory[i].getCount() == 0) continue;
-            ItemStack is = this.dropItemRand(this.MymainInventory[i].getItem(), this.MymainInventory[i].getCount());
-            if (this.MymainInventory[i].getCount() != 1) continue;
-            is.setItemDamage(this.MymainInventory[i].getItemDamage());
-        }
-    }
-
-    public boolean interact(EntityPlayer par1EntityPlayer) {
-        return false;
-    }
-
-    public boolean attackEntityAsMob(Entity par1Entity) {
-        return super.attackEntityAsMob(par1Entity);
-    }
-
-    protected void updateAITasks() {
-        EntityLivingBase e;
-        if (this.isDead) {
-            return;
-        }
-        super.updateAITasks();
-        if (this.world.rand.nextInt(12) == 1 && (e = this.findSomethingToAttack()) != null) {
-            this.faceEntity((Entity)e, 10.0f, 10.0f);
-            if (this.getDistanceSq((Entity)e) < 9.0) {
-                this.attackEntityAsMob((Entity)e);
-                if (e instanceof EntityPlayer) {
-                    int i;
-                    EntityPlayer p = (EntityPlayer)e;
-                    int k = -1;
-                    int kp = -1;
-                    for (i = 0; i < this.MymainInventory.length; ++i) {
-                        if (this.MymainInventory[i] != null) continue;
-                        k = i;
-                        break;
-                    }
-                    if (k >= 0) {
-                        for (i = p.inventory.armorInventory.size() - 1; i >= 0; --i) {
-                            if (p.inventory.armorInventory.get(i).isEmpty()) continue;
-                            kp = i;
-                            break;
-                        }
-                        if (kp >= 0) {
-                            this.MymainInventory[k] = p.inventory.armorInventory.get(kp);
-                            p.inventory.armorInventory.set(kp, ItemStack.EMPTY);
-                            ++this.got_stuff;
-                        }
-                        if (kp < 0) {
-                            for (i = p.inventory.mainInventory.size() - 1; i >= 0; --i) {
-                                if (p.inventory.mainInventory.get(i).isEmpty()) continue;
-                                kp = i;
-                                break;
-                            }
-                            if (kp >= 0) {
-                                this.MymainInventory[k] = p.inventory.mainInventory.get(kp);
-                                p.inventory.mainInventory.set(kp, ItemStack.EMPTY);
-                                ++this.got_stuff;
-                            }
-                        }
-                    }
-                }
-            } else {
-                this.getNavigator().tryMoveToEntityLiving((Entity)e, 1.25);
+            if (this.MymainInventory[i] == null || this.MymainInventory[i].isEmpty()) {
+                continue;
+            }
+            ItemStack dropped =
+                    this.dropItemRand(this.MymainInventory[i].getItem(), this.MymainInventory[i].getCount());
+            if (this.MymainInventory[i].getCount() == 1 && dropped != null) {
+                dropped.setDamageValue(this.MymainInventory[i].getDamageValue());
             }
         }
     }
 
-    private boolean isSuitableTarget(EntityLivingBase par1EntityLiving, boolean par2) {
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        return InteractionResult.PASS;
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        if (this.isDeadOrDying()) {
+            return;
+        }
+        super.customServerAiStep();
+        if (this.getRandom().nextInt(12) == 1) {
+            LivingEntity e = this.findSomethingToAttack();
+            if (e != null) {
+                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                if (this.distanceToSqr(e) < 9.0) {
+                    this.doHurtTarget(e);
+                    if (e instanceof Player p) {
+                        int k = -1;
+                        int kp = -1;
+                        for (int i = 0; i < this.MymainInventory.length; ++i) {
+                            if (this.MymainInventory[i] == null || this.MymainInventory[i].isEmpty()) {
+                                k = i;
+                                break;
+                            }
+                        }
+                        if (k >= 0) {
+                            for (int i = p.getInventory().armor.size() - 1; i >= 0; --i) {
+                                if (!p.getInventory().armor.get(i).isEmpty()) {
+                                    kp = i;
+                                    break;
+                                }
+                            }
+                            if (kp >= 0) {
+                                this.MymainInventory[k] = p.getInventory().armor.get(kp).copy();
+                                p.getInventory().armor.set(kp, ItemStack.EMPTY);
+                                ++this.got_stuff;
+                            }
+                            if (kp < 0) {
+                                for (int i = p.getInventory().items.size() - 1; i >= 0; --i) {
+                                    if (!p.getInventory().items.get(i).isEmpty()) {
+                                        kp = i;
+                                        break;
+                                    }
+                                }
+                                if (kp >= 0) {
+                                    this.MymainInventory[k] = p.getInventory().items.get(kp).copy();
+                                    p.getInventory().items.set(kp, ItemStack.EMPTY);
+                                    ++this.got_stuff;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    this.getNavigation().moveTo(e, 1.25);
+                }
+            }
+        }
+    }
+
+    private boolean isSuitableTarget(LivingEntity par1EntityLiving) {
         if (par1EntityLiving == null) {
             return false;
         }
         if (par1EntityLiving == this) {
             return false;
         }
-        if (!par1EntityLiving.isEntityAlive()) {
+        if (!par1EntityLiving.isAlive()) {
             return false;
         }
-        if (!this.getEntitySenses().canSee((Entity)par1EntityLiving)) {
+        if (!this.getSensing().hasLineOfSight(par1EntityLiving)) {
             return false;
         }
-        if (par1EntityLiving instanceof EntityPlayer) {
-            EntityPlayer p = (EntityPlayer)par1EntityLiving;
-            if (p.capabilities.isCreativeMode) {
+        if (par1EntityLiving instanceof Player p) {
+            if (p.isCreative()) {
                 return false;
             }
             return true;
         }
-        if (par1EntityLiving instanceof EntityVillager) {
+        if (par1EntityLiving instanceof Villager) {
             return true;
         }
         if (par1EntityLiving instanceof Girlfriend) {
@@ -318,107 +286,142 @@ extends EntityMob {
         return false;
     }
 
-    private EntityLivingBase findSomethingToAttack() {
+    private LivingEntity findSomethingToAttack() {
         if (ChaosPersists.PlayNicely != 0) {
             return null;
         }
-        List var5 = this.world.getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox().expand(20.0, 6.0, 20.0));
-        Collections.sort(var5, this.TargetSorter);
-        Iterator var2 = var5.iterator();
-        Entity var3 = null;
-        EntityLivingBase var4 = null;
+        List<LivingEntity> candidates =
+                this.level()
+                        .getEntitiesOfClass(
+                                LivingEntity.class,
+                                this.getBoundingBox().inflate(20.0, 6.0, 20.0),
+                                e -> e != this && this.isSuitableTarget(e));
+        Collections.sort(candidates, this.targetSorter);
+        Iterator<LivingEntity> var2 = candidates.iterator();
         while (var2.hasNext()) {
-            var3 = (Entity)var2.next();
-            var4 = (EntityLivingBase)var3;
-            if (!this.isSuitableTarget(var4, false)) continue;
-            return var4;
+            LivingEntity var4 = var2.next();
+            if (this.isSuitableTarget(var4)) {
+                return var4;
+            }
         }
         return null;
     }
 
     public int getWhat() {
-        return this.getDataManager().get(ATTACKING).intValue();
+        return this.entityData.get(ATTACKING).intValue();
     }
 
     public void setWhat(int par1) {
-        this.getDataManager().set(ATTACKING, (byte)par1);
+        this.entityData.set(ATTACKING, (byte) par1);
     }
 
-    public boolean getCanSpawnHere() {
+    private static boolean isCriminalSpawnerNear(LevelAccessor level, BlockPos origin) {
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
         for (int k = -3; k < 3; ++k) {
             for (int j = -3; j < 3; ++j) {
                 for (int i = 0; i < 5; ++i) {
-                    Block bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k)).getBlock();
-                    if (bid != Blocks.MOB_SPAWNER) continue;
-                    TileEntityMobSpawner tileentitymobspawner = null;
-                    tileentitymobspawner = (TileEntityMobSpawner)this.world.getTileEntity(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k));
-                    String s = null;
-                    net.minecraft.util.ResourceLocation id = com.astryxion.chaospersists.util.SpawnerFixHelper.getMobSpawnerEntityId(tileentitymobspawner.getSpawnerBaseLogic());
-                    if (id != null) s = id.getPath();
-                    if (s == null || !"criminal".equals(s.toLowerCase(Locale.ROOT))) continue;
-                    return true;
+                    checkPos.set(origin.getX() + j, origin.getY() + i, origin.getZ() + k);
+                    if (level.getBlockState(checkPos).getBlock() != Blocks.SPAWNER) {
+                        continue;
+                    }
+                    if (!(level.getBlockEntity(checkPos) instanceof SpawnerBlockEntity spawner)) {
+                        continue;
+                    }
+                    ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityIdFromBlockEntity(spawner);
+                    if (id != null && "criminal".equals(id.getPath().toLowerCase(Locale.ROOT))) {
+                        return true;
+                    }
                 }
             }
         }
-        if (!this.world.isDaytime()) {
-            return false;
-        }
-        if (this.posY < 50.0) {
-            return false;
-        }
-        if (this.posY < 100.0) {
-            return false;
-        }
-        BandP target = null;
-        target = (BandP)this.world.findNearestEntityWithinAABB(BandP.class, this.getEntityBoundingBox().expand(32.0, 12.0, 32.0), (Entity)this);
-        if (target != null) {
-            return false;
-        }
-        EntityVillager target2 = null;
-        target2 = (EntityVillager)this.world.findNearestEntityWithinAABB(EntityVillager.class, this.getEntityBoundingBox().expand(36.0, 12.0, 36.0), (Entity)this);
-        if (target2 == null) {
-            return false;
-        }
-        return true;
+        return false;
     }
 
-    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {
-        super.writeEntityToNBT(par1NBTTagCompound);
+    public static boolean checkBandPSpawnRules(
+            EntityType<BandP> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            RandomSource random) {
+        if (isCriminalSpawnerNear(level, pos)) {
+            return true;
+        }
+        if (!MyUtils.isDay(level)) {
+            return false;
+        }
+        if (pos.getY() < 50) {
+            return false;
+        }
+        if (pos.getY() < 100) {
+            return false;
+        }
+        AABB bandpBox = new AABB(pos).inflate(32.0, 12.0, 32.0);
+        if (!level.getEntitiesOfClass(BandP.class, bandpBox, Entity::isAlive).isEmpty()) {
+            return false;
+        }
+        AABB villagerBox = new AABB(pos).inflate(36.0, 12.0, 36.0);
+        return !level.getEntitiesOfClass(Villager.class, villagerBox, Entity::isAlive).isEmpty();
+    }
+
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        if (!(level instanceof ServerLevelAccessor serverLevel)) {
+            return false;
+        }
+        return checkBandPSpawnRules(
+                (EntityType<BandP>) this.getType(),
+                serverLevel,
+                spawnReason,
+                this.blockPosition(),
+                this.getRandom());
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
         if (this.got_stuff != 0) {
-            par1NBTTagCompound.setTag("Inventory", (NBTBase)this.writeToNBT(new NBTTagList()));
+            tag.put("Inventory", this.writeInventoryToNbt());
         }
-        par1NBTTagCompound.setInteger("GotStuff", this.got_stuff);
+        tag.putInt("GotStuff", this.got_stuff);
     }
 
-    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound) {
-        super.readEntityFromNBT(par1NBTTagCompound);
-        this.got_stuff = par1NBTTagCompound.getInteger("GotStuff");
-        if (this.got_stuff != 0) {
-            NBTTagList nbttaglist = par1NBTTagCompound.getTagList("Inventory", 10);
-            this.readFromNBT(nbttaglist);
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.got_stuff = tag.getInt("GotStuff");
+        if (this.got_stuff != 0 && tag.contains("Inventory", Tag.TAG_LIST)) {
+            this.readInventoryFromNbt(tag.getList("Inventory", Tag.TAG_COMPOUND));
         }
     }
 
-    public NBTTagList writeToNBT(NBTTagList par1NBTTagList) {
+    private ListTag writeInventoryToNbt() {
+        ListTag list = new ListTag();
         for (int i = 0; i < this.MymainInventory.length; ++i) {
-            if (this.MymainInventory[i] == null) continue;
-            NBTTagCompound nbttagcompound = new NBTTagCompound();
-            nbttagcompound.setByte("Slot", (byte)i);
-            this.MymainInventory[i].writeToNBT(nbttagcompound);
-            par1NBTTagList.appendTag((NBTBase)nbttagcompound);
+            if (this.MymainInventory[i] == null || this.MymainInventory[i].isEmpty()) {
+                continue;
+            }
+            CompoundTag slotTag = new CompoundTag();
+            slotTag.putByte("Slot", (byte) i);
+            this.MymainInventory[i].save(slotTag);
+            list.add(slotTag);
         }
-        return par1NBTTagList;
+        return list;
     }
 
-    public void readFromNBT(NBTTagList par1NBTTagList) {
+    private void readInventoryFromNbt(ListTag list) {
         this.MymainInventory = new ItemStack[100];
-        for (int i = 0; i < par1NBTTagList.tagCount(); ++i) {
-            NBTTagCompound nbttagcompound = par1NBTTagList.getCompoundTagAt(i);
-            int j = nbttagcompound.getByte("Slot") & 255;
-            ItemStack itemstack = new ItemStack((NBTTagCompound)nbttagcompound);
-            if (itemstack == null || j < 0 || j >= this.MymainInventory.length) continue;
-            this.MymainInventory[j] = itemstack;
+        for (int i = 0; i < list.size(); ++i) {
+            CompoundTag slotTag = list.getCompound(i);
+            int j = slotTag.getByte("Slot") & 255;
+            ItemStack stack = ItemStack.of(slotTag);
+            if (!stack.isEmpty() && j >= 0 && j < this.MymainInventory.length) {
+                this.MymainInventory[j] = stack;
+            }
         }
+    }
+
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+        return EntityDimensions.scalable(0.75f, 1.75f);
     }
 }
-

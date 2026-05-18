@@ -1,0 +1,136 @@
+{
+  "temperature": 0.7,
+  "downfall": 0.5,
+  "has_precipitation": true,
+  "effects": {
+    "fog_color": 12638463,
+    "sky_color": 7907327,
+    "water_color": 353825,
+    "water_fog_color": 329011,
+    "grass_color_modifier": "none"
+  },
+  "spawners": {
+    "monster": [
+      { "type": "chaospersists:bomb_omb", "weight": 25, "minCount": 4, "maxCount": 8 },
+      { "type": "chaospersists:robo_pounder", "weight": 16, "minCount": 2, "maxCount": 8 },
+      { "type": "chaospersists:robo_gunner", "weight": 12, "minCount": 2, "maxCount": 4 },
+      { "type": "chaospersists:robo_warrior", "weight": 8, "minCount": 1, "maxCount": 2 },
+      { "type": "chaospersists:robo_sniper", "weight": 20, "minCount": 4, "maxCount": 8 },
+      { "type": "chaospersists:jeffery", "weight": 8, "minCount": 1, "maxCount": 2 },
+      { "type": "chaospersists:spider_driver", "weight": 20, "minCount": 3, "maxCount": 5 },
+      { "type": "chaospersists:mobzilla", "weight": 2, "minCount": 1, "maxCount": 1 },
+      { "type": "chaospersists:criminal", "weight": 15, "minCount": 1, "maxCount": 2 }
+    ],
+    "creature": [
+      { "type": "chaospersists:gazelle", "weight": 10, "minCount": 2, "maxCount": 4 },
+      { "type": "chaospersists:girlfriend", "weight": 5, "minCount": 2, "maxCount": 3 },
+      { "type": "chaospersists:girlfriend", "weight": 1, "minCount": 2, "maxCount": 3 },
+      { "type": "chaospersists:boyfriend", "weight": 5, "minCount": 2, "maxCount": 3 },
+      { "type": "chaospersists:boyfriend", "weight": 1, "minCount": 2, "maxCount": 3 },
+      { "type": "chaospersists:apple_cow", "weight": 10, "minCount": 4, "maxCount": 8 },
+      { "type": "chaospersists:apple_cow", "weight": 8, "minCount": 4, "maxCount": 8 },
+      { "type": "chaospersists:golden_apple_cow", "weight": 8, "minCount": 2, "maxCount": 6 },
+      { "type": "chaospersists:golden_apple_cow", "weight": 6, "minCount": 2, "maxCount": 6 },
+      { "type": "chaospersists:enchanted_golden_apple_cow", "weight": 5, "minCount": 2, "maxCount": 4 },
+      { "type": "chaospersists:enchanted_golden_apple_cow", "weight": 4, "minCount": 2, "maxCount": 4 }
+    ],
+    "ambient": [
+      { "type": "chaospersists:firefly", "weight": 15, "minCount": 3, "maxCount": 6 },
+      { "type": "chaospersists:firefly", "weight": 10, "minCount": 3, "maxCount": 6 },
+      { "type": "chaospersists:butterfly", "weight": 20, "minCount": 3, "maxCount": 6 },
+      { "type": "chaospersists:butterfly", "weight": 25, "minCount": 3, "maxCount": 6 },
+      { "type": "chaospersists:moth", "weight": 10, "minCount": 1, "maxCount": 5 },
+      { "type": "chaospersists:moth", "weight": 20, "minCount": 1, "maxCount": 5 },
+      { "type": "chaospersists:chipmunk", "weight": 3, "minCount": 1, "maxCount": 2 },
+      { "type": "chaospersists:chipmunk", "weight": 5, "minCount": 1, "maxCount": 2 },
+      { "type": "chaospersists:bird", "weight": 10, "minCount": 2, "maxCount": 4 },
+      { "type": "chaospersists:bird", "weight": 15, "minCount": 2, "maxCount": 4 },
+      { "type": "chaospersists:gold_fish", "weight": 1, "minCount": 1, "maxCount": 1 },
+      { "type": "chaospersists:coin", "weight": 2, "minCount": 1, "maxCount": 1 },
+      { "type": "chaospersists:coin", "weight": 2, "minCount": 1, "maxCount": 1 },
+      { "type": "chaospersists:cricket", "weight": 5, "minCount": 4, "maxCount": 6 },
+      { "type": "chaospersists:tshirt", "weight": 2, "minCount": 1, "maxCount": 1 }
+    ],
+    "water_creature": [
+      { "type": "chaospersists:whale", "weight": 1, "minCount": 1, "maxCount": 1 },
+      { "type": "chaospersists:flounder", "weight": 2, "minCount": 2, "maxCount": 4 },
+      { "type": "chaospersists:frog", "weight": 5, "minCount": 4, "maxCount": 6 }
+    ]
+  },
+  "spawn_costs": {
+    "chaospersists:bird": { "energy_budget": 0.1, "charge": 0.5 },
+    "chaospersists:butterfly": { "energy_budget": 0.1, "charge": 0.5 },
+    "chaospersists:firefly": { "energy_budget": 0.1, "charge": 0.5 },
+    "chaospersists:moth": { "energy_budget": 0.1, "charge": 0.5 },
+    "chaospersists:chipmunk": { "energy_budget": 0.1, "charge": 0.5 },
+    "chaospersists:cricket": { "energy_budget": 0.1, "charge": 0.5 },
+    "chaospersists:coin": { "energy_budget": 0.1, "charge": 0.5 },
+    "chaospersists:gold_fish": { "energy_budget": 0.1, "charge": 0.5 },
+    "chaospersists:tshirt": { "energy_budget": 0.1, "charge": 0.5 }
+  },
+  "carvers": {
+    "air": [
+      "minecraft:cave",
+      "minecraft:cave_extra_underground",
+      "minecraft:canyon"
+    ],
+    "liquid": [
+      "minecraft:cave_extra_underground",
+      "minecraft:canyon"
+    ]
+  },
+  "features": [
+    [],
+    [
+      "minecraft:lake_lava_underground"
+    ],
+    [
+      "minecraft:amethyst_geode"
+    ],
+    [
+      "minecraft:monster_room",
+      "minecraft:monster_room_deep"
+    ],
+    [],
+    [
+      "minecraft:ore_dirt",
+      "minecraft:ore_gravel",
+      "minecraft:ore_granite_upper",
+      "minecraft:ore_granite_lower",
+      "minecraft:ore_diorite_upper",
+      "minecraft:ore_diorite_lower",
+      "minecraft:ore_andesite_upper",
+      "minecraft:ore_andesite_lower",
+      "minecraft:ore_tuff",
+      "minecraft:ore_coal_upper",
+      "minecraft:ore_coal_lower",
+      "minecraft:ore_iron_upper",
+      "minecraft:ore_iron_middle",
+      "minecraft:ore_iron_small",
+      "minecraft:ore_gold",
+      "minecraft:ore_gold_lower",
+      "minecraft:ore_redstone",
+      "minecraft:ore_redstone_lower",
+      "minecraft:ore_diamond",
+      "minecraft:ore_diamond_large",
+      "minecraft:ore_diamond_buried",
+      "minecraft:ore_lapis",
+      "minecraft:ore_lapis_buried",
+      "minecraft:ore_copper",
+      "minecraft:ore_emerald"
+    ],
+    [
+      "minecraft:spring_lava"
+    ],
+    [
+      "minecraft:glow_lichen",
+      "minecraft:patch_tall_grass_2",
+      "minecraft:flower_default",
+      "minecraft:patch_grass_plain"
+    ],
+    [
+      "minecraft:freeze_top_layer"
+    ]
+  ],
+  "creature_spawn_probability": 0.1
+}

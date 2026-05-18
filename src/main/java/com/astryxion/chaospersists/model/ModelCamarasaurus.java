@@ -1,253 +1,160 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Camarasaurus
- *  com.astryxion.chaospersists.ModelCamarasaurus
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- */
 package com.astryxion.chaospersists.model;
 
 import com.astryxion.chaospersists.entity.Camarasaurus;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.util.Mth;
 
-public class ModelCamarasaurus
-extends ModelBase {
-    private float wingspeed = 1.0f;
-    ModelRenderer Body1;
-    ModelRenderer Body2;
-    ModelRenderer Body3;
-    ModelRenderer Body4;
-    ModelRenderer Tail0;
-    ModelRenderer Neck1;
-    ModelRenderer Neck2;
-    ModelRenderer Neck3;
-    ModelRenderer Head1;
-    ModelRenderer Head2;
-    ModelRenderer Tail1;
-    ModelRenderer Tail2;
-    ModelRenderer Tail3;
-    ModelRenderer BLegupleft;
-    ModelRenderer FLegupleft;
-    ModelRenderer BLegupright;
-    ModelRenderer FLegupright;
-    ModelRenderer BLegdownright;
-    ModelRenderer FLegdownleft;
-    ModelRenderer FLegdownright;
-    ModelRenderer BLegdownleft;
+public class ModelCamarasaurus extends EntityModel<Camarasaurus> {
+    private final float wingspeed;
+    private final ModelPart Body1;
+    private final ModelPart Body2;
+    private final ModelPart Body3;
+    private final ModelPart Body4;
+    private final ModelPart Tail0;
+    private final ModelPart Neck1;
+    private final ModelPart Neck2;
+    private final ModelPart Neck3;
+    private final ModelPart Head1;
+    private final ModelPart Head2;
+    private final ModelPart Tail1;
+    private final ModelPart Tail2;
+    private final ModelPart Tail3;
+    private final ModelPart BLegupleft;
+    private final ModelPart FLegupleft;
+    private final ModelPart BLegupright;
+    private final ModelPart FLegupright;
+    private final ModelPart BLegdownright;
+    private final ModelPart FLegdownleft;
+    private final ModelPart FLegdownright;
+    private final ModelPart BLegdownleft;
 
     public ModelCamarasaurus(float f1) {
-        this.wingspeed = f1;
-        this.textureWidth = 256;
-        this.textureHeight = 256;
-        this.Body1 = new ModelRenderer((ModelBase)this, 0, 135);
-        this.Body1.addBox(-6.0f, 0.0f, 0.0f, 12, 12, 12);
-        this.Body1.setRotationPoint(0.0f, -1.0f, 0.0f);
-        this.Body1.setTextureSize(256, 256);
-        this.Body1.mirror = true;
-        this.setRotation(this.Body1, 0.0f, 0.0f, 0.0f);
-        this.Body2 = new ModelRenderer((ModelBase)this, 0, 160);
-        this.Body2.addBox(-5.0f, 0.0f, 0.0f, 10, 10, 6);
-        this.Body2.setRotationPoint(0.0f, -2.0f, -4.0f);
-        this.Body2.setTextureSize(256, 256);
-        this.Body2.mirror = true;
-        this.setRotation(this.Body2, -0.1858931f, 0.0f, 0.0f);
-        this.Body3 = new ModelRenderer((ModelBase)this, 0, 177);
-        this.Body3.addBox(-4.0f, 0.0f, 0.0f, 8, 8, 4);
-        this.Body3.setRotationPoint(0.0f, -3.0f, -6.0f);
-        this.Body3.setTextureSize(256, 256);
-        this.Body3.mirror = true;
-        this.setRotation(this.Body3, -0.3346075f, 0.0f, 0.0f);
-        this.Body4 = new ModelRenderer((ModelBase)this, 0, 120);
-        this.Body4.addBox(-5.0f, 0.0f, 0.0f, 10, 10, 4);
-        this.Body4.setRotationPoint(0.0f, 0.0f, 11.0f);
-        this.Body4.setTextureSize(256, 256);
-        this.Body4.mirror = true;
-        this.setRotation(this.Body4, 0.0f, 0.0f, 0.0f);
-        this.Tail0 = new ModelRenderer((ModelBase)this, 0, 107);
-        this.Tail0.addBox(-3.0f, -2.0f, 0.0f, 6, 6, 6);
-        this.Tail0.setRotationPoint(0.0f, 3.0f, 14.0f);
-        this.Tail0.setTextureSize(256, 256);
-        this.Tail0.mirror = true;
-        this.setRotation(this.Tail0, -0.0743572f, 0.0f, 0.0f);
-        this.Neck1 = new ModelRenderer((ModelBase)this, 0, 190);
-        this.Neck1.addBox(-3.0f, 0.0f, 0.0f, 6, 6, 5);
-        this.Neck1.setRotationPoint(0.0f, -4.0f, -9.0f);
-        this.Neck1.setTextureSize(256, 256);
-        this.Neck1.mirror = true;
-        this.setRotation(this.Neck1, -0.4089647f, 0.0f, 0.0f);
-        this.Neck2 = new ModelRenderer((ModelBase)this, 0, 202);
-        this.Neck2.addBox(-2.0f, 0.0f, -6.0f, 4, 4, 7);
-        this.Neck2.setRotationPoint(0.0f, -3.0f, -9.0f);
-        this.Neck2.setTextureSize(256, 256);
-        this.Neck2.mirror = true;
-        this.setRotation(this.Neck2, -0.5948578f, 0.0f, 0.0f);
-        this.Neck3 = new ModelRenderer((ModelBase)this, 0, 214);
-        this.Neck3.addBox(-2.0f, -2.0f, -12.0f, 4, 4, 13);
-        this.Neck3.setRotationPoint(0.0f, -5.0f, -15.0f);
-        this.Neck3.setTextureSize(256, 256);
-        this.Neck3.mirror = true;
-        this.setRotation(this.Neck3, -0.8179294f, 0.0f, 0.0f);
-        this.Head1 = new ModelRenderer((ModelBase)this, 0, 232);
-        this.Head1.addBox(-4.0f, -3.0f, -6.0f, 8, 6, 6);
-        this.Head1.setRotationPoint(0.0f, -13.0f, -22.0f);
-        this.Head1.setTextureSize(256, 256);
-        this.Head1.mirror = true;
-        this.setRotation(this.Head1, -0.1115358f, 0.0f, 0.0f);
-        this.Head2 = new ModelRenderer((ModelBase)this, 0, 245);
-        this.Head2.addBox(-3.0f, -2.0f, -4.0f, 6, 4, 4);
-        this.Head2.setRotationPoint(0.0f, -13.0f, -27.0f);
-        this.Head2.setTextureSize(256, 256);
-        this.Head2.mirror = true;
-        this.setRotation(this.Head2, 0.0f, 0.0f, 0.0f);
-        this.Tail1 = new ModelRenderer((ModelBase)this, 0, 93);
-        this.Tail1.addBox(-2.0f, -3.0f, 0.0f, 4, 4, 9);
-        this.Tail1.setRotationPoint(0.0f, 5.0f, 19.0f);
-        this.Tail1.setTextureSize(256, 256);
-        this.Tail1.mirror = true;
-        this.setRotation(this.Tail1, -0.1115358f, 0.0f, 0.0f);
-        this.Tail2 = new ModelRenderer((ModelBase)this, 0, 82);
-        this.Tail2.addBox(-1.0f, -1.0f, 0.0f, 2, 2, 8);
-        this.Tail2.setRotationPoint(0.0f, 4.0f, 26.0f);
-        this.Tail2.setTextureSize(256, 256);
-        this.Tail2.mirror = true;
-        this.setRotation(this.Tail2, -0.0743572f, 0.0f, 0.0f);
-        this.Tail3 = new ModelRenderer((ModelBase)this, 0, 73);
-        this.Tail3.addBox(-0.5f, -0.5f, 0.0f, 1, 1, 7);
-        this.Tail3.setRotationPoint(0.0f, 4.5f, 34.0f);
-        this.Tail3.setTextureSize(256, 256);
-        this.Tail3.mirror = true;
-        this.setRotation(this.Tail3, -0.0371786f, 0.0f, 0.0f);
-        this.BLegupleft = new ModelRenderer((ModelBase)this, 49, 157);
-        this.BLegupleft.addBox(0.0f, 0.0f, 0.0f, 6, 8, 6);
-        this.BLegupleft.setRotationPoint(2.0f, 9.0f, 7.0f);
-        this.BLegupleft.setTextureSize(256, 256);
-        this.BLegupleft.mirror = true;
-        this.setRotation(this.BLegupleft, -0.1487195f, 0.0f, 0.0f);
-        this.FLegupleft = new ModelRenderer((ModelBase)this, 49, 141);
-        this.FLegupleft.addBox(0.0f, 0.0f, -6.0f, 6, 9, 6);
-        this.FLegupleft.setRotationPoint(2.0f, 8.0f, 2.0f);
-        this.FLegupleft.setTextureSize(256, 256);
-        this.FLegupleft.mirror = true;
-        this.setRotation(this.FLegupleft, 0.0f, 0.0f, 0.0f);
-        this.BLegupright = new ModelRenderer((ModelBase)this, 49, 126);
-        this.BLegupright.addBox(-6.0f, 0.0f, 0.0f, 6, 8, 6);
-        this.BLegupright.setRotationPoint(-2.0f, 9.0f, 7.0f);
-        this.BLegupright.setTextureSize(256, 256);
-        this.BLegupright.mirror = true;
-        this.setRotation(this.BLegupright, -0.1487144f, 0.0f, 0.0f);
-        this.FLegupright = new ModelRenderer((ModelBase)this, 49, 110);
-        this.FLegupright.addBox(-6.0f, 0.0f, -6.0f, 6, 9, 6);
-        this.FLegupright.setRotationPoint(-2.0f, 8.0f, 2.0f);
-        this.FLegupright.setTextureSize(256, 256);
-        this.FLegupright.mirror = true;
-        this.setRotation(this.FLegupright, 0.0f, 0.0f, 0.0f);
-        this.BLegdownright = new ModelRenderer((ModelBase)this, 115, 157);
-        this.BLegdownright.addBox(-5.0f, 7.0f, -1.0f, 5, 8, 5);
-        this.BLegdownright.setRotationPoint(-2.0f, 9.0f, 7.0f);
-        this.BLegdownright.setTextureSize(256, 256);
-        this.BLegdownright.mirror = true;
-        this.setRotation(this.BLegdownright, 0.0f, 0.0f, 0.0f);
-        this.FLegdownleft = new ModelRenderer((ModelBase)this, 94, 143);
-        this.FLegdownleft.addBox(0.0f, 8.0f, -6.0f, 5, 8, 5);
-        this.FLegdownleft.setRotationPoint(2.0f, 8.0f, 2.0f);
-        this.FLegdownleft.setTextureSize(256, 256);
-        this.FLegdownleft.mirror = true;
-        this.setRotation(this.FLegdownleft, 0.0f, 0.0f, 0.0f);
-        this.FLegdownright = new ModelRenderer((ModelBase)this, 94, 157);
-        this.FLegdownright.addBox(-5.0f, 8.0f, -6.0f, 5, 8, 5);
-        this.FLegdownright.setRotationPoint(-2.0f, 8.0f, 2.0f);
-        this.FLegdownright.setTextureSize(256, 256);
-        this.FLegdownright.mirror = true;
-        this.setRotation(this.FLegdownright, 0.0f, 0.0f, 0.0f);
-        this.BLegdownleft = new ModelRenderer((ModelBase)this, 115, 143);
-        this.BLegdownleft.addBox(0.0f, 7.0f, -1.0f, 5, 8, 5);
-        this.BLegdownleft.setRotationPoint(2.0f, 9.0f, 7.0f);
-        this.BLegdownleft.setTextureSize(256, 256);
-        this.BLegdownleft.mirror = true;
-        this.setRotation(this.BLegdownleft, 0.0f, 0.0f, 0.0f);
+        this(LayerDefinition.create(createMesh(), 256, 256).bakeRoot(), f1);
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        Camarasaurus c = (Camarasaurus)entity;
-        float hf = 0.0f;
-        float newangle = 0.0f;
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        newangle = (double)f1 > 0.1 ? MathHelper.cos((float)(f2 * 1.3f * this.wingspeed)) * 3.1415927f * 0.25f * f1 : 0.0f;
-        this.FLegupleft.rotateAngleX = newangle;
-        this.FLegdownleft.rotateAngleX = newangle;
-        this.FLegupright.rotateAngleX = - newangle;
-        this.FLegdownright.rotateAngleX = - newangle;
-        this.BLegupleft.rotateAngleX = -0.15f - newangle;
-        this.BLegdownleft.rotateAngleX = - newangle;
-        this.BLegupright.rotateAngleX = -0.15f + newangle;
-        this.BLegdownright.rotateAngleX = newangle;
-        hf = (float)c.getCamarasaurusHealth() / c.getMaxHealth();
-        newangle = MathHelper.cos((float)(f2 * 1.5f * this.wingspeed * hf)) * 3.1415927f * 0.25f * hf;
-        if (c.isSitting()) {
+    public ModelCamarasaurus(ModelPart root, float wingspeed) {
+        this.wingspeed = wingspeed;
+        this.Body1 = root.getChild("Body1");
+        this.Body2 = root.getChild("Body2");
+        this.Body3 = root.getChild("Body3");
+        this.Body4 = root.getChild("Body4");
+        this.Tail0 = root.getChild("Tail0");
+        this.Neck1 = root.getChild("Neck1");
+        this.Neck2 = root.getChild("Neck2");
+        this.Neck3 = root.getChild("Neck3");
+        this.Head1 = root.getChild("Head1");
+        this.Head2 = root.getChild("Head2");
+        this.Tail1 = root.getChild("Tail1");
+        this.Tail2 = root.getChild("Tail2");
+        this.Tail3 = root.getChild("Tail3");
+        this.BLegupleft = root.getChild("BLegupleft");
+        this.FLegupleft = root.getChild("FLegupleft");
+        this.BLegupright = root.getChild("BLegupright");
+        this.FLegupright = root.getChild("FLegupright");
+        this.BLegdownright = root.getChild("BLegdownright");
+        this.FLegdownleft = root.getChild("FLegdownleft");
+        this.FLegdownright = root.getChild("FLegdownright");
+        this.BLegdownleft = root.getChild("BLegdownleft");
+    }
+
+    public static MeshDefinition createMesh() {
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
+        partdefinition.addOrReplaceChild("Body1", CubeListBuilder.create().texOffs(0, 135).mirror().addBox(-6.0f, 0.0f, 0.0f, 12, 12, 12), PartPose.offset(0.0f, -1.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Body2", CubeListBuilder.create().texOffs(0, 160).mirror().addBox(-5.0f, 0.0f, 0.0f, 10, 10, 6), PartPose.offsetAndRotation(0.0f, -2.0f, -4.0f, -0.1858931f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Body3", CubeListBuilder.create().texOffs(0, 177).mirror().addBox(-4.0f, 0.0f, 0.0f, 8, 8, 4), PartPose.offsetAndRotation(0.0f, -3.0f, -6.0f, -0.3346075f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Body4", CubeListBuilder.create().texOffs(0, 120).mirror().addBox(-5.0f, 0.0f, 0.0f, 10, 10, 4), PartPose.offset(0.0f, 0.0f, 11.0f));
+        partdefinition.addOrReplaceChild("Tail0", CubeListBuilder.create().texOffs(0, 107).mirror().addBox(-3.0f, -2.0f, 0.0f, 6, 6, 6), PartPose.offsetAndRotation(0.0f, 3.0f, 14.0f, -0.0743572f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Neck1", CubeListBuilder.create().texOffs(0, 190).mirror().addBox(-3.0f, 0.0f, 0.0f, 6, 6, 5), PartPose.offsetAndRotation(0.0f, -4.0f, -9.0f, -0.4089647f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Neck2", CubeListBuilder.create().texOffs(0, 202).mirror().addBox(-2.0f, 0.0f, -6.0f, 4, 4, 7), PartPose.offsetAndRotation(0.0f, -3.0f, -9.0f, -0.5948578f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Neck3", CubeListBuilder.create().texOffs(0, 214).mirror().addBox(-2.0f, -2.0f, -12.0f, 4, 4, 13), PartPose.offsetAndRotation(0.0f, -5.0f, -15.0f, -0.8179294f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Head1", CubeListBuilder.create().texOffs(0, 232).mirror().addBox(-4.0f, -3.0f, -6.0f, 8, 6, 6), PartPose.offsetAndRotation(0.0f, -13.0f, -22.0f, -0.1115358f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Head2", CubeListBuilder.create().texOffs(0, 245).mirror().addBox(-3.0f, -2.0f, -4.0f, 6, 4, 4), PartPose.offset(0.0f, -13.0f, -27.0f));
+        partdefinition.addOrReplaceChild("Tail1", CubeListBuilder.create().texOffs(0, 93).mirror().addBox(-2.0f, -3.0f, 0.0f, 4, 4, 9), PartPose.offsetAndRotation(0.0f, 5.0f, 19.0f, -0.1115358f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Tail2", CubeListBuilder.create().texOffs(0, 82).mirror().addBox(-1.0f, -1.0f, 0.0f, 2, 2, 8), PartPose.offsetAndRotation(0.0f, 4.0f, 26.0f, -0.0743572f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Tail3", CubeListBuilder.create().texOffs(0, 73).mirror().addBox(-0.5f, -0.5f, 0.0f, 1, 1, 7), PartPose.offsetAndRotation(0.0f, 4.5f, 34.0f, -0.0371786f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("BLegupleft", CubeListBuilder.create().texOffs(49, 157).mirror().addBox(0.0f, 0.0f, 0.0f, 6, 8, 6), PartPose.offsetAndRotation(2.0f, 9.0f, 7.0f, -0.1487195f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("FLegupleft", CubeListBuilder.create().texOffs(49, 141).mirror().addBox(0.0f, 0.0f, -6.0f, 6, 9, 6), PartPose.offset(2.0f, 8.0f, 2.0f));
+        partdefinition.addOrReplaceChild("BLegupright", CubeListBuilder.create().texOffs(49, 126).mirror().addBox(-6.0f, 0.0f, 0.0f, 6, 8, 6), PartPose.offsetAndRotation(-2.0f, 9.0f, 7.0f, -0.1487144f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("FLegupright", CubeListBuilder.create().texOffs(49, 110).mirror().addBox(-6.0f, 0.0f, -6.0f, 6, 9, 6), PartPose.offset(-2.0f, 8.0f, 2.0f));
+        partdefinition.addOrReplaceChild("BLegdownright", CubeListBuilder.create().texOffs(115, 157).mirror().addBox(-5.0f, 7.0f, -1.0f, 5, 8, 5), PartPose.offset(-2.0f, 9.0f, 7.0f));
+        partdefinition.addOrReplaceChild("FLegdownleft", CubeListBuilder.create().texOffs(94, 143).mirror().addBox(0.0f, 8.0f, -6.0f, 5, 8, 5), PartPose.offset(2.0f, 8.0f, 2.0f));
+        partdefinition.addOrReplaceChild("FLegdownright", CubeListBuilder.create().texOffs(94, 157).mirror().addBox(-5.0f, 8.0f, -6.0f, 5, 8, 5), PartPose.offset(-2.0f, 8.0f, 2.0f));
+        partdefinition.addOrReplaceChild("BLegdownleft", CubeListBuilder.create().texOffs(115, 143).mirror().addBox(0.0f, 7.0f, -1.0f, 5, 8, 5), PartPose.offset(2.0f, 9.0f, 7.0f));
+        return meshdefinition;
+    }
+
+    @Override
+    public void setupAnim(Camarasaurus entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        float hf = entity.getHealth() / entity.getMaxHealth();
+        float newangle = limbSwingAmount > 0.1f ? Mth.cos(ageInTicks * 1.3f * this.wingspeed) * ((float) Math.PI * 0.25f) * limbSwingAmount : 0.0f;
+        this.FLegupleft.xRot = newangle;
+        this.FLegdownleft.xRot = newangle;
+        this.FLegupright.xRot = -newangle;
+        this.FLegdownright.xRot = -newangle;
+        this.BLegupleft.xRot = -0.15f - newangle;
+        this.BLegdownleft.xRot = -newangle;
+        this.BLegupright.xRot = -0.15f + newangle;
+        this.BLegdownright.xRot = newangle;
+        newangle = Mth.cos(ageInTicks * 1.5f * this.wingspeed * hf) * ((float) Math.PI * 0.25f) * hf;
+        if (entity.isInSittingPose()) {
             newangle = 0.0f;
         }
-        this.Tail0.rotateAngleY = newangle * 0.25f;
-        this.Tail1.rotationPointZ = this.Tail0.rotationPointZ + (float)Math.cos(this.Tail0.rotateAngleY) * 5.0f;
-        this.Tail1.rotationPointX = this.Tail0.rotationPointX + (float)Math.sin(this.Tail0.rotateAngleY) * 5.0f;
-        this.Tail1.rotateAngleY = newangle * 0.5f;
-        this.Tail2.rotationPointZ = this.Tail1.rotationPointZ + (float)Math.cos(this.Tail1.rotateAngleY) * 8.0f;
-        this.Tail2.rotationPointX = this.Tail1.rotationPointX + (float)Math.sin(this.Tail1.rotateAngleY) * 8.0f;
-        this.Tail2.rotateAngleY = newangle * 0.75f;
-        this.Tail3.rotationPointZ = this.Tail2.rotationPointZ + (float)Math.cos(this.Tail2.rotateAngleY) * 7.0f;
-        this.Tail3.rotationPointX = this.Tail2.rotationPointX + (float)Math.sin(this.Tail2.rotateAngleY) * 7.0f;
-        this.Tail3.rotateAngleY = newangle * 1.0f;
-        this.Neck1.rotateAngleY = (float)Math.toRadians(f3) * 0.125f;
-        this.Neck2.rotationPointZ = this.Neck1.rotationPointZ;
-        this.Neck2.rotationPointX = this.Neck1.rotationPointX;
-        this.Neck2.rotateAngleY = (float)Math.toRadians(f3) * 0.25f;
-        this.Neck3.rotationPointZ = this.Neck2.rotationPointZ - (float)Math.cos(this.Neck2.rotateAngleY) * 6.0f;
-        this.Neck3.rotationPointX = this.Neck2.rotationPointX - (float)Math.sin(this.Neck2.rotateAngleY) * 6.0f;
-        this.Neck3.rotateAngleY = (float)Math.toRadians(f3) * 0.38f;
-        this.Head1.rotationPointZ = this.Neck3.rotationPointZ - (float)Math.cos(this.Neck3.rotateAngleY) * 7.0f;
-        this.Head1.rotationPointX = this.Neck3.rotationPointX - (float)Math.sin(this.Neck3.rotateAngleY) * 7.0f;
-        this.Head1.rotateAngleY = (float)Math.toRadians(f3);
-        this.Head2.rotationPointZ = this.Head1.rotationPointZ - (float)Math.cos(this.Head1.rotateAngleY) * 5.0f;
-        this.Head2.rotationPointX = this.Head1.rotationPointX - (float)Math.sin(this.Head1.rotateAngleY) * 5.0f;
-        this.Head2.rotateAngleY = (float)Math.toRadians(f3);
-        this.Body1.render(f5);
-        this.Body2.render(f5);
-        this.Body3.render(f5);
-        this.Body4.render(f5);
-        this.Tail0.render(f5);
-        this.Neck1.render(f5);
-        this.Neck2.render(f5);
-        this.Neck3.render(f5);
-        this.Head1.render(f5);
-        this.Head2.render(f5);
-        this.Tail1.render(f5);
-        this.Tail2.render(f5);
-        this.Tail3.render(f5);
-        this.FLegupleft.render(f5);
-        this.FLegdownleft.render(f5);
-        this.FLegupright.render(f5);
-        this.FLegdownright.render(f5);
-        this.BLegupleft.render(f5);
-        this.BLegdownright.render(f5);
-        this.BLegupright.render(f5);
-        this.BLegdownleft.render(f5);
+        this.Tail0.yRot = newangle * 0.25f;
+        this.Tail1.z = this.Tail0.z + (float) Math.cos(this.Tail0.yRot) * 5.0f;
+        this.Tail1.x = this.Tail0.x + (float) Math.sin(this.Tail0.yRot) * 5.0f;
+        this.Tail1.yRot = newangle * 0.5f;
+        this.Tail2.z = this.Tail1.z + (float) Math.cos(this.Tail1.yRot) * 8.0f;
+        this.Tail2.x = this.Tail1.x + (float) Math.sin(this.Tail1.yRot) * 8.0f;
+        this.Tail2.yRot = newangle * 0.75f;
+        this.Tail3.z = this.Tail2.z + (float) Math.cos(this.Tail2.yRot) * 7.0f;
+        this.Tail3.x = this.Tail2.x + (float) Math.sin(this.Tail2.yRot) * 7.0f;
+        this.Tail3.yRot = newangle;
+        this.Neck1.yRot = (float) Math.toRadians(netHeadYaw) * 0.125f;
+        this.Neck2.z = this.Neck1.z;
+        this.Neck2.x = this.Neck1.x;
+        this.Neck2.yRot = (float) Math.toRadians(netHeadYaw) * 0.25f;
+        this.Neck3.z = this.Neck2.z - (float) Math.cos(this.Neck2.yRot) * 6.0f;
+        this.Neck3.x = this.Neck2.x - (float) Math.sin(this.Neck2.yRot) * 6.0f;
+        this.Neck3.yRot = (float) Math.toRadians(netHeadYaw) * 0.38f;
+        this.Head1.z = this.Neck3.z - (float) Math.cos(this.Neck3.yRot) * 7.0f;
+        this.Head1.x = this.Neck3.x - (float) Math.sin(this.Neck3.yRot) * 7.0f;
+        this.Head1.yRot = (float) Math.toRadians(netHeadYaw);
+        this.Head2.z = this.Head1.z - (float) Math.cos(this.Head1.yRot) * 5.0f;
+        this.Head2.x = this.Head1.x - (float) Math.sin(this.Head1.yRot) * 5.0f;
+        this.Head2.yRot = (float) Math.toRadians(netHeadYaw);
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
-    }
-
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+    @Override
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+        this.Body1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Body2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Body3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Body4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Tail0.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Neck1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Neck2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Neck3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Head1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Head2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Tail1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Tail2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Tail3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.BLegupleft.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.FLegupleft.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.BLegupright.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.FLegupright.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.BLegdownright.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.FLegdownleft.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.FLegdownright.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.BLegdownleft.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

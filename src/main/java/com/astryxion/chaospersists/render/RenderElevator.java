@@ -1,72 +1,59 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.Elevator
- *  com.astryxion.chaospersists.ModelElevator
- *  com.astryxion.chaospersists.RenderElevator
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.renderer.entity.Render
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- *  net.minecraft.util.ResourceLocation
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import com.astryxion.chaospersists.item.Elevator;
 import com.astryxion.chaospersists.model.ModelElevator;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.entity.Render;
-import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 
-@SideOnly(value=Side.CLIENT)
-public class RenderElevator
-extends Render {
-    protected ModelBase modelElevator;
+public class RenderElevator extends EntityRenderer<Elevator> {
+    private final ModelElevator model = new ModelElevator();
 
-    public RenderElevator(RenderManager manager) {
-        super(manager);
-        this.shadowSize = 0.25f;
-        this.modelElevator = new ModelElevator();
+    public RenderElevator(EntityRendererProvider.Context context) {
+        super(context);
+        this.shadowRadius = 0.25f;
     }
 
-    public void renderElevator(Elevator par1EntityElevator, double par2, double par4, double par6, float par8, float par9) {
-        GL11.glPushMatrix();
-        GL11.glTranslatef((float)((float)par2), (float)((float)par4), (float)((float)par6));
-        GL11.glRotatef((float)(180.0f - par8), (float)0.0f, (float)1.0f, (float)0.0f);
-        float f2 = (float)par1EntityElevator.getTimeSinceHit() - par9;
-        float f3 = par1EntityElevator.getDamageTaken() - par9;
+    @Override
+    public void render(
+            Elevator entity,
+            float entityYaw,
+            float partialTicks,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight) {
+        poseStack.pushPose();
+        poseStack.translate(0.0, 0.0, 0.0);
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f - entityYaw));
+        float f2 = (float) entity.getTimeSinceHit() - partialTicks;
+        float f3 = entity.getDamageTaken() - partialTicks;
         if (f3 < 0.0f) {
             f3 = 0.0f;
         }
         if (f2 > 0.0f) {
-            GL11.glRotatef((float)(MathHelper.sin((float)f2) * f2 * f3 / 10.0f * (float)par1EntityElevator.getForwardDirection()), (float)1.0f, (float)0.0f, (float)0.0f);
+            poseStack.mulPose(
+                    Axis.XP.rotation(
+                            Mth.sin(f2) * f2 * f3 / 10.0f * (float) entity.getForwardDirection()));
         }
         float f4 = 0.75f;
-        GL11.glScalef((float)f4, (float)f4, (float)f4);
-        GL11.glScalef((float)(1.0f / f4), (float)(1.0f / f4), (float)(1.0f / f4));
-        this.bindTexture(par1EntityElevator.getTexture());
-        GL11.glScalef((float)-1.0f, (float)-1.0f, (float)1.0f);
-        this.modelElevator.render((Entity)par1EntityElevator, 0.0f, 0.0f, -0.1f, 0.0f, 0.0f, 0.0625f);
-        GL11.glPopMatrix();
+        poseStack.scale(f4, f4, f4);
+        poseStack.scale(1.0f / f4, 1.0f / f4, 1.0f / f4);
+        poseStack.scale(-1.0f, -1.0f, 1.0f);
+        VertexConsumer vertexConsumer = buffer.getBuffer(this.model.renderType(this.getTextureLocation(entity)));
+        this.model.setupAnim(entity, 0.0f, 0.0f, -0.1f, 0.0f, 0.0f);
+        this.model.renderToBuffer(poseStack, vertexConsumer, packedLight, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f);
+        poseStack.popPose();
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-        this.renderElevator((Elevator)par1Entity, par2, par4, par6, par8, par9);
-    }
-
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        Elevator a = (Elevator)entity;
-        return a.getTexture();
+    @Override
+    public ResourceLocation getTextureLocation(Elevator entity) {
+        return entity.getTexture();
     }
 }
-

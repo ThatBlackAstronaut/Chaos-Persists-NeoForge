@@ -1,245 +1,233 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.EntityCannonFodder
- *  com.astryxion.chaospersists.MyEntityAIAvoidEntity
- *  com.astryxion.chaospersists.MyEntityAIFollowOwner
- *  com.astryxion.chaospersists.MyEntityAIWander
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.VelocityRaptor
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockDeadBush
- *  net.minecraft.block.BlockDoublePlant
- *  net.minecraft.block.BlockFlower
- *  net.minecraft.block.BlockTallGrass
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityAgeable
- *  net.minecraft.entity.EntityCreature
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAILookIdle
- *  net.minecraft.entity.ai.EntityAIMate
- *  net.minecraft.entity.ai.EntityAIMoveIndoors
- *  net.minecraft.entity.ai.EntityAIPanic
- *  net.minecraft.entity.ai.EntityAISwimming
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.EntityAITempt
- *  net.minecraft.entity.ai.EntityAIWatchClosest
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.passive.EntityAnimal
- *  net.minecraft.entity.passive.EntityTameable
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.InventoryPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.MathHelper
- *  net.minecraft.world.GameRules
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import com.astryxion.chaospersists.entity.EntityCannonFodder;
+import com.astryxion.chaospersists.util.MyUtils;
+
+import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
 import com.astryxion.chaospersists.util.MyEntityAIAvoidEntity;
 import com.astryxion.chaospersists.util.MyEntityAIFollowOwner;
 import com.astryxion.chaospersists.util.MyEntityAIWander;
-import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import java.util.UUID;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockDeadBush;
-import net.minecraft.block.BlockDoublePlant;
-import net.minecraft.block.BlockFlower;
-import net.minecraft.block.BlockTallGrass;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityAgeable;
-import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAIMate;
-import net.minecraft.entity.ai.EntityAIMoveIndoors;
-import net.minecraft.entity.ai.EntityAIPanic;
-import net.minecraft.entity.ai.EntityAISwimming;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.EntityAITempt;
-import net.minecraft.entity.ai.EntityAIWatchClosest;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.passive.EntityAnimal;
-import net.minecraft.entity.passive.EntityTameable;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoublePlantBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.ForgeRegistries;
 
-public class VelocityRaptor
-extends EntityCannonFodder {
+public class VelocityRaptor extends EntityCannonFodder {
     private float moveSpeed = 0.55f;
     private int closest = 99999;
     private int tx = 0;
     private int ty = 0;
     private int tz = 0;
 
-    public VelocityRaptor(World par1World) {
-        super(par1World);
-        this.setSize(0.5f, 0.6f);
-                        this.setSitting(false);
-        this.experienceValue = 5;
-        this.tasks.addTask(0, (EntityAIBase)new EntityAISwimming((EntityLiving)this));
-        this.tasks.addTask(1, (EntityAIBase)new EntityAIMate((EntityAnimal)this, 1.0));
-        this.tasks.addTask(2, (EntityAIBase)new MyEntityAIFollowOwner((EntityTameable)this, 1.5f, 10.0f, 2.0f));
-        this.tasks.addTask(3, (EntityAIBase)new MyEntityAIAvoidEntity((EntityCreature)this, EntityMob.class, 8.0f, 1.0, 1.399999976158142));
-        this.tasks.addTask(4, (EntityAIBase)new EntityAITempt((EntityCreature)this, 1.25, Items.APPLE, false));
-        this.tasks.addTask(5, (EntityAIBase)new EntityAIPanic((EntityCreature)this, 1.600000023841858));
-        this.tasks.addTask(6, (EntityAIBase)new EntityAIWatchClosest((EntityLiving)this, EntityPlayer.class, 6.0f));
-        this.tasks.addTask(7, (EntityAIBase)new MyEntityAIWander((EntityCreature)this, 0.9f));
-        this.tasks.addTask(8, (EntityAIBase)new EntityAILookIdle((EntityLiving)this));
-        this.tasks.addTask(9, (EntityAIBase)new EntityAIMoveIndoors((EntityCreature)this));
+    public VelocityRaptor(EntityType<? extends VelocityRaptor> type, Level level) {
+        super(type, level);
+        this.moveSpeed = 0.55f;
+        this.setOrderedToSit(false);
+        this.xpReward = 5;
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new BreedGoal(this, 1.0));
+        this.goalSelector.addGoal(2, new MyEntityAIFollowOwner(this, 1.5f, 10.0f, 2.0f));
+        this.goalSelector.addGoal(
+                3, new MyEntityAIAvoidEntity(this, Monster.class, 8.0f, 1.0, 1.399999976158142));
+        this.goalSelector.addGoal(4, new TemptGoal(this, 1.25, Ingredient.of(Items.APPLE), false));
+        this.goalSelector.addGoal(5, new PanicGoal(this, 1.600000023841858));
+        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0f));
+        this.goalSelector.addGoal(7, new MyEntityAIWander(this, 0.9f));
+        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(9, new OpenDoorGoal(this, true));
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(2.0);
+    public static AttributeSupplier.Builder createAttributes() {
+        return TamableAnimal.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 10.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.55)
+                .add(Attributes.ATTACK_DAMAGE, 2.0);
     }
 
-    protected void entityInit() {
-        super.entityInit();
-        this.setSitting(false);
-    }
-
-    public boolean getCanSpawnHere() {
-        if (this.posY < 50.0) {
-            return false;
+    @Override
+    public void tick() {
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
+        double max = (double) this.mygetMaxHealth();
+        if (this.getAttribute(Attributes.MAX_HEALTH).getBaseValue() != max) {
+            this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(max);
         }
-        if (!this.world.isDaytime()) {
-            return false;
-        }
-        return true;
+        super.tick();
     }
 
-    public void onUpdate() {
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        super.onUpdate();
-    }
-
-    protected void fall(float par1) {
-        float i = (float)MathHelper.ceil((double)((float)(par1 - 3.0f)));
+    @Override
+    public boolean causeFallDamage(float par1, float damageMultiplier, DamageSource source) {
+        float i = (float) Mth.ceil(par1 - 3.0f);
         if (i > 0.0f) {
             if (i > 3.0f) {
-                this.playSound(net.minecraft.init.SoundEvents.ENTITY_GENERIC_BIG_FALL, 1.0f, 1.0f);
+                this.playSound(SoundEvents.GENERIC_BIG_FALL, 1.0f, 1.0f);
             } else {
-                this.playSound(net.minecraft.init.SoundEvents.ENTITY_GENERIC_SMALL_FALL, 1.0f, 1.0f);
+                this.playSound(SoundEvents.GENERIC_SMALL_FALL, 1.0f, 1.0f);
             }
             if (i > 2.0f) {
                 i = 2.0f;
             }
-            this.attackEntityFrom(DamageSource.FALL, i);
-        }
-    }
-
-    private boolean scan_it(int x, int y, int z, int dx, int dy, int dz) {
-        int i;
-        Block bid;
-        int d;
-        int j;
-        int found = 0;
-        for (i = - dy; i <= dy; ++i) {
-            for (j = - dz; j <= dz; ++j) {
-                bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x + dx, y + i, z + j)).getBlock();
-                if ((bid == Blocks.TALLGRASS || bid == Blocks.YELLOW_FLOWER || bid == Blocks.RED_FLOWER || bid == Blocks.DEADBUSH || bid == Blocks.DOUBLE_PLANT) && (d = dx * dx + j * j + i * i) < this.closest) {
-                    this.closest = d;
-                    this.tx = x + dx;
-                    this.ty = y + i;
-                    this.tz = z + j;
-                    ++found;
-                }
-                if ((bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x - dx, y + i, z + j)).getBlock()) != Blocks.TALLGRASS && bid != Blocks.YELLOW_FLOWER && bid != Blocks.RED_FLOWER && bid != Blocks.DEADBUSH && bid != Blocks.DOUBLE_PLANT || (d = dx * dx + j * j + i * i) >= this.closest) continue;
-                this.closest = d;
-                this.tx = x - dx;
-                this.ty = y + i;
-                this.tz = z + j;
-                ++found;
-            }
-        }
-        for (i = - dx; i <= dx; ++i) {
-            for (j = - dz; j <= dz; ++j) {
-                bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x + i, y + dy, z + j)).getBlock();
-                if ((bid == Blocks.TALLGRASS || bid == Blocks.YELLOW_FLOWER || bid == Blocks.RED_FLOWER || bid == Blocks.DEADBUSH || bid == Blocks.DOUBLE_PLANT) && (d = dy * dy + j * j + i * i) < this.closest) {
-                    this.closest = d;
-                    this.tx = x + i;
-                    this.ty = y + dy;
-                    this.tz = z + j;
-                    ++found;
-                }
-                if ((bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x + i, y - dy, z + j)).getBlock()) != Blocks.TALLGRASS && bid != Blocks.YELLOW_FLOWER && bid != Blocks.RED_FLOWER && bid != Blocks.DEADBUSH && bid != Blocks.DOUBLE_PLANT || (d = dy * dy + j * j + i * i) >= this.closest) continue;
-                this.closest = d;
-                this.tx = x + i;
-                this.ty = y - dy;
-                this.tz = z + j;
-                ++found;
-            }
-        }
-        for (i = - dx; i <= dx; ++i) {
-            for (j = - dy; j <= dy; ++j) {
-                bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x + i, y + j, z + dz)).getBlock();
-                if ((bid == Blocks.TALLGRASS || bid == Blocks.YELLOW_FLOWER || bid == Blocks.RED_FLOWER || bid == Blocks.DEADBUSH || bid == Blocks.DOUBLE_PLANT) && (d = dz * dz + j * j + i * i) < this.closest) {
-                    this.closest = d;
-                    this.tx = x + i;
-                    this.ty = y + j;
-                    this.tz = z + dz;
-                    ++found;
-                }
-                if ((bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x + i, y + j, z - dz)).getBlock()) != Blocks.TALLGRASS && bid != Blocks.YELLOW_FLOWER && bid != Blocks.RED_FLOWER && bid != Blocks.DEADBUSH && bid != Blocks.DOUBLE_PLANT || (d = dz * dz + j * j + i * i) >= this.closest) continue;
-                this.closest = d;
-                this.tx = x + i;
-                this.ty = y + j;
-                this.tz = z - dz;
-                ++found;
-            }
-        }
-        if (found != 0) {
-            return true;
+            this.hurt(this.damageSources().fall(), i);
         }
         return false;
     }
 
-    protected void updateAITasks() {
-        super.updateAITasks();
-        if (this.isDead) {
+    private boolean isGrazableBlock(Block block) {
+        return block == Blocks.TALL_GRASS
+                || block == Blocks.GRASS
+                || block == Blocks.DANDELION
+                || block == Blocks.POPPY
+                || block == Blocks.DEAD_BUSH
+                || block instanceof DoublePlantBlock;
+    }
+
+    private boolean scan_it(int x, int y, int z, int dx, int dy, int dz) {
+        int found = 0;
+        for (int i = -dy; i <= dy; ++i) {
+            for (int j = -dz; j <= dz; ++j) {
+                Block bid =
+                        this.level()
+                                .getBlockState(new BlockPos(x + dx, y + i, z + j))
+                                .getBlock();
+                if (this.isGrazableBlock(bid)) {
+                    int d = dx * dx + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x + dx;
+                        this.ty = y + i;
+                        this.tz = z + j;
+                        ++found;
+                    }
+                }
+                bid =
+                        this.level()
+                                .getBlockState(new BlockPos(x - dx, y + i, z + j))
+                                .getBlock();
+                if (this.isGrazableBlock(bid)) {
+                    int d = dx * dx + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x - dx;
+                        this.ty = y + i;
+                        this.tz = z + j;
+                        ++found;
+                    }
+                }
+            }
+        }
+        for (int i = -dx; i <= dx; ++i) {
+            for (int j = -dz; j <= dz; ++j) {
+                Block bid =
+                        this.level()
+                                .getBlockState(new BlockPos(x + i, y + dy, z + j))
+                                .getBlock();
+                if (this.isGrazableBlock(bid)) {
+                    int d = dy * dy + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x + i;
+                        this.ty = y + dy;
+                        this.tz = z + j;
+                        ++found;
+                    }
+                }
+                bid =
+                        this.level()
+                                .getBlockState(new BlockPos(x + i, y - dy, z + j))
+                                .getBlock();
+                if (this.isGrazableBlock(bid)) {
+                    int d = dy * dy + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x + i;
+                        this.ty = y - dy;
+                        this.tz = z + j;
+                        ++found;
+                    }
+                }
+            }
+        }
+        for (int i = -dx; i <= dx; ++i) {
+            for (int j = -dy; j <= dy; ++j) {
+                Block bid =
+                        this.level()
+                                .getBlockState(new BlockPos(x + i, y + j, z + dz))
+                                .getBlock();
+                if (this.isGrazableBlock(bid)) {
+                    int d = dz * dz + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x + i;
+                        this.ty = y + j;
+                        this.tz = z + dz;
+                        ++found;
+                    }
+                }
+                bid =
+                        this.level()
+                                .getBlockState(new BlockPos(x + i, y + j, z - dz))
+                                .getBlock();
+                if (this.isGrazableBlock(bid)) {
+                    int d = dz * dz + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x + i;
+                        this.ty = y + j;
+                        this.tz = z - dz;
+                        ++found;
+                    }
+                }
+            }
+        }
+        return found != 0;
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        if (this.isDeadOrDying()) {
             return;
         }
-        if (this.world.rand.nextInt(200) == 1) {
-            this.setRevengeTarget(null);
+        if (this.getRandom().nextInt(200) == 1) {
+            this.setLastHurtByMob(null);
         }
-        if (!this.isSitting() && (this.world.rand.nextInt(20) == 0 && this.getVHealth() < this.mygetMaxHealth() || this.world.rand.nextInt(250) == 0) && ChaosPersists.PlayNicely == 0) {
+        if (!this.isInSittingPose()
+                && (this.getRandom().nextInt(20) == 0
+                                && this.getVHealth() < this.mygetMaxHealth()
+                        || this.getRandom().nextInt(250) == 0)
+                && ChaosPersists.PlayNicely == 0) {
             this.closest = 99999;
             this.tz = 0;
             this.ty = 0;
@@ -249,201 +237,244 @@ extends EntityCannonFodder {
                 if (j > 2) {
                     j = 2;
                 }
-                if (this.scan_it((int)this.posX, (int)this.posY + 1, (int)this.posZ, i, j, i)) break;
-                if (i < 5) continue;
+                if (this.scan_it((int) this.getX(), (int) this.getY() + 1, (int) this.getZ(), i, j, i)) {
+                    break;
+                }
+                if (i < 5) {
+                    continue;
+                }
                 ++i;
             }
             if (this.closest < 99999) {
-                this.getNavigator().tryMoveToXYZ((double)this.tx, (double)this.ty, (double)this.tz, 1.0);
+                this.getNavigation().moveTo((double) this.tx, (double) this.ty, (double) this.tz, 1.0);
                 if (this.closest < 12) {
-                    if (this.world.getGameRules().getBoolean("mobGriefing")) {
-                        this.world.setBlockState(new net.minecraft.util.math.BlockPos(this.tx, this.ty, this.tz), Blocks.AIR.getDefaultState(), 2);
+                    if (this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+                        this.level()
+                                .setBlock(
+                                        new BlockPos(this.tx, this.ty, this.tz),
+                                        Blocks.AIR.defaultBlockState(),
+                                        2);
                     }
                     this.heal(2.0f);
-                    this.playSound(net.minecraft.init.SoundEvents.ENTITY_PLAYER_BURP, 0.5f, this.world.rand.nextFloat() * 0.2f + 1.5f);
+                    this.playSound(
+                            SoundEvents.PLAYER_BURP,
+                            0.5f,
+                            this.getRandom().nextFloat() * 0.2f + 1.5f);
                 }
             }
         }
-    }
-
-    public boolean isAIEnabled() {
-        return true;
-    }
-
-    public boolean canBreatheUnderwater() {
-        return false;
     }
 
     public int mygetMaxHealth() {
-        return this.isTamed() ? 20 : 10;
-    }
-
-    public void onLivingUpdate() {
-        super.onLivingUpdate();
+        return this.isTame() ? 20 : 10;
     }
 
     public int getVHealth() {
-        return (int)this.getHealth();
+        return (int) this.getHealth();
     }
 
-    public boolean interact(EntityPlayer par1EntityPlayer) {
-        ItemStack var2 = par1EntityPlayer.inventory.getCurrentItem();
-        if (var2 != null && var2.isEmpty()) {
-            par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, ItemStack.EMPTY);
+    public static boolean checkVelocityRaptorSpawnRules(
+            EntityType<VelocityRaptor> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        if (pos.getY() < 50) {
+            return false;
+        }
+        return MyUtils.isDay(level);
+    }
+
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        if (this.getY() < 50.0) {
+            return false;
+        }
+        if (level instanceof net.minecraft.world.level.Level worldLevel) {
+            return worldLevel.isDay();
+        }
+        return true;
+    }
+
+    @Override
+    public InteractionResult mobInteract(Player par1EntityPlayer, InteractionHand hand) {
+        ItemStack var2 = par1EntityPlayer.getItemInHand(hand);
+        if (!var2.isEmpty() && var2.getCount() <= 0) {
+            par1EntityPlayer.setItemInHand(hand, ItemStack.EMPTY);
             var2 = ItemStack.EMPTY;
         }
-        if (super.processInteract(par1EntityPlayer, net.minecraft.util.EnumHand.MAIN_HAND)) {
-            return true;
+        if (super.mobInteract(par1EntityPlayer, hand) == InteractionResult.SUCCESS) {
+            return InteractionResult.SUCCESS;
         }
-        if (var2 != null && var2.getItem() == Items.APPLE && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0) {
-            if (!this.isTamed()) {
-                if (!this.world.isRemote) {
-                    if (this.rand.nextInt(2) == 0) {
-                        this.setTamed(true);
-                        this.setOwnerId(par1EntityPlayer.getUniqueID());
-                        this.playTameEffect(true);
-                        this.world.setEntityState((Entity)this, (byte)7);
-                        this.heal((float)this.mygetMaxHealth() - this.getHealth());
+        if (!var2.isEmpty() && var2.is(Items.APPLE) && par1EntityPlayer.distanceToSqr(this) < 16.0) {
+            if (!this.isTame()) {
+                if (!this.level().isClientSide) {
+                    if (this.getRandom().nextInt(2) == 0) {
+                        this.setTame(true);
+                        this.setOwnerUUID(par1EntityPlayer.getUUID());
+                        spawnTamingParticles(true);
+                        this.level().broadcastEntityEvent(this, (byte) 7);
+                        this.heal((float) this.mygetMaxHealth() - this.getHealth());
                     } else {
-                        this.playTameEffect(false);
-                        this.world.setEntityState((Entity)this, (byte)6);
+                        spawnTamingParticles(false);
+                        this.level().broadcastEntityEvent(this, (byte) 6);
                     }
                 }
-            } else if (this.isOwner(par1EntityPlayer)) {
-                if (this.world.isRemote) {
-                    this.playTameEffect(true);
-                    this.world.setEntityState((Entity)this, (byte)7);
-                    par1EntityPlayer.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.6000000238418579);
+            } else if (this.isOwnedBy(par1EntityPlayer)) {
+                if (this.level().isClientSide) {
+                    spawnTamingParticles(true);
+                    this.level().broadcastEntityEvent(this, (byte) 7);
+                    par1EntityPlayer
+                            .getAttribute(Attributes.MOVEMENT_SPEED)
+                            .setBaseValue(0.6000000238418579);
                 }
-                if ((float)this.mygetMaxHealth() > this.getHealth()) {
-                    this.heal((float)this.mygetMaxHealth() - this.getHealth());
+                if ((float) this.mygetMaxHealth() > this.getHealth()) {
+                    this.heal((float) this.mygetMaxHealth() - this.getHealth());
                 }
             }
-            if (!par1EntityPlayer.capabilities.isCreativeMode) {
+            if (!par1EntityPlayer.getAbilities().instabuild) {
                 var2.shrink(1);
                 if (var2.isEmpty()) {
-                    par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, ItemStack.EMPTY);
+                    par1EntityPlayer.setItemInHand(hand, ItemStack.EMPTY);
                 }
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        if (this.isTamed() && var2 != null && var2.getItem() == Item.getItemFromBlock((Block)Blocks.DEADBUSH) && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0 && this.isOwner(par1EntityPlayer)) {
-            if (!this.world.isRemote) {
-                this.setTamed(false);
-                this.setHealth((float)this.mygetMaxHealth());
-                this.setOwnerId((java.util.UUID)null);
-                this.playTameEffect(false);
-                this.world.setEntityState((Entity)this, (byte)6);
+        if (this.isTame()
+                && !var2.isEmpty()
+                && var2.is(Blocks.DEAD_BUSH.asItem())
+                && par1EntityPlayer.distanceToSqr(this) < 16.0
+                && this.isOwnedBy(par1EntityPlayer)) {
+            if (!this.level().isClientSide) {
+                this.setTame(false);
+                this.setHealth((float) this.mygetMaxHealth());
+                this.setOwnerUUID(null);
+                spawnTamingParticles(false);
+                this.level().broadcastEntityEvent(this, (byte) 6);
             } else {
-                par1EntityPlayer.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.30000001192092896);
+                par1EntityPlayer.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.30000001192092896);
             }
-            if (!par1EntityPlayer.capabilities.isCreativeMode) {
+            if (!par1EntityPlayer.getAbilities().instabuild) {
                 var2.shrink(1);
                 if (var2.isEmpty()) {
-                    par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, ItemStack.EMPTY);
+                    par1EntityPlayer.setItemInHand(hand, ItemStack.EMPTY);
                 }
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        if (this.isTamed() && var2 != null && var2.getItem() == Items.NAME_TAG && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0 && this.isOwner(par1EntityPlayer)) {
-            this.setCustomNameTag(var2.getDisplayName());
-            if (!par1EntityPlayer.capabilities.isCreativeMode) {
+        if (this.isTame()
+                && !var2.isEmpty()
+                && var2.is(Items.NAME_TAG)
+                && par1EntityPlayer.distanceToSqr(this) < 16.0
+                && this.isOwnedBy(par1EntityPlayer)) {
+            this.setCustomName(var2.getHoverName());
+            if (!par1EntityPlayer.getAbilities().instabuild) {
                 var2.shrink(1);
                 if (var2.isEmpty()) {
-                    par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, ItemStack.EMPTY);
+                    par1EntityPlayer.setItemInHand(hand, ItemStack.EMPTY);
                 }
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        if (this.isTamed() && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0 && this.isOwner(par1EntityPlayer)) {
-            if (!this.isSitting()) {
-                this.setSitting(true);
+        if (this.isTame()
+                && par1EntityPlayer.distanceToSqr(this) < 16.0
+                && this.isOwnedBy(par1EntityPlayer)) {
+            if (!this.isInSittingPose()) {
+                this.setOrderedToSit(true);
             } else {
-                this.setSitting(false);
+                this.setOrderedToSit(false);
             }
-            if (this.world.isRemote) {
-                par1EntityPlayer.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.30000001192092896);
+            if (this.level().isClientSide) {
+                par1EntityPlayer.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.30000001192092896);
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        return false;
+        return InteractionResult.PASS;
     }
 
-    protected net.minecraft.util.SoundEvent getAmbientSound() {
-        if (this.isSitting()) {
-            return null;
-        }
+    @Override
+    protected SoundEvent getAmbientSound() {
         return null;
     }
 
-    protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource damageSource) {
-        return com.astryxion.chaospersists.core.ChaosSounds.CRYO_HURT;
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return ChaosSounds.CRYO_HURT;
     }
 
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return com.astryxion.chaospersists.core.ChaosSounds.CRYO_DEATH;
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ChaosSounds.CRYO_DEATH;
     }
 
+    @Override
     protected float getSoundVolume() {
         return 0.4f;
     }
 
-    protected Item getDropItem() {
-        return null;
-    }
-
-    protected void dropFewItems(boolean par1, int par2) {
-        int var3 = 0;
-        if (this.isTamed()) {
-            var3 = this.rand.nextInt(5);
-            for (int var4 = 0; var4 < (var3 += 2); ++var4) {
-                this.dropItem(Item.getItemFromBlock((Block)Blocks.RED_FLOWER), 1);
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        if (this.isTame()) {
+            int var3 = this.getRandom().nextInt(5);
+            var3 += 2;
+            for (int var4 = 0; var4 < var3; ++var4) {
+                this.spawnAtLocation(Blocks.POPPY.asItem());
             }
         }
     }
 
-    protected float getSoundPitch() {
-        return this.isChild() ? (this.rand.nextFloat() - this.rand.nextFloat()) * 0.1f + 1.5f : (this.rand.nextFloat() - this.rand.nextFloat()) * 0.1f + 1.0f;
+    @Override
+    public float getVoicePitch() {
+        return this.isBaby()
+                ? (this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 0.1f + 1.5f
+                : (this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 0.1f + 1.0f;
     }
 
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-        boolean ret = false;
+    @Override
+    public boolean hurt(DamageSource par1DamageSource, float par2) {
         float p2 = par2;
         if (p2 > 10.0f) {
             p2 = 10.0f;
         }
-        ret = super.attackEntityFrom(par1DamageSource, p2);
-        return ret;
+        return super.hurt(par1DamageSource, p2);
     }
 
-    protected boolean canDespawn() {
-        if (this.isChild()) {
-            this.enablePersistence();
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        if (this.isBaby()) {
+            this.setPersistenceRequired();
             return false;
         }
-        if (this.isTamed()) {
+        if (this.isTame()) {
             return false;
         }
-        if (this.isNoDespawnRequired()) {
+        if (this.isPersistenceRequired()) {
             return false;
         }
         return true;
     }
 
-    public EntityAgeable createChild(EntityAgeable entityageable) {
-        return this.spawnBabyAnimal(entityageable);
-    }
-
-    public VelocityRaptor spawnBabyAnimal(EntityAgeable par1EntityAgeable) {
-        return new VelocityRaptor(this.world);
+    @Override
+    public VelocityRaptor getBreedOffspring(ServerLevel level, AgeableMob partner) {
+        return (VelocityRaptor) this.getType().create(level);
     }
 
     public boolean isWheat(ItemStack par1ItemStack) {
-        return par1ItemStack != null && par1ItemStack.getItem() == Items.APPLE;
+        return !par1ItemStack.isEmpty() && par1ItemStack.is(Items.APPLE);
     }
 
     public boolean isBreedingItem(ItemStack par1ItemStack) {
-        return par1ItemStack.getItem() == ChaosPersists.MyCrystalApple;
+        Item crystal =
+                ForgeRegistries.ITEMS.getValue(
+                        ResourceLocation.fromNamespaceAndPath("chaospersists", "crystalapple"));
+        if (crystal == null) {
+            crystal = ChaosPersists.MyCrystalApple;
+        }
+        return crystal != null && par1ItemStack.is(crystal);
+    }
+
+    @Override
+    public boolean isFood(ItemStack stack) {
+        return this.isBreedingItem(stack);
     }
 }
-

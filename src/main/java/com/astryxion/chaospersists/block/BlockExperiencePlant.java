@@ -1,101 +1,77 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.BlockExperiencePlant
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.Trees
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockGrass
- *  net.minecraft.block.BlockReed
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.init.Blocks
- *  net.minecraft.item.Item
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.block;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockReed;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import java.util.Collections;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
 
-public class BlockExperiencePlant
-extends BlockReed {
-    public BlockExperiencePlant() { this(0); }
+public class BlockExperiencePlant extends Block {
+
+    public BlockExperiencePlant() {
+        this(0);
+    }
+
     protected BlockExperiencePlant(int par1) {
-        float var3 = 0.375f;
-        this.setTickRandomly(true);
+        super(net.minecraft.world.level.block.Block.Properties.of().noCollission().randomTicks().noOcclusion().sound(SoundType.GRASS));
     }
 
     @Override
-    public boolean canPlaceBlockAt(World world, BlockPos pos) {
-        Block bid = world.getBlockState(pos.down()).getBlock();
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        Block bid = level.getBlockState(pos.below()).getBlock();
         if (bid == Blocks.AIR) {
             return false;
         }
-        return bid == Blocks.GRASS || bid == Blocks.DIRT || bid == Blocks.FARMLAND;
+        return bid == Blocks.GRASS_BLOCK || bid == Blocks.DIRT || bid == Blocks.FARMLAND;
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    public void randomDisplayTick(IBlockState stateIn, World worldIn, BlockPos pos, Random rand) {
-        if (worldIn.rand.nextInt(20) != 1) {
+    public void animateTick(BlockState stateIn, Level worldIn, BlockPos pos, RandomSource rand) {
+        if (worldIn.random.nextInt(20) != 1) {
             return;
         }
         for (int j1 = 0; j1 < 20; ++j1) {
-            worldIn.spawnParticle(EnumParticleTypes.VILLAGER_HAPPY,
-                    (double) ((float) pos.getX() + worldIn.rand.nextFloat()),
-                    (double) pos.getY() + (double) worldIn.rand.nextFloat(),
-                    (double) ((float) pos.getZ() + worldIn.rand.nextFloat()),
-                    0.0, 0.0, 0.0);
+            worldIn.addParticle(
+                    ParticleTypes.HAPPY_VILLAGER,
+                    (float) pos.getX() + rand.nextFloat(),
+                    (double) pos.getY() + rand.nextFloat(),
+                    (float) pos.getZ() + rand.nextFloat(),
+                    0.0,
+                    0.0,
+                    0.0);
         }
     }
 
     /**
-     * 1.7.10 grew via random tick; 1.12.2 must override {@code updateTick(World, BlockPos, IBlockState, Random)}.
-     * Do not call super — {@link BlockReed} would apply sugar cane growth.
+     * 1.7.10 grew via random tick; 1.12.2 must override updateTick.
+     * Do not call super â€” sugar cane growth must not apply.
      */
     @Override
-    public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) {
-        if (world.isRemote) {
-            return;
-        }
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource rand) {
         if (rand.nextInt(10) != 1) {
             return;
         }
-        world.setBlockState(pos, Blocks.AIR.getDefaultState(), 2);
-        ChaosPersists.chaospersistsTrees.ExperienceTree(world, pos.getX(), pos.getY() - 1, pos.getZ());
+        level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+        ChaosPersists.chaospersistsTrees.ExperienceTree(level, pos.getX(), pos.getY() - 1, pos.getZ());
     }
 
-    public Item getItemDropped(int p_149650_1_, Random p_149650_2_, int p_149650_3_) {
-        return Item.getItemFromBlock((Block)ChaosPersists.MyExperiencePlant);
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        return Collections.singletonList(new ItemStack(ChaosPersists.MyExperiencePlant));
     }
 
-    public int quantityDropped(Random par1Random) {
-        return 1;
+    @Override
+    public ItemStack getCloneItemStack(net.minecraft.world.level.BlockGetter level, BlockPos pos, BlockState state) {
+        return new ItemStack(ChaosPersists.MyExperienceTreeSeed);
     }
-
-    public int idPicked(World par1World, int par2, int par3, int par4) {
-        return 0;
-    }
-
-    protected Item getSeedItem() {
-        return ChaosPersists.MyExperienceTreeSeed;
-    }
-
-    protected int getCropItem() {
-        return 0;
-    }}
-
+}

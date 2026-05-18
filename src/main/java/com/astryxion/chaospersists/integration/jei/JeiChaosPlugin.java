@@ -1,83 +1,82 @@
 package com.astryxion.chaospersists.integration.jei;
 
+import com.astryxion.chaospersists.core.ChaosPersists;
+import java.util.ArrayList;
 import java.util.Collection;
-
+import java.util.List;
 import mezz.jei.api.IModPlugin;
-import mezz.jei.api.IModRegistry;
-import mezz.jei.api.JEIPlugin;
-import mezz.jei.api.ingredients.IIngredientBlacklist;
-import mezz.jei.api.ingredients.IIngredientRegistry;
-import mezz.jei.api.ingredients.VanillaTypes;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.runtime.IIngredientManager;
+import mezz.jei.api.runtime.IJeiRuntime;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import com.astryxion.chaospersists.compat.forge.common.CreativeTabCompat;
 
 /**
  * Hides {@code chaospersists} stacks in JEI that do not appear on the mod's creative tabs.
  * Relies on {@code ChaosPersists.load} having already run {@code applyChaosCreativeTabs()}.
- * <p>
- * Compares against {@link IIngredientRegistry#getAllIngredients} so we blacklist the same stacks JEI
- * actually indexes (subtypes, NBT), not only what {@link Item#getSubItems(CreativeTabs, NonNullList)}
- * returns for {@link CreativeTabs#SEARCH}.
  */
-@JEIPlugin
+@JeiPlugin
 public class JeiChaosPlugin implements IModPlugin {
 
   @Override
-  public void register(IModRegistry registry) {
-    // Creative tabs are applied in ChaosPersists.load — do not call applyChaosCreativeTabs() here:
-    // a second pass saw tabChaosTools/tabChaosWeapons as "not TOOLS/COMBAT" and moved tools/weapons to Chaos Items.
-    IIngredientBlacklist blacklist = registry.getJeiHelpers().getIngredientBlacklist();
-    IIngredientRegistry ingredients = registry.getIngredientRegistry();
+  public ResourceLocation getPluginUid() {
+    return ResourceLocation.fromNamespaceAndPath(ChaosPersists.MODID, "jei");
+  }
 
-    NonNullList<ItemStack> allowed = NonNullList.create();
-    for (Item item : ForgeRegistries.ITEMS) {
-      if (item == null) {
+  @Override
+  public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
+    IIngredientManager ingredientManager = jeiRuntime.getIngredientManager();
+    List<ItemStack> allowed = new ArrayList<>();
+    for (Item item : BuiltInRegistries.ITEM) {
+      ResourceLocation rl = BuiltInRegistries.ITEM.getKey(item);
+      if (rl == null || !ChaosPersists.MODID.equals(rl.getNamespace())) {
         continue;
       }
-      ResourceLocation rl = item.getRegistryName();
-      if (rl == null || !"chaospersists".equals(rl.getNamespace())) {
-        continue;
-      }
-      CreativeTabs tab = item.getCreativeTab();
+      CreativeModeTab tab = CreativeTabCompat.getCreativeTab(item);
       if (tab == null) {
         continue;
       }
-      item.getSubItems(tab, allowed);
+      allowed.add(new ItemStack(item));
     }
 
-    Collection<ItemStack> allItemIngredients = ingredients.getAllIngredients(VanillaTypes.ITEM);
+    Collection<ItemStack> allItemIngredients = ingredientManager.getAllIngredients(VanillaTypes.ITEM_STACK);
+    List<ItemStack> toRemove = new ArrayList<>();
     for (ItemStack stack : allItemIngredients) {
-      if (stack == null || stack.isEmpty()) {
+      if (stack.isEmpty()) {
         continue;
       }
       Item item = stack.getItem();
-      ResourceLocation rl = item.getRegistryName();
-      if (rl == null || !"chaospersists".equals(rl.getNamespace())) {
+      ResourceLocation rl = BuiltInRegistries.ITEM.getKey(item);
+      if (rl == null || !ChaosPersists.MODID.equals(rl.getNamespace())) {
         continue;
       }
-      if (item.getCreativeTab() == null) {
-        blacklist.addIngredientToBlacklist(stack.copy());
+      if (CreativeTabCompat.getCreativeTab(item) == null) {
+        toRemove.add(stack.copy());
         continue;
       }
       if (!stackListContains(allowed, stack)) {
-        blacklist.addIngredientToBlacklist(stack.copy());
+        toRemove.add(stack.copy());
       }
+    }
+    if (!toRemove.isEmpty()) {
+      ingredientManager.removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, toRemove);
     }
   }
 
-  private static boolean stackListContains(NonNullList<ItemStack> list, ItemStack candidate) {
-    if (candidate == null || candidate.isEmpty()) {
+  private static boolean stackListContains(List<ItemStack> list, ItemStack candidate) {
+    if (candidate.isEmpty()) {
       return false;
     }
     for (ItemStack s : list) {
       if (s.isEmpty()) {
         continue;
       }
-      if (ItemStack.areItemsEqual(s, candidate) && ItemStack.areItemStackTagsEqual(s, candidate)) {
+      if (ItemStack.isSameItem(s, candidate) && ItemStack.matches(s, candidate)) {
         return true;
       }
     }

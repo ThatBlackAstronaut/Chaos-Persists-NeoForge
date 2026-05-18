@@ -9,7 +9,7 @@
  *  com.astryxion.chaospersists.Girlfriend
  *  com.astryxion.chaospersists.Slice
  *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
+ *  com.astryxion.chaospersists.compat.minecraft.creativetab.CreativeTabs
  *  net.minecraft.enchantment.Enchantment
  *  net.minecraft.enchantment.EnchantmentHelper
  *  net.minecraft.entity.Entity
@@ -21,72 +21,74 @@
  *  net.minecraft.item.ItemStack
  *  net.minecraft.item.ItemSword
  *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
+ *  com.astryxion.chaospersists.compat.minecraft.world.World
  */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.entity.BerthaHit;
 import com.astryxion.chaospersists.entity.Boyfriend;
 import com.astryxion.chaospersists.entity.Girlfriend;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
-import net.minecraft.world.World;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
-public class Slice
-extends ItemSword {
-    public Slice(Item.ToolMaterial par2EnumToolMaterial) {
-        super(par2EnumToolMaterial);
-        this.maxStackSize = 1;
-        this.setMaxDamage(2600);
-        this.setCreativeTab(CreativeTabs.COMBAT);
+public class Slice extends SwordItem {
+
+    public Slice(Tier par2EnumToolMaterial) {
+        super(par2EnumToolMaterial, 3, -2.4f, new Properties().stacksTo(1).durability(2600));
     }
 
-    public void onCreated(ItemStack par1ItemStack, World par2World, EntityPlayer par3EntityPlayer) {
-        par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(16), 5);
-        par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(18), 1);
+    @Override
+    public void onCraftedBy(ItemStack par1ItemStack, Level par2World, Player par3EntityPlayer) {
+        ensureEnchantments(par1ItemStack);
     }
 
-    public void onUsingTick(ItemStack stack, EntityPlayer player, int count) {
-        int lvl = EnchantmentHelper.getEnchantmentLevel(Enchantment.getEnchantmentByID(16), (ItemStack)stack);
-        if (lvl <= 0) {
-            stack.addEnchantment(Enchantment.getEnchantmentByID(16), 5);
-            stack.addEnchantment(Enchantment.getEnchantmentByID(18), 1);
+    private void ensureEnchantments(ItemStack stack) {
+        if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SHARPNESS, stack) <= 0) {
+            stack.enchant(Enchantments.SHARPNESS, 5);
+            stack.enchant(Enchantments.BANE_OF_ARTHROPODS, 1);
         }
     }
 
-    public void onUpdate(ItemStack stack, World par2World, Entity par3Entity, int par4, boolean par5) {
-        this.onUsingTick(stack, (EntityPlayer)null, 0);
+    @Override
+    public void inventoryTick(ItemStack stack, Level par2World, Entity par3Entity, int par4, boolean par5) {
+        ensureEnchantments(stack);
     }
 
-    public boolean onLeftClickEntity(ItemStack stack, EntityPlayer player, Entity entity) {
-        if (entity != null && (entity instanceof EntityPlayer || entity instanceof Girlfriend || entity instanceof Boyfriend)) {
+    @Override
+    public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
+        if (entity != null && (entity instanceof Player || entity instanceof Girlfriend || entity instanceof Boyfriend)) {
             return true;
         }
         return false;
     }
 
-    public boolean onEntitySwing(EntityLivingBase entityLiving, ItemStack stack) {
-        if (entityLiving != null && entityLiving instanceof EntityPlayer) {
-            EntityPlayer p = (EntityPlayer)entityLiving;
+    @Override
+    public boolean onEntitySwing(ItemStack stack, LivingEntity entityLiving) {
+        if (entityLiving != null && entityLiving instanceof Player p) {
             double xzoff = 2.0;
             double yoff = 1.55;
-            BerthaHit lb = new BerthaHit(p.world, (EntityLivingBase)p);
-            lb.setLocationAndAngles(p.posX - xzoff * Math.sin(Math.toRadians(p.rotationYawHead)), p.posY + yoff, p.posZ + xzoff * Math.cos(Math.toRadians(p.rotationYawHead)), p.rotationYawHead, p.rotationPitch);
-            lb.motionX *= 2.0;
-            lb.motionY *= 2.0;
-            lb.motionZ *= 2.0;
-            p.world.spawnEntity((Entity)lb);
-            stack.damageItem(1, (EntityLivingBase)p);
+            BerthaHit lb = new BerthaHit(ChaosPersists.ENTITY_TYPE_BERTHA_HIT.get(), p, p.level());
+            lb.setPos(
+                    p.getX() - xzoff * Mth.sin((float) Math.toRadians(p.getYHeadRot())),
+                    p.getY() + yoff,
+                    p.getZ() + xzoff * Mth.cos((float) Math.toRadians(p.getYHeadRot())));
+            lb.setYRot(p.getYHeadRot());
+            lb.setXRot(p.getXRot());
+            Vec3 motion = lb.getDeltaMovement();
+            lb.setDeltaMovement(motion.x * 2.0, motion.y * 2.0, motion.z * 2.0);
+            p.level().addFreshEntity(lb);
+            stack.hurtAndBreak(1, p, e -> e.broadcastBreakEvent(EquipmentSlot.MAINHAND));
         }
         return false;
     }
@@ -95,12 +97,14 @@ extends ItemSword {
         return "Uranium/Titanium";
     }
 
-    public boolean hitEntity(ItemStack par1ItemStack, EntityLiving par2EntityLiving, EntityLiving par3EntityLiving) {
-        par1ItemStack.damageItem(1, (EntityLivingBase)par3EntityLiving);
+    @Override
+    public boolean hurtEnemy(ItemStack par1ItemStack, LivingEntity par2EntityLiving, LivingEntity par3EntityLiving) {
+        par1ItemStack.hurtAndBreak(1, par3EntityLiving, e -> e.broadcastBreakEvent(EquipmentSlot.MAINHAND));
         return true;
     }
 
-    public int getMaxItemUseDuration(ItemStack par1ItemStack) {
+    @Override
+    public int getUseDuration(ItemStack par1ItemStack) {
         return 9000;
-    }}
-
+    }
+}

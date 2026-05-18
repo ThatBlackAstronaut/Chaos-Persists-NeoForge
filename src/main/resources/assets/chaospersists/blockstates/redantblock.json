@@ -1,7 +1,7 @@
 {
   "variants": {
-    "normal": { "model": "chaospersists:redantblock" },
-    "snowy=false": { "model": "chaospersists:redantblock" },
-    "snowy=true": { "model": "chaospersists:redantblock" }
+    "" : { "model": "chaospersists:block/redantblock" },
+    "snowy=false": { "model": "chaospersists:block/redantblock" },
+    "snowy=true": { "model": "chaospersists:block/redantblock" }
   }
 }

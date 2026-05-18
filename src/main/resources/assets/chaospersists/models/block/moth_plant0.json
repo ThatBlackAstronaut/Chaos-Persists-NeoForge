@@ -1,6 +1,6 @@
 {
   "parent": "block/crop",
   "textures": {
-    "crop": "chaospersists:blocks/moth_plant0"
+    "crop": "chaospersists:block/moth_plant0"
   }
 }

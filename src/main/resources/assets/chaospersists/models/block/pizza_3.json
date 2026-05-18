@@ -14,11 +14,11 @@
     }
   ],
   "textures": {
-    "particle": "chaospersists:blocks/pizza_top",
-    "bottom": "chaospersists:blocks/pizza_bottom",
-    "top": "chaospersists:blocks/pizza_top",
-    "side": "chaospersists:blocks/pizza_side",
-    "inner": "chaospersists:blocks/pizza_inner"
+    "particle": "chaospersists:block/pizza_top",
+    "bottom": "chaospersists:block/pizza_bottom",
+    "top": "chaospersists:block/pizza_top",
+    "side": "chaospersists:block/pizza_side",
+    "inner": "chaospersists:block/pizza_inner"
   }
 }
 

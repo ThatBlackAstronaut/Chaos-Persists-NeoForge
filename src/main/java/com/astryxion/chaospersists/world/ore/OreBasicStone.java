@@ -1,97 +1,87 @@
 package com.astryxion.chaospersists.world.ore;
 
-import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.util.MyUtils;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import com.astryxion.chaospersists.core.ChaosPersists;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public class OreBasicStone extends Block {
 
     public OreBasicStone(float hardness, float resistance) {
-        super(Material.ROCK);
-        this.setHardness(hardness);
-        this.setResistance(resistance);
-        this.setCreativeTab(CreativeTabs.BUILDING_BLOCKS);
-        this.setTickRandomly(false);
+        super(Block.Properties.of()
+                .mapColor(MapColor.STONE)
+                .strength(hardness, resistance)
+                .sound(SoundType.STONE)
+                .requiresCorrectToolForDrops());
     }
 
-    // ===== BLOCK BREAK SPAWNING =====
-    //
-    // Forge 1.12.2 removes blocks via Block#removedByPlayer → World#setBlockState; Chunk then
-    // calls Block#breakBlock on the old state. Player breaks do not reliably call
-    // onBlockDestroyedByPlayer, so spawns must run in breakBlock.
-
     @Override
-    public void breakBlock(World world, BlockPos pos, IBlockState state) {
-        if (!world.isRemote && !world.restoringBlockSnapshots) {
+    public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock()) && !world.isClientSide) {
             if (this == ChaosPersists.CrystalRat) {
-                int num = 1 + world.rand.nextInt(10);
+                int num = 1 + world.getRandom().nextInt(10);
                 for (int i = 0; i < num; ++i) {
-                    spawnCreature(world, 0, "Rat",
-                            pos.getX() + 0.5 + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.2,
+                    spawnCreature(
+                            world,
+                            0,
+                            "Rat",
+                            pos.getX() + 0.5 + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.2,
                             pos.getY() + 0.01,
-                            pos.getZ() + 0.5 + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.2);
+                            pos.getZ() + 0.5 + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.2);
                 }
             }
             if (this == ChaosPersists.CrystalFairy) {
-                int num = 1 + world.rand.nextInt(6);
+                int num = 1 + world.getRandom().nextInt(6);
                 for (int i = 0; i < num; ++i) {
-                    spawnCreature(world, 0, "Fairy",
-                            pos.getX() + 0.5 + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.2,
+                    spawnCreature(
+                            world,
+                            0,
+                            "Fairy",
+                            pos.getX() + 0.5 + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.2,
                             pos.getY() + 0.01,
-                            pos.getZ() + 0.5 + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.2);
+                            pos.getZ() + 0.5 + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.2);
                 }
             }
             if (this == ChaosPersists.RedAntTroll) {
-                int num = 15 + world.rand.nextInt(6);
+                int num = 15 + world.getRandom().nextInt(6);
                 for (int i = 0; i < num; ++i) {
-                    spawnCreature(world, 0, "Red Ant",
-                            pos.getX() + 0.5 + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.2,
+                    spawnCreature(
+                            world,
+                            0,
+                            "Red Ant",
+                            pos.getX() + 0.5 + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.2,
                             pos.getY() + 0.01,
-                            pos.getZ() + 0.5 + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.2);
+                            pos.getZ() + 0.5 + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.2);
                 }
             }
             if (this == ChaosPersists.TermiteTroll) {
-                int num = 15 + world.rand.nextInt(6);
+                int num = 15 + world.getRandom().nextInt(6);
                 for (int i = 0; i < num; ++i) {
-                    spawnCreature(world, 0, "Termite",
-                            pos.getX() + 0.5 + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.2,
+                    spawnCreature(
+                            world,
+                            0,
+                            "Termite",
+                            pos.getX() + 0.5 + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.2,
                             pos.getY() + 0.01,
-                            pos.getZ() + 0.5 + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.2);
+                            pos.getZ() + 0.5 + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.2);
                 }
             }
         }
-        super.breakBlock(world, pos, state);
+        super.onRemove(state, world, pos, newState, isMoving);
     }
-
-    /**
-     * Crystal variants use non-full cubes for rendering; default {@code canCreatureSpawn} would reject all
-     * natural spawns on those blocks. Behave like vanilla stone for placement checks.
-     */
-    @Override
-    public boolean canCreatureSpawn(IBlockState state, IBlockAccess world, BlockPos pos,
-                                    EntityLiving.SpawnPlacementType type) {
-        if (isCrystalBlock()) {
-            return Blocks.STONE.canCreatureSpawn(Blocks.STONE.getDefaultState(), world, pos, type);
-        }
-        return super.canCreatureSpawn(state, world, pos, type);
-    }
-
-    // ===== RENDERING =====
 
     private boolean isCrystalBlock() {
         return this == ChaosPersists.CrystalStone
@@ -100,77 +90,54 @@ public class OreBasicStone extends Block {
     }
 
     @Override
-    public boolean isOpaqueCube(IBlockState state) {
-        return !isCrystalBlock();
-    }
-
-    @Override
-    public boolean isFullCube(IBlockState state) {
-        return !isCrystalBlock();
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return isCrystalBlock() ? BlockRenderLayer.CUTOUT : BlockRenderLayer.SOLID;
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public boolean shouldSideBeRendered(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+    public boolean useShapeForLightOcclusion(BlockState state) {
         if (isCrystalBlock()) {
-            IBlockState adjacent = world.getBlockState(pos.offset(side));
-            if (adjacent.getBlock() == this) {
-                return false;
-            }
+            return false;
         }
-        return super.shouldSideBeRendered(state, world, pos, side);
+        return super.useShapeForLightOcclusion(state);
     }
 
-    // ===== SPAWN CREATURE =====
+    @Override
+    public boolean skipRendering(BlockState state, BlockState adjacentState, Direction side) {
+        if (isCrystalBlock() && adjacentState.getBlock() == this) {
+            return true;
+        }
+        return super.skipRendering(state, adjacentState, side);
+    }
 
-    /**
-     * 1.7.10 used {@link EntityList#createEntityByName(String, World)} with legacy names like
-     * {@code "Red Ant"}. In 1.12.2 entities are keyed by {@link ResourceLocation}
-     * ({@code chaospersists:red_ant}, {@code chaospersists:termite}, …).
-     */
     private static ResourceLocation legacySpawnNameToRegistry(String legacyName) {
         if (legacyName == null) {
             return null;
         }
         switch (legacyName) {
             case "Rat":
-                return new ResourceLocation("chaospersists", "rat");
+                return ResourceLocation.fromNamespaceAndPath("chaospersists", "rat");
             case "Fairy":
-                return new ResourceLocation("chaospersists", "fairy");
+                return ResourceLocation.fromNamespaceAndPath("chaospersists", "fairy");
             case "Red Ant":
-                return new ResourceLocation("chaospersists", "red_ant");
+                return ResourceLocation.fromNamespaceAndPath("chaospersists", "red_ant");
             case "Termite":
-                return new ResourceLocation("chaospersists", "termite");
+                return ResourceLocation.fromNamespaceAndPath("chaospersists", "termite");
             default:
-                return new ResourceLocation(
-                        "chaospersists",
-                        legacyName.toLowerCase(java.util.Locale.ROOT).replace(' ', '_'));
+                return ResourceLocation.fromNamespaceAndPath(
+                        "chaospersists", legacyName.toLowerCase(java.util.Locale.ROOT).replace(' ', '_'));
         }
     }
 
-    public static Entity spawnCreature(World world, int id, String name,
-                                        double x, double y, double z) {
-
-        Entity entity = name == null
-                ? EntityList.createEntityByID(id, world)
-                : EntityList.createEntityByIDFromName(legacySpawnNameToRegistry(name), world);
-
+    public static Entity spawnCreature(Level world, int id, String name, double x, double y, double z) {
+        ResourceLocation entityId = legacySpawnNameToRegistry(name);
+        EntityType<?> type = entityId != null ? ForgeRegistries.ENTITY_TYPES.getValue(entityId) : null;
+        if (type == null || !(world instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        Entity entity = type.create(serverLevel);
         if (entity != null) {
-            entity.setLocationAndAngles(x, y, z,
-                    world.rand.nextFloat() * 360.0f, 0.0f);
-            world.spawnEntity(entity);
-
-            if (entity instanceof EntityLiving) {
-                ((EntityLiving) entity).playLivingSound();
+            entity.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0f, 0.0f);
+            serverLevel.addFreshEntity(entity);
+            if (entity instanceof Mob mob) {
+                MyUtils.playAmbientSound(mob);
             }
         }
-
         return entity;
     }
 }

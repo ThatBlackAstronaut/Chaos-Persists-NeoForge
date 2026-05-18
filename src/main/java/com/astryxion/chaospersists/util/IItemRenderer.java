@@ -1,6 +1,6 @@
 package com.astryxion.chaospersists.util;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * 1.12.2 compat: Forge's IItemRenderer was removed. Local interface for custom item renderers.

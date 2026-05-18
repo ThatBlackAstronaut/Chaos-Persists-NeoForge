@@ -1,44 +1,49 @@
 package com.astryxion.chaospersists.render;
 
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.entity.Render;
-import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
-/**
- * Same approach as {@link RenderThrownRock}: single flat texture billboard (full 16×16 sheet UVs),
- * which is reliable in 1.12 unlike {@link net.minecraft.client.renderer.RenderItem} inside entity passes.
- */
-@SideOnly(Side.CLIENT)
-public final class RenderThrowableBillboard extends Render<Entity> {
-
+public final class RenderThrowableBillboard extends EntityRenderer<Entity> {
     private final ResourceLocation texture;
 
-    public RenderThrowableBillboard(RenderManager manager, ResourceLocation texture) {
-        super(manager);
+    public RenderThrowableBillboard(EntityRendererProvider.Context context, ResourceLocation texture) {
+        super(context);
         this.texture = texture;
     }
 
     @Override
-    public void doRender(Entity entity, double x, double y, double z, float entityYaw, float partialTicks) {
-        this.bindTexture(this.texture);
-        GL11.glPushMatrix();
-        GL11.glTranslatef((float) x, (float) y, (float) z);
-        GL11.glEnable(32826);
-        GL11.glScalef(0.5f, 0.5f, 0.5f);
-        drawBillboardQuad(0, entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partialTicks);
-        GL11.glDisable(32826);
-        GL11.glPopMatrix();
+    public void render(
+            Entity entity,
+            float entityYaw,
+            float partialTicks,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight) {
+        poseStack.pushPose();
+        poseStack.translate(0.0, 0.15, 0.0);
+        poseStack.scale(0.5f, 0.5f, 0.5f);
+        float spin = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
+        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+        poseStack.mulPose(Axis.ZP.rotationDegrees(spin));
+        VertexConsumer vertexConsumer =
+                buffer.getBuffer(RenderType.entityCutoutNoCull(this.texture));
+        drawBillboardQuad(poseStack, vertexConsumer, packedLight, 0);
+        poseStack.popPose();
     }
 
-    /** par2 = sprite index in 16×16 grid; 0 uses the whole texture (same math as {@link RenderThrownRock}). */
-    private void drawBillboardQuad(int spriteIndex, float spinDegrees) {
+    private static void drawBillboardQuad(
+            PoseStack poseStack, VertexConsumer buffer, int packedLight, int spriteIndex) {
         float u0 = (float) (spriteIndex % 16 * 16) / 16.0f;
         float u1 = (float) (spriteIndex % 16 * 16 + 16) / 16.0f;
         float v0 = (float) (spriteIndex / 16 * 16) / 16.0f;
@@ -46,20 +51,41 @@ public final class RenderThrowableBillboard extends Render<Entity> {
         float size = 1.0f;
         float hx = 0.5f;
         float hy = 0.25f;
-        GL11.glRotatef(180.0f - this.renderManager.playerViewY, 0.0f, 1.0f, 0.0f);
-        GL11.glRotatef(-this.renderManager.playerViewX, 1.0f, 0.0f, 0.0f);
-        GL11.glRotatef(spinDegrees, 0.0f, 0.0f, 1.0f);
-        BufferBuilder buf = Tessellator.getInstance().getBuffer();
-        buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        buf.pos((double) (0.0f - hx), (double) (0.0f - hy), 0.0).tex((double) u0, (double) v1).normal(0.0f, 1.0f, 0.0f).endVertex();
-        buf.pos((double) (size - hx), (double) (0.0f - hy), 0.0).tex((double) u1, (double) v1).normal(0.0f, 1.0f, 0.0f).endVertex();
-        buf.pos((double) (size - hx), (double) (size - hy), 0.0).tex((double) u1, (double) v0).normal(0.0f, 1.0f, 0.0f).endVertex();
-        buf.pos((double) (0.0f - hx), (double) (size - hy), 0.0).tex((double) u0, (double) v0).normal(0.0f, 1.0f, 0.0f).endVertex();
-        Tessellator.getInstance().draw();
+        PoseStack.Pose pose = poseStack.last();
+        Matrix4f matrix = pose.pose();
+        Matrix3f normal = pose.normal();
+        buffer.vertex(matrix, 0.0f - hx, 0.0f - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u0, v1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
+        buffer.vertex(matrix, size - hx, 0.0f - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u1, v1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
+        buffer.vertex(matrix, size - hx, size - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u1, v0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
+        buffer.vertex(matrix, 0.0f - hx, size - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u0, v0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
     }
 
     @Override
-    protected ResourceLocation getEntityTexture(Entity entity) {
+    public ResourceLocation getTextureLocation(Entity entity) {
         return this.texture;
     }
 }

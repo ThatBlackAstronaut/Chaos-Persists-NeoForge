@@ -1,6 +1,6 @@
 {
   "parent": "block/cross",
   "textures": {
-    "cross": "chaospersists:blocks/quinoa_2"
+    "cross": "chaospersists:block/quinoa_2"
   }
 }

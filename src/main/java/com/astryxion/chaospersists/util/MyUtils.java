@@ -35,7 +35,7 @@
  *  com.astryxion.chaospersists.TheQueen
  *  com.astryxion.chaospersists.WaterDragon
  *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLivingBase
+ *  net.minecraft.entity.LivingEntity
  *  net.minecraft.entity.monster.EntityMob
  *  net.minecraft.entity.passive.EntityVillager
  */
@@ -72,11 +72,22 @@ import com.astryxion.chaospersists.entity.ThePrinceTeen;
 import com.astryxion.chaospersists.entity.ThePrincess;
 import com.astryxion.chaospersists.entity.TheQueen;
 import com.astryxion.chaospersists.entity.WaterDragon;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.passive.EntityVillager;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import javax.annotation.Nullable;
 
 /*
  * Exception performing whole class analysis ignored.
@@ -85,8 +96,26 @@ public class MyUtils {
     public MyUtils() {
     }
 
+    /** 1.12 {@code World.isDaytime()} for {@link LevelAccessor} spawn checks. */
+    public static boolean isDay(LevelAccessor level) {
+        if (level instanceof Level world) {
+            return world.isDay();
+        }
+        if (level instanceof ServerLevelAccessor serverLevel) {
+            return serverLevel.getLevel().isDay();
+        }
+        return false;
+    }
+
+    /** 1.12 {@code EntityLivingBase.playAmbientSound()} equivalent. */
+    public static void playAmbientSound(LivingEntity entity) {
+        if (entity instanceof Mob mob) {
+            mob.playAmbientSound();
+        }
+    }
+
     public static boolean isRoyalty(Entity e) {
-        if (!(e instanceof EntityLivingBase)) {
+        if (!(e instanceof LivingEntity)) {
             return false;
         }
         if (e instanceof ThePrince) {
@@ -119,8 +148,8 @@ public class MyUtils {
         return false;
     }
 
-    public static boolean isAttackableNonMob(EntityLivingBase par1EntityLiving) {
-        if (par1EntityLiving instanceof EntityMob) {
+    public static boolean isAttackableNonMob(LivingEntity par1EntityLiving) {
+        if (par1EntityLiving instanceof Monster) {
             return true;
         }
         if (par1EntityLiving instanceof Mothra) {
@@ -153,7 +182,7 @@ public class MyUtils {
         if (par1EntityLiving instanceof Boyfriend) {
             return true;
         }
-        if (par1EntityLiving instanceof EntityVillager) {
+        if (par1EntityLiving instanceof Villager) {
             return true;
         }
         if (par1EntityLiving instanceof Stinky) {
@@ -162,7 +191,7 @@ public class MyUtils {
         return false;
     }
 
-    public static boolean isIgnoreable(EntityLivingBase par1EntityLiving) {
+    public static boolean isIgnoreable(LivingEntity par1EntityLiving) {
         if (par1EntityLiving instanceof RockBase) {
             return true;
         }
@@ -205,19 +234,57 @@ public class MyUtils {
     /**
      * Prince-family mounts: while nobody is riding, never leave noClip/gravity-off on or stay inside blocks.
      */
-    public static void enforceDragonMountGroundSafety(EntityLiving entity) {
-        if (entity == null || entity.world == null || entity.world.isRemote) {
+    public static void enforceDragonMountGroundSafety(Mob entity) {
+        if (entity == null || entity.level() == null || entity.level().isClientSide) {
             return;
         }
         if (!entity.getPassengers().isEmpty()) {
             return;
         }
-        entity.noClip = false;
+        entity.noPhysics = false;
         entity.setNoGravity(false);
         int n = 0;
-        while (entity.isEntityInsideOpaqueBlock() && n++ < 48) {
-            entity.setPosition(entity.posX, Math.min(252.0, entity.posY + 0.5), entity.posZ);
+        while (entity.isInWall() && n++ < 48) {
+            entity.setPos(entity.getX(), Math.min(252.0, entity.getY() + 0.5), entity.getZ());
         }
+    }
+
+    /** Avoid {@link WorldGenRegion} out-of-bounds chunk access during natural spawn in chunk generation. */
+    public static boolean canAccessBlockDuringWorldGen(LevelAccessor level, BlockPos pos) {
+        if (level instanceof WorldGenRegion region) {
+            return region.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
+                    && pos.getY() >= region.getMinBuildHeight()
+                    && pos.getY() < region.getMaxBuildHeight();
+        }
+        if (level instanceof Level worldLevel) {
+            return worldLevel.isInWorldBounds(pos);
+        }
+        return pos.getY() >= level.getMinBuildHeight() && pos.getY() < level.getMaxBuildHeight();
+    }
+
+    /** Spawn-rule block reads that must not cross {@link WorldGenRegion} chunk bounds during generation. */
+    public static BlockState getBlockStateForSpawnRules(LevelAccessor level, BlockPos pos) {
+        if (!canAccessBlockDuringWorldGen(level, pos)) {
+            return Blocks.VOID_AIR.defaultBlockState();
+        }
+        return level.getBlockState(pos);
+    }
+
+    @Nullable
+    public static BlockEntity getBlockEntityForSpawnRules(LevelAccessor level, BlockPos pos) {
+        if (!canAccessBlockDuringWorldGen(level, pos)) {
+            return null;
+        }
+        return level.getBlockEntity(pos);
+    }
+
+    /** Safe surface Y for dimension teleporters (1.12 default fallback Y=120). */
+    public static int findSurfaceSpawnY(ServerLevel level, int blockX, int blockZ) {
+        int spawnY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, blockX, blockZ);
+        if (spawnY < level.getMinBuildHeight() + 8) {
+            return 120;
+        }
+        return Math.max(spawnY + 1, 64);
     }
 }
 

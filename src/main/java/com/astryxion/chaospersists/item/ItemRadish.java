@@ -1,25 +1,36 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.ItemRadish
- *  net.minecraft.block.Block
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.item.ItemSeedFood
- *  net.minecraft.util.IIcon
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraft.block.Block;
-import net.minecraft.item.ItemSeedFood;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class ItemRadish
-extends ItemSeedFood {
-    public ItemRadish(int par2, float par3, Block par4, Block par5) {
-        super(par2, par3, par4, par5);
-    }}
+/** 1.12 {@code ItemSeedFood}: edible seed that plants a crop on the configured soil block. */
+public class ItemRadish extends BlockItem {
+    private final Block soilBlock;
 
+    public ItemRadish(int nutrition, float saturation, Block cropBlock, Block soilBlock) {
+        super(cropBlock, foodProperties(nutrition, saturation));
+        this.soilBlock = soilBlock;
+    }
+
+    private static Properties foodProperties(int nutrition, float saturation) {
+        return new Properties()
+                .food(new FoodProperties.Builder().nutrition(nutrition).saturationMod(saturation).build());
+    }
+
+    @Override
+    public InteractionResult useOn(UseOnContext context) {
+        if (context.getClickedFace() != Direction.UP) {
+            return InteractionResult.FAIL;
+        }
+        BlockState ground = context.getLevel().getBlockState(context.getClickedPos());
+        if (ground.getBlock() != this.soilBlock) {
+            return InteractionResult.FAIL;
+        }
+        return super.useOn(context);
+    }
+}

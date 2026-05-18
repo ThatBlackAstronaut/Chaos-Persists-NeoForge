@@ -1,118 +1,59 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.EntityCannonFodder
- *  com.astryxion.chaospersists.MyEntityAIAvoidEntity
- *  com.astryxion.chaospersists.MyEntityAIFollowOwner
- *  com.astryxion.chaospersists.MyEntityAIWander
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.Ostrich
- *  com.astryxion.chaospersists.RenderInfo
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockDeadBush
- *  net.minecraft.block.BlockFlower
- *  net.minecraft.block.BlockGrass
- *  net.minecraft.block.BlockSand
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityAgeable
- *  net.minecraft.entity.EntityCreature
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAILookIdle
- *  net.minecraft.entity.ai.EntityAIMate
- *  net.minecraft.entity.ai.EntityAIMoveIndoors
- *  net.minecraft.entity.ai.EntityAIPanic
- *  net.minecraft.entity.ai.EntityAISwimming
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.EntityAITempt
- *  net.minecraft.entity.ai.EntityAIWatchClosest
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.passive.EntityAnimal
- *  net.minecraft.entity.passive.EntityTameable
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.InventoryPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.nbt.NBTTagCompound
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.MathHelper
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import com.astryxion.chaospersists.entity.EntityCannonFodder;
+import com.astryxion.chaospersists.util.MyUtils;
+
+import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
+import com.astryxion.chaospersists.render.RenderInfo;
 import com.astryxion.chaospersists.util.MyEntityAIAvoidEntity;
 import com.astryxion.chaospersists.util.MyEntityAIFollowOwner;
 import com.astryxion.chaospersists.util.MyEntityAIWander;
-import com.astryxion.chaospersists.core.ChaosPersists;
-import com.astryxion.chaospersists.render.RenderInfo;
-import java.util.Random;
-import java.util.UUID;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockDeadBush;
-import net.minecraft.block.BlockFlower;
-import net.minecraft.block.BlockGrass;
-import net.minecraft.block.BlockSand;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.MoverType;
-import net.minecraft.entity.EntityAgeable;
-import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAIMate;
-import net.minecraft.entity.ai.EntityAIMoveIndoors;
-import net.minecraft.entity.ai.EntityAIPanic;
-import net.minecraft.entity.ai.EntityAISwimming;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.EntityAITempt;
-import net.minecraft.entity.ai.EntityAIWatchClosest;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.passive.EntityAnimal;
-import net.minecraft.entity.passive.EntityTameable;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.util.RandomSource;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.registries.ForgeRegistries;
 
-public class Ostrich
-extends EntityCannonFodder {
+public class Ostrich extends EntityCannonFodder {
     private float moveSpeed = 0.2f;
     private RenderInfo renderdata = new RenderInfo();
     private int boatPosRotationIncrements;
@@ -128,37 +69,38 @@ extends EntityCannonFodder {
     float deltasmooth = 0.0f;
     private int didjump = 0;
 
-    public Ostrich(World par1World) {
-        super(par1World);
-        this.setSize(0.85f, 2.1f);
+    public Ostrich(EntityType<? extends Ostrich> type, Level level) {
+        super(type, level);
         this.moveSpeed = 0.38f;
-                        this.setSitting(false);
-        this.experienceValue = 10;
+        this.setOrderedToSit(false);
+        this.xpReward = 10;
         this.renderdata = new RenderInfo();
-        this.tasks.addTask(0, (EntityAIBase)new EntityAISwimming((EntityLiving)this));
-        this.tasks.addTask(1, (EntityAIBase)new EntityAIMate((EntityAnimal)this, 1.0));
-        this.tasks.addTask(2, (EntityAIBase)new MyEntityAIFollowOwner((EntityTameable)this, 2.0f, 10.0f, 2.0f));
-        this.tasks.addTask(3, (EntityAIBase)new MyEntityAIAvoidEntity((EntityCreature)this, EntityMob.class, 8.0f, 1.0, 1.899999976158142));
-        this.tasks.addTask(4, (EntityAIBase)new EntityAITempt((EntityCreature)this, 1.2000000476837158, Items.APPLE, false));
-        this.tasks.addTask(5, (EntityAIBase)new EntityAIPanic((EntityCreature)this, 1.5));
-        this.tasks.addTask(6, (EntityAIBase)new EntityAIWatchClosest((EntityLiving)this, EntityPlayer.class, 6.0f));
-        this.tasks.addTask(7, (EntityAIBase)new EntityAIWatchClosest((EntityLiving)this, EntityLiving.class, 5.0f));
-        this.tasks.addTask(8, (EntityAIBase)new MyEntityAIWander((EntityCreature)this, 1.0f));
-        this.tasks.addTask(9, (EntityAIBase)new EntityAILookIdle((EntityLiving)this));
-        this.tasks.addTask(10, (EntityAIBase)new EntityAIMoveIndoors((EntityCreature)this));
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new BreedGoal(this, 1.0));
+        this.goalSelector.addGoal(2, new MyEntityAIFollowOwner(this, 2.0f, 10.0f, 2.0f));
+        this.goalSelector.addGoal(
+                3, new MyEntityAIAvoidEntity(this, Monster.class, 8.0f, 1.0, 1.899999976158142));
+        this.goalSelector.addGoal(4, new TemptGoal(this, 1.2000000476837158, Ingredient.of(Items.APPLE), false));
+        this.goalSelector.addGoal(5, new PanicGoal(this, 1.5));
+        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0f));
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, LivingEntity.class, 5.0f));
+        this.goalSelector.addGoal(8, new MyEntityAIWander(this, 1.0f));
+        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
+        // 1.12 EntityAIMoveIndoors — class removed in 1.20.x; OpenDoorGoal preserves pathing through doors.
+        this.goalSelector.addGoal(10, new OpenDoorGoal(this, true));
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(6.0);
+    public static AttributeSupplier.Builder createAttributes() {
+        return TamableAnimal.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 25.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.38)
+                .add(Attributes.ATTACK_DAMAGE, 6.0);
     }
 
-    protected void entityInit() {
-        super.entityInit();
-        this.setSitting(false);
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.setOrderedToSit(false);
         if (this.renderdata == null) {
             this.renderdata = new RenderInfo();
         }
@@ -187,38 +129,43 @@ extends EntityCannonFodder {
         this.renderdata.ri4 = r.ri4;
     }
 
-    public void onUpdate() {
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        if (!this.isDead && this.world.rand.nextInt(200) == 1) {
-            this.setRevengeTarget(null);
+    @Override
+    public void tick() {
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
+        if (!this.isDeadOrDying() && this.getRandom().nextInt(200) == 1) {
+            this.setLastHurtByMob(null);
         }
-        if (!this.isDead && this.world.rand.nextInt(250) == 0) {
+        if (!this.isDeadOrDying() && this.getRandom().nextInt(250) == 0) {
             this.heal(1.0f);
         }
-        super.onUpdate();
-    }
-
-    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {
-        super.writeEntityToNBT(par1NBTTagCompound);
-    }
-
-    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound) {
-        super.readEntityFromNBT(par1NBTTagCompound);
-    }
-
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-        if (!par1DamageSource.getDamageType().equals("cactus")) {
-            super.attackEntityFrom(par1DamageSource, par2);
+        if (this.getControllingPassenger() != null) {
+            this.tickRidden();
+            if (!this.level().isClientSide) {
+                return;
+            }
         }
-        return false;
+        super.tick();
     }
 
-
-    public boolean isAIEnabled() {
-        return true;
+    @Override
+    public void travel(Vec3 travelVector) {
+        if (this.getControllingPassenger() != null) {
+            return;
+        }
+        super.travel(travelVector);
     }
 
-    public boolean canBreatheUnderwater() {
+    @Override
+    public LivingEntity getControllingPassenger() {
+        Entity e = this.getFirstPassenger();
+        return e instanceof LivingEntity le ? le : null;
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (!source.is(DamageTypes.CACTUS)) {
+            super.hurt(source, amount);
+        }
         return false;
     }
 
@@ -227,320 +174,343 @@ extends EntityCannonFodder {
     }
 
     public int getOstrichHealth() {
-        return (int)this.getHealth();
+        return (int) this.getHealth();
     }
 
-    public boolean processInteract(EntityPlayer par1EntityPlayer, EnumHand hand) {
-        ItemStack var2 = par1EntityPlayer.getHeldItem(hand);
+    @Override
+    public InteractionResult mobInteract(Player par1EntityPlayer, InteractionHand hand) {
+        ItemStack var2 = par1EntityPlayer.getItemInHand(hand);
         if (!var2.isEmpty() && var2.getCount() <= 0) {
-            par1EntityPlayer.setHeldItem(hand, ItemStack.EMPTY);
+            par1EntityPlayer.setItemInHand(hand, ItemStack.EMPTY);
             var2 = ItemStack.EMPTY;
         }
-        if (super.processInteract(par1EntityPlayer, hand)) {
-            return true;
+        if (super.mobInteract(par1EntityPlayer, hand) == InteractionResult.SUCCESS) {
+            return InteractionResult.SUCCESS;
         }
-        if (var2 != null && !var2.isEmpty() && var2.getItem() == Items.APPLE && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0) {
-            if (!this.isTamed()) {
-                if (!this.world.isRemote) {
-                    if (this.rand.nextInt(2) == 0) {
-                        this.setTamed(true);
-                        this.setOwnerId(par1EntityPlayer.getUniqueID());
-                        this.playTameEffect(true);
-                        this.world.setEntityState((Entity)this, (byte)7);
-                        this.heal((float)this.mygetMaxHealth() - this.getHealth());
+        if (!var2.isEmpty() && var2.is(Items.APPLE) && par1EntityPlayer.distanceToSqr(this) < 16.0) {
+            if (!this.isTame()) {
+                if (!this.level().isClientSide) {
+                    if (this.getRandom().nextInt(2) == 0) {
+                        this.setTame(true);
+                        this.setOwnerUUID(par1EntityPlayer.getUUID());
+                        spawnTamingParticles(true);
+                        this.level().broadcastEntityEvent(this, (byte) 7);
+                        this.heal((float) this.mygetMaxHealth() - this.getHealth());
                     } else {
-                        this.playTameEffect(false);
-                        this.world.setEntityState((Entity)this, (byte)6);
+                        spawnTamingParticles(false);
+                        this.level().broadcastEntityEvent(this, (byte) 6);
                     }
                 }
-            } else if (this.isOwner((EntityLivingBase)par1EntityPlayer)) {
-                if (this.world.isRemote) {
-                    this.playTameEffect(true);
-                    this.world.setEntityState((Entity)this, (byte)7);
+            } else if (this.isOwnedBy(par1EntityPlayer)) {
+                if (this.level().isClientSide) {
+                    spawnTamingParticles(true);
+                    this.level().broadcastEntityEvent(this, (byte) 7);
                 }
-                if ((float)this.mygetMaxHealth() > this.getHealth()) {
-                    this.heal((float)this.mygetMaxHealth() - this.getHealth());
+                if ((float) this.mygetMaxHealth() > this.getHealth()) {
+                    this.heal((float) this.mygetMaxHealth() - this.getHealth());
                 }
             }
-            if (!par1EntityPlayer.capabilities.isCreativeMode) {
+            if (!par1EntityPlayer.getAbilities().instabuild) {
                 var2.shrink(1);
-                if (var2.getCount() <= 0) {
-                    par1EntityPlayer.setHeldItem(hand, ItemStack.EMPTY);
+                if (var2.isEmpty()) {
+                    par1EntityPlayer.setItemInHand(hand, ItemStack.EMPTY);
                 }
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        if (this.isTamed() && var2 != null && !var2.isEmpty() && var2.getItem() == Item.getItemFromBlock((Block)Blocks.DEADBUSH) && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0 && this.isOwner((EntityLivingBase)par1EntityPlayer)) {
-            if (!this.world.isRemote) {
-                this.setTamed(false);
-                this.setOwnerId((UUID)null);
-                this.playTameEffect(false);
-                this.world.setEntityState((Entity)this, (byte)6);
+        if (this.isTame()
+                && !var2.isEmpty()
+                && var2.is(Blocks.DEAD_BUSH.asItem())
+                && par1EntityPlayer.distanceToSqr(this) < 16.0
+                && this.isOwnedBy(par1EntityPlayer)) {
+            if (!this.level().isClientSide) {
+                this.setTame(false);
+                this.setOwnerUUID(null);
+                spawnTamingParticles(false);
+                this.level().broadcastEntityEvent(this, (byte) 6);
             }
-            if (!par1EntityPlayer.capabilities.isCreativeMode) {
+            if (!par1EntityPlayer.getAbilities().instabuild) {
                 var2.shrink(1);
-                if (var2.getCount() <= 0) {
-                    par1EntityPlayer.setHeldItem(hand, ItemStack.EMPTY);
+                if (var2.isEmpty()) {
+                    par1EntityPlayer.setItemInHand(hand, ItemStack.EMPTY);
                 }
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        if (var2 != null && !var2.isEmpty() && this.isTamed() && this.isOwner((EntityLivingBase)par1EntityPlayer) && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0) {
-            if (!this.world.isRemote) {
-                if (!this.isSitting()) {
-                    Block bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)this.posY - 1, (int)this.posZ)).getBlock();
-                    if (bid == Blocks.SAND || bid == Blocks.GRAVEL || bid == Blocks.DIRT || bid == Blocks.FARMLAND || bid == Blocks.GRASS) {
-                        this.setSitting(true);
+        if (!var2.isEmpty()
+                && this.isTame()
+                && this.isOwnedBy(par1EntityPlayer)
+                && par1EntityPlayer.distanceToSqr(this) < 16.0) {
+            if (!this.level().isClientSide) {
+                if (!this.isInSittingPose()) {
+                    Block bid =
+                            this.level()
+                                    .getBlockState(BlockPos.containing(this.getX(), this.getY() - 1.0, this.getZ()))
+                                    .getBlock();
+                    if (bid == Blocks.SAND
+                            || bid == Blocks.GRAVEL
+                            || bid == Blocks.DIRT
+                            || bid == Blocks.FARMLAND
+                            || bid == Blocks.GRASS_BLOCK) {
+                        this.setOrderedToSit(true);
                     }
                 } else {
-                    this.setSitting(false);
+                    this.setOrderedToSit(false);
                 }
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        if (this.isTamed() && var2 != null && !var2.isEmpty() && var2.getItem() == Items.NAME_TAG && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0 && this.isOwner((EntityLivingBase)par1EntityPlayer)) {
-            this.setCustomNameTag(var2.getDisplayName());
-            if (!par1EntityPlayer.capabilities.isCreativeMode) {
+        if (this.isTame()
+                && !var2.isEmpty()
+                && var2.is(Items.NAME_TAG)
+                && par1EntityPlayer.distanceToSqr(this) < 16.0
+                && this.isOwnedBy(par1EntityPlayer)) {
+            this.setCustomName(var2.getHoverName());
+            if (!par1EntityPlayer.getAbilities().instabuild) {
                 var2.shrink(1);
-                if (var2.getCount() <= 0) {
-                    par1EntityPlayer.setHeldItem(hand, ItemStack.EMPTY);
+                if (var2.isEmpty()) {
+                    par1EntityPlayer.setItemInHand(hand, ItemStack.EMPTY);
                 }
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        if ((var2 == null || var2.isEmpty()) && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0) {
-            if (!this.world.isRemote) {
+        if (var2.isEmpty() && par1EntityPlayer.distanceToSqr(this) < 16.0) {
+            if (!this.level().isClientSide) {
                 par1EntityPlayer.startRiding(this);
-                this.setSitting(false);
+                this.setOrderedToSit(false);
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
+        return InteractionResult.PASS;
+    }
+
+    @Override
+    public boolean shouldRiderSit() {
+        return true;
+    }
+
+    @Override
+    public boolean canBreatheUnderwater() {
         return false;
     }
 
+    @Override
     protected SoundEvent getAmbientSound() {
-        if (this.isSitting()) {
+        if (this.isInSittingPose()) {
             return null;
         }
         return null;
     }
 
+    @Override
     protected SoundEvent getHurtSound(DamageSource damageSource) {
-        return com.astryxion.chaospersists.core.ChaosSounds.CRYO_HURT;
+        return ChaosSounds.CRYO_HURT;
     }
 
+    @Override
     protected SoundEvent getDeathSound() {
-        return com.astryxion.chaospersists.core.ChaosSounds.CRYO_DEATH;
+        return ChaosSounds.CRYO_DEATH;
     }
 
+    @Override
     protected float getSoundVolume() {
         return 0.4f;
     }
 
-    protected Item getDropItem() {
-        return Items.FEATHER;
-    }
-
-    protected void dropFewItems(boolean par1, int par2) {
-        int var3 = 0;
-        if (this.isTamed()) {
-            var3 = this.rand.nextInt(5);
-            for (int var4 = 0; var4 < (var3 += 2); ++var4) {
-                this.dropItem(Item.getItemFromBlock((Block)Blocks.RED_FLOWER), 1);
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        if (this.isTame()) {
+            int var3 = this.getRandom().nextInt(5);
+            var3 += 2;
+            for (int var4 = 0; var4 < var3; ++var4) {
+                this.spawnAtLocation(Items.POPPY);
             }
         } else {
-            super.dropFewItems(par1, par2);
+            super.dropCustomDeathLoot(source, looting, recentlyHit);
         }
     }
 
-    protected float getSoundPitch() {
-        return this.isChild() ? (this.rand.nextFloat() - this.rand.nextFloat()) * 0.1f + 1.5f : (this.rand.nextFloat() - this.rand.nextFloat()) * 0.1f + 1.0f;
+    @Override
+    public float getVoicePitch() {
+        return this.isBaby()
+                ? (this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 0.1f + 1.5f
+                : (this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 0.1f + 1.0f;
     }
 
-    public boolean shouldRiderSit() {
-        return true;
-    }
-
-    public int getTrackingRange() {
-        return 128;
-    }
-
-    public int getUpdateFrequency() {
-        return 10;
-    }
-
-    public boolean sendsVelocityUpdates() {
-        return true;
-    }
-
-    protected void jump() {
-        this.motionY += 0.25;
-        super.jump();
-    }
-
-    public double getMountedYOffset() {
+    @Override
+    public double getPassengersRidingOffset() {
         return 1.4;
     }
 
-    public boolean getCanSpawnHere() {
-        if (this.posY < 50.0) {
-            return false;
+    @Override
+    protected void positionRider(Entity passenger, net.minecraft.world.entity.Entity.MoveFunction moveFunction) {
+        if (this.getControllingPassenger() != null && passenger == this.getControllingPassenger()) {
+            float f = -0.15f;
+            double x = this.getX() - (double) f * Math.sin(Math.toRadians(this.getYRot()));
+            double y = this.getY() + this.getPassengersRidingOffset() + passenger.getMyRidingOffset();
+            double z = this.getZ() + (double) f * Math.cos(Math.toRadians(this.getYRot()));
+            moveFunction.accept(passenger, x, y, z);
+        } else {
+            super.positionRider(passenger, moveFunction);
         }
-        if (!this.world.isDaytime()) {
-            return false;
-        }
-        if (this.world.rand.nextInt(4) != 1) {
-            return false;
-        }
-        Ostrich target = null;
-        target = (Ostrich)this.world.findNearestEntityWithinAABB(Ostrich.class, this.getEntityBoundingBox().expand(16.0, 6.0, 16.0), (Entity)this);
-        if (target != null) {
-            return false;
-        }
-        return true;
     }
 
-    @SideOnly(value=Side.CLIENT)
-    public void setPositionAndRotation2(double par1, double par3, double par5, float par7, float par8, int par9) {
+    @Override
+    protected void jumpFromGround() {
+        Vec3 v = this.getDeltaMovement();
+        this.setDeltaMovement(v.x, v.y + 0.25, v.z);
+        super.jumpFromGround();
+    }
+
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public void lerpTo(double x, double y, double z, float yaw, float pitch, int steps, boolean interpolate) {
         this.boatPosRotationIncrements = 10;
-        this.boatX = par1;
-        this.boatY = par3;
-        this.boatZ = par5;
-        this.boatYaw = par7;
-        this.boatPitch = par8;
-        this.boatYawHead = par9;
-        this.motionX = this.velocityX;
-        this.motionY = this.velocityY;
-        this.motionZ = this.velocityZ;
+        this.boatX = x;
+        this.boatY = y;
+        this.boatZ = z;
+        this.boatYaw = yaw;
+        this.boatPitch = pitch;
+        this.boatYawHead = steps;
+        Vec3 m = this.getDeltaMovement();
+        this.velocityX = m.x;
+        this.velocityY = m.y;
+        this.velocityZ = m.z;
     }
 
-    @SideOnly(value=Side.CLIENT)
-    public void setVelocity(double par1, double par3, double par5) {
-        this.velocityX = this.motionX = par1;
-        this.velocityY = this.motionY = par3;
-        this.velocityZ = this.motionZ = par5;
+    @Override
+    @OnlyIn(Dist.CLIENT)
+    public void lerpMotion(double x, double y, double z) {
+        this.velocityX = x;
+        this.velocityY = y;
+        this.velocityZ = z;
+        this.setDeltaMovement(x, y, z);
     }
 
-    public void onLivingUpdate() {
-        Object list = null;
-        Object listEntity = null;
-        double d6 = this.rand.nextFloat() * 2.0f - 1.0f;
-        double d7 = (double)(this.rand.nextInt(2) * 2 - 1) * 0.7;
+    protected void tickRidden() {
         double obstruction_factor = 0.0;
         double relative_g = 0.0;
         double max_speed = 0.75;
-        double gh = 1.0;
-        double rt = 0.0;
         double pi = 3.1415926545;
         double deltav = 0.0;
         int dist = 2;
         if (this.getControllingPassenger() == null) {
-            super.onLivingUpdate();
             return;
         }
-        if (this.isDead) {
+        if (this.isDeadOrDying()) {
             return;
         }
-        if (this.getControllingPassenger() == null) {
-            float var7 = (float)(Math.atan2(this.motionZ, this.motionX) * 180.0 / 3.141592653589793) - 90.0f;
-            float var8 = MathHelper.wrapDegrees((float)(var7 - this.rotationYaw));
-            this.rotationYaw += var8 / 5.0f;
-        }
-        if (this.world.isRemote) {
+        if (this.level().isClientSide) {
             if (this.boatPosRotationIncrements > 0) {
-                double d4 = this.posX + (this.boatX - this.posX) / (double)this.boatPosRotationIncrements;
-                double d5 = this.posY + (this.boatY - this.posY) / (double)this.boatPosRotationIncrements;
-                double d11 = this.posZ + (this.boatZ - this.posZ) / (double)this.boatPosRotationIncrements;
-                this.setPosition(d4, d5, d11);
-                this.rotationPitch = (float)((double)this.rotationPitch + (this.boatPitch - (double)this.rotationPitch) / (double)this.boatPosRotationIncrements);
-                double d10 = MathHelper.wrapDegrees((double)(this.boatYaw - (double)this.rotationYaw));
+                double d4 = this.getX() + (this.boatX - this.getX()) / (double) this.boatPosRotationIncrements;
+                double d5 = this.getY() + (this.boatY - this.getY()) / (double) this.boatPosRotationIncrements;
+                double d11 = this.getZ() + (this.boatZ - this.getZ()) / (double) this.boatPosRotationIncrements;
+                this.setPos(d4, d5, d11);
+                float newPitch =
+                        (float)
+                                ((double) this.getXRot()
+                                        + (this.boatPitch - (double) this.getXRot())
+                                                / (double) this.boatPosRotationIncrements);
+                this.setXRot(newPitch);
+                double d10 = Mth.wrapDegrees(this.boatYaw - (double) this.getYRot());
                 if (this.getControllingPassenger() != null) {
-                    d10 = MathHelper.wrapDegrees((double)((double)this.getControllingPassenger().rotationYaw - (double)this.rotationYaw));
+                    d10 = Mth.wrapDegrees((double) this.getControllingPassenger().getYRot() - (double) this.getYRot());
                 }
-                this.rotationYaw = (float)((double)this.rotationYaw + d10 / (double)this.boatPosRotationIncrements);
-                this.setRotation(this.rotationYaw, this.rotationPitch);
+                this.setYRot((float) ((double) this.getYRot() + d10 / (double) this.boatPosRotationIncrements));
+                this.setRot(this.getYRot(), this.getXRot());
                 --this.boatPosRotationIncrements;
             }
         } else if (this.getControllingPassenger() != null) {
             double rdv;
-            EntityPlayer pp = (EntityPlayer)this.getControllingPassenger();
-            if (this.motionX < -2.0) {
-                this.motionX = -2.0;
+            Player pp = (Player) this.getControllingPassenger();
+            Vec3 dm = this.getDeltaMovement();
+            double mx = dm.x;
+            double my = dm.y;
+            double mz = dm.z;
+            if (mx < -2.0) {
+                mx = -2.0;
             }
-            if (this.motionX > 2.0) {
-                this.motionX = 2.0;
+            if (mx > 2.0) {
+                mx = 2.0;
             }
-            if (this.motionZ < -2.0) {
-                this.motionZ = -2.0;
+            if (mz < -2.0) {
+                mz = -2.0;
             }
-            if (this.motionZ > 2.0) {
-                this.motionZ = 2.0;
+            if (mz > 2.0) {
+                mz = 2.0;
             }
-            double velocity = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
+            double velocity = Math.sqrt(mx * mx + mz * mz);
             obstruction_factor = 0.0;
-            dist = 1 + (int)(velocity * 10.0);
+            dist = 1 + (int) (velocity * 10.0);
             for (int k = 0; k < dist; ++k) {
                 for (int i = 1; i < dist * 2; ++i) {
-                    double dz = (double)i * Math.sin(Math.toRadians(this.rotationYaw + 90.0f));
-                    double dx = (double)i * Math.cos(Math.toRadians(this.rotationYaw + 90.0f));
-                    net.minecraft.util.math.BlockPos checkPos = new net.minecraft.util.math.BlockPos((int)(this.posX + dx), (int)this.posY - 1 + k, (int)(this.posZ + dz));
-                    Block bid = this.world.getBlockState(checkPos).getBlock();
-                    if (bid == Blocks.AIR) continue;
+                    double dz = (double) i * Math.sin(Math.toRadians(this.getYRot() + 90.0f));
+                    double dx = (double) i * Math.cos(Math.toRadians(this.getYRot() + 90.0f));
+                    BlockPos checkPos =
+                            new BlockPos(
+                                    (int) (this.getX() + dx),
+                                    (int) this.getY() - 1 + k,
+                                    (int) (this.getZ() + dz));
+                    Block bid = this.level().getBlockState(checkPos).getBlock();
+                    if (bid == Blocks.AIR) {
+                        continue;
+                    }
                     obstruction_factor += 0.075;
                 }
             }
-            this.motionY += obstruction_factor;
-            this.posY += obstruction_factor;
-            if (this.motionY > 4.0) {
-                this.motionY = 4.0;
+            my += obstruction_factor;
+            this.setPos(this.getX(), this.getY() + obstruction_factor, this.getZ());
+            if (my > 4.0) {
+                my = 4.0;
             }
-            double d4 = this.getControllingPassenger().rotationYaw;
+            double d4 = this.getControllingPassenger().getYRot();
             d4 %= 360.0;
             while (d4 < 0.0) {
                 d4 += 360.0;
             }
-            double d5 = this.rotationYaw;
+            double d5 = this.getYRot();
             d5 %= 360.0;
             while (d5 < 0.0) {
                 d5 += 360.0;
             }
             for (relative_g = (d4 - d5) % 180.0; relative_g < 0.0; relative_g += 180.0) {
+                // 1.12 empty for-loop condition body
             }
             if (relative_g > 90.0) {
                 relative_g -= 180.0;
             }
             if (velocity > 0.01) {
                 d4 = 1.85 - velocity;
-                if ((d4 = Math.abs(d4)) < 0.01) {
+                d4 = Math.abs(d4);
+                if (d4 < 0.01) {
                     d4 = 0.01;
                 }
                 if (d4 > 0.9) {
                     d4 = 0.9;
                 }
-                this.rotationYaw = this.getControllingPassenger().rotationYaw + (float)(relative_g * d4);
+                this.setYRot(
+                        this.getControllingPassenger().getYRot() + (float) (relative_g * d4));
             } else {
-                this.rotationYaw = this.getControllingPassenger().rotationYaw;
+                this.setYRot(this.getControllingPassenger().getYRot());
             }
-            this.rotationPitch = 2.0f * (float)velocity;
-            this.setRotation(this.rotationYaw, this.rotationPitch);
-            double newvelocity = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
-            double rr = Math.atan2(this.getControllingPassenger().motionZ, this.getControllingPassenger().motionX);
-            double rhm = Math.atan2(this.motionZ, this.motionX);
-            double rhdir = Math.toRadians((this.getControllingPassenger().rotationYaw + 90.0f) % 360.0f);
-            rt = 0.0;
-            pi = 3.1415926545;
+            this.setXRot(2.0f * (float) velocity);
+            this.setRot(this.getYRot(), this.getXRot());
+            double newvelocity = Math.sqrt(mx * mx + mz * mz);
+            double rhm = Math.atan2(mz, mx);
+            double rhdir = Math.toRadians((this.getControllingPassenger().getYRot() + 90.0f) % 360.0f);
             deltav = 0.0;
-            float im = pp.moveForward;
+            float im = pp.zza;
             if (ChaosPersists.flyup_keystate != 0) {
                 if (this.didjump == 0) {
-                    this.motionY += 1.0;
-                    this.motionY += velocity * 6.0;
+                    my += 1.0;
+                    my += velocity * 6.0;
                     this.didjump = 20;
                 }
             } else if (this.didjump > 0) {
                 --this.didjump;
             }
-            if ((rdv = Math.abs(rhm - rhdir) % (pi * 2.0)) > pi) {
+            rdv = Math.abs(rhm - rhdir) % (pi * 2.0);
+            if (rdv > pi) {
                 rdv -= pi * 2.0;
             }
             rdv = Math.abs(rdv);
@@ -548,7 +518,7 @@ extends EntityCannonFodder {
                 rdv = 0.0;
             }
             if (rdv > 1.5) {
-                newvelocity = - newvelocity;
+                newvelocity = -newvelocity;
             }
             if (Math.abs(im) > 0.001f) {
                 if (im > 0.0f) {
@@ -556,9 +526,9 @@ extends EntityCannonFodder {
                     if (this.deltasmooth < 0.0f) {
                         this.deltasmooth = 0.0f;
                     }
-                    this.deltasmooth = (float)((double)this.deltasmooth + deltav / 10.0);
-                    if ((double)this.deltasmooth > deltav) {
-                        this.deltasmooth = (float)deltav;
+                    this.deltasmooth = (float) ((double) this.deltasmooth + deltav / 10.0);
+                    if ((double) this.deltasmooth > deltav) {
+                        this.deltasmooth = (float) deltav;
                     }
                 } else {
                     max_speed = 0.25;
@@ -566,98 +536,135 @@ extends EntityCannonFodder {
                     if (this.deltasmooth > 0.0f) {
                         this.deltasmooth = 0.0f;
                     }
-                    this.deltasmooth = (float)((double)this.deltasmooth + deltav / 10.0);
-                    if ((double)this.deltasmooth < deltav) {
-                        this.deltasmooth = (float)deltav;
+                    this.deltasmooth = (float) ((double) this.deltasmooth + deltav / 10.0);
+                    if ((double) this.deltasmooth < deltav) {
+                        this.deltasmooth = (float) deltav;
                     }
                 }
-                if ((newvelocity += (double)this.deltasmooth) >= 0.0) {
+                if ((newvelocity += (double) this.deltasmooth) >= 0.0) {
                     if (newvelocity > max_speed) {
                         newvelocity = max_speed;
                     }
-                    this.motionX = Math.cos(Math.toRadians(this.rotationYaw + 90.0f)) * newvelocity;
-                    this.motionZ = Math.sin(Math.toRadians(this.rotationYaw + 90.0f)) * newvelocity;
+                    mx = Math.cos(Math.toRadians(this.getYRot() + 90.0f)) * newvelocity;
+                    mz = Math.sin(Math.toRadians(this.getYRot() + 90.0f)) * newvelocity;
                 } else {
-                    if (newvelocity < - max_speed) {
-                        newvelocity = - max_speed;
+                    if (newvelocity < -max_speed) {
+                        newvelocity = -max_speed;
                     }
-                    newvelocity = - newvelocity;
-                    this.motionX = Math.cos(Math.toRadians(this.rotationYaw + 270.0f)) * newvelocity;
-                    this.motionZ = Math.sin(Math.toRadians(this.rotationYaw + 270.0f)) * newvelocity;
+                    newvelocity = -newvelocity;
+                    mx = Math.cos(Math.toRadians(this.getYRot() + 270.0f)) * newvelocity;
+                    mz = Math.sin(Math.toRadians(this.getYRot() + 270.0f)) * newvelocity;
                 }
             } else if (newvelocity >= 0.0) {
-                this.motionX = Math.cos(Math.toRadians(this.rotationYaw + 90.0f)) * newvelocity;
-                this.motionZ = Math.sin(Math.toRadians(this.rotationYaw + 90.0f)) * newvelocity;
+                mx = Math.cos(Math.toRadians(this.getYRot() + 90.0f)) * newvelocity;
+                mz = Math.sin(Math.toRadians(this.getYRot() + 90.0f)) * newvelocity;
             } else {
-                this.motionX = Math.cos(Math.toRadians(this.rotationYaw + 270.0f)) * (newvelocity * -1.0);
-                this.motionZ = Math.sin(Math.toRadians(this.rotationYaw + 270.0f)) * (newvelocity * -1.0);
+                mx = Math.cos(Math.toRadians(this.getYRot() + 270.0f)) * (newvelocity * -1.0);
+                mz = Math.sin(Math.toRadians(this.getYRot() + 270.0f)) * (newvelocity * -1.0);
             }
-            this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-            this.motionY -= 0.25;
-            this.motionX *= 0.95;
-            this.motionY *= 0.85;
-            this.motionZ *= 0.95;
-            if (this.getControllingPassenger() != null && this.getControllingPassenger().isDead) {
-                this.removePassengers();
+            this.move(MoverType.SELF, new Vec3(mx, my, mz));
+            my -= 0.25;
+            mx *= 0.95;
+            my *= 0.85;
+            mz *= 0.95;
+            this.setDeltaMovement(mx, my, mz);
+            if (this.getControllingPassenger() != null && !this.getControllingPassenger().isAlive()) {
+                this.ejectPassengers();
             }
         }
     }
 
-    public void updateRiderPosition() {
-        if (this.getControllingPassenger() != null) {
-            float f = -0.15f;
-            this.getControllingPassenger().setPosition(this.posX - (double)f * Math.sin(Math.toRadians(this.rotationYaw)), this.posY + this.getMountedYOffset() + this.getControllingPassenger().getYOffset(), this.posZ + (double)f * Math.cos(Math.toRadians(this.rotationYaw)));
-        }
+    @Override
+    protected void checkFallDamage(double y, boolean onGroundIn, BlockState state, BlockPos pos) {
+        super.checkFallDamage(y, onGroundIn, state, pos);
+        this.fallDistance = 0.0f;
     }
 
-    protected void playTameEffect(boolean par1) {
-        EnumParticleTypes type = par1 ? EnumParticleTypes.HEART : EnumParticleTypes.SMOKE_NORMAL;
-        for (int i = 0; i < 20; ++i) {
-            double d0 = this.rand.nextGaussian() * 0.08;
-            double d1 = this.rand.nextGaussian() * 0.08;
-            double d2 = this.rand.nextGaussian() * 0.08;
-            this.world.spawnParticle(type, this.posX + (double)((this.rand.nextFloat() - this.rand.nextFloat()) * 2.5f), this.posY + 0.5 + (double)this.rand.nextFloat() * 1.5, this.posZ + (double)((this.rand.nextFloat() - this.rand.nextFloat()) * 2.5f), d0, d1, d2);
-        }
+    @Override
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+        return false;
     }
 
-    public void fall(float distance, float damageMultiplier) {
-    }
-
-    protected void updateFallState(double y, boolean onGroundIn, net.minecraft.block.state.IBlockState state, net.minecraft.util.math.BlockPos pos) {
-        fallDistance = 0.0f;
-    }
-
-    protected boolean canDespawn() {
-        if (this.isChild()) {
-            this.enablePersistence();
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        if (this.isBaby()) {
+            this.setPersistenceRequired();
             return false;
         }
-        if (this.getControllingPassenger() != null) {
+        if (!this.getPassengers().isEmpty()) {
             return false;
         }
-        if (this.isNoDespawnRequired()) {
+        if (this.isPersistenceRequired()) {
             return false;
         }
-        if (this.isTamed()) {
+        if (this.isTame()) {
             return false;
         }
         return true;
     }
 
-    public EntityAgeable createChild(EntityAgeable entityageable) {
-        return this.spawnBabyAnimal(entityageable);
-    }
-
-    public Ostrich spawnBabyAnimal(EntityAgeable par1EntityAgeable) {
-        return new Ostrich(this.world);
+    @Override
+    public Ostrich getBreedOffspring(ServerLevel level, AgeableMob partner) {
+        return (Ostrich) this.getType().create(level);
     }
 
     public boolean isWheat(ItemStack par1ItemStack) {
-        return par1ItemStack != null && par1ItemStack.getItem() == Items.APPLE;
+        return !par1ItemStack.isEmpty() && par1ItemStack.is(Items.APPLE);
     }
 
     public boolean isBreedingItem(ItemStack par1ItemStack) {
-        return par1ItemStack.getItem() == ChaosPersists.MyCrystalApple;
+        Item crystal =
+                ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("chaospersists", "crystalapple"));
+        if (crystal == null) {
+            crystal = ChaosPersists.MyCrystalApple;
+        }
+        return crystal != null && par1ItemStack.is(crystal);
+    }
+
+    @Override
+    public boolean isFood(ItemStack stack) {
+        return this.isBreedingItem(stack);
+    }
+
+    public static boolean checkOstrichSpawnRules(
+            EntityType<Ostrich> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            RandomSource random) {
+        if (pos.getY() < 50) {
+            return false;
+        }
+        if (!MyUtils.isDay(level)) {
+            return false;
+        }
+        if (random.nextInt(4) != 1) {
+            return false;
+        }
+        List<Ostrich> found =
+                level.getLevel()
+                        .getEntitiesOfClass(
+                                Ostrich.class,
+                                new AABB(pos).inflate(16.0, 6.0, 16.0));
+        return found.isEmpty();
+    }
+
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        if (this.getY() < 50.0) {
+            return false;
+        }
+        if (!this.level().isDay()) {
+            return false;
+        }
+        if (this.getRandom().nextInt(4) != 1) {
+            return false;
+        }
+        List<Ostrich> target =
+                this.level()
+                        .getEntitiesOfClass(
+                                Ostrich.class, this.getBoundingBox().inflate(16.0, 6.0, 16.0));
+        long others = target.stream().filter(e -> e != this).count();
+        return others == 0;
     }
 }
-

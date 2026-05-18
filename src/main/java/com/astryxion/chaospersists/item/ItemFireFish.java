@@ -1,41 +1,34 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.ItemFireFish
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.item.ItemFood
- *  net.minecraft.item.ItemStack
- *  net.minecraft.potion.Potion
- *  net.minecraft.potion.PotionEffect
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemFood;
-import net.minecraft.item.ItemStack;
-import net.minecraft.potion.Potion;
-import net.minecraft.potion.PotionEffect;
-import net.minecraft.world.World;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
-public class ItemFireFish
-extends ItemFood {
-    public ItemFireFish(int par2, float par3, boolean par4) {
-        super(par2, par3, par4);
-        this.setAlwaysEdible();
+public class ItemFireFish extends Item {
+
+    public ItemFireFish(int nutrition, float saturation, boolean alwaysEdible) {
+        super(createProperties(nutrition, saturation, alwaysEdible));
     }
 
-    public void onFoodEaten(ItemStack par1ItemStack, World par2World, EntityPlayer par3EntityPlayer) {
-        super.onFoodEaten(par1ItemStack, par2World, par3EntityPlayer);
-        if (!par2World.isRemote) {
-            par3EntityPlayer.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.FIRE_RESISTANCE, 1200, 0));
+    private static Properties createProperties(int nutrition, float saturation, boolean alwaysEdible) {
+        FoodProperties.Builder builder = new FoodProperties.Builder().nutrition(nutrition).saturationMod(saturation);
+        if (alwaysEdible) {
+            builder.alwaysEat();
         }
-    }}
+        return new Properties().food(builder.build());
+    }
 
+    @Override
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
+        ItemStack result = super.finishUsingItem(stack, level, entity);
+        if (!level.isClientSide && entity instanceof Player player) {
+            player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 1200, 0));
+        }
+        return result;
+    }
+}

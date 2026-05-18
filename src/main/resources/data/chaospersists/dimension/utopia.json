@@ -1,0 +1,11 @@
+{
+  "type": "chaospersists:utopia_type",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "chaospersists:chaos_utopia_rolling_hills",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "chaospersists:utopia"
+    }
+  }
+}

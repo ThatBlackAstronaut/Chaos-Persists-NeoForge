@@ -1,71 +1,65 @@
-/*
- * Decompiled with CFR 0_125.
- *
- * 1.12.2: use EntityPlayer.onItemUse(BlockPos, EnumHand, EnumFacing) — the old int-coord
- * method is never called by the game (matches 1.7.10: place MyExperiencePlant above soil).
- */
 package com.astryxion.chaospersists.item;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
-import net.minecraft.block.Block;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class ItemExperienceTreeSeed extends Item {
 
     public ItemExperienceTreeSeed(int i) {
-        this.maxStackSize = 1;
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
+        super(new Properties().stacksTo(1));
     }
 
     @Override
-    public EnumActionResult onItemUse(EntityPlayer player,
-                                      World world,
-                                      BlockPos pos,
-                                      EnumHand hand,
-                                      EnumFacing facing,
-                                      float hitX,
-                                      float hitY,
-                                      float hitZ) {
-        if (facing != EnumFacing.UP) {
-            return EnumActionResult.FAIL;
+    public InteractionResult useOn(UseOnContext context) {
+        if (context.getClickedFace() != Direction.UP) {
+            return InteractionResult.FAIL;
         }
 
-        ItemStack stack = player.getHeldItem(hand);
-        Block ground = world.getBlockState(pos).getBlock();
-        if (ground != Blocks.GRASS && ground != Blocks.DIRT && ground != Blocks.FARMLAND) {
-            return EnumActionResult.FAIL;
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        BlockState ground = level.getBlockState(pos);
+        if (!ground.is(Blocks.GRASS_BLOCK) && !ground.is(Blocks.DIRT) && !ground.is(Blocks.FARMLAND)) {
+            return InteractionResult.FAIL;
         }
 
-        BlockPos above = pos.up();
-        if (!world.isAirBlock(above)) {
-            return EnumActionResult.FAIL;
+        BlockPos above = pos.above();
+        if (!level.isEmptyBlock(above)) {
+            return InteractionResult.FAIL;
         }
 
-        if (!world.isRemote) {
-            world.setBlockState(above, ChaosPersists.MyExperiencePlant.getDefaultState(), 2);
-            if (!player.capabilities.isCreativeMode) {
-                stack.shrink(1);
-            }
-        } else {
+        if (level.isClientSide) {
             for (int j1 = 0; j1 < 10; ++j1) {
-                world.spawnParticle(EnumParticleTypes.VILLAGER_HAPPY,
-                        (double) ((float) pos.getX() + world.rand.nextFloat()),
-                        (double) pos.getY() + 1.0 + (double) world.rand.nextFloat(),
-                        (double) ((float) pos.getZ() + world.rand.nextFloat()),
-                        0.0, 0.0, 0.0);
+                level.addParticle(
+                        ParticleTypes.HAPPY_VILLAGER,
+                        (double) ((float) pos.getX() + level.random.nextFloat()),
+                        (double) pos.getY() + 1.0 + (double) level.random.nextFloat(),
+                        (double) ((float) pos.getZ() + level.random.nextFloat()),
+                        0.0,
+                        0.0,
+                        0.0);
             }
+            return InteractionResult.SUCCESS;
         }
 
-        return EnumActionResult.SUCCESS;
+        Block plant = ChaosPersists.MyExperiencePlant;
+        if (plant == null) {
+            return InteractionResult.FAIL;
+        }
+
+        level.setBlock(above, plant.defaultBlockState(), 2);
+        if (context.getPlayer() != null && !context.getPlayer().getAbilities().instabuild) {
+            context.getItemInHand().shrink(1);
+        }
+
+        return InteractionResult.SUCCESS;
     }
 }

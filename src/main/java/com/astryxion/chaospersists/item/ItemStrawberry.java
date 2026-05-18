@@ -1,23 +1,19 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.ItemStrawberry
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.item.ItemFood
- *  net.minecraft.util.IIcon
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraft.item.ItemFood;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
 
-public class ItemStrawberry
-extends ItemFood {
-    public ItemStrawberry(int par2, float par3, boolean par4) {
-        super(par2, par3, par4);
-    }}
+public class ItemStrawberry extends Item {
 
+    public ItemStrawberry(int nutrition, float saturation, boolean alwaysEdible) {
+        super(createProperties(nutrition, saturation, alwaysEdible));
+    }
+
+    private static Properties createProperties(int nutrition, float saturation, boolean alwaysEdible) {
+        FoodProperties.Builder builder = new FoodProperties.Builder().nutrition(nutrition).saturationMod(saturation);
+        if (alwaysEdible) {
+            builder.alwaysEat();
+        }
+        return new Properties().food(builder.build());
+    }
+}

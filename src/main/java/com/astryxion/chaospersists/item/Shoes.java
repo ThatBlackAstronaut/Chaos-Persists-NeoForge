@@ -1,146 +1,169 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.Boyfriend
- *  com.astryxion.chaospersists.Girlfriend
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.Shoes
- *  net.minecraft.entity.DataWatcher
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.monster.EntityCreeper
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.projectile.EntityThrowable
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.math.RayTraceResult
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
+import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.entity.Boyfriend;
 import com.astryxion.chaospersists.entity.Girlfriend;
-import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.monster.EntityCreeper;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.projectile.EntityThrowable;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import org.joml.Vector3f;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
-public class Shoes
-extends EntityThrowable {
-    private static final DataParameter<Integer> SHOE_ID = EntityDataManager.createKey(Shoes.class, DataSerializers.VARINT);
+public class Shoes extends ThrowableProjectile {
+    private static final EntityDataAccessor<Integer> SHOE_ID =
+            SynchedEntityData.defineId(Shoes.class, EntityDataSerializers.INT);
     public int ShoeId = 0;
     private float my_rotation = 0.0f;
 
-    public Shoes(World par1World) {
-        super(par1World);
-        this.ShoeId = this.rand.nextInt(4) + 2;
-        this.getDataManager().set(SHOE_ID, this.ShoeId);
+    public Shoes(EntityType<? extends Shoes> type, Level level) {
+        super(type, level);
+        this.ShoeId = this.random.nextInt(4) + 2;
+        this.entityData.set(SHOE_ID, this.ShoeId);
     }
 
-    public Shoes(World par1World, int par2) {
-        super(par1World);
+    public Shoes(Level level) {
+        this(ChaosPersists.ENTITY_TYPE_SHOES.get(), level);
+    }
+
+    public Shoes(Level level, int par2) {
+        super(ChaosPersists.ENTITY_TYPE_SHOES.get(), level);
         this.ShoeId = par2;
-        this.getDataManager().set(SHOE_ID, this.ShoeId);
+        this.entityData.set(SHOE_ID, this.ShoeId);
     }
 
-    public Shoes(World par1World, EntityLivingBase par2EntityLiving) {
-        super(par1World, par2EntityLiving);
-        this.ShoeId = this.rand.nextInt(4) + 2;
-        this.getDataManager().set(SHOE_ID, this.ShoeId);
+    public Shoes(Level level, LivingEntity par2EntityLiving) {
+        super(ChaosPersists.ENTITY_TYPE_SHOES.get(), par2EntityLiving, level);
+        this.ShoeId = this.random.nextInt(4) + 2;
+        this.entityData.set(SHOE_ID, this.ShoeId);
     }
 
-    public Shoes(World par1World, EntityLivingBase par2EntityLiving, int par3) {
-        super(par1World, par2EntityLiving);
+    public Shoes(Level level, LivingEntity par2EntityLiving, int par3) {
+        super(ChaosPersists.ENTITY_TYPE_SHOES.get(), par2EntityLiving, level);
         this.ShoeId = par3;
-        this.getDataManager().set(SHOE_ID, this.ShoeId);
+        this.entityData.set(SHOE_ID, this.ShoeId);
     }
 
-    public Shoes(World par1World, double par2, double par4, double par6) {
-        super(par1World, par2, par4, par6);
-        this.ShoeId = this.rand.nextInt(4) + 2;
-        this.getDataManager().set(SHOE_ID, this.ShoeId);
+    public Shoes(Level level, double par2, double par4, double par6) {
+        super(ChaosPersists.ENTITY_TYPE_SHOES.get(), level);
+        this.setPos(par2, par4, par6);
+        this.ShoeId = this.random.nextInt(4) + 2;
+        this.entityData.set(SHOE_ID, this.ShoeId);
     }
 
-    protected void entityInit() {
-        super.entityInit();
-        this.getDataManager().register(SHOE_ID, 0);
+    @Override
+    protected void defineSynchedData() {
+        this.entityData.define(SHOE_ID, 0);
     }
 
     public int getShoeId() {
-        return this.getDataManager().get(SHOE_ID).intValue();
+        return this.entityData.get(SHOE_ID);
     }
 
     /**
-     * Same trajectory as {@link com.astryxion.chaospersists.entity.Boyfriend#attackEntityWithRangedAttack} /
-     * {@link com.astryxion.chaospersists.entity.Girlfriend#attackEntityWithRangedAttack} (1.7.10 behavior).
+     * Same trajectory as {@link Boyfriend#performRangedAttack} /
+     * {@link Girlfriend#performRangedAttack} (1.7.10 behavior).
      */
-    public static void shootTowardTarget(EntityLivingBase thrower, EntityLivingBase target, int shoeId) {
-        World world = thrower.world;
-        if (world.isRemote || target == null || target == thrower) {
+    public static void shootTowardTarget(LivingEntity thrower, LivingEntity target, int shoeId) {
+        Level world = thrower.level();
+        if (world.isClientSide || target == null || target == thrower) {
             return;
         }
         Shoes shoes = new Shoes(world, thrower, shoeId);
-        double dx = target.posX - thrower.posX;
-        double dy = target.posY + (double) target.getEyeHeight() - 1.1 - shoes.posY;
-        double dz = target.posZ - thrower.posZ;
-        float lift = MathHelper.sqrt(dx * dx + dz * dz) * 0.2f;
+        double dx = target.getX() - thrower.getX();
+        double dy = target.getY() + (double) target.getEyeHeight() - 1.1 - shoes.getY();
+        double dz = target.getZ() - thrower.getZ();
+        float lift = Mth.sqrt((float) (dx * dx + dz * dz)) * 0.2f;
         shoes.shoot(dx, dy + (double) lift, dz, 1.8f, 4.0f);
-        world.spawnEntity(shoes);
-        world.playSound(null, thrower.posX, thrower.posY, thrower.posZ, SoundEvents.ENTITY_SKELETON_SHOOT,
-                SoundCategory.NEUTRAL, 0.75f, 1.0f / (world.rand.nextFloat() * 0.4f + 0.8f));
+        world.addFreshEntity(shoes);
+        world.playSound(
+                null,
+                thrower.getX(),
+                thrower.getY(),
+                thrower.getZ(),
+                SoundEvents.SKELETON_SHOOT,
+                SoundSource.NEUTRAL,
+                0.75f,
+                1.0f / (world.getRandom().nextFloat() * 0.4f + 0.8f));
     }
 
-    protected void onImpact(RayTraceResult par1MovingObjectPosition) {
-        if (par1MovingObjectPosition.entityHit != null) {
+    @Override
+    protected void onHitEntity(EntityHitResult par1MovingObjectPosition) {
+        Entity hit = par1MovingObjectPosition.getEntity();
+        if (hit != null) {
             float var2 = 2.0f;
             if (this.getShoeId() == 6) {
                 var2 = 6.0f;
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityCreeper) {
+            if (hit instanceof Creeper) {
                 var2 += 4.0f;
             }
-            if (par1MovingObjectPosition.entityHit instanceof Girlfriend) {
+            if (hit instanceof Girlfriend) {
                 var2 = 1.0f;
             }
-            if (par1MovingObjectPosition.entityHit instanceof Boyfriend) {
+            if (hit instanceof Boyfriend) {
                 var2 = 1.0f;
             }
-            if (par1MovingObjectPosition.entityHit instanceof EntityPlayer) {
+            if (hit instanceof Player) {
                 var2 = 0.0f;
             }
             if (ChaosPersists.valentines_day != 0) {
                 var2 = 10.0f;
             }
-            par1MovingObjectPosition.entityHit.attackEntityFrom(DamageSource.causeThrownDamage((Entity)this, (Entity)this.getThrower()), var2);
+            if (var2 > 0.0f) {
+                hit.hurt(this.damageSources().thrown(this, this.getOwner()), var2);
+            }
         }
-        for (int var3 = 0; var3 < 4; ++var3) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.CLOUD, this.posX, this.posY, this.posZ, 0.0, 0.0, 0.0);
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.REDSTONE, this.posX, this.posY, this.posZ, 0.0, 0.0, 0.0);
-        }
-        if (!this.world.isRemote) {
-            this.setDead();
+        this.spawnImpactParticles();
+        if (!this.level().isClientSide) {
+            this.discard();
         }
     }
 
-    public void onUpdate() {
-        super.onUpdate();
+    @Override
+    protected void onHit(HitResult result) {
+        super.onHit(result);
+        if (result.getType() != HitResult.Type.ENTITY) {
+            this.spawnImpactParticles();
+            if (!this.level().isClientSide) {
+                this.discard();
+            }
+        }
+    }
+
+    private void spawnImpactParticles() {
+        for (int var3 = 0; var3 < 4; ++var3) {
+            this.level().addParticle(ParticleTypes.CLOUD, this.getX(), this.getY(), this.getZ(), 0.0, 0.0, 0.0);
+            this.level().addParticle(new DustParticleOptions(new Vector3f(0.5f, 0.5f, 0.5f), 1.0f), this.getX(), this.getY(), this.getZ(), 0.0, 0.0, 0.0);
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
         this.my_rotation += 20.0f;
         while (this.my_rotation > 360.0f) {
             this.my_rotation -= 360.0f;
         }
-        this.rotationPitch = this.prevRotationPitch = this.my_rotation;
+        this.setXRot(this.my_rotation);
+        this.xRotO = this.my_rotation;
+    }
+
+    protected ItemStack getDefaultItem() {
+        return ItemStack.EMPTY;
     }
 }
-

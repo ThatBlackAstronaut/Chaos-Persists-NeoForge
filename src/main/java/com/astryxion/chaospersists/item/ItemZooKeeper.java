@@ -1,81 +1,116 @@
 package com.astryxion.chaospersists.item;
 
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.SoundCategory;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import org.joml.Vector3f;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 /**
- * OreSpawn 1.7.10 "ZooKeeper Shard": left-click a mob with it to run {@link EntityLiving#enablePersistence()}
+ * OreSpawn 1.7.10 "ZooKeeper Shard": left-click a mob with it to run persistence
  * (mob no longer despawns). Same particles/sound as the original; uses one durability (max damage 1, takes 2 "damage steps").
  */
 public class ItemZooKeeper extends Item {
 
     public ItemZooKeeper(int i) {
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
-        this.setMaxDamage(1);
+        super(new Properties().durability(1));
     }
 
     @Override
-    public boolean onLeftClickEntity(ItemStack stack, EntityPlayer player, Entity entity) {
+    public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
         if (entity == null) {
             return false;
         }
 
         playEffects(player, entity);
 
-        if (!(entity instanceof EntityLiving)) {
+        if (!(entity instanceof LivingEntity living)) {
             return false;
         }
 
-        EntityLiving e = (EntityLiving) entity;
-        if (!player.world.isRemote) {
-            e.enablePersistence();
-            stack.damageItem(2, player);
+        if (!player.level().isClientSide) {
+            if (living instanceof Mob mob) {
+                mob.setPersistenceRequired();
+            }
+            stack.hurtAndBreak(
+                    2,
+                    player,
+                    p -> p.broadcastBreakEvent(
+                            player.getMainHandItem() == stack
+                                    ? InteractionHand.MAIN_HAND
+                                    : InteractionHand.OFF_HAND));
             clearSlotIfBroken(player, stack);
         }
 
         return true;
     }
 
-    private static void playEffects(EntityPlayer player, Entity entity) {
+    private static void playEffects(Player player, Entity entity) {
+        Level level = player.level();
         for (int i = 0; i < 8; ++i) {
-            float f1 = player.world.rand.nextFloat() * 3.0f - player.world.rand.nextFloat() * 3.0f;
-            float f2 = 0.25f + player.world.rand.nextFloat() * 2.0f;
-            float f3 = player.world.rand.nextFloat() * 3.0f - player.world.rand.nextFloat() * 3.0f;
-            player.world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL,
-                    entity.posX + f1, entity.posY + f2, entity.posZ + f3, 0.0, 0.0, 0.0);
-            f1 = player.world.rand.nextFloat() * 3.0f - player.world.rand.nextFloat() * 3.0f;
-            f2 = 0.25f + player.world.rand.nextFloat() * 2.0f;
-            f3 = player.world.rand.nextFloat() * 3.0f - player.world.rand.nextFloat() * 3.0f;
-            player.world.spawnParticle(EnumParticleTypes.EXPLOSION_NORMAL,
-                    entity.posX + f1, entity.posY + f2, entity.posZ + f3, 0.0, 0.0, 0.0);
-            f1 = player.world.rand.nextFloat() * 3.0f - player.world.rand.nextFloat() * 3.0f;
-            f2 = 0.25f + player.world.rand.nextFloat() * 2.0f;
-            f3 = player.world.rand.nextFloat() * 3.0f - player.world.rand.nextFloat() * 3.0f;
-            player.world.spawnParticle(EnumParticleTypes.REDSTONE,
-                    entity.posX + f1, entity.posY + f2, entity.posZ + f3, 0.0, 0.0, 0.0);
+            float f1 = level.random.nextFloat() * 3.0f - level.random.nextFloat() * 3.0f;
+            float f2 = 0.25f + level.random.nextFloat() * 2.0f;
+            float f3 = level.random.nextFloat() * 3.0f - level.random.nextFloat() * 3.0f;
+            level.addParticle(
+                    ParticleTypes.SMOKE,
+                    entity.getX() + f1,
+                    entity.getY() + f2,
+                    entity.getZ() + f3,
+                    0.0,
+                    0.0,
+                    0.0);
+            f1 = level.random.nextFloat() * 3.0f - level.random.nextFloat() * 3.0f;
+            f2 = 0.25f + level.random.nextFloat() * 2.0f;
+            f3 = level.random.nextFloat() * 3.0f - level.random.nextFloat() * 3.0f;
+            level.addParticle(
+                    ParticleTypes.EXPLOSION,
+                    entity.getX() + f1,
+                    entity.getY() + f2,
+                    entity.getZ() + f3,
+                    0.0,
+                    0.0,
+                    0.0);
+            f1 = level.random.nextFloat() * 3.0f - level.random.nextFloat() * 3.0f;
+            f2 = 0.25f + level.random.nextFloat() * 2.0f;
+            f3 = level.random.nextFloat() * 3.0f - level.random.nextFloat() * 3.0f;
+            level.addParticle(
+                    new DustParticleOptions(new Vector3f(0.5f, 0.5f, 0.5f), 1.0f),
+                    entity.getX() + f1,
+                    entity.getY() + f2,
+                    entity.getZ() + f3,
+                    0.0,
+                    0.0,
+                    0.0);
         }
-        player.world.playSound(null, entity.posX, entity.posY, entity.posZ,
-                SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.5f, 1.5f);
+        level.playSound(
+                null,
+                entity.getX(),
+                entity.getY(),
+                entity.getZ(),
+                SoundEvents.GENERIC_EXPLODE,
+                SoundSource.PLAYERS,
+                0.5f,
+                1.5f);
     }
 
-    private static void clearSlotIfBroken(EntityPlayer player, ItemStack stack) {
-        if (stack.getCount() > 0) {
+    private static void clearSlotIfBroken(Player player, ItemStack stack) {
+        if (!stack.isEmpty()) {
             return;
         }
-        if (player.getHeldItemMainhand() == stack) {
-            player.setHeldItem(EnumHand.MAIN_HAND, ItemStack.EMPTY);
-        } else if (player.getHeldItemOffhand() == stack) {
-            player.setHeldItem(EnumHand.OFF_HAND, ItemStack.EMPTY);
+        if (player.getMainHandItem() == stack) {
+            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        } else if (player.getOffhandItem() == stack) {
+            player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
         } else {
-            player.inventory.setInventorySlotContents(player.inventory.currentItem, ItemStack.EMPTY);
+            player.getInventory().setItem(player.getInventory().selected, ItemStack.EMPTY);
         }
     }
 }

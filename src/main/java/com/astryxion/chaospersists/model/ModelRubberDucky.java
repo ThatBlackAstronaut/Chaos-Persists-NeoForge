@@ -1,114 +1,110 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelRubberDucky
- *  com.astryxion.chaospersists.RenderInfo
- *  com.astryxion.chaospersists.RubberDucky
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.model;
 
-import com.astryxion.chaospersists.render.RenderInfo;
 import com.astryxion.chaospersists.entity.RubberDucky;
-import java.util.Random;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.render.RenderInfo;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.util.Mth;
 
-public class ModelRubberDucky
-extends ModelBase {
-    private float wingspeed = 1.0f;
-    ModelRenderer bottom;
-    ModelRenderer body;
-    ModelRenderer back;
-    ModelRenderer neck;
-    ModelRenderer head;
-    ModelRenderer beak;
-    ModelRenderer Lwing;
-    ModelRenderer Rwing;
+public class ModelRubberDucky extends EntityModel<RubberDucky> {
+    private final float wingspeed;
+    private final ModelPart bottom;
+    private final ModelPart body;
+    private final ModelPart back;
+    private final ModelPart neck;
+    private final ModelPart head;
+    private final ModelPart beak;
+    private final ModelPart Lwing;
+    private final ModelPart Rwing;
 
     public ModelRubberDucky(float f1) {
-        this.wingspeed = f1;
-        this.textureWidth = 64;
-        this.textureHeight = 64;
-        this.bottom = new ModelRenderer((ModelBase)this, 0, 56);
-        this.bottom.addBox(-2.0f, 0.0f, -2.0f, 4, 1, 4);
-        this.bottom.setRotationPoint(0.0f, 23.0f, 0.0f);
-        this.bottom.setTextureSize(64, 64);
-        this.bottom.mirror = true;
-        this.setRotation(this.bottom, 0.0f, 0.0f, 0.0f);
-        this.body = new ModelRenderer((ModelBase)this, 0, 45);
-        this.body.addBox(-3.0f, 0.0f, -3.0f, 6, 2, 8);
-        this.body.setRotationPoint(0.0f, 21.0f, 0.0f);
-        this.body.setTextureSize(64, 64);
-        this.body.mirror = true;
-        this.setRotation(this.body, 0.0f, 0.0f, 0.0f);
-        this.back = new ModelRenderer((ModelBase)this, 0, 33);
-        this.back.addBox(-3.0f, 0.0f, -3.0f, 6, 1, 10);
-        this.back.setRotationPoint(0.0f, 20.0f, 0.0f);
-        this.back.setTextureSize(64, 64);
-        this.back.mirror = true;
-        this.setRotation(this.back, 0.0f, 0.0f, 0.0f);
-        this.neck = new ModelRenderer((ModelBase)this, 17, 27);
-        this.neck.addBox(-1.0f, 0.0f, -1.0f, 2, 1, 2);
-        this.neck.setRotationPoint(0.0f, 19.0f, -1.0f);
-        this.neck.setTextureSize(64, 64);
-        this.neck.mirror = true;
-        this.setRotation(this.neck, 0.0f, 0.0f, 0.0f);
-        this.head = new ModelRenderer((ModelBase)this, 13, 18);
-        this.head.addBox(-2.0f, -4.0f, -2.0f, 4, 4, 4);
-        this.head.setRotationPoint(0.0f, 19.0f, -1.0f);
-        this.head.setTextureSize(64, 64);
-        this.head.mirror = true;
-        this.setRotation(this.head, 0.0f, 0.0f, 0.0f);
-        this.beak = new ModelRenderer((ModelBase)this, 0, 21);
-        this.beak.addBox(-1.5f, -1.0f, -5.0f, 3, 1, 3);
-        this.beak.setRotationPoint(0.0f, 19.0f, -1.0f);
-        this.beak.setTextureSize(64, 64);
-        this.beak.mirror = true;
-        this.setRotation(this.beak, 0.0f, 0.0f, 0.0f);
-        this.Lwing = new ModelRenderer((ModelBase)this, 0, 0);
-        this.Lwing.addBox(0.0f, -0.5f, 0.0f, 2, 1, 5);
-        this.Lwing.setRotationPoint(3.0f, 21.0f, -2.0f);
-        this.Lwing.setTextureSize(64, 64);
-        this.Lwing.mirror = true;
-        this.setRotation(this.Lwing, 0.0f, 0.0f, 0.0f);
-        this.Rwing = new ModelRenderer((ModelBase)this, 17, 0);
-        this.Rwing.addBox(-2.0f, -0.5f, 0.0f, 2, 1, 5);
-        this.Rwing.setRotationPoint(-3.0f, 21.0f, -2.0f);
-        this.Rwing.setTextureSize(64, 64);
-        this.Rwing.mirror = true;
-        this.setRotation(this.Rwing, 0.0f, 0.0f, 0.0f);
+        this(LayerDefinition.create(createMesh(), 64, 64).bakeRoot(), f1);
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        RubberDucky c = (RubberDucky)entity;
-        RenderInfo r = null;
-        float hf = 0.0f;
-        float newangle = 0.0f;
-        float nextangle = 0.0f;
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        newangle = (double)f1 > 0.1 ? MathHelper.cos((float)(f2 * 2.3f * this.wingspeed)) * 3.1415927f * 0.25f * f1 : 0.0f;
-        this.beak.rotateAngleY = this.head.rotateAngleY = (float)Math.toRadians(f3) * 0.45f;
-        this.beak.rotateAngleX = this.head.rotateAngleX = (float)Math.toRadians(f4) * 0.65f;
+    public ModelRubberDucky(ModelPart root, float wingspeed) {
+        this.wingspeed = wingspeed;
+        this.bottom = root.getChild("bottom");
+        this.body = root.getChild("body");
+        this.back = root.getChild("back");
+        this.neck = root.getChild("neck");
+        this.head = root.getChild("head");
+        this.beak = root.getChild("beak");
+        this.Lwing = root.getChild("Lwing");
+        this.Rwing = root.getChild("Rwing");
+    }
+
+    private static MeshDefinition createMesh() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild(
+                "bottom",
+                CubeListBuilder.create().texOffs(0, 56).mirror().addBox(-2.0f, 0.0f, -2.0f, 4, 1, 4),
+                PartPose.offset(0.0f, 23.0f, 0.0f));
+        root.addOrReplaceChild(
+                "body",
+                CubeListBuilder.create().texOffs(0, 45).mirror().addBox(-3.0f, 0.0f, -3.0f, 6, 2, 8),
+                PartPose.offset(0.0f, 21.0f, 0.0f));
+        root.addOrReplaceChild(
+                "back",
+                CubeListBuilder.create().texOffs(0, 33).mirror().addBox(-3.0f, 0.0f, -3.0f, 6, 1, 10),
+                PartPose.offset(0.0f, 20.0f, 0.0f));
+        root.addOrReplaceChild(
+                "neck",
+                CubeListBuilder.create().texOffs(17, 27).mirror().addBox(-1.0f, 0.0f, -1.0f, 2, 1, 2),
+                PartPose.offset(0.0f, 19.0f, -1.0f));
+        root.addOrReplaceChild(
+                "head",
+                CubeListBuilder.create().texOffs(13, 18).mirror().addBox(-2.0f, -4.0f, -2.0f, 4, 4, 4),
+                PartPose.offset(0.0f, 19.0f, -1.0f));
+        root.addOrReplaceChild(
+                "beak",
+                CubeListBuilder.create().texOffs(0, 21).mirror().addBox(-1.5f, -1.0f, -5.0f, 3, 1, 3),
+                PartPose.offset(0.0f, 19.0f, -1.0f));
+        root.addOrReplaceChild(
+                "Lwing",
+                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, -0.5f, 0.0f, 2, 1, 5),
+                PartPose.offset(3.0f, 21.0f, -2.0f));
+        root.addOrReplaceChild(
+                "Rwing",
+                CubeListBuilder.create().texOffs(17, 0).mirror().addBox(-2.0f, -0.5f, 0.0f, 2, 1, 5),
+                PartPose.offset(-3.0f, 21.0f, -2.0f));
+        return mesh;
+    }
+
+    @Override
+    public void setupAnim(
+            RubberDucky c,
+            float f,
+            float f1,
+            float f2,
+            float f3,
+            float f4) {
+        RenderInfo r;
+        float newangle;
+        float nextangle;
+        newangle =
+                (double) f1 > 0.1
+                        ? Mth.cos((float) (f2 * 2.3f * this.wingspeed)) * 3.1415927f * 0.25f * f1
+                        : 0.0f;
+        this.beak.yRot = this.head.yRot = (float) Math.toRadians(f3) * 0.45f;
+        this.beak.xRot = this.head.xRot = (float) Math.toRadians(f4) * 0.65f;
         r = c.getRenderInfo();
-        newangle = MathHelper.cos((float)(f2 * 1.0f * this.wingspeed)) * 3.1415927f * 0.15f;
-        nextangle = MathHelper.cos((float)((f2 + 0.3f) * 1.0f * this.wingspeed)) * 3.1415927f * 0.15f;
+        newangle = Mth.cos((float) (f2 * 1.0f * this.wingspeed)) * 3.1415927f * 0.15f;
+        nextangle = Mth.cos((float) ((f2 + 0.3f) * 1.0f * this.wingspeed)) * 3.1415927f * 0.15f;
         if (nextangle > 0.0f && newangle < 0.0f) {
             r.ri1 = 0;
-            if (c.world.rand.nextInt(3) == 1) {
+            if (c.getRandom().nextInt(3) == 1) {
                 r.ri1 = 1;
             }
             if (c.getKillCount() >= 5) {
-                if (c.world.rand.nextInt(2) == 1) {
+                if (c.getRandom().nextInt(2) == 1) {
                     r.ri1 = 1;
                 }
                 newangle *= 4.0f;
@@ -117,33 +113,34 @@ extends ModelBase {
         if (r.ri1 == 0) {
             newangle = 0.0f;
         }
-        if (c.isSitting()) {
+        if (c.isInSittingPose()) {
             newangle = 0.0f;
         }
         newangle = Math.abs(newangle);
-        this.Lwing.rotateAngleZ = - newangle;
-        this.Lwing.rotateAngleY = newangle / 2.0f;
-        this.Rwing.rotateAngleZ = newangle;
-        this.Rwing.rotateAngleY = (- newangle) / 2.0f;
+        this.Lwing.zRot = -newangle;
+        this.Lwing.yRot = newangle / 2.0f;
+        this.Rwing.zRot = newangle;
+        this.Rwing.yRot = (-newangle) / 2.0f;
         c.setRenderInfo(r);
-        this.bottom.render(f5);
-        this.body.render(f5);
-        this.back.render(f5);
-        this.neck.render(f5);
-        this.head.render(f5);
-        this.beak.render(f5);
-        this.Lwing.render(f5);
-        this.Rwing.render(f5);
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
-    }
-
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+    @Override
+    public void renderToBuffer(
+            PoseStack poseStack,
+            VertexConsumer buffer,
+            int packedLight,
+            int packedOverlay,
+            float red,
+            float green,
+            float blue,
+            float alpha) {
+        this.bottom.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.body.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.back.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.neck.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.head.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.beak.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Lwing.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Rwing.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

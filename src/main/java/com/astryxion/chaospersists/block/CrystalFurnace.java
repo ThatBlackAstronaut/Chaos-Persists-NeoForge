@@ -2,202 +2,148 @@ package com.astryxion.chaospersists.block;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.tileentity.TileEntityCrystalFurnace;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.ITileEntityProvider;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.properties.PropertyDirection;
-import net.minecraft.block.state.BlockStateContainer;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.InventoryHelper;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
 import javax.annotation.Nullable;
-import java.util.Random;
-
-public class CrystalFurnace extends Block implements ITileEntityProvider {
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.phys.BlockHitResult;
+public class CrystalFurnace extends BaseEntityBlock {
     private static boolean keepInventory;
 
-    public static final PropertyDirection FACING =
-            PropertyDirection.create("facing", EnumFacing.Plane.HORIZONTAL);
-
-    public static final PropertyBool LIT =
-            PropertyBool.create("lit");
+    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     public CrystalFurnace(float hardness, float resistance) {
-        super(Material.ROCK);
-
-        this.setHardness(hardness);
-        this.setResistance(resistance);
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
-        this.setTickRandomly(true);
-
-        this.setDefaultState(this.blockState.getBaseState()
-                .withProperty(FACING, EnumFacing.NORTH)
-                .withProperty(LIT, false));
-    }
-
-    // ================= BLOCKSTATE =================
-
-    @Override
-    protected BlockStateContainer createBlockState() {
-        return new BlockStateContainer(this, FACING, LIT);
+        super(net.minecraft.world.level.block.Block.Properties.of().strength(hardness, resistance).lightLevel(state -> state.getValue(LIT) ? 13 : 0).noOcclusion().randomTicks());
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, false));
     }
 
     @Override
-    public IBlockState getStateFromMeta(int meta) {
-        EnumFacing facing = EnumFacing.byHorizontalIndex(meta & 3);
-        boolean lit = (meta & 4) != 0;
-
-        return this.getDefaultState()
-                .withProperty(FACING, facing)
-                .withProperty(LIT, lit);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, LIT);
     }
 
     @Override
-    public int getMetaFromState(IBlockState state) {
-        int meta = state.getValue(FACING).getHorizontalIndex();
-        if (state.getValue(LIT)) meta |= 4;
-        return meta;
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
-    // ================= PLACEMENT =================
-
     @Override
-    public void onBlockPlacedBy(World world, BlockPos pos,
-                                 IBlockState state,
-                                 EntityLivingBase placer,
-                                 ItemStack stack) {
-
-        EnumFacing facing = placer.getHorizontalFacing().getOpposite();
-        world.setBlockState(pos,
-                state.withProperty(FACING, facing), 2);
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+        if (placer != null) {
+            level.setBlock(pos, state.setValue(FACING, placer.getDirection().getOpposite()), 2);
+        }
     }
 
-    // ================= GUI =================
-
     @Override
-    public boolean onBlockActivated(World world, BlockPos pos,
-                                    IBlockState state,
-                                    EntityPlayer player,
-                                    EnumHand hand,
-                                    EnumFacing facing,
-                                    float hitX, float hitY, float hitZ) {
-
-        if (world.isRemote) return true;
-
-        player.openGui(ChaosPersists.instance, 0,
-                world, pos.getX(), pos.getY(), pos.getZ());
-
-        return true;
+    public InteractionResult use(
+            BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (player instanceof ServerPlayer serverPlayer) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity instanceof TileEntityCrystalFurnace furnace) {
+                serverPlayer.openMenu(furnace);
+            }
+        }
+        return InteractionResult.CONSUME;
     }
 
-    // ================= PARTICLES =================
-
     @Override
-    public void randomDisplayTick(IBlockState state,
-                                  World world,
-                                  BlockPos pos,
-                                  Random rand) {
-
-        if (!state.getValue(LIT)) return;
-
-        EnumFacing facing = state.getValue(FACING);
-
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource rand) {
+        if (!state.getValue(LIT)) {
+            return;
+        }
+        Direction facing = state.getValue(FACING);
         double x = pos.getX() + 0.5;
         double y = pos.getY() + rand.nextDouble() * 0.6;
         double z = pos.getZ() + 0.5;
         double offset = 0.52;
         double randomOffset = rand.nextDouble() * 0.6 - 0.3;
-
         switch (facing) {
             case WEST:
-                world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL,
-                        x - offset, y, z + randomOffset, 0, 0, 0);
-                world.spawnParticle(net.minecraft.util.EnumParticleTypes.FLAME,
-                        x - offset, y, z + randomOffset, 0, 0, 0);
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE, x - offset, y, z + randomOffset, 0, 0, 0);
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.FLAME, x - offset, y, z + randomOffset, 0, 0, 0);
                 break;
             case EAST:
-                world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL,
-                        x + offset, y, z + randomOffset, 0, 0, 0);
-                world.spawnParticle(net.minecraft.util.EnumParticleTypes.FLAME,
-                        x + offset, y, z + randomOffset, 0, 0, 0);
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE, x + offset, y, z + randomOffset, 0, 0, 0);
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.FLAME, x + offset, y, z + randomOffset, 0, 0, 0);
                 break;
             case NORTH:
-                world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL,
-                        x + randomOffset, y, z - offset, 0, 0, 0);
-                world.spawnParticle(net.minecraft.util.EnumParticleTypes.FLAME,
-                        x + randomOffset, y, z - offset, 0, 0, 0);
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE, x + randomOffset, y, z - offset, 0, 0, 0);
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.FLAME, x + randomOffset, y, z - offset, 0, 0, 0);
                 break;
             case SOUTH:
-                world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL,
-                        x + randomOffset, y, z + offset, 0, 0, 0);
-                world.spawnParticle(net.minecraft.util.EnumParticleTypes.FLAME,
-                        x + randomOffset, y, z + offset, 0, 0, 0);
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE, x + randomOffset, y, z + offset, 0, 0, 0);
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.FLAME, x + randomOffset, y, z + offset, 0, 0, 0);
+                break;
+            default:
                 break;
         }
     }
 
-    // ================= RENDER =================
-
     @Override
-    public boolean isOpaqueCube(IBlockState state) {
-        return false;
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
     }
 
     @Override
-    public boolean isFullCube(IBlockState state) {
-        return false;
-    }
-
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
-    }
-
-    @Override
-    public int getLightValue(IBlockState state) {
-        return state.getValue(LIT) ? 13 : 0;
-    }
-
-    // ================= TILE ENTITY =================
-
-    public boolean hasTileEntity(IBlockState state) {
+    public boolean useShapeForLightOcclusion(BlockState state) {
         return true;
     }
 
     @Nullable
     @Override
-    public TileEntity createNewTileEntity(World world, int meta) {
-        return new TileEntityCrystalFurnace();
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TileEntityCrystalFurnace(pos, state);
     }
 
-    // ================= COMPARATOR =================
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return level.isClientSide
+                ? null
+                : createTickerHelper(
+                        type,
+                        ChaosPersists.BLOCK_ENTITY_CRYSTAL_FURNACE.get(),
+                        TileEntityCrystalFurnace::serverTick);
+    }
 
     @Override
-    public boolean hasComparatorInputOverride(IBlockState state) {
+    public boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
     @Override
-    public int getComparatorInputOverride(IBlockState state,
-                                          World world,
-                                          BlockPos pos) {
-
-        return Container.calcRedstoneFromInventory(
-                (IInventory) world.getTileEntity(pos));
+    public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof net.minecraft.world.Container container) {
+            return AbstractContainerMenu.getRedstoneSignalFromContainer(container);
+        }
+        return 0;
     }
 
     public static void setKeepInventory(boolean keep) {
@@ -207,33 +153,29 @@ public class CrystalFurnace extends Block implements ITileEntityProvider {
     /**
      * Vanilla furnace TE swaps vanilla blocks; crystal furnace must swap only its own lit property.
      */
-    public static void setState(boolean active, World world, BlockPos pos) {
-        IBlockState state = world.getBlockState(pos);
+    public static void setState(boolean active, Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
         if (!(state.getBlock() instanceof CrystalFurnace)) {
             return;
         }
-
-        TileEntity te = world.getTileEntity(pos);
+        BlockEntity te = level.getBlockEntity(pos);
         keepInventory = true;
-
-        world.setBlockState(pos, state.withProperty(LIT, active), 3);
-
+        level.setBlock(pos, state.setValue(LIT, active), 3);
         keepInventory = false;
         if (te != null) {
-            te.validate();
-            world.setTileEntity(pos, te);
+            level.setBlockEntity(te);
         }
     }
 
     @Override
-    public void breakBlock(World world, BlockPos pos, IBlockState state) {
-        if (!keepInventory) {
-            TileEntity tileEntity = world.getTileEntity(pos);
-            if (tileEntity instanceof IInventory) {
-                InventoryHelper.dropInventoryItems(world, pos, (IInventory) tileEntity);
-                world.updateComparatorOutputLevel(pos, this);
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (!keepInventory && blockEntity instanceof net.minecraft.world.Container container) {
+                Containers.dropContents(level, pos, container);
+                level.updateNeighbourForOutputSignal(pos, this);
             }
         }
-        super.breakBlock(world, pos, state);
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 }

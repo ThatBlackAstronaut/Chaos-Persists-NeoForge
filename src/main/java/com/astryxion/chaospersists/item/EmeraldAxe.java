@@ -1,43 +1,20 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.EmeraldAxe
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.entity.Entity
- *  net.minecraft.item.Item
- *  net.minecraft.item.Item$ToolMaterial
- *  net.minecraft.item.ItemAxe
- *  net.minecraft.util.IIcon
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemAxe;
+import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.Tier;
 
-public class EmeraldAxe
-extends ItemAxe {
-    private int weaponDamage = 10;
+public class EmeraldAxe extends AxeItem {
+    private static final float WEAPON_DAMAGE = 10.0f;
 
-    public EmeraldAxe(Item.ToolMaterial par2) {
-        super(par2, 8.0F + par2.getAttackDamage(), -3.0F);
-        this.maxStackSize = 1;
-        this.setMaxDamage(1300);
-        this.setCreativeTab(CreativeTabs.TOOLS);
-    }
-
-    public int getDamageVsEntity(Entity par1Entity) {
-        return this.weaponDamage;
+    public EmeraldAxe(Tier tier) {
+        super(
+                tier,
+                (int)(WEAPON_DAMAGE - tier.getAttackDamageBonus()),
+                -3.0f,
+                new Properties().stacksTo(1).durability(1300));
     }
 
     public String getMaterialName() {
         return "Emerald";
-    }}
-
+    }
+}

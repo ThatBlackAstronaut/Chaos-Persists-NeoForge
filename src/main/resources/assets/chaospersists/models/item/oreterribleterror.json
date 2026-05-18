@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "chaospersists:items/oreterribleterror"
+    "layer0": "chaospersists:block/oreterribleterror"
   }
 }

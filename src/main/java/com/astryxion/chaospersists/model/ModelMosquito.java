@@ -1,84 +1,85 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelMosquito
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- */
 package com.astryxion.chaospersists.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
+import com.astryxion.chaospersists.entity.EntityMosquito;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.util.Mth;
 
-public class ModelMosquito
-extends ModelBase {
-    ModelRenderer body;
-    ModelRenderer leftwing1;
-    ModelRenderer rightwing1;
-    ModelRenderer leftwing2;
-    ModelRenderer rightwing2;
+public class ModelMosquito extends EntityModel<EntityMosquito> {
+    private final ModelPart body;
+    private final ModelPart leftwing1;
+    private final ModelPart rightwing1;
+    private final ModelPart leftwing2;
+    private final ModelPart rightwing2;
 
     public ModelMosquito() {
-        this.textureWidth = 32;
-        this.textureHeight = 32;
-        this.body = new ModelRenderer((ModelBase)this, 8, 18);
-        this.body.addBox(0.0f, 0.0f, -2.0f, 1, 1, 8);
-        this.body.setRotationPoint(0.0f, 17.0f, 0.0f);
-        this.body.setTextureSize(64, 32);
-        this.body.mirror = true;
-        this.setRotation(this.body, 0.0f, 0.0f, 0.0f);
-        this.leftwing1 = new ModelRenderer((ModelBase)this, 16, 13);
-        this.leftwing1.addBox(1.0f, 0.0f, -1.0f, 3, 1, 3);
-        this.leftwing1.setRotationPoint(1.0f, 17.0f, 0.0f);
-        this.leftwing1.setTextureSize(64, 32);
-        this.leftwing1.mirror = true;
-        this.setRotation(this.leftwing1, 0.0f, 0.0f, 0.0f);
-        this.rightwing1 = new ModelRenderer((ModelBase)this, 2, 13);
-        this.rightwing1.addBox(-4.0f, 0.0f, -1.0f, 3, 1, 3);
-        this.rightwing1.setRotationPoint(0.0f, 17.0f, 0.0f);
-        this.rightwing1.setTextureSize(64, 32);
-        this.rightwing1.mirror = true;
-        this.setRotation(this.rightwing1, 0.0f, 0.0f, 0.0f);
-        this.leftwing2 = new ModelRenderer((ModelBase)this, 15, 8);
-        this.leftwing2.addBox(0.0f, 0.0f, 0.0f, 5, 1, 1);
-        this.leftwing2.setRotationPoint(1.0f, 17.0f, 0.0f);
-        this.leftwing2.setTextureSize(64, 32);
-        this.leftwing2.mirror = true;
-        this.setRotation(this.leftwing2, 0.0f, 0.0f, 0.0f);
-        this.rightwing2 = new ModelRenderer((ModelBase)this, 2, 8);
-        this.rightwing2.addBox(-5.0f, 0.0f, 0.0f, 5, 1, 1);
-        this.rightwing2.setRotationPoint(0.0f, 17.0f, 0.0f);
-        this.rightwing2.setTextureSize(64, 32);
-        this.rightwing2.mirror = true;
-        this.setRotation(this.rightwing2, 0.0f, 0.0f, 0.0f);
+        this(LayerDefinition.create(createMesh(), 32, 32).bakeRoot());
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        this.body.render(f5);
-        this.rightwing2.rotateAngleZ = this.rightwing1.rotateAngleZ = MathHelper.cos((float)(f2 * 3.0f)) * 3.1415927f * 0.25f;
-        this.leftwing1.rotateAngleZ = - this.rightwing1.rotateAngleZ;
-        this.leftwing2.rotateAngleZ = - this.rightwing1.rotateAngleZ;
-        this.leftwing1.render(f5);
-        this.rightwing1.render(f5);
-        this.leftwing2.render(f5);
-        this.rightwing2.render(f5);
+    public ModelMosquito(ModelPart root) {
+        this.body = root.getChild("body");
+        this.leftwing1 = root.getChild("leftwing1");
+        this.rightwing1 = root.getChild("rightwing1");
+        this.leftwing2 = root.getChild("leftwing2");
+        this.rightwing2 = root.getChild("rightwing2");
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
+    private static MeshDefinition createMesh() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild(
+                "body",
+                CubeListBuilder.create().texOffs(8, 18).mirror().addBox(0.0f, 0.0f, -2.0f, 1.0f, 1.0f, 8.0f),
+                PartPose.offset(0.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "leftwing1",
+                CubeListBuilder.create().texOffs(16, 13).mirror().addBox(1.0f, 0.0f, -1.0f, 3.0f, 1.0f, 3.0f),
+                PartPose.offset(1.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "rightwing1",
+                CubeListBuilder.create().texOffs(2, 13).mirror().addBox(-4.0f, 0.0f, -1.0f, 3.0f, 1.0f, 3.0f),
+                PartPose.offset(0.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "leftwing2",
+                CubeListBuilder.create().texOffs(15, 8).mirror().addBox(0.0f, 0.0f, 0.0f, 5.0f, 1.0f, 1.0f),
+                PartPose.offset(1.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "rightwing2",
+                CubeListBuilder.create().texOffs(2, 8).mirror().addBox(-5.0f, 0.0f, 0.0f, 5.0f, 1.0f, 1.0f),
+                PartPose.offset(0.0f, 17.0f, 0.0f));
+        return mesh;
     }
 
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+    @Override
+    public void setupAnim(EntityMosquito entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        float flap = Mth.cos(ageInTicks * 3.0f) * ((float) Math.PI * 0.25f);
+        this.rightwing2.zRot = flap;
+        this.rightwing1.zRot = flap;
+        this.leftwing1.zRot = -flap;
+        this.leftwing2.zRot = -flap;
+    }
+
+    @Override
+    public void renderToBuffer(
+            PoseStack poseStack,
+            VertexConsumer buffer,
+            int packedLight,
+            int packedOverlay,
+            float red,
+            float green,
+            float blue,
+            float alpha) {
+        this.body.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.leftwing1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rightwing1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.leftwing2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rightwing2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

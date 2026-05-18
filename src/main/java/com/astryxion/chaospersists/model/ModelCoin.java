@@ -1,53 +1,57 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelCoin
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- */
 package com.astryxion.chaospersists.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
+import com.astryxion.chaospersists.item.Coin;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.util.Mth;
 
-public class ModelCoin
-extends ModelBase {
-    private float wingspeed = 1.0f;
-    ModelRenderer Shape1;
+public class ModelCoin extends EntityModel<Coin> {
+    private final float wingspeed;
+    private final ModelPart shape1;
+    private float animAgeInTicks;
 
-    public ModelCoin(float f1) {
-        this.wingspeed = f1;
-        this.textureWidth = 512;
-        this.textureHeight = 512;
-        this.Shape1 = new ModelRenderer((ModelBase)this, 0, 0);
-        this.Shape1.addBox(-128.0f, -128.0f, 0.0f, 256, 256, 1);
-        this.Shape1.setRotationPoint(0.0f, -109.0f, 0.0f);
-        this.Shape1.setTextureSize(512, 512);
-        this.Shape1.mirror = true;
-        this.setRotation(this.Shape1, 0.0f, 0.0f, 0.0f);
+    public ModelCoin(float wingspeed) {
+        this(wingspeed, LayerDefinition.create(createMesh(), 512, 512).bakeRoot());
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        float newangle = 0.0f;
-        this.Shape1.rotateAngleY = newangle = MathHelper.cos((float)(f2 * 0.05f * this.wingspeed)) * 3.1415927f;
-        this.Shape1.render(f5);
+    public ModelCoin(float wingspeed, ModelPart root) {
+        this.wingspeed = wingspeed;
+        this.shape1 = root.getChild("Shape1");
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
+    public static MeshDefinition createMesh() {
+        MeshDefinition meshdefinition = new MeshDefinition();
+        PartDefinition partdefinition = meshdefinition.getRoot();
+        partdefinition.addOrReplaceChild(
+                "Shape1",
+                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-128.0f, -128.0f, 0.0f, 256, 256, 1),
+                PartPose.offsetAndRotation(0.0f, -109.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        return meshdefinition;
     }
 
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+    @Override
+    public void setupAnim(Coin entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.animAgeInTicks = ageInTicks;
+    }
+
+    @Override
+    public void renderToBuffer(
+            PoseStack poseStack,
+            VertexConsumer buffer,
+            int packedLight,
+            int packedOverlay,
+            float red,
+            float green,
+            float blue,
+            float alpha) {
+        this.shape1.yRot = Mth.cos(this.animAgeInTicks * 0.05f * this.wingspeed) * (float) Math.PI;
+        this.shape1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

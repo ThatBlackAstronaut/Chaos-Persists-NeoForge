@@ -1,22 +1,24 @@
 package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.item.UltimateArrow;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.entity.RenderArrow;
-import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.renderer.entity.ArrowRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
-@SideOnly(Side.CLIENT)
-public class RenderUltimateArrow extends RenderArrow<UltimateArrow> {
-    private static final ResourceLocation TEXTURE = new ResourceLocation("minecraft", "textures/entity/projectiles/arrow.png");
+@OnlyIn(Dist.CLIENT)
+public class RenderUltimateArrow extends ArrowRenderer<UltimateArrow> {
 
-    public RenderUltimateArrow(RenderManager manager) {
-        super(manager);
+    private static final ResourceLocation TEXTURE =
+            ResourceLocation.withDefaultNamespace("textures/entity/projectiles/arrow.png");
+
+    public RenderUltimateArrow(EntityRendererProvider.Context context) {
+        super(context);
     }
 
     @Override
-    protected ResourceLocation getEntityTexture(UltimateArrow entity) {
+    public ResourceLocation getTextureLocation(UltimateArrow entity) {
         return TEXTURE;
     }
 }

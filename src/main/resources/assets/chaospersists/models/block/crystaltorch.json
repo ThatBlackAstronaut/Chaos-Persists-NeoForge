@@ -1,6 +1,6 @@
 {
-  "parent": "block/torch",
+  "parent": "minecraft:block/template_torch",
   "textures": {
-    "torch": "chaospersists:blocks/crystaltorch"
+    "torch": "chaospersists:block/crystaltorch"
   }
 }

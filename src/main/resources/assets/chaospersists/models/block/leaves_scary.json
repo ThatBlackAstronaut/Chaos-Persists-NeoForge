@@ -15,7 +15,7 @@
     }
   ],
   "textures": {
-    "particle": "chaospersists:blocks/leaves_scary",
-    "all": "chaospersists:blocks/leaves_scary"
+    "particle": "chaospersists:block/leaves_scary",
+    "all": "chaospersists:block/leaves_scary"
   }
 }

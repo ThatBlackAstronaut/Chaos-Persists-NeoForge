@@ -1,21 +1,22 @@
 package com.astryxion.chaospersists.util;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.WeightedRandom;
-
-import java.util.Random;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.random.Weight;
+import net.minecraft.util.random.WeightedEntry;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * 1.12.2 compat: replaces removed net.minecraft.util.WeightedRandomFishable for fishing loot.
  */
-public class WeightedRandomFishable extends WeightedRandom.Item {
+public class WeightedRandomFishable implements WeightedEntry {
     private final ItemStack stack;
+    private final int weight;
     private float chance = 1.0f;
     private boolean treasure = false;
 
     public WeightedRandomFishable(ItemStack stack, int itemWeightIn) {
-        super(itemWeightIn);
         this.stack = stack;
+        this.weight = itemWeightIn;
     }
 
     public WeightedRandomFishable func_150709_a(float chanceIn) {
@@ -28,7 +29,7 @@ public class WeightedRandomFishable extends WeightedRandom.Item {
         return this;
     }
 
-    public ItemStack getItemStack(Random random) {
+    public ItemStack getItemStack(RandomSource random) {
         ItemStack out = this.stack.copy();
         if (out.getCount() > 1) {
             out.setCount(1 + random.nextInt(out.getCount()));
@@ -36,6 +37,16 @@ public class WeightedRandomFishable extends WeightedRandom.Item {
         return out;
     }
 
-    public float getChance() { return chance; }
-    public boolean isTreasure() { return treasure; }
+    public float getChance() {
+        return chance;
+    }
+
+    public boolean isTreasure() {
+        return treasure;
+    }
+
+    @Override
+    public Weight getWeight() {
+        return Weight.of(this.weight);
+    }
 }

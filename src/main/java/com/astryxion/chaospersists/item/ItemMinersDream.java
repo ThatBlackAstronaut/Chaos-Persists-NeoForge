@@ -6,53 +6,56 @@
  *  net.minecraftforge.fml.relauncher.SideOnly
  *  com.astryxion.chaospersists.ItemMinersDream
  *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockLiquid
- *  net.minecraft.block.BlockSand
+ *  com.astryxion.chaospersists.compat.minecraft.block.Block
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockLiquid
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockSand
  *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
+ *  com.astryxion.chaospersists.compat.minecraft.creativetab.CreativeTabs
  *  net.minecraft.entity.Entity
  *  net.minecraft.entity.player.EntityPlayer
  *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.init.Blocks
+ *  com.astryxion.chaospersists.compat.minecraft.init.Blocks
  *  net.minecraft.item.Item
  *  net.minecraft.item.ItemStack
  *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- *  net.minecraft.world.WorldProvider
+ *  com.astryxion.chaospersists.compat.minecraft.world.World
+ *  com.astryxion.chaospersists.compat.minecraft.world.WorldProvider
  */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockLiquid;
-import net.minecraft.block.BlockSand;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class ItemMinersDream
-extends Item {
+public class ItemMinersDream extends Item {
+
     public ItemMinersDream(int i) {
-        this.maxStackSize = 16;
-        this.setCreativeTab(CreativeTabs.REDSTONE);
+        super(new Properties().stacksTo(16));
+    }
+
+    private static Block modBlock(Object block) {
+        return (Block) block;
     }
 
     @Override
-    public EnumActionResult onItemUse(EntityPlayer Player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-        ItemStack par1ItemStack = Player.getHeldItem(hand);
+    public InteractionResult useOn(UseOnContext context) {
+        Player player = context.getPlayer();
+        Level world = context.getLevel();
+        if (player == null) {
+            return InteractionResult.FAIL;
+        }
+        ItemStack par1ItemStack = context.getItemInHand();
+        BlockPos pos = context.getClickedPos();
         int cposx = pos.getX();
         int cposy = pos.getY();
         int cposz = pos.getZ();
@@ -71,9 +74,9 @@ extends Item {
         if (cposz < 0) {
             dirz = -1;
         }
-        int pposx = (int)(Player.posX + 0.99 * (double)dirx);
-        int pposy = (int)Player.posY;
-        int pposz = (int)(Player.posZ + 0.99 * (double)dirz);
+        int pposx = (int) (player.getX() + 0.99 * (double) dirx);
+        int pposy = (int) player.getY();
+        int pposz = (int) (player.getZ() + 0.99 * (double) dirz);
         if (cposx - pposx == 0 || cposz - pposz == 0) {
             Block bid;
             int k;
@@ -93,55 +96,102 @@ extends Item {
                 deltaz = 1;
             }
             if (deltax == 0 && deltaz == 0) {
-                return EnumActionResult.FAIL;
+                return InteractionResult.FAIL;
             }
             if (deltax != 0 && deltaz != 0) {
-                return EnumActionResult.FAIL;
+                return InteractionResult.FAIL;
             }
-            Player.world.playSound(Player.posX, Player.posY, Player.posZ, net.minecraft.init.SoundEvents.ENTITY_GENERIC_EXPLODE, net.minecraft.util.SoundCategory.PLAYERS, 1.0f, 1.5f, false);
-            if (world.isRemote) {
-                return EnumActionResult.SUCCESS;
+            world.playSound(
+                    player,
+                    player.blockPosition(),
+                    SoundEvents.GENERIC_EXPLODE,
+                    SoundSource.PLAYERS,
+                    1.0f,
+                    1.5f);
+            if (world.isClientSide()) {
+                return InteractionResult.SUCCESS;
             }
             for (int i = 0; i < height; ++i) {
                 for (k = 0; k < length; ++k) {
                     int j;
                     solid_count = 0;
-                    for (j = - width; j <= width; ++j) {
-                        bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + k * deltax + j * deltaz, y + i, z + k * deltaz + j * deltax)).getBlock();
-                        if (bid == Blocks.STONE || bid == Blocks.DIRT || bid == Blocks.GRAVEL || bid == Blocks.FLOWING_WATER || bid == Blocks.WATER || bid == Blocks.FLOWING_LAVA || bid == Blocks.LAVA || bid == Blocks.NETHERRACK || bid == Blocks.END_STONE || bid == ChaosPersists.CrystalStone) {
-                            world.setBlockState(new net.minecraft.util.math.BlockPos(x + k * deltax + j * deltaz, y + i, z + k * deltaz + j * deltax), Blocks.AIR.getDefaultState(), 2);
+                    for (j = -width; j <= width; ++j) {
+                        BlockPos minePos = new BlockPos(x + k * deltax + j * deltaz, y + i, z + k * deltaz + j * deltax);
+                        bid = world.getBlockState(minePos).getBlock();
+                        if (bid == Blocks.STONE
+                                || bid == Blocks.DIRT
+                                || bid == Blocks.GRAVEL
+                                || bid == Blocks.WATER
+                                || bid == Blocks.LAVA
+                                || bid == Blocks.NETHERRACK
+                                || bid == Blocks.END_STONE
+                                || bid == modBlock(ChaosPersists.CrystalStone)) {
+                            world.setBlock(minePos, Blocks.AIR.defaultBlockState(), 2);
                         }
-                        if (i != height - 1) continue;
-                        bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + k * deltax + j * deltaz, y + i + 1, z + k * deltaz + j * deltax)).getBlock();
+                        if (i != height - 1) {
+                            continue;
+                        }
+                        BlockPos ceilingPos = new BlockPos(x + k * deltax + j * deltaz, y + i + 1, z + k * deltaz + j * deltax);
+                        bid = world.getBlockState(ceilingPos).getBlock();
                         if (bid != Blocks.AIR) {
                             ++solid_count;
                         }
-                        if (bid != Blocks.AIR && bid != Blocks.GRAVEL && bid != Blocks.SAND && bid != Blocks.FLOWING_WATER && bid != Blocks.WATER && bid != Blocks.FLOWING_LAVA && bid != Blocks.LAVA) continue;
-                        if (world.provider.getDimension() == ChaosPersists.getDimension(5)) {
-                            world.setBlockState(new net.minecraft.util.math.BlockPos(x + k * deltax + j * deltaz, y + i + 1, z + k * deltaz + j * deltax), ChaosPersists.CrystalStone.getDefaultState(), 2);
+                        if (bid != Blocks.AIR
+                                && bid != Blocks.GRAVEL
+                                && bid != Blocks.SAND
+                                && bid != Blocks.WATER
+                                && bid != Blocks.LAVA) {
                             continue;
                         }
-                        world.setBlockState(new net.minecraft.util.math.BlockPos(x + k * deltax + j * deltaz, y + i + 1, z + k * deltaz + j * deltax), Blocks.COBBLESTONE.getDefaultState(), 2);
+                        if (world.dimension().equals(ChaosPersists.getDimensionKey(5))) {
+                            world.setBlock(
+                                    ceilingPos,
+                                    modBlock(ChaosPersists.CrystalStone).defaultBlockState(),
+                                    2);
+                            continue;
+                        }
+                        world.setBlock(ceilingPos, Blocks.COBBLESTONE.defaultBlockState(), 2);
                     }
-                    if (i != height - 1 || solid_count != 0) continue;
-                    for (j = - width; j <= width; ++j) {
-                        world.setBlockState(new net.minecraft.util.math.BlockPos(x + k * deltax + j * deltaz, y + i + 1, z + k * deltaz + j * deltax), Blocks.AIR.getDefaultState(), 2);
+                    if (i != height - 1 || solid_count != 0) {
+                        continue;
+                    }
+                    for (j = -width; j <= width; ++j) {
+                        world.setBlock(
+                                new BlockPos(x + k * deltax + j * deltaz, y + i + 1, z + k * deltaz + j * deltax),
+                                Blocks.AIR.defaultBlockState(),
+                                2);
                     }
                 }
             }
             for (k = 0; k < length; k += torches) {
-                bid = world.getBlockState(new net.minecraft.util.math.BlockPos(x + k * deltax, y - 1, z + k * deltaz)).getBlock();
-                if ((bid == Blocks.STONE || bid == Blocks.DIRT || bid == Blocks.GRAVEL || bid == Blocks.NETHERRACK || bid == Blocks.END_STONE || bid == Blocks.BEDROCK) && world.isAirBlock(new net.minecraft.util.math.BlockPos(x + k * deltax, y, z + k * deltaz))) {
-                    world.setBlockState(new net.minecraft.util.math.BlockPos(x + k * deltax, y, z + k * deltaz), ChaosPersists.ExtremeTorch.getDefaultState(), 2);
+                BlockPos floorPos = new BlockPos(x + k * deltax, y - 1, z + k * deltaz);
+                BlockPos torchPos = new BlockPos(x + k * deltax, y, z + k * deltaz);
+                bid = world.getBlockState(floorPos).getBlock();
+                if ((bid == Blocks.STONE
+                                || bid == Blocks.DIRT
+                                || bid == Blocks.GRAVEL
+                                || bid == Blocks.NETHERRACK
+                                || bid == Blocks.END_STONE
+                                || bid == Blocks.BEDROCK)
+                        && world.getBlockState(torchPos).isAir()) {
+                    world.setBlock(
+                            torchPos,
+                            modBlock(ChaosPersists.ExtremeTorch).defaultBlockState(),
+                            2);
                 }
-                if (bid != ChaosPersists.CrystalStone || !world.isAirBlock(new net.minecraft.util.math.BlockPos(x + k * deltax, y, z + k * deltaz))) continue;
-                world.setBlockState(new net.minecraft.util.math.BlockPos(x + k * deltax, y, z + k * deltaz), ChaosPersists.CrystalTorch.getDefaultState(), 2);
+                if (bid != modBlock(ChaosPersists.CrystalStone) || !world.getBlockState(torchPos).isAir()) {
+                    continue;
+                }
+                world.setBlock(
+                        torchPos,
+                        modBlock(ChaosPersists.CrystalTorch).defaultBlockState(),
+                        2);
             }
-            if (!Player.capabilities.isCreativeMode) {
+            if (!player.getAbilities().instabuild) {
                 par1ItemStack.shrink(1);
             }
-            return EnumActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
-        return EnumActionResult.FAIL;
-    }}
-
+        return InteractionResult.FAIL;
+    }
+}

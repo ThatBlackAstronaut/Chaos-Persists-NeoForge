@@ -1,38 +1,23 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.client.FMLClientHandler
- *  com.astryxion.chaospersists.ModelHammy
- *  com.astryxion.chaospersists.RenderHammy
- *  com.astryxion.chaospersists.RenderHammy$1
- *  net.minecraft.client.Minecraft
- *  net.minecraft.client.renderer.texture.TextureManager
- *  net.minecraft.item.ItemStack
- *  net.minecraft.util.ResourceLocation
- *  net.minecraftforge.client.IItemRenderer
- *  net.minecraftforge.client.IItemRenderer$ItemRenderType
- *  net.minecraftforge.client.IItemRenderer$ItemRendererHelper
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
-import com.astryxion.chaospersists.util.IItemRenderer;
-import net.minecraftforge.fml.client.FMLClientHandler;
 import com.astryxion.chaospersists.model.ModelHammy;
-import com.astryxion.chaospersists.render.RenderHammy;
+import com.astryxion.chaospersists.util.IItemRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
-public class RenderHammy
-implements IItemRenderer {
+public class RenderHammy implements IItemRenderer {
     protected ModelHammy modelHammy = new ModelHammy();
-    private static final ResourceLocation texture = new ResourceLocation("chaospersists", "textures/entity/attitudeadjustertexture.png");
+    private static final ResourceLocation texture =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/attitudeadjustertexture.png");
 
-    public boolean handleRenderType(ItemStack item, IItemRenderer.ItemRenderType type) {
+    @Override
+    public boolean handleRenderType(ItemStack item, ItemRenderType type) {
         switch (type.ordinal()) {
             case 1: {
                 return true;
@@ -44,11 +29,13 @@ implements IItemRenderer {
         return false;
     }
 
-    public boolean shouldUseRenderHelper(IItemRenderer.ItemRenderType type, ItemStack item, IItemRenderer.ItemRendererHelper helper) {
+    @Override
+    public boolean shouldUseRenderHelper(ItemRenderType type, ItemStack item, ItemRendererHelper helper) {
         return true;
     }
 
-    public /* varargs */ void renderItem(IItemRenderer.ItemRenderType type, ItemStack item, Object ... data) {
+    @Override
+    public void renderItem(ItemRenderType type, ItemStack item, Object... data) {
         switch (type.ordinal()) {
             case 1: {
                 this.renderSwordF5(6.0f, -20.0f, -4.0f, 0.15f);
@@ -62,25 +49,27 @@ implements IItemRenderer {
     }
 
     private void renderSword(float x, float y, float z, float scale) {
-        GL11.glPushMatrix();
-        GL11.glRotatef((float)70.0f, (float)0.0f, (float)1.0f, (float)0.0f);
-        GL11.glRotatef((float)190.0f, (float)1.0f, (float)0.0f, (float)0.0f);
-        GL11.glRotatef((float)25.0f, (float)0.0f, (float)0.0f, (float)1.0f);
-        GL11.glScalef((float)scale, (float)scale, (float)scale);
-        GL11.glTranslatef((float)x, (float)y, (float)z);
-        FMLClientHandler.instance().getClient().renderEngine.bindTexture(texture);
-        this.modelHammy.render();
-        GL11.glPopMatrix();
+        PoseStack poseStack = new PoseStack();
+        poseStack.mulPose(Axis.YP.rotationDegrees(70.0f));
+        poseStack.mulPose(Axis.XP.rotationDegrees(190.0f));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(25.0f));
+        poseStack.scale(scale, scale, scale);
+        poseStack.translate(x, y, z);
+        this.drawModel(poseStack);
     }
 
     private void renderSwordF5(float x, float y, float z, float scale) {
-        GL11.glPushMatrix();
-        GL11.glRotatef((float)180.0f, (float)1.0f, (float)0.0f, (float)0.0f);
-        GL11.glScalef((float)scale, (float)scale, (float)scale);
-        GL11.glTranslatef((float)x, (float)y, (float)z);
-        FMLClientHandler.instance().getClient().renderEngine.bindTexture(texture);
-        this.modelHammy.render();
-        GL11.glPopMatrix();
+        PoseStack poseStack = new PoseStack();
+        poseStack.mulPose(Axis.XP.rotationDegrees(180.0f));
+        poseStack.scale(scale, scale, scale);
+        poseStack.translate(x, y, z);
+        this.drawModel(poseStack);
+    }
+
+    private void drawModel(PoseStack poseStack) {
+        MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+        var vertexConsumer = buffer.getBuffer(RenderType.entityCutoutNoCull(texture));
+        this.modelHammy.render(poseStack, vertexConsumer, 0xF000F0, OverlayTexture.NO_OVERLAY);
+        buffer.endBatch();
     }
 }
-

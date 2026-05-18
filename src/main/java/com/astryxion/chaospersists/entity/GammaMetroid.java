@@ -1,324 +1,273 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.GammaMetroid
- *  com.astryxion.chaospersists.GenericTargetSorter
- *  com.astryxion.chaospersists.MobStats
- *  com.astryxion.chaospersists.MyEntityAIFollowOwner
- *  com.astryxion.chaospersists.MyEntityAIWanderALot
- *  com.astryxion.chaospersists.MyUtils
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockDeadBush
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityAgeable
- *  net.minecraft.entity.EntityCreature
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.EntityAIBase
- *  net.minecraft.entity.ai.EntityAIHurtByTarget
- *  net.minecraft.entity.ai.EntityAILookIdle
- *  net.minecraft.entity.ai.EntityAIMate
- *  net.minecraft.entity.ai.EntityAISwimming
- *  net.minecraft.entity.ai.EntityAITasks
- *  net.minecraft.entity.ai.EntityAITempt
- *  net.minecraft.entity.ai.EntityAIWatchClosest
- *  net.minecraft.entity.ai.EntitySenses
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.passive.EntityAnimal
- *  net.minecraft.entity.passive.EntityTameable
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.InventoryPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.tileentity.MobSpawnerBaseLogic
- *  net.minecraft.tileentity.TileEntity
- *  net.minecraft.tileentity.TileEntityMobSpawner
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.MathHelper
- *  net.minecraft.world.EnumDifficulty
- *  net.minecraft.world.EnumSkyBlock
- *  net.minecraft.world.GameRules
- *  net.minecraft.world.World
- *  net.minecraft.world.WorldProvider
- */
 package com.astryxion.chaospersists.entity;
 
+import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
-import com.astryxion.chaospersists.util.MobStats;
 import com.astryxion.chaospersists.util.MyEntityAIFollowOwner;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
-import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockDeadBush;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityAgeable;
-import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.ai.EntityAIHurtByTarget;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAIMate;
-import net.minecraft.entity.ai.EntityAISwimming;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.EntityAITempt;
-import net.minecraft.entity.ai.EntityAIWatchClosest;
-import net.minecraft.entity.ai.EntitySenses;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.passive.EntityAnimal;
-import net.minecraft.entity.passive.EntityTameable;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.tileentity.MobSpawnerBaseLogic;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.EnumDifficulty;
-import net.minecraft.world.EnumSkyBlock;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class GammaMetroid
-extends EntityTameable {
-    private GenericTargetSorter TargetSorter = null;
-    private float moveSpeed = 0.15f;
+public class GammaMetroid extends TamableAnimal {
+    private final GenericTargetSorter targetSorter;
+    private final float moveSpeed = 0.15f;
     private int closest = 99999;
     private int tx = 0;
     private int ty = 0;
     private int tz = 0;
 
-    public GammaMetroid(World par1World) {
-        super(par1World);
-        this.setSize(1.5f, 1.5f);
-                this.experienceValue = 20;
-                this.TargetSorter = new GenericTargetSorter((Entity)this);
-        this.tasks.addTask(0, (EntityAIBase)new EntityAISwimming((EntityLiving)this));
-        this.tasks.addTask(1, (EntityAIBase)new EntityAIMate((EntityAnimal)this, 1.0));
-        this.tasks.addTask(2, (EntityAIBase)new MyEntityAIFollowOwner((EntityTameable)this, 2.0f, 10.0f, 2.0f));
-        this.tasks.addTask(3, (EntityAIBase)new EntityAITempt((EntityCreature)this, 1.2000000476837158, Items.IRON_INGOT, false));
-        this.tasks.addTask(4, (EntityAIBase)new MyEntityAIWanderALot((EntityCreature)this, 16, 1.0));
-        this.tasks.addTask(5, (EntityAIBase)new EntityAIWatchClosest((EntityLiving)this, EntityPlayer.class, 8.0f));
-        this.tasks.addTask(6, (EntityAIBase)new EntityAILookIdle((EntityLiving)this));
-        this.targetTasks.addTask(1, (EntityAIBase)new EntityAIHurtByTarget((EntityCreature)this, false));
+    public GammaMetroid(EntityType<? extends GammaMetroid> type, Level level) {
+        super(type, level);
+        this.xpReward = 20;
+        this.targetSorter = new GenericTargetSorter(this);
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new BreedGoal(this, 1.0));
+        this.goalSelector.addGoal(2, new MyEntityAIFollowOwner(this, 2.0f, 10.0f, 2.0f));
+        this.goalSelector.addGoal(3, new TemptGoal(this, 1.2000000476837158, Ingredient.of(Items.IRON_INGOT), false));
+        this.goalSelector.addGoal(4, new MyEntityAIWanderALot(this, 16, 1.0));
+        this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0f));
+        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue((double)ChaosPersists.GammaMetroid_stats.attack);
+    public static AttributeSupplier.Builder createAttributes() {
+        return TamableAnimal.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, (double) ChaosPersists.GammaMetroid_stats.health)
+                .add(Attributes.MOVEMENT_SPEED, 0.15)
+                .add(Attributes.ATTACK_DAMAGE, (double) ChaosPersists.GammaMetroid_stats.attack)
+                .add(Attributes.ARMOR, (double) ChaosPersists.GammaMetroid_stats.defense);
     }
 
-    protected boolean canDespawn() {
-        if (this.isChild()) {
-            this.enablePersistence();
-            return false;
-        }
-        if (this.isTamed()) {
-            return false;
-        }
-        if (this.isNoDespawnRequired()) {
-            return false;
-        }
-        return true;
+    @Override
+    public void tick() {
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
+        super.tick();
     }
 
-    public boolean attackEntityAsMob(Entity par1Entity) {
-        boolean var4 = par1Entity.attackEntityFrom(DamageSource.causeMobDamage((EntityLivingBase)this), (float)ChaosPersists.GammaMetroid_stats.attack);
-        return var4;
+    @Override
+    public boolean doHurtTarget(Entity entity) {
+        return entity.hurt(this.damageSources().mobAttack(this), (float) ChaosPersists.GammaMetroid_stats.attack);
     }
 
-    public boolean processInteract(EntityPlayer par1EntityPlayer, net.minecraft.util.EnumHand hand) {
-        ItemStack var2 = par1EntityPlayer.getHeldItem(hand);
-        if (var2 != null && var2.getCount() <= 0) {
-            par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, ItemStack.EMPTY);
-            var2 = null;
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!stack.isEmpty() && stack.getCount() <= 0) {
+            player.setItemInHand(hand, ItemStack.EMPTY);
+            stack = ItemStack.EMPTY;
         }
-        if (super.processInteract(par1EntityPlayer, hand)) {
-            return true;
+        if (super.mobInteract(player, hand) == InteractionResult.SUCCESS) {
+            return InteractionResult.SUCCESS;
         }
-        if (var2 != null && var2.getItem() == Items.IRON_INGOT && par1EntityPlayer.getDistanceSq((Entity)this) < 25.0) {
-            if (!this.isTamed()) {
-                if (!this.world.isRemote) {
-                    if (this.rand.nextInt(3) == 0) {
-                        this.setTamed(true);
-                        this.setOwnerId(par1EntityPlayer.getUniqueID());
-                        this.playTameEffect(true);
-                        this.world.setEntityState((Entity)this, (byte)7);
-                        this.heal((float)this.mygetMaxHealth() - this.getHealth());
+        if (!stack.isEmpty() && stack.is(Items.IRON_INGOT) && player.distanceToSqr(this) < 25.0) {
+            if (!this.isTame()) {
+                if (!this.level().isClientSide) {
+                    if (this.getRandom().nextInt(3) == 0) {
+                        this.setTame(true);
+                        this.setOwnerUUID(player.getUUID());
+                        spawnTamingParticles(true);
+                        this.level().broadcastEntityEvent(this, (byte) 7);
+                        this.heal((float) this.mygetMaxHealth() - this.getHealth());
                     } else {
-                        this.playTameEffect(false);
-                        this.world.setEntityState((Entity)this, (byte)6);
+                        spawnTamingParticles(false);
+                        this.level().broadcastEntityEvent(this, (byte) 6);
                     }
                 }
-            } else if (this.isOwner(par1EntityPlayer)) {
-                if (this.world.isRemote) {
-                    this.playTameEffect(true);
-                    this.world.setEntityState((Entity)this, (byte)7);
+            } else if (this.isOwnedBy(player)) {
+                if (this.level().isClientSide) {
+                    spawnTamingParticles(true);
+                    this.level().broadcastEntityEvent(this, (byte) 7);
                 }
-                if ((float)this.mygetMaxHealth() > this.getHealth()) {
-                    this.heal((float)this.mygetMaxHealth() - this.getHealth());
-                }
-            }
-            if (!par1EntityPlayer.capabilities.isCreativeMode) {
-                var2.shrink(1);
-                if (var2.getCount() <= 0) {
-                    par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, ItemStack.EMPTY);
+                if ((float) this.mygetMaxHealth() > this.getHealth()) {
+                    this.heal((float) this.mygetMaxHealth() - this.getHealth());
                 }
             }
-            return true;
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+                if (stack.isEmpty()) {
+                    player.setItemInHand(hand, ItemStack.EMPTY);
+                }
+            }
+            return InteractionResult.SUCCESS;
         }
-        if (this.isTamed() && var2 != null && var2.getItem() == Item.getItemFromBlock((Block)Blocks.DEADBUSH) && par1EntityPlayer.getDistanceSq((Entity)this) < 25.0 && this.isOwner(par1EntityPlayer)) {
-            if (!this.world.isRemote) {
-                this.setTamed(false);
-                this.setOwnerId(null);
-                this.playTameEffect(false);
-                this.world.setEntityState((Entity)this, (byte)6);
+        if (this.isTame()
+                && !stack.isEmpty()
+                && stack.is(Blocks.DEAD_BUSH.asItem())
+                && player.distanceToSqr(this) < 25.0
+                && this.isOwnedBy(player)) {
+            if (!this.level().isClientSide) {
+                this.setTame(false);
+                this.setOwnerUUID(null);
+                spawnTamingParticles(false);
+                this.level().broadcastEntityEvent(this, (byte) 6);
             }
-            if (!par1EntityPlayer.capabilities.isCreativeMode) {
-                var2.shrink(1);
-                if (var2.getCount() <= 0) {
-                    par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, ItemStack.EMPTY);
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+                if (stack.isEmpty()) {
+                    player.setItemInHand(hand, ItemStack.EMPTY);
                 }
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        if (this.isTamed() && var2 != null && var2.getItem() == Items.NAME_TAG && par1EntityPlayer.getDistanceSq((Entity)this) < 16.0 && this.isOwner(par1EntityPlayer)) {
-            this.setCustomNameTag(var2.getDisplayName());
-            if (!par1EntityPlayer.capabilities.isCreativeMode) {
-                var2.shrink(1);
-                if (var2.getCount() <= 0) {
-                    par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, ItemStack.EMPTY);
+        if (this.isTame()
+                && !stack.isEmpty()
+                && stack.is(Items.NAME_TAG)
+                && player.distanceToSqr(this) < 16.0
+                && this.isOwnedBy(player)) {
+            this.setCustomName(stack.getHoverName());
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+                if (stack.isEmpty()) {
+                    player.setItemInHand(hand, ItemStack.EMPTY);
                 }
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        if (this.isTamed() && this.isOwner(par1EntityPlayer) && par1EntityPlayer.getDistanceSq((Entity)this) < 25.0) {
-            if (!this.isSitting()) {
-                this.setSitting(true);
+        if (this.isTame() && this.isOwnedBy(player) && player.distanceToSqr(this) < 25.0) {
+            if (!this.isInSittingPose()) {
+                this.setOrderedToSit(true);
             } else {
-                this.setSitting(false);
+                this.setOrderedToSit(false);
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        return false;
-    }
-
-    public void onUpdate() {
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
-        super.onUpdate();
+        return InteractionResult.PASS;
     }
 
     public int mygetMaxHealth() {
         return ChaosPersists.GammaMetroid_stats.health;
     }
 
-    public int getTotalArmorValue() {
+    @Override
+    public int getArmorValue() {
         return ChaosPersists.GammaMetroid_stats.defense;
     }
 
-    protected boolean isAIEnabled() {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        if (this.isBaby()) {
+            this.setPersistenceRequired();
+            return false;
+        }
+        if (this.isTame()) {
+            return false;
+        }
+        if (this.isPersistenceRequired()) {
+            return false;
+        }
         return true;
     }
 
-    public void onLivingUpdate() {
-        super.onLivingUpdate();
-    }
-
-    protected net.minecraft.util.SoundEvent getAmbientSound() {
-        if (this.world.rand.nextInt(5) == 1) {
-            return net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("chaospersists", "wtf_living"));
+    @Override
+    protected SoundEvent getAmbientSound() {
+        if (this.getRandom().nextInt(5) == 1) {
+            return ChaosSounds.WTF_LIVING;
         }
         return null;
     }
 
-    protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource ds) {
-        return net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("chaospersists", "duck_hurt"));
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return ChaosSounds.DUCK_HURT;
     }
 
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("chaospersists", "alo_death"));
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ChaosSounds.ALO_DEATH;
     }
 
+    @Override
     protected float getSoundVolume() {
         return 1.5f;
     }
 
-    protected float getSoundPitch() {
-        return 1.0f;
-    }
-
-    protected Item getDropItem() {
-        return Items.IRON_INGOT;
-    }
-
-    private void dropItemRand(Item index, int par1) {
-        EntityItem var3 = new EntityItem(this.world, this.posX + (double)ChaosPersists.ChaosRand.nextInt(4) - (double)ChaosPersists.ChaosRand.nextInt(4), this.posY + 1.0, this.posZ + (double)ChaosPersists.ChaosRand.nextInt(4) - (double)ChaosPersists.ChaosRand.nextInt(4), new ItemStack(index, par1, 0));
-        this.world.spawnEntity((Entity)var3);
-    }
-
-    protected void dropFewItems(boolean par1, int par2) {
-        int var4;
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
         int i = 5 + ChaosPersists.ChaosRand.nextInt(10);
-        for (var4 = 0; var4 < i; ++var4) {
+        for (int var4 = 0; var4 < i; ++var4) {
             this.dropItemRand(Items.GOLD_NUGGET, 1);
         }
         i = 6 + ChaosPersists.ChaosRand.nextInt(10);
-        for (var4 = 0; var4 < i; ++var4) {
+        for (int var4 = 0; var4 < i; ++var4) {
             this.dropItemRand(Items.IRON_INGOT, 1);
         }
     }
 
-    protected void updateAITasks() {
-        EntityLivingBase e;
-        if (this.isDead) {
+    private void dropItemRand(net.minecraft.world.item.Item index, int count) {
+        ItemEntity entityItem =
+                new ItemEntity(
+                        this.level(),
+                        this.getX() + ChaosPersists.ChaosRand.nextInt(4) - ChaosPersists.ChaosRand.nextInt(4),
+                        this.getY() + 1.0,
+                        this.getZ() + ChaosPersists.ChaosRand.nextInt(4) - ChaosPersists.ChaosRand.nextInt(4),
+                        new ItemStack(index, count));
+        this.level().addFreshEntity(entityItem);
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        if (this.isDeadOrDying()) {
             return;
         }
-        super.updateAITasks();
-        if (this.world.getDifficulty() != EnumDifficulty.PEACEFUL && this.world.rand.nextInt(5) == 0 && (e = this.findSomethingToAttack()) != null) {
-            this.faceEntity((Entity)e, 10.0f, 10.0f);
-            if (this.getDistanceSq((Entity)e) <= 9.0) {
-                if (this.world.rand.nextInt(4) == 0 || this.world.rand.nextInt(5) == 1) {
-                    this.attackEntityAsMob((Entity)e);
+        super.customServerAiStep();
+        LivingEntity target;
+        if (this.level().getDifficulty() != Difficulty.PEACEFUL
+                && this.getRandom().nextInt(5) == 0
+                && (target = this.findSomethingToAttack()) != null) {
+            this.getLookControl().setLookAt(target, 10.0f, 10.0f);
+            if (this.distanceToSqr(target) <= 9.0) {
+                if (this.getRandom().nextInt(4) == 0 || this.getRandom().nextInt(5) == 1) {
+                    this.doHurtTarget(target);
                 }
             } else {
-                this.getNavigator().tryMoveToEntityLiving((Entity)e, 1.25);
+                this.getNavigation().moveTo(target, 1.25);
             }
         }
-        if ((this.world.rand.nextInt(20) == 0 && this.getHealth() < (float)this.mygetMaxHealth() || this.world.rand.nextInt(100) == 0) && ChaosPersists.PlayNicely == 0 && !this.isSitting()) {
+        if ((this.getRandom().nextInt(20) == 0 && this.getHealth() < (float) this.mygetMaxHealth()
+                        || this.getRandom().nextInt(100) == 0)
+                && ChaosPersists.PlayNicely == 0
+                && !this.isInSittingPose()) {
             this.closest = 99999;
             this.tz = 0;
             this.ty = 0;
@@ -328,25 +277,32 @@ extends EntityTameable {
                 if (j > 2) {
                     j = 2;
                 }
-                if (this.scan_it((int)this.posX, (int)this.posY + 1, (int)this.posZ, i, j, i)) break;
-                if (i < 4) continue;
+                if (this.scan_it((int) this.getX(), (int) this.getY() + 1, (int) this.getZ(), i, j, i)) {
+                    break;
+                }
+                if (i < 4) {
+                    continue;
+                }
                 ++i;
             }
             if (this.closest < 99999) {
-                this.getNavigator().tryMoveToXYZ((double)this.tx, (double)this.ty, (double)this.tz, 1.0);
+                this.getNavigation().moveTo(this.tx, this.ty, this.tz, 1.0);
                 if (this.closest < 12) {
-                    if (this.world.getGameRules().getBoolean("mobGriefing")) {
-                        this.world.setBlockState(new net.minecraft.util.math.BlockPos(this.tx, this.ty, this.tz), Blocks.AIR.getDefaultState(), 2);
+                    if (this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+                        this.level().setBlock(new BlockPos(this.tx, this.ty, this.tz), Blocks.AIR.defaultBlockState(), 2);
                     }
                     this.heal(1.0f);
-                    this.playSound(net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft", "entity.player.burp")), 0.5f, this.world.rand.nextFloat() * 0.2f + 1.5f);
+                    this.playSound(
+                            SoundEvents.PLAYER_BURP,
+                            0.5f,
+                            this.getRandom().nextFloat() * 0.2f + 1.5f);
                 }
             }
         }
     }
 
-    private boolean isSuitableTarget(EntityLivingBase par1EntityLiving, boolean par2) {
-        if (this.world.getDifficulty() == EnumDifficulty.PEACEFUL) {
+    private boolean isSuitableTarget(LivingEntity par1EntityLiving, boolean par2) {
+        if (this.level().getDifficulty() == Difficulty.PEACEFUL) {
             return false;
         }
         if (par1EntityLiving == null) {
@@ -355,98 +311,111 @@ extends EntityTameable {
         if (par1EntityLiving == this) {
             return false;
         }
-        if (!par1EntityLiving.isEntityAlive()) {
+        if (!par1EntityLiving.isAlive()) {
             return false;
         }
-        if (MyUtils.isIgnoreable((EntityLivingBase)par1EntityLiving)) {
+        if (MyUtils.isIgnoreable(par1EntityLiving)) {
             return false;
         }
-        if (!this.getEntitySenses().canSee((Entity)par1EntityLiving)) {
+        if (!this.getSensing().hasLineOfSight(par1EntityLiving)) {
             return false;
         }
         if (par1EntityLiving instanceof GammaMetroid) {
             return false;
         }
-        if (par1EntityLiving instanceof EntityMob) {
+        if (par1EntityLiving instanceof Monster) {
             return false;
         }
-        if (this.isTamed()) {
+        if (this.isTame()) {
             return false;
         }
-        if (par1EntityLiving instanceof EntityPlayer) {
-            EntityPlayer p = (EntityPlayer)par1EntityLiving;
-            if (p.capabilities.isCreativeMode) {
+        if (par1EntityLiving instanceof Player player) {
+            if (player.getAbilities().instabuild) {
                 return false;
             }
         }
         return true;
     }
 
-    private EntityLivingBase findSomethingToAttack() {
+    private LivingEntity findSomethingToAttack() {
         if (ChaosPersists.PlayNicely != 0) {
             return null;
         }
-        if (this.isChild()) {
+        if (this.isBaby()) {
             return null;
         }
-        List var5 = this.world.getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox().expand(10.0, 3.0, 10.0));
-        Collections.sort(var5, this.TargetSorter);
-        Iterator var2 = var5.iterator();
-        Entity var3 = null;
-        EntityLivingBase var4 = null;
-        while (var2.hasNext()) {
-            var3 = (Entity)var2.next();
-            var4 = (EntityLivingBase)var3;
-            if (!this.isSuitableTarget(var4, false)) continue;
-            return var4;
+        List<LivingEntity> candidates =
+                this.level()
+                        .getEntitiesOfClass(
+                                LivingEntity.class,
+                                this.getBoundingBox().inflate(10.0, 3.0, 10.0));
+        Collections.sort(candidates, this.targetSorter);
+        Iterator<LivingEntity> it = candidates.iterator();
+        while (it.hasNext()) {
+            LivingEntity candidate = it.next();
+            if (!this.isSuitableTarget(candidate, false)) {
+                continue;
+            }
+            return candidate;
         }
         return null;
     }
 
-    protected boolean isValidLightLevel() {
-        net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(MathHelper.floor(this.posX), MathHelper.floor(this.getEntityBoundingBox().minY), MathHelper.floor(this.posZ));
-        if (this.world.getLightFor(EnumSkyBlock.SKY, pos) > this.rand.nextInt(32)) {
+    protected boolean isValidLightLevel(LevelAccessor level) {
+        BlockPos pos = this.blockPosition();
+        if (level.getBrightness(LightLayer.SKY, pos) > level.getRandom().nextInt(32)) {
             return false;
         }
-        int l = this.world.getLightFor(EnumSkyBlock.BLOCK, pos);
-        return l <= this.rand.nextInt(8);
+        int l = level.getBrightness(LightLayer.BLOCK, pos);
+        return l <= level.getRandom().nextInt(8);
     }
 
-    public boolean getCanSpawnHere() {
-        Block bid;
-        int j;
-        int i;
-        int k;
-        for (k = -3; k < 3; ++k) {
-            for (j = -3; j < 3; ++j) {
-                for (i = 0; i < 5; ++i) {
-                    bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k)).getBlock();
-                    if (bid != Blocks.MOB_SPAWNER) continue;
-                    TileEntityMobSpawner tileentitymobspawner = null;
-                    tileentitymobspawner = (TileEntityMobSpawner)this.world.getTileEntity(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k));
-                                        String s = null;
-                    net.minecraft.util.ResourceLocation id = com.astryxion.chaospersists.util.SpawnerFixHelper.getMobSpawnerEntityId(tileentitymobspawner.getSpawnerBaseLogic());
-                    if (id != null) s = id.getPath();
-                    if (s == null || !s.equals("WTF?")) continue;
-                    return true;
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        BlockPos origin = this.blockPosition();
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
+        if (!(level instanceof net.minecraft.server.level.WorldGenRegion)) {
+            for (int k = -3; k < 3; ++k) {
+                for (int j = -3; j < 3; ++j) {
+                    for (int i = 0; i < 5; ++i) {
+                        checkPos.set(origin.getX() + j, origin.getY() + i, origin.getZ() + k);
+                        if (!MyUtils.canAccessBlockDuringWorldGen(level, checkPos)) {
+                            continue;
+                        }
+                        BlockState state = MyUtils.getBlockStateForSpawnRules(level, checkPos);
+                        if (state.getBlock() != Blocks.SPAWNER) {
+                            continue;
+                        }
+                        if (!(MyUtils.getBlockEntityForSpawnRules(level, checkPos) instanceof SpawnerBlockEntity spawner)) {
+                            continue;
+                        }
+                        ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityIdFromBlockEntity(spawner);
+                        if (id != null && "WTF?".equals(id.getPath())) {
+                            return true;
+                        }
+                    }
                 }
             }
         }
-        if (!this.isValidLightLevel()) {
+        if (!this.isValidLightLevel(level)) {
             return false;
         }
-        if (this.world.provider.getDimension() == ChaosPersists.getDimension(4)) {
+        if (level instanceof Level world && world.dimension().equals(ChaosPersists.getDimensionKey(4))) {
             return true;
         }
-        if (this.posY > 50.0) {
+        if (origin.getY() > 50) {
             return false;
         }
-        for (k = -1; k < 1; ++k) {
-            for (j = -1; j < 1; ++j) {
-                for (i = 1; i < 4; ++i) {
-                    bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k)).getBlock();
-                    if (bid == Blocks.AIR) continue;
-                    return false;
+        for (int k = -1; k < 1; ++k) {
+            for (int j = -1; j < 1; ++j) {
+                for (int i = 1; i < 4; ++i) {
+                    checkPos.set(origin.getX() + j, origin.getY() + i, origin.getZ() + k);
+                    if (!MyUtils.canAccessBlockDuringWorldGen(level, checkPos)) {
+                        continue;
+                    }
+                    if (MyUtils.getBlockStateForSpawnRules(level, checkPos).getBlock() != Blocks.AIR) {
+                        return false;
+                    }
                 }
             }
         }
@@ -454,90 +423,113 @@ extends EntityTameable {
     }
 
     private boolean scan_it(int x, int y, int z, int dx, int dy, int dz) {
-        int i;
-        Block bid;
-        int d;
-        int j;
         int found = 0;
-        for (i = - dy; i <= dy; ++i) {
-            for (j = - dz; j <= dz; ++j) {
-                bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x + dx, y + i, z + j)).getBlock();
-                if (bid == Blocks.STONE && (d = dx * dx + j * j + i * i) < this.closest) {
-                    this.closest = d;
-                    this.tx = x + dx;
-                    this.ty = y + i;
-                    this.tz = z + j;
-                    ++found;
+        for (int i = -dy; i <= dy; ++i) {
+            for (int j = -dz; j <= dz; ++j) {
+                BlockState state = this.level().getBlockState(new BlockPos(x + dx, y + i, z + j));
+                if (state.is(Blocks.STONE)) {
+                    int d = dx * dx + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x + dx;
+                        this.ty = y + i;
+                        this.tz = z + j;
+                        ++found;
+                    }
                 }
-                if ((bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x - dx, y + i, z + j)).getBlock()) != Blocks.STONE || (d = dx * dx + j * j + i * i) >= this.closest) continue;
-                this.closest = d;
-                this.tx = x - dx;
-                this.ty = y + i;
-                this.tz = z + j;
-                ++found;
+                state = this.level().getBlockState(new BlockPos(x - dx, y + i, z + j));
+                if (state.is(Blocks.STONE)) {
+                    int d = dx * dx + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x - dx;
+                        this.ty = y + i;
+                        this.tz = z + j;
+                        ++found;
+                    }
+                }
             }
         }
-        for (i = - dx; i <= dx; ++i) {
-            for (j = - dz; j <= dz; ++j) {
-                bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x + i, y + dy, z + j)).getBlock();
-                if (bid == Blocks.STONE && (d = dy * dy + j * j + i * i) < this.closest) {
-                    this.closest = d;
-                    this.tx = x + i;
-                    this.ty = y + dy;
-                    this.tz = z + j;
-                    ++found;
+        for (int i = -dx; i <= dx; ++i) {
+            for (int j = -dz; j <= dz; ++j) {
+                BlockState state = this.level().getBlockState(new BlockPos(x + i, y + dy, z + j));
+                if (state.is(Blocks.STONE)) {
+                    int d = dy * dy + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x + i;
+                        this.ty = y + dy;
+                        this.tz = z + j;
+                        ++found;
+                    }
                 }
-                if ((bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x + i, y - dy, z + j)).getBlock()) != Blocks.STONE || (d = dy * dy + j * j + i * i) >= this.closest) continue;
-                this.closest = d;
-                this.tx = x + i;
-                this.ty = y - dy;
-                this.tz = z + j;
-                ++found;
+                state = this.level().getBlockState(new BlockPos(x + i, y - dy, z + j));
+                if (state.is(Blocks.STONE)) {
+                    int d = dy * dy + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x + i;
+                        this.ty = y - dy;
+                        this.tz = z + j;
+                        ++found;
+                    }
+                }
             }
         }
-        for (i = - dx; i <= dx; ++i) {
-            for (j = - dy; j <= dy; ++j) {
-                bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x + i, y + j, z + dz)).getBlock();
-                if (bid == Blocks.STONE && (d = dz * dz + j * j + i * i) < this.closest) {
-                    this.closest = d;
-                    this.tx = x + i;
-                    this.ty = y + j;
-                    this.tz = z + dz;
-                    ++found;
+        for (int i = -dx; i <= dx; ++i) {
+            for (int j = -dy; j <= dy; ++j) {
+                BlockState state = this.level().getBlockState(new BlockPos(x + i, y + j, z + dz));
+                if (state.is(Blocks.STONE)) {
+                    int d = dz * dz + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x + i;
+                        this.ty = y + j;
+                        this.tz = z + dz;
+                        ++found;
+                    }
                 }
-                if ((bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(x + i, y + j, z - dz)).getBlock()) != Blocks.STONE || (d = dz * dz + j * j + i * i) >= this.closest) continue;
-                this.closest = d;
-                this.tx = x + i;
-                this.ty = y + j;
-                this.tz = z - dz;
-                ++found;
+                state = this.level().getBlockState(new BlockPos(x + i, y + j, z - dz));
+                if (state.is(Blocks.STONE)) {
+                    int d = dz * dz + j * j + i * i;
+                    if (d < this.closest) {
+                        this.closest = d;
+                        this.tx = x + i;
+                        this.ty = y + j;
+                        this.tz = z - dz;
+                        ++found;
+                    }
+                }
             }
         }
-        if (found != 0) {
-            return true;
-        }
-        return false;
+        return found != 0;
     }
 
-    public EntityAgeable createChild(EntityAgeable entityageable) {
-        return this.spawnBabyAnimal(entityageable);
+    @Override
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob partner) {
+        return this.spawnBabyAnimal(level, partner);
     }
 
-    public GammaMetroid spawnBabyAnimal(EntityAgeable par1EntityAgeable) {
-        GammaMetroid w = new GammaMetroid(this.world);
-        if (this.isTamed()) {
-            this.setOwnerId(this.getOwnerId());
-            w.setTamed(true);
+    public GammaMetroid spawnBabyAnimal(ServerLevel level, AgeableMob par1EntityAgeable) {
+        GammaMetroid w = (GammaMetroid) this.getType().create(level);
+        if (this.isTame()) {
+            this.setOwnerUUID(this.getOwnerUUID());
+            w.setTame(true);
         }
         return w;
     }
 
-    public boolean isWheat(ItemStack par1ItemStack) {
-        return par1ItemStack != null && par1ItemStack.getItem() == Items.IRON_INGOT;
+    @Override
+    public boolean isFood(ItemStack par1ItemStack) {
+        return ChaosPersists.MyCrystalApple != null && par1ItemStack.is(ChaosPersists.MyCrystalApple);
     }
 
-    public boolean isBreedingItem(ItemStack par1ItemStack) {
-        return par1ItemStack.getItem() == ChaosPersists.MyCrystalApple;
+    public static boolean checkGammaMetroidSpawnRules(
+            EntityType<GammaMetroid> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        return Animal.checkAnimalSpawnRules(type, level, spawnType, pos, random);
     }
 }
-

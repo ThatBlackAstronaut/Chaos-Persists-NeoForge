@@ -1,130 +1,126 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelButterfly
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- */
 package com.astryxion.chaospersists.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
+import com.astryxion.chaospersists.entity.EntityButterfly;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.util.Mth;
 
-public class ModelButterfly
-extends ModelBase {
-    ModelRenderer body;
-    ModelRenderer leftwing;
-    ModelRenderer rightwing;
-    ModelRenderer leftwing2;
-    ModelRenderer rightwing2;
-    ModelRenderer leftwing3;
-    ModelRenderer rightwing3;
-    ModelRenderer head;
-    ModelRenderer leftwing4;
-    ModelRenderer rightwing4;
-    private float wingspeed = 1.0f;
+public class ModelButterfly extends EntityModel<EntityButterfly> {
+    private final float wingspeed;
+    private final ModelPart body;
+    private final ModelPart leftwing;
+    private final ModelPart rightwing;
+    private final ModelPart leftwing2;
+    private final ModelPart rightwing2;
+    private final ModelPart leftwing3;
+    private final ModelPart rightwing3;
+    private final ModelPart head;
+    private final ModelPart leftwing4;
+    private final ModelPart rightwing4;
 
     public ModelButterfly(float f1) {
-        this.textureWidth = 64;
-        this.textureHeight = 32;
-        this.wingspeed = f1;
-        this.body = new ModelRenderer((ModelBase)this, 21, 19);
-        this.body.addBox(0.0f, 0.0f, -4.0f, 1, 1, 8);
-        this.body.setRotationPoint(0.0f, 17.0f, 0.0f);
-        this.body.setTextureSize(64, 32);
-        this.body.mirror = true;
-        this.setRotation(this.body, 0.0f, 0.0f, 0.0f);
-        this.leftwing = new ModelRenderer((ModelBase)this, 43, 24);
-        this.leftwing.addBox(0.0f, 0.0f, -4.0f, 5, 1, 5);
-        this.leftwing.setRotationPoint(1.0f, 17.0f, 0.0f);
-        this.leftwing.setTextureSize(64, 32);
-        this.leftwing.mirror = true;
-        this.setRotation(this.leftwing, 0.0f, 0.0f, 0.0f);
-        this.rightwing = new ModelRenderer((ModelBase)this, 43, 17);
-        this.rightwing.addBox(-5.0f, 0.0f, -4.0f, 5, 1, 5);
-        this.rightwing.setRotationPoint(0.0f, 17.0f, 0.0f);
-        this.rightwing.setTextureSize(64, 32);
-        this.rightwing.mirror = true;
-        this.setRotation(this.rightwing, 0.0f, 0.0f, 0.0f);
-        this.leftwing2 = new ModelRenderer((ModelBase)this, 0, 0);
-        this.leftwing2.addBox(1.0f, 0.0f, -6.0f, 6, 1, 7);
-        this.leftwing2.setRotationPoint(1.0f, 17.0f, 0.0f);
-        this.leftwing2.setTextureSize(64, 32);
-        this.leftwing2.mirror = true;
-        this.setRotation(this.leftwing2, 0.0f, 0.0f, 0.0f);
-        this.rightwing2 = new ModelRenderer((ModelBase)this, 29, 0);
-        this.rightwing2.addBox(-7.0f, 0.0f, -6.0f, 6, 1, 7);
-        this.rightwing2.setRotationPoint(0.0f, 17.0f, 0.0f);
-        this.rightwing2.setTextureSize(64, 32);
-        this.rightwing2.mirror = true;
-        this.setRotation(this.rightwing2, 0.0f, 0.0f, 0.0f);
-        this.leftwing3 = new ModelRenderer((ModelBase)this, 0, 9);
-        this.leftwing3.addBox(0.0f, 0.0f, 1.0f, 5, 1, 5);
-        this.leftwing3.setRotationPoint(1.0f, 17.0f, 0.0f);
-        this.leftwing3.setTextureSize(64, 32);
-        this.leftwing3.mirror = true;
-        this.setRotation(this.leftwing3, 0.0f, 0.0f, 0.0f);
-        this.rightwing3 = new ModelRenderer((ModelBase)this, 27, 9);
-        this.rightwing3.addBox(-5.0f, 0.0f, 1.0f, 5, 1, 5);
-        this.rightwing3.setRotationPoint(0.0f, 17.0f, 0.0f);
-        this.rightwing3.setTextureSize(64, 32);
-        this.rightwing3.mirror = true;
-        this.setRotation(this.rightwing3, 0.0f, 0.0f, 0.0f);
-        this.head = new ModelRenderer((ModelBase)this, 21, 11);
-        this.head.addBox(0.0f, 0.0f, -6.0f, 1, 1, 1);
-        this.head.setRotationPoint(0.0f, 17.0f, 1.0f);
-        this.head.setTextureSize(64, 32);
-        this.head.mirror = true;
-        this.setRotation(this.head, 0.0f, 0.0f, 0.0f);
-        this.leftwing4 = new ModelRenderer((ModelBase)this, 2, 24);
-        this.leftwing4.addBox(0.0f, 0.0f, 6.0f, 1, 1, 7);
-        this.leftwing4.setRotationPoint(1.0f, 17.0f, 0.0f);
-        this.leftwing4.setTextureSize(64, 32);
-        this.leftwing4.mirror = true;
-        this.setRotation(this.leftwing4, 0.0f, 0.0f, 0.0f);
-        this.rightwing4 = new ModelRenderer((ModelBase)this, 2, 16);
-        this.rightwing4.addBox(-1.0f, 0.0f, 6.0f, 1, 1, 7);
-        this.rightwing4.setRotationPoint(0.0f, 17.0f, 0.0f);
-        this.rightwing4.setTextureSize(64, 32);
-        this.rightwing4.mirror = true;
-        this.setRotation(this.rightwing4, 0.0f, 0.0f, 0.0f);
+        this(f1, LayerDefinition.create(createMesh(), 64, 32).bakeRoot());
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        this.head.render(f5);
-        this.body.render(f5);
-        this.rightwing2.rotateAngleZ = this.rightwing.rotateAngleZ = MathHelper.cos((float)(f2 * 1.3f * this.wingspeed)) * 3.1415927f * 0.25f;
-        this.rightwing3.rotateAngleZ = this.rightwing.rotateAngleZ;
-        this.rightwing4.rotateAngleZ = this.rightwing.rotateAngleZ;
-        this.leftwing.rotateAngleZ = - this.rightwing.rotateAngleZ;
-        this.leftwing2.rotateAngleZ = - this.rightwing.rotateAngleZ;
-        this.leftwing3.rotateAngleZ = - this.rightwing.rotateAngleZ;
-        this.leftwing4.rotateAngleZ = - this.rightwing.rotateAngleZ;
-        this.leftwing.render(f5);
-        this.rightwing.render(f5);
-        this.leftwing2.render(f5);
-        this.rightwing2.render(f5);
-        this.leftwing3.render(f5);
-        this.rightwing3.render(f5);
-        this.leftwing4.render(f5);
-        this.rightwing4.render(f5);
+    public ModelButterfly(float wingspeed, ModelPart root) {
+        this.wingspeed = wingspeed;
+        this.body = root.getChild("body");
+        this.leftwing = root.getChild("leftwing");
+        this.rightwing = root.getChild("rightwing");
+        this.leftwing2 = root.getChild("leftwing2");
+        this.rightwing2 = root.getChild("rightwing2");
+        this.leftwing3 = root.getChild("leftwing3");
+        this.rightwing3 = root.getChild("rightwing3");
+        this.head = root.getChild("head");
+        this.leftwing4 = root.getChild("leftwing4");
+        this.rightwing4 = root.getChild("rightwing4");
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
+    private static MeshDefinition createMesh() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild(
+                "body",
+                CubeListBuilder.create().texOffs(21, 19).mirror().addBox(0.0f, 0.0f, -4.0f, 1.0f, 1.0f, 8.0f),
+                PartPose.offset(0.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "leftwing",
+                CubeListBuilder.create().texOffs(43, 24).mirror().addBox(0.0f, 0.0f, -4.0f, 5.0f, 1.0f, 5.0f),
+                PartPose.offset(1.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "rightwing",
+                CubeListBuilder.create().texOffs(43, 17).mirror().addBox(-5.0f, 0.0f, -4.0f, 5.0f, 1.0f, 5.0f),
+                PartPose.offset(0.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "leftwing2",
+                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(1.0f, 0.0f, -6.0f, 6.0f, 1.0f, 7.0f),
+                PartPose.offset(1.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "rightwing2",
+                CubeListBuilder.create().texOffs(29, 0).mirror().addBox(-7.0f, 0.0f, -6.0f, 6.0f, 1.0f, 7.0f),
+                PartPose.offset(0.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "leftwing3",
+                CubeListBuilder.create().texOffs(0, 9).mirror().addBox(0.0f, 0.0f, 1.0f, 5.0f, 1.0f, 5.0f),
+                PartPose.offset(1.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "rightwing3",
+                CubeListBuilder.create().texOffs(27, 9).mirror().addBox(-5.0f, 0.0f, 1.0f, 5.0f, 1.0f, 5.0f),
+                PartPose.offset(0.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "head",
+                CubeListBuilder.create().texOffs(21, 11).mirror().addBox(0.0f, 0.0f, -6.0f, 1.0f, 1.0f, 1.0f),
+                PartPose.offset(0.0f, 17.0f, 1.0f));
+        root.addOrReplaceChild(
+                "leftwing4",
+                CubeListBuilder.create().texOffs(2, 24).mirror().addBox(0.0f, 0.0f, 6.0f, 1.0f, 1.0f, 7.0f),
+                PartPose.offset(1.0f, 17.0f, 0.0f));
+        root.addOrReplaceChild(
+                "rightwing4",
+                CubeListBuilder.create().texOffs(2, 16).mirror().addBox(-1.0f, 0.0f, 6.0f, 1.0f, 1.0f, 7.0f),
+                PartPose.offset(0.0f, 17.0f, 0.0f));
+        return mesh;
     }
 
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+    @Override
+    public void setupAnim(EntityButterfly entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        float flap = Mth.cos(ageInTicks * 1.3f * this.wingspeed) * (float) Math.PI * 0.25f;
+        this.rightwing2.zRot = flap;
+        this.rightwing.zRot = flap;
+        this.rightwing3.zRot = flap;
+        this.rightwing4.zRot = flap;
+        this.leftwing.zRot = -flap;
+        this.leftwing2.zRot = -flap;
+        this.leftwing3.zRot = -flap;
+        this.leftwing4.zRot = -flap;
+    }
+
+    @Override
+    public void renderToBuffer(
+            PoseStack poseStack,
+            VertexConsumer buffer,
+            int packedLight,
+            int packedOverlay,
+            float red,
+            float green,
+            float blue,
+            float alpha) {
+        this.head.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.body.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.leftwing.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rightwing.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.leftwing2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rightwing2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.leftwing3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rightwing3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.leftwing4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rightwing4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

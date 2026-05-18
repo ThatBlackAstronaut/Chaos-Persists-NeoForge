@@ -1,68 +1,35 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelTheKing
- *  com.astryxion.chaospersists.RenderTheKing
- *  com.astryxion.chaospersists.TheKing
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.renderer.entity.RenderLiving
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.util.ResourceLocation
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
-import com.astryxion.chaospersists.model.ModelTheKing;
+import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.entity.TheKing;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.entity.RenderLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import com.astryxion.chaospersists.model.ModelTheKing;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.resources.ResourceLocation;
 
-public class RenderTheKing
-extends RenderLiving {
-    protected ModelTheKing model;
-    private float scale = 1.0f;
-    private static final ResourceLocation texture = new ResourceLocation("chaospersists", "textures/entity/thekingtexture.png");
+public class RenderTheKing extends MobRenderer<TheKing, ModelTheKing> {
+    private static final ResourceLocation TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/thekingtexture.png");
+    private final float scale;
 
-    public RenderTheKing(net.minecraft.client.renderer.entity.RenderManager manager, ModelTheKing par1ModelBase, float par2, float par3) {
-        super(manager, (ModelBase)par1ModelBase, par2 * par3);
-        this.model = (ModelTheKing)this.mainModel;
-        this.scale = par3;
+    public RenderTheKing(EntityRendererProvider.Context context, ModelTheKing model, float shadow, float scale) {
+        super(context, model, shadow * scale);
+        this.scale = scale;
     }
 
-    public void renderTheKing(TheKing par1EntityTheKing, double par2, double par4, double par6, float par8, float par9) {
-        super.doRender((EntityLiving)par1EntityTheKing, par2, par4, par6, par8, par9);
-    }
-
-    public void doRender(EntityLiving par1EntityLiving, double par2, double par4, double par6, float par8, float par9) {
-        this.renderTheKing((TheKing)par1EntityLiving, par2, par4, par6, par8, par9);
-    }
-
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-        this.renderTheKing((TheKing)par1Entity, par2, par4, par6, par8, par9);
-    }
-
-    protected void preRenderScale(TheKing par1Entity, float par2) {
-        if (par1Entity != null && par1Entity.getPlayNicely() != 0) {
-            GL11.glScalef((float)(this.scale / 4.0f), (float)(this.scale / 4.0f), (float)(this.scale / 4.0f));
-            return;
+    @Override
+    protected void scale(TheKing entity, PoseStack poseStack, float partialTick) {
+        if (entity.getPlayNicely() != 0) {
+            float s = this.scale / 4.0f;
+            poseStack.scale(s, s, s);
+        } else {
+            poseStack.scale(this.scale, this.scale, this.scale);
         }
-        GL11.glScalef((float)this.scale, (float)this.scale, (float)this.scale);
     }
 
-    protected void preRenderCallback(EntityLivingBase par1EntityLiving, float par2) {
-        this.preRenderScale((TheKing)par1EntityLiving, par2);
-    }
-
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        return texture;
+    @Override
+    public ResourceLocation getTextureLocation(TheKing entity) {
+        return TEXTURE;
     }
 }
-

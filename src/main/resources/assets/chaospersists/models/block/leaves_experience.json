@@ -15,7 +15,7 @@
     }
   ],
   "textures": {
-    "particle": "chaospersists:blocks/leaves_experience",
-    "all": "chaospersists:blocks/leaves_experience"
+    "particle": "chaospersists:block/leaves_experience",
+    "all": "chaospersists:block/leaves_experience"
   }
 }

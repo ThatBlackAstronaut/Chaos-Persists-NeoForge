@@ -1,1181 +1,1347 @@
 package com.astryxion.chaospersists.entity;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
+import com.astryxion.chaospersists.item.BetterFireball;
+import com.astryxion.chaospersists.item.IceBall;
+import com.astryxion.chaospersists.item.PurplePower;
+import com.astryxion.chaospersists.item.ThunderBolt;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyUtils;
-import com.astryxion.chaospersists.item.PurplePower;
-import com.astryxion.chaospersists.item.BetterFireball;
-import com.astryxion.chaospersists.item.ThunderBolt;
-import com.astryxion.chaospersists.item.IceBall;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIHurtByTarget;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAISwimming;
-import net.minecraft.entity.ai.EntityAITasks;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.boss.EntityDragon;
-import net.minecraft.entity.effect.EntityLightningBolt;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.passive.EntityHorse;
-import net.minecraft.entity.passive.EntityVillager;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.registry.RegistryNamespaced;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import java.util.Locale;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.animal.horse.Horse;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.registries.ForgeRegistries;
 
-public class TheKing extends EntityMob
-{
-  private static final DataParameter<Byte> BYTE20 = EntityDataManager.createKey(TheKing.class, DataSerializers.BYTE);
-  private static final DataParameter<Integer> PLAY_NICELY = EntityDataManager.createKey(TheKing.class, DataSerializers.VARINT);
-  private static final DataParameter<Integer> IS_END = EntityDataManager.createKey(TheKing.class, DataSerializers.VARINT);
-  private BlockPos currentFlightTarget = null;
-  private GenericTargetSorter TargetSorter = null;
-  private EntityLivingBase rt = null;
-  private double attdam = 250.0D;
-  private int hurt_timer = 0;
-  private int homex = 0;
-  private int homez = 0;
-  private int stream_count = 0;
-  private int stream_count_l = 0;
-  private int stream_count_i = 0;
-  private int ticker = 0;
-  private int player_hit_count = 0;
-  private int backoff_timer = 0;
-  private int guard_mode = 0;
-  private volatile int head_found = 0;
-  private int wing_sound = 0;
-  private int large_unknown_detected = 0;
-  private int isEnd = 0;
-  private int endCounter = 0;
+public class TheKing extends Monster {
+    private static final EntityDataAccessor<Byte> BYTE20 =
+            SynchedEntityData.defineId(TheKing.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Integer> PLAY_NICELY =
+            SynchedEntityData.defineId(TheKing.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> IS_END =
+            SynchedEntityData.defineId(TheKing.class, EntityDataSerializers.INT);
 
-  public TheKing(World par1World) {
-    super(par1World);
-    if (ChaosPersists.PlayNicely == 0)
-      setSize(22.0F, 24.0F);
-    else {
-      setSize(5.5F, 6.0F);
-    }
-    ((net.minecraft.pathfinding.PathNavigateGround)getNavigator()).setCanSwim(true);
-    this.experienceValue = 25000;
-    this.isImmuneToFire = true;
-        this.noClip = true;
-    this.TargetSorter = new GenericTargetSorter(this);
-    this.setRenderDistanceWeight(12.0D);
-    this.tasks.addTask(0, new EntityAISwimming(this));
-    this.tasks.addTask(1, new EntityAILookIdle(this));
-    this.targetTasks.addTask(1, new EntityAIHurtByTarget(this, false));
-  }
+    private BlockPos currentFlightTarget = null;
+    private final GenericTargetSorter targetSorter;
+    private LivingEntity rt = null;
+    private double attdam = 250.0;
+    private int hurt_timer = 0;
+    private int homex = 0;
+    private int homez = 0;
+    private int stream_count = 0;
+    private int stream_count_l = 0;
+    private int stream_count_i = 0;
+    private int ticker = 0;
+    private int player_hit_count = 0;
+    private int backoff_timer = 0;
+    private int guard_mode = 0;
+    private volatile int head_found = 0;
+    private int wing_sound = 0;
+    private int large_unknown_detected = 0;
+    private int isEnd = 0;
+    private int endCounter = 0;
 
-  protected void applyEntityAttributes()
-  {
-    super.applyEntityAttributes();
-    getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(mygetMaxHealth());
-    getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.6200000047683716D);
-
-    this.attdam = ChaosPersists.TheKing_stats.attack;
-    getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(this.attdam);
-  }
-
-  protected void entityInit()
-  {
-    super.entityInit();
-    this.getDataManager().register(BYTE20, (byte)0);
-    this.getDataManager().register(PLAY_NICELY, ChaosPersists.PlayNicely);
-    this.getDataManager().register(IS_END, this.isEnd);
-  }
-
-  public int getPlayNicely() {
-    return this.getDataManager().get(PLAY_NICELY).intValue();
-  }
-
-  @SideOnly(Side.CLIENT)
-  public boolean isInRangeToRenderDist(double par1)
-  {
-    return true;
-  }
-
-  @SideOnly(Side.CLIENT)
-  public boolean isInRangeToRenderVec3D(Vec3d par1Vec3)
-  {
-    return true;
-  }
-
-  protected boolean canDespawn() {
-    return false;
-  }
-
-  public final int getAttacking()
-  {
-    return this.getDataManager().get(BYTE20).byteValue();
-  }
-
-  public final void setAttacking(int par1)
-  {
-    this.getDataManager().set(BYTE20, (byte)par1);
-  }
-
-  protected float getSoundVolume()
-  {
-    return 1.35F;
-  }
-
-  protected float getSoundPitch()
-  {
-    return 1.0F;
-  }
-
-  protected net.minecraft.util.SoundEvent getAmbientSound()
-  {
-    return com.astryxion.chaospersists.core.ChaosSounds.KING_LIVING;
-  }
-
-  protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource damageSource)
-  {
-    return com.astryxion.chaospersists.core.ChaosSounds.KING_HIT;
-  }
-
-  protected net.minecraft.util.SoundEvent getDeathSound()
-  {
-    return com.astryxion.chaospersists.core.ChaosSounds.TREX_DEATH;
-  }
-
-  public boolean canBePushed()
-  {
-    return false;
-  }
-
-  protected void collideWithEntity(Entity par1Entity) {
-  }
-
-  public int mygetMaxHealth() {
-    return ChaosPersists.TheKing_stats.health;
-  }
-
-  protected Item getDropItem()
-  {
-    return Item.getItemFromBlock(Blocks.YELLOW_FLOWER);
-  }
-
-  private void dropItemRand(Item index, int par1)
-  {
-    EntityItem var3 = new EntityItem(this.world, this.posX + ChaosPersists.ChaosRand.nextInt(20) - ChaosPersists.ChaosRand.nextInt(20), this.posY + 12.0D, this.posZ + ChaosPersists.ChaosRand.nextInt(20) - ChaosPersists.ChaosRand.nextInt(20), new ItemStack(index, par1, 0));
-
-    this.world.spawnEntity(var3);
-  }
-
-  protected void dropFewItems(boolean par1, int par2) {
-      int k;
-      Item it = null;
-      Block bl = null;
-      TheKing.spawnCreature((World)this.world, (String)"The Prince", (double)this.posX, (double)(this.posY + 10.0), (double)this.posZ);
-      this.dropItemRand((Item)ChaosPersists.RoyalBody, 1);
-      this.dropItemRand((Item)ChaosPersists.RoyalHelmet, 1);
-      this.dropItemRand((Item)ChaosPersists.RoyalLegs, 1);
-      this.dropItemRand((Item)ChaosPersists.RoyalBoots, 1);
-      this.dropItemRand(ChaosPersists.MyRoyal, 1);
-      java.util.List<Item> itemList = new java.util.ArrayList<>();
-      for (net.minecraft.util.ResourceLocation key : Item.REGISTRY.getKeys()) {
-          Item itemObj = Item.REGISTRY.getObject(key);
-          if (itemObj != null) itemList.add(itemObj);
-      }
-      int icount = itemList.size();
-      int j = 0;
-      while (j < 150) {
-          it = itemList.get(this.world.rand.nextInt(icount));
-          if (it == null) continue;
-          ++j;
-          this.dropItemRand(it, 1);
-      }
-      java.util.List<Block> blockList = new java.util.ArrayList<>();
-      for (net.minecraft.util.ResourceLocation key : Block.REGISTRY.getKeys()) {
-          Block blk = Block.REGISTRY.getObject(key);
-          if (blk != null) blockList.add(blk);
-      }
-      int bcount = blockList.size();
-      j = 0;
-      while (j < 150) {
-          bl = blockList.get(this.world.rand.nextInt(bcount));
-          if (bl == null) continue;
-          ++j;
-          this.dropItemRand(Item.getItemFromBlock((Block)bl), 1);
-      }
-  }
-
-  protected boolean isAIEnabled()
-  {
-    return true;
-  }
-
-  public void onUpdate()
-  {
-    super.onUpdate();
-
-    this.wing_sound += 1;
-    if (this.wing_sound > 30)
-    {
-      if (!this.world.isRemote) this.world.playSound(null, this.posX, this.posY, this.posZ, com.astryxion.chaospersists.core.ChaosSounds.MOTHRA_WINGS, this.getSoundCategory(), 1.75F, 0.75F);
-      this.wing_sound = 0;
+    public TheKing(EntityType<? extends TheKing> type, Level level) {
+        super(type, level);
+        this.attdam = ChaosPersists.TheKing_stats.attack;
+        this.xpReward = 25000;
+        this.fireImmune();
+        this.noPhysics = true;
+        this.targetSorter = new GenericTargetSorter(this);
+        this.getNavigation().setCanFloat(true);
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new RandomLookAroundGoal(this));
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
     }
 
-    this.noClip = true;
-    this.motionY *= 0.6D;
-    if ((this.player_hit_count < 10) && (getHealth() < mygetMaxHealth() * 2 / 3)) this.attdam = (ChaosPersists.TheKing_stats.attack * 2);
-    if ((this.player_hit_count < 10) && (getHealth() < mygetMaxHealth() / 2)) this.attdam = (ChaosPersists.TheKing_stats.attack * 4);
-    if ((this.player_hit_count < 10) && (getHealth() < mygetMaxHealth() / 4)) this.attdam = (ChaosPersists.TheKing_stats.attack * 8);
-    if ((this.player_hit_count < 10) && (getHealth() < mygetMaxHealth() / 8)) this.attdam = (ChaosPersists.TheKing_stats.attack * 16);
-
-    if (this.world.isRemote) {
-      float f = 7.0F;
-      this.isEnd = this.getDataManager().get(IS_END).intValue();
-
-      if ((this.isEnd != 0) && (this.world.rand.nextInt(3) == 1))
-      {
-        for (int i = 0; i < 10; i++)
-          this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FIREWORKS_SPARK, this.posX - f * Math.sin(Math.toRadians(this.rotationYaw)), this.posY + 14.0D, this.posZ + f * Math.cos(Math.toRadians(this.rotationYaw)), (this.world.rand.nextGaussian() - this.world.rand.nextGaussian()) / 4.0D + this.motionX * 6.0D, (this.world.rand.nextGaussian() - this.world.rand.nextGaussian()) / 4.0D, (this.world.rand.nextGaussian() - this.world.rand.nextGaussian()) / 4.0D + this.motionZ * 6.0D);
-      }
-    }
-  }
-
-  public boolean attackEntityAsMob(Entity par1Entity)
-  {
-    if ((par1Entity != null) && ((par1Entity instanceof EntityLivingBase)))
-    {
-      float s = par1Entity.height * par1Entity.width;
-      if ((s > 30.0F) && 
-        (!MyUtils.isRoyalty(par1Entity)) && (!(par1Entity instanceof Godzilla)) && (!(par1Entity instanceof GodzillaHead)) && (!(par1Entity instanceof PitchBlack)) && (!(par1Entity instanceof Kraken)))
-      {
-        EntityLivingBase e = (EntityLivingBase)par1Entity;
-        e.setHealth(e.getHealth() / 2.0F);
-        e.attackEntityFrom(DamageSource.causeMobDamage(this), (float)this.attdam * 10.0F);
-        this.large_unknown_detected = 1;
-      }
-
+    public static AttributeSupplier.Builder createAttributes() {
+        return Monster.createMonsterAttributes()
+                .add(Attributes.MAX_HEALTH, (double) ChaosPersists.TheKing_stats.health)
+                .add(Attributes.MOVEMENT_SPEED, 0.6200000047683716)
+                .add(Attributes.ATTACK_DAMAGE, (double) ChaosPersists.TheKing_stats.attack)
+                .add(Attributes.ARMOR, (double) ChaosPersists.TheKing_stats.defense);
     }
 
-    if ((par1Entity != null) && ((par1Entity instanceof EntityDragon))) {
-      EntityDragon dr = (EntityDragon)par1Entity;
-      DamageSource var21 = null;
-      var21 = DamageSource.causeExplosionDamage(this);
-      if (this.world.rand.nextInt(6) == 1)
-        dr.attackEntityFromPart(dr.dragonPartHead, var21, (float)this.attdam);
-      else {
-        dr.attackEntityFromPart(dr.dragonPartBody, var21, (float)this.attdam);
-      }
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(BYTE20, (byte) 0);
+        this.entityData.define(PLAY_NICELY, ChaosPersists.PlayNicely);
+        this.entityData.define(IS_END, this.isEnd);
     }
 
-    boolean var4 = par1Entity.attackEntityFrom(DamageSource.causeMobDamage(this), (float)this.attdam);
-    if (var4) {
-      double ks = 3.3D;
-      double inair = 0.25D;
-      float f3 = (float)Math.atan2(par1Entity.posZ - this.posZ, par1Entity.posX - this.posX);
-      inair += this.world.rand.nextFloat() * 0.25F;
-      if ((par1Entity.isDead) || ((par1Entity instanceof EntityPlayer))) inair *= 1.5D;
-      par1Entity.addVelocity(Math.cos(f3) * ks, inair, Math.sin(f3) * ks);
+    @Override
+    public void onAddedToWorld() {
+        super.onAddedToWorld();
+        this.refreshDimensions();
     }
 
-    return var4;
-  }
-
-  public boolean canSeeTarget(double pX, double pY, double pZ)
-  {
-    return this.world.rayTraceBlocks(new Vec3d(this.posX, this.posY + 8.75D, this.posZ), new Vec3d(pX, pY, pZ), false) == null;
-  }
-
-  private boolean tooFarFromHome()
-  {
-    float d1 = (float)(this.posX - this.homex);
-    float d2 = (float)(this.posZ - this.homez);
-
-    d1 = (float)Math.sqrt(d1 * d1 + d2 * d2);
-    return d1 > 120.0F;
-  }
-
-  private void msgToPlayers(String s)
-  {
-    List var5 = this.world.getEntitiesWithinAABB(EntityPlayer.class, this.getEntityBoundingBox().expand(80.0D, 64.0D, 80.0D));
-    Collections.sort(var5, this.TargetSorter);
-    Iterator var2 = var5.iterator();
-    Entity var3 = null;
-    EntityPlayer var4 = null;
-
-    while (var2.hasNext())
-    {
-      var3 = (Entity)var2.next();
-      var4 = (EntityPlayer)var3;
-      var4.sendMessage(new net.minecraft.util.text.TextComponentString(s));
-    }
-  }
-
-  private EntityPlayer findNearestPlayer()
-  {
-    List var5 = this.world.getEntitiesWithinAABB(EntityPlayer.class, this.getEntityBoundingBox().expand(80.0D, 64.0D, 80.0D));
-    Collections.sort(var5, this.TargetSorter);
-    Iterator var2 = var5.iterator();
-    Entity var3 = null;
-    EntityPlayer var4 = null;
-
-    while (var2.hasNext())
-    {
-      var3 = (Entity)var2.next();
-      if ((var3 instanceof EntityPlayer)) var4 = (EntityPlayer)var3;
-      if (var4 == null)
-        continue;
-    }
-    return var4;
-  }
-
-  protected void updateAITasks()
-  {
-    int xdir = 1;
-    int zdir = 1;
-
-    int attrand = 5;
-    int updown = 0;
-    int which = 0;
-    EntityLivingBase e = null;
-    EntityLivingBase f = null;
-
-    double rr = 0.0D;
-    double rhdir = 0.0D;
-    double rdd = 0.0D;
-    double pi = 3.1415926545D;
-    double var1 = 0.0D;
-    double var3 = 0.0D;
-    double var5 = 0.0D;
-    float var7 = 0.0F;
-    float var8 = 0.0F;
-
-    EntityPlayer p = null;
-
-    if (this.isDead) return;
-    super.updateAITasks();
-    this.getDataManager().set(IS_END, this.isEnd);
-    this.getDataManager().set(PLAY_NICELY, ChaosPersists.PlayNicely);
-
-    if (this.isEnd == 1) {
-      this.endCounter += 1;
-      this.noClip = true;
-      this.motionX = 0.0D;
-      this.motionY = 0.0D;
-      this.motionZ = 0.0D;
-      this.hurt_timer = 10;
-
-      if (this.isDead) return;
-
-      p = findNearestPlayer();
-      if (p != null) {
-        faceEntity(p, 10.0F, 10.0F);
-        p.motionX = 0.0D;
-        p.motionY = 0.0D;
-        p.motionZ = 0.0D;
-        double dd0 = this.posX - p.posX;
-        double dd1 = this.posZ - p.posZ;
-        float f2 = (float)(Math.atan2(dd1, dd0) * 180.0D / 3.141592653589793D) - 90.0F;
-        p.rotationYaw = f2;
-        p.setHealth(1.0F);
-      }
-
-      if (this.endCounter == 10) {
-        msgToPlayers("The King: Enough of this charade. I am done. You have shown me what I wanted to know.");
-        return;
-      }
-      if (this.endCounter == 80) {
-        msgToPlayers("The King: That's right my little pet. It has all been a game. You never killed me. You can't.");
-        return;
-      }
-      if (this.endCounter == 160) {
-        msgToPlayers("The King: I am the one. The only. The many. I exist within both space and time. Everywhere and always.");
-        return;
-      }
-      if (this.endCounter == 240) {
-        msgToPlayers("The King: I used you to learn your ways, and I have reached my conclusion on your species.");
-        return;
-      }
-      if (this.endCounter == 300) {
-        msgToPlayers("The King: You have 10 seconds to run...");
-        return;
-      }
-      if (this.endCounter == 320) {
-        msgToPlayers("9.");
-        return;
-      }
-      if (this.endCounter == 340) {
-        msgToPlayers("8.");
-        return;
-      }
-      if (this.endCounter == 360) {
-        msgToPlayers("7.");
-        return;
-      }
-      if (this.endCounter == 380) {
-        msgToPlayers("6.");
-        return;
-      }
-      if (this.endCounter == 400) {
-        msgToPlayers("5.");
-        return;
-      }
-      if (this.endCounter == 420) {
-        msgToPlayers("4.");
-        return;
-      }
-      if (this.endCounter == 440) {
-        msgToPlayers("3.");
-        return;
-      }
-      if (this.endCounter == 460) {
-        msgToPlayers("2.");
-        return;
-      }
-      if (this.endCounter == 480) {
-        msgToPlayers("1.");
-        return;
-      }
-      if (this.endCounter == 500) {
-        msgToPlayers("The King: Prepare to die!");
-        this.isEnd = 2;
-        return;
-      }
-
-      return;
-    }
-
-    if (this.isEnd == 2) {
-      this.hurt_timer = 10;
-      this.player_hit_count = 0;
-      this.stream_count = 10;
-      this.stream_count_l = 10;
-      this.stream_count_i = 10;
-      attrand = 3;
-      this.guard_mode = 0;
-      this.large_unknown_detected = 1;
-      if (this.backoff_timer > 0) this.backoff_timer -= 1;
-    }
-
-    if (this.hurt_timer > 0) this.hurt_timer -= 1;
-    if (((this.homex == 0) && (this.homez == 0)) || (this.guard_mode == 0)) {
-      this.homex = (int)this.posX;
-      this.homez = (int)this.posZ;
-    }
-
-    this.ticker += 1;
-    if (this.ticker > 30000) this.ticker = 0;
-    if (this.ticker % 80 == 0) this.stream_count = 10;
-    if (this.ticker % 90 == 0) this.stream_count_l = 5;
-    if (this.ticker % 70 == 0) this.stream_count_i = 8;
-    if (this.backoff_timer > 0) this.backoff_timer -= 1;
-
-    if ((this.player_hit_count < 10) && (getHealth() < mygetMaxHealth() / 2)) attrand = 3;
-    this.noClip = true;
-
-    if (this.currentFlightTarget == null) {
-      this.currentFlightTarget = new BlockPos((int)this.posX, (int)this.posY, (int)this.posZ);
-    }
-
-    if ((tooFarFromHome()) || (this.world.rand.nextInt(200) == 0) || (this.currentFlightTarget.distanceSq(this.posX, this.posY, this.posZ) < 9.1F))
-    {
-      zdir = this.world.rand.nextInt(120);
-      xdir = this.world.rand.nextInt(120);
-      if (this.world.rand.nextInt(2) == 0) zdir = -zdir;
-      if (this.world.rand.nextInt(2) == 0) xdir = -xdir;
-
-      int dist = 0;
-      for (int i = -5; i <= 5; i += 5) {
-        for (int j = -5; j <= 5; j += 5) {
-          Block bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(this.homex + j, (int)this.posY, this.homez + i)).getBlock();
-          if (bid != Blocks.AIR)
-            for (int k = 1; k < 20; k++) {
-              bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(this.homex + j, (int)this.posY + k, this.homez + i)).getBlock();
-              dist++;
-              if (bid == Blocks.AIR)
-                break;
-            }
-          for (int k = 1; k < 20; k++) {
-            bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos(this.homex + j, (int)this.posY - k, this.homez + i)).getBlock();
-            dist--;
-            if (bid != Blocks.AIR)
-              break;
-          }
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+        if (ChaosPersists.PlayNicely == 0) {
+            return EntityDimensions.scalable(22.0f, 24.0f);
         }
-      }
-      dist = dist / 9 + 2;
-      if ((int)(this.posY + dist) > 230) dist = 230 - (int)this.posY;
-      this.currentFlightTarget = new BlockPos(this.homex + xdir, (int)(this.posY + dist), this.homez + zdir);
-    }
-    else if (this.world.rand.nextInt(attrand) == 0)
-    {
-      e = this.rt;
-      if (ChaosPersists.PlayNicely != 0) e = null;
-      if ((e != null) && (
-        ((e instanceof TheKing)) || ((e instanceof KingHead)))) {
-        this.rt = null;
-        e = null;
-      }
-
-      if (e != null)
-      {
-        float d1 = (float)(e.posX - this.homex);
-        float d2 = (float)(e.posZ - this.homez);
-        d1 = (float)Math.sqrt(d1 * d1 + d2 * d2);
-        if ((e.isDead) || (this.world.rand.nextInt(250) == 1) || ((d1 > 128.0F) && (this.guard_mode == 1))) {
-          e = null;
-          this.rt = null;
-        }
-        if ((e != null) && 
-          (!MyCanSee(e))) {
-          e = null;
-        }
-
-      }
-
-      f = findSomethingToAttack();
-      if (this.head_found == 0)
-      {
-        EntityLiving localEntityLiving = (EntityLiving)spawnCreature(this.world, "KingHead", this.posX, this.posY + 20.0D, this.posZ);
-      }
-
-      if (e == null) {
-        e = f;
-      }
-
-      if (e != null)
-      {
-        setAttacking(1);
-        if (this.backoff_timer == 0) {
-          int dist = (int)(e.posY + e.height / 2.0F + 1.0D);
-          if (dist > 230) dist = 230;
-          this.currentFlightTarget = new BlockPos((int)e.posX, dist, (int)e.posZ);
-          if (this.world.rand.nextInt(70) == 1) this.backoff_timer = (80 + this.world.rand.nextInt(80));
-        }
-        else if (this.currentFlightTarget.distanceSq(this.posX, this.posY, this.posZ) < 9.1F)
-        {
-          zdir = this.world.rand.nextInt(20) + 30;
-          xdir = this.world.rand.nextInt(20) + 30;
-          if (this.world.rand.nextInt(2) == 0) zdir = -zdir;
-          if (this.world.rand.nextInt(2) == 0) xdir = -xdir;
-
-          int dist = 0;
-          for (int i = -5; i <= 5; i += 5) {
-            for (int j = -5; j <= 5; j += 5) {
-              Block bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)e.posX + j, (int)this.posY, (int)e.posZ + i)).getBlock();
-              if (bid != Blocks.AIR)
-                for (int k = 1; k < 20; k++) {
-                  bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)e.posX + j, (int)this.posY + k, (int)e.posZ + i)).getBlock();
-                  dist++;
-                  if (bid == Blocks.AIR)
-                    break;
-                }
-              for (int k = 1; k < 20; k++) {
-                bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)e.posX + j, (int)this.posY - k, (int)e.posZ + i)).getBlock();
-                dist--;
-                if (bid != Blocks.AIR)
-                  break;
-              }
-            }
-          }
-          dist = dist / 9 + 2;
-          if ((int)(this.posY + dist) > 230) dist = 230 - (int)this.posY;
-          this.currentFlightTarget = new BlockPos((int)e.posX + xdir, (int)(this.posY + dist), (int)e.posZ + zdir);
-        }
-
-        if (getDistanceSq(e) < 900.0D) {
-          if (this.world.rand.nextInt(2) == 1) doJumpDamage(this.posX, this.posY, this.posZ, 15.0D, ChaosPersists.TheKing_stats.attack / 4, 0);
-          attackEntityAsMob(e);
-        }
-
-        double dx = this.posX + 20.0D * Math.sin(Math.toRadians(this.rotationYawHead));
-        double dz = this.posZ - 20.0D * Math.cos(Math.toRadians(this.rotationYawHead));
-        if (this.world.rand.nextInt(3) == 1) doJumpDamage(dx, this.posY + 10.0D, dz, 15.0D, ChaosPersists.TheKing_stats.attack / 2, 1);
-
-        if (getHorizontalDistanceSqToEntity(e) > 900.0D) {
-          which = this.world.rand.nextInt(3);
-          if (which == 0)
-          {
-            if (this.stream_count > 0) {
-              setAttacking(1);
-
-              rr = Math.atan2(e.posZ - this.posZ, e.posX - this.posX);
-              rhdir = Math.toRadians((this.rotationYawHead + 90.0F) % 360.0F);
-
-              rdd = Math.abs(rr - rhdir) % (pi * 2.0D);
-              if (rdd > pi) rdd -= pi * 2.0D;
-              rdd = Math.abs(rdd);
-
-              if (rdd < 0.5D) {
-                firecanon(e);
-              }
-            }
-          }
-          else if (which == 1) {
-            if (this.stream_count_l > 0) {
-              setAttacking(1);
-
-              rr = Math.atan2(e.posZ - this.posZ, e.posX - this.posX);
-              rhdir = Math.toRadians((this.rotationYawHead + 90.0F) % 360.0F);
-
-              rdd = Math.abs(rr - rhdir) % (pi * 2.0D);
-              if (rdd > pi) rdd -= pi * 2.0D;
-              rdd = Math.abs(rdd);
-
-              if (rdd < 0.5D) {
-                firecanonl(e);
-              }
-            }
-
-          }
-          else if (this.stream_count_i > 0) {
-            setAttacking(1);
-
-            rr = Math.atan2(e.posZ - this.posZ, e.posX - this.posX);
-            rhdir = Math.toRadians((this.rotationYawHead + 90.0F) % 360.0F);
-
-            rdd = Math.abs(rr - rhdir) % (pi * 2.0D);
-            if (rdd > pi) rdd -= pi * 2.0D;
-            rdd = Math.abs(rdd);
-
-            if (rdd < 0.5D) {
-              firecanoni(e);
-            }
-          }
-        }
-      }
-      else
-      {
-        setAttacking(0);
-        this.stream_count = 10;
-        this.stream_count_l = 5;
-        this.stream_count_i = 8;
-      }
+        return EntityDimensions.scalable(5.5f, 6.0f);
     }
 
-    if ((getAttacking() != 0) && (this.isEnd == 2)) {
-      double xzoff = 10.0D;
-      double yoff = 14.0D;
-      Entity ppwr = spawnCreature(this.world, "PurplePower", this.posX - xzoff * Math.sin(Math.toRadians(this.rotationYaw)), this.posY + yoff, this.posZ + xzoff * Math.cos(Math.toRadians(this.rotationYaw)));
-
-      if (ppwr != null) {
-        PurplePower pwr = (PurplePower)ppwr;
-        pwr.motionX = (this.motionX * 3.0D);
-        pwr.motionZ = (this.motionZ * 3.0D);
-        pwr.setPurpleType(10);
-      }
+    public int getPlayNicely() {
+        return this.entityData.get(PLAY_NICELY);
     }
 
-    var1 = this.currentFlightTarget.getX() + 0.5D - this.posX;
-    var3 = this.currentFlightTarget.getY() + 0.1D - this.posY;
-    var5 = this.currentFlightTarget.getZ() + 0.5D - this.posZ;
-
-    this.motionX += (Math.signum(var1) * 0.7D - this.motionX) * 0.35D;
-    this.motionY += (Math.signum(var3) * 0.69999D - this.motionY) * 0.3D;
-    this.motionZ += (Math.signum(var5) * 0.7D - this.motionZ) * 0.35D;
-
-    var7 = (float)(Math.atan2(this.motionZ, this.motionX) * 180.0D / 3.141592653589793D) - 90.0F;
-    var8 = MathHelper.wrapDegrees(var7 - this.rotationYaw);
-    this.moveForward = 1.0F;
-    this.rotationYaw += var8 / 8.0F;
-
-    if ((this.world.rand.nextInt(30) == 1) && 
-      (getHealth() < mygetMaxHealth()))
-    {
-      heal(5.0F);
-      if (this.large_unknown_detected != 0) heal(200.0F);
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return true;
     }
 
-    if ((this.player_hit_count < 10) && (getHealth() < 2000.0F)) heal(2000.0F - getHealth());
-  }
-
-  private double getHorizontalDistanceSqToEntity(Entity e)
-  {
-    double d1 = e.posZ - this.posZ;
-    double d2 = e.posX - this.posX;
-    return d1 * d1 + d2 * d2;
-  }
-
-  private void firecanon(EntityLivingBase e)
-  {
-    double yoff = 14.0D;
-    double xzoff = 32.0D;
-
-    BetterFireball bf = null;
-
-    double cx = this.posX - xzoff * Math.sin(Math.toRadians(this.rotationYaw));
-    double cz = this.posZ + xzoff * Math.cos(Math.toRadians(this.rotationYaw));
-    if (this.stream_count > 0)
-    {
-      bf = new BetterFireball(this.world, this, e.posX - cx, e.posY + e.height / 2.0F - (this.posY + yoff), e.posZ - cz);
-      bf.setLocationAndAngles(cx, this.posY + yoff, cz, this.rotationYaw, 0.0F);
-      bf.setPosition(cx, this.posY + yoff, cz);
-      bf.setReallyBig();
-      this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.ENTITY_TNT_PRIMED, this.getSoundCategory(), 1.0F, 1.0F / (getRNG().nextFloat() * 0.4F + 0.8F));
-      this.world.spawnEntity(bf);
-      for (int i = 0; i < 6; i++) {
-        float r1 = 5.0F * (this.world.rand.nextFloat() - this.world.rand.nextFloat());
-        float r2 = 3.0F * (this.world.rand.nextFloat() - this.world.rand.nextFloat());
-        float r3 = 5.0F * (this.world.rand.nextFloat() - this.world.rand.nextFloat());
-        bf = new BetterFireball(this.world, this, e.posX - cx + r1, e.posY + e.height / 2.0F - (this.posY + yoff) + r2, e.posZ - cz + r3);
-        bf.setLocationAndAngles(cx, this.posY + yoff, cz, this.rotationYaw, 0.0F);
-        bf.setPosition(cx, this.posY + yoff, cz);
-        bf.setBig();
-        if (this.world.rand.nextInt(2) == 1) bf.setSmall();
-        this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.ENTITY_ARROW_SHOOT, this.getSoundCategory(), 1.0F, 1.0F / (getRNG().nextFloat() * 0.4F + 0.8F));
-        this.world.spawnEntity(bf);
-      }
-      this.stream_count -= 1;
-    }
-  }
-
-  private void firecanonl(EntityLivingBase e)
-  {
-    double yoff = 14.0D;
-    double xzoff = 32.0D;
-
-    double var3 = 0.0D;
-    double var5 = 0.0D;
-    double var7 = 0.0D;
-    float var9 = 0.0F;
-    double cx = this.posX - xzoff * Math.sin(Math.toRadians(this.rotationYaw));
-    double cz = this.posZ + xzoff * Math.cos(Math.toRadians(this.rotationYaw));
-    if (this.stream_count_l > 0) {
-      this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.ENTITY_ARROW_SHOOT, this.getSoundCategory(), 1.0F, 1.0F / (getRNG().nextFloat() * 0.4F + 0.8F));
-      for (int i = 0; i < 3; i++) {
-        float r1 = 5.0F * (this.world.rand.nextFloat() - this.world.rand.nextFloat());
-        float r2 = 3.0F * (this.world.rand.nextFloat() - this.world.rand.nextFloat());
-        float r3 = 5.0F * (this.world.rand.nextFloat() - this.world.rand.nextFloat());
-        ThunderBolt lb = new ThunderBolt(this.world, cx, this.posY + yoff, cz);
-        lb.setLocationAndAngles(cx, this.posY + yoff, cz, 0.0F, 0.0F);
-        var3 = e.posX - lb.posX;
-        var5 = e.posY + 0.25D - lb.posY;
-        var7 = e.posZ - lb.posZ;
-        var9 = MathHelper.sqrt(var3 * var3 + var7 * var7) * 0.2F;
-        lb.shoot(var3, var5 + var9, var7, 1.4F, 4.0F);
-        lb.motionX *= 3.0D;
-        lb.motionY *= 3.0D;
-        lb.motionZ *= 3.0D;
-        this.world.spawnEntity(lb);
-      }
-      this.stream_count_l -= 1;
-    }
-  }
-
-  private void firecanoni(EntityLivingBase e)
-  {
-    double yoff = 14.0D;
-    double xzoff = 32.0D;
-
-    double var3 = 0.0D;
-    double var5 = 0.0D;
-    double var7 = 0.0D;
-    float var9 = 0.0F;
-    double cx = this.posX - xzoff * Math.sin(Math.toRadians(this.rotationYaw));
-    double cz = this.posZ + xzoff * Math.cos(Math.toRadians(this.rotationYaw));
-    if (this.stream_count_i > 0) {
-      this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.ENTITY_ARROW_SHOOT, this.getSoundCategory(), 1.0F, 1.0F / (getRNG().nextFloat() * 0.4F + 0.8F));
-      for (int i = 0; i < 5; i++) {
-        float r1 = 5.0F * (this.world.rand.nextFloat() - this.world.rand.nextFloat());
-        float r2 = 3.0F * (this.world.rand.nextFloat() - this.world.rand.nextFloat());
-        float r3 = 5.0F * (this.world.rand.nextFloat() - this.world.rand.nextFloat());
-        IceBall lb = new IceBall(this.world, cx, this.posY + yoff, cz);
-        lb.setIceMaker(1);
-        lb.setLocationAndAngles(cx, this.posY + yoff, cz, 0.0F, 0.0F);
-        var3 = e.posX - lb.posX;
-        var5 = e.posY + 0.25D - lb.posY;
-        var7 = e.posZ - lb.posZ;
-        var9 = MathHelper.sqrt(var3 * var3 + var7 * var7) * 0.2F;
-        lb.shoot(var3, var5 + var9, var7, 1.4F, 4.0F);
-        lb.motionX *= 3.0D;
-        lb.motionY *= 3.0D;
-        lb.motionZ *= 3.0D;
-        this.world.spawnEntity(lb);
-      }
-      this.stream_count_i -= 1;
-    }
-  }
-
-  protected boolean canTriggerWalking()
-  {
-    return true;
-  }
-
-  public void fall(float distance, float damageMultiplier) {
-  }
-
-  protected void updateFallState(double y, boolean onGroundIn, net.minecraft.block.state.IBlockState state, net.minecraft.util.math.BlockPos pos) {
-    fallDistance = 0.0f;
-  }
-
-  public boolean doesEntityNotTriggerPressurePlate()
-  {
-    return false;
-  }
-
-  public boolean attackEntityFrom(DamageSource par1DamageSource, float par2)
-  {
-    boolean ret = false;
-    float dm = par2;
-
-    if (this.hurt_timer > 0) return false;
-    if (dm > 750.0F) dm = 750.0F;
-
-    if (par1DamageSource.getDamageType().equals("inWall")) {
-      return false;
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public boolean shouldRender(double x, double y, double z) {
+        return true;
     }
 
-    Entity e = par1DamageSource.getTrueSource();
-    if ((e != null) && ((e instanceof EntityLivingBase)))
-    {
-      EntityLivingBase enl = (EntityLivingBase)e;
-      float s = enl.height * enl.width;
-      if ((s > 30.0F) && 
-        (!MyUtils.isRoyalty(enl)) && (!(enl instanceof Godzilla)) && (!(enl instanceof GodzillaHead)) && (!(enl instanceof PitchBlack)) && (!(enl instanceof Kraken)))
-      {
-        dm /= 10.0F;
-        this.hurt_timer = 50;
-        this.large_unknown_detected = 1;
-      }
-
-      if (((e instanceof EntityMob)) && 
-        (s < 3.0F)) {
-        e.setDead();
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return false;
-      }
-
     }
 
-    if (!par1DamageSource.getDamageType().equals("cactus")) {
-      this.hurt_timer = 20;
-      ret = super.attackEntityFrom(par1DamageSource, dm);
+    public final int getAttacking() {
+        return this.entityData.get(BYTE20);
+    }
 
-      if ((e != null) && ((e instanceof EntityPlayer)))
-      {
-        this.player_hit_count += 1;
-      }
+    public final void setAttacking(int par1) {
+        this.entityData.set(BYTE20, (byte) par1);
+    }
 
-      if ((e != null) && ((e instanceof EntityLivingBase)) && (this.currentFlightTarget != null))
-      {
-        if (!MyUtils.isRoyalty(e)) {
-          this.rt = ((EntityLivingBase)e);
-          int dist = (int)e.posY;
-          if (dist > 230) dist = 230;
-          this.currentFlightTarget = new BlockPos((int)e.posX, dist, (int)e.posZ);
+    @Override
+    protected float getSoundVolume() {
+        return 1.35f;
+    }
+
+    @Override
+    public float getVoicePitch() {
+        return 1.0f;
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return ChaosSounds.KING_LIVING;
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return ChaosSounds.KING_HIT;
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ChaosSounds.TREX_DEATH;
+    }
+
+    @Override
+    public boolean isPushable() {
+        return false;
+    }
+
+    public int mygetMaxHealth() {
+        return ChaosPersists.TheKing_stats.health;
+    }
+
+    private void dropRegistryItem(String path, int par1) {
+        Item item =
+                ForgeRegistries.ITEMS.getValue(
+                        ResourceLocation.fromNamespaceAndPath("chaospersists", path));
+        if (item != null) {
+            this.dropItemRand(item, par1);
         }
-      }
-    }
-    return ret;
-  }
-
-  public boolean getCanSpawnHere()
-  {
-    return true;
-  }
-
-  public int getTotalArmorValue()
-  {
-    if (this.large_unknown_detected != 0) return 25;
-    if ((this.player_hit_count < 10) && (getHealth() < mygetMaxHealth() * 2 / 3)) return ChaosPersists.TheKing_stats.defense + 1;
-    if ((this.player_hit_count < 10) && (getHealth() < mygetMaxHealth() / 2)) return ChaosPersists.TheKing_stats.defense + 2;
-    if ((this.player_hit_count < 10) && (getHealth() < mygetMaxHealth() / 4)) return ChaosPersists.TheKing_stats.defense + 3;
-    return ChaosPersists.TheKing_stats.defense;
-  }
-
-  public void onStruckByLightning(EntityLightningBolt par1EntityLightningBolt)
-  {
-  }
-
-  public void initCreature()
-  {
-  }
-
-  public boolean MyCanSee(EntityLivingBase e)
-  {
-    double xzoff = 22.0D;
-
-    int nblks = 20;
-
-    double cx = this.posX - xzoff * Math.sin(Math.toRadians(this.rotationYaw));
-    double cz = this.posZ + xzoff * Math.cos(Math.toRadians(this.rotationYaw));
-    float startx = (float)cx;
-    float starty = (float)(this.posY + this.height * 7.0F / 8.0F);
-    float startz = (float)cz;
-    float dx = (float)((e.posX - startx) / 20.0D);
-    float dy = (float)((e.posY + e.height / 2.0F - starty) / 20.0D);
-    float dz = (float)((e.posZ - startz) / 20.0D);
-
-    if (Math.abs(dx) > 1.0D) {
-      dy /= Math.abs(dx);
-      dz /= Math.abs(dx);
-      nblks = (int)(nblks * Math.abs(dx));
-      if (dx > 1.0F) dx = 1.0F;
-      if (dx < -1.0F) dx = -1.0F;
-    }
-    if (Math.abs(dy) > 1.0D) {
-      dx /= Math.abs(dy);
-      dz /= Math.abs(dy);
-      nblks = (int)(nblks * Math.abs(dy));
-      if (dy > 1.0F) dy = 1.0F;
-      if (dy < -1.0F) dy = -1.0F;
-    }
-    if (Math.abs(dz) > 1.0D) {
-      dy /= Math.abs(dz);
-      dx /= Math.abs(dz);
-      nblks = (int)(nblks * Math.abs(dz));
-      if (dz > 1.0F) dz = 1.0F;
-      if (dz < -1.0F) dz = -1.0F;
     }
 
-    for (int i = 0; i < nblks; i++) {
-      startx += dx;
-      starty += dy;
-      startz += dz;
-      Block bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)startx, (int)starty, (int)startz)).getBlock();
-      if ((bid != Blocks.FLOWING_WATER) && (bid != Blocks.WATER) && (bid != Blocks.LEAVES) && (bid != Blocks.VINE) && 
-        (bid != Blocks.AIR)) return false;
-
-    }
-
-    return true;
-  }
-
-  private boolean isSuitableTarget(EntityLivingBase par1EntityLiving, boolean par2)
-  {
-    if (par1EntityLiving == null)
-    {
-      return false;
-    }
-
-    if (par1EntityLiving == this)
-    {
-      return false;
-    }
-    if (!par1EntityLiving.isEntityAlive())
-    {
-      return false;
-    }
-
-    if ((par1EntityLiving instanceof KingHead))
-    {
-      this.head_found = 1;
-      return false;
-    }
-    if (MyUtils.isRoyalty(par1EntityLiving))
-    {
-      return false;
-    }
-
-    float d1 = (float)(par1EntityLiving.posX - this.homex);
-    float d2 = (float)(par1EntityLiving.posZ - this.homez);
-    d1 = (float)Math.sqrt(d1 * d1 + d2 * d2);
-    if (d1 > 144.0F) return false;
-
-    if (MyUtils.isIgnoreable(par1EntityLiving)) return false;
-
-    if (this.isEnd == 2) {
-      if ((par1EntityLiving instanceof EntityPlayer))
-      {
-        EntityPlayer p = (EntityPlayer)par1EntityLiving;
-
-        return p.capabilities.isCreativeMode != true;
-      }
-
-      if ((par1EntityLiving instanceof Girlfriend))
-      {
-        return true;
-      }
-      if ((par1EntityLiving instanceof Boyfriend))
-      {
-        return true;
-      }
-      if ((par1EntityLiving instanceof EntityVillager))
-      {
-        return true;
-      }
-
-    }
-
-    if (!MyCanSee(par1EntityLiving))
-    {
-      return false;
-    }
-
-    if ((par1EntityLiving instanceof EntityPlayer))
-    {
-      EntityPlayer p = (EntityPlayer)par1EntityLiving;
-
-      return p.capabilities.isCreativeMode != true;
-    }
-
-    if ((par1EntityLiving instanceof EntityHorse))
-    {
-      return true;
-    }
-    if ((par1EntityLiving instanceof EntityMob))
-    {
-      return true;
-    }
-
-    if ((par1EntityLiving instanceof EntityDragon))
-    {
-      return true;
-    }
-
-    return MyUtils.isAttackableNonMob(par1EntityLiving);
-  }
-
-  private EntityLivingBase findSomethingToAttack()
-  {
-    if (ChaosPersists.PlayNicely != 0) {
-      this.head_found = 1;
-      return null;
-    }
-
-    if (this.isEnd == 2) {
-      List var5p = this.world.getEntitiesWithinAABB(EntityPlayer.class, this.getEntityBoundingBox().expand(80.0D, 64.0D, 80.0D));
-      Collections.sort(var5p, this.TargetSorter);
-      Iterator var2p = var5p.iterator();
-      Entity var3p = null;
-      EntityLivingBase var4p = null;
-      EntityLivingBase retp = null;
-      this.head_found = 1;
-      while (var2p.hasNext())
-      {
-        var3p = (Entity)var2p.next();
-        var4p = (EntityLivingBase)var3p;
-
-        if (isSuitableTarget(var4p, false))
-        {
-          return var4p;
+    private void dropItemRand(Item index, int par1) {
+        if (index == null) {
+            return;
         }
-      }
-    }
-    List var5 = this.world.getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox().expand(80.0D, 64.0D, 80.0D));
-    Collections.sort(var5, this.TargetSorter);
-    Iterator var2 = var5.iterator();
-    Entity var3 = null;
-    EntityLivingBase var4 = null;
-    EntityLivingBase ret = null;
-
-    this.head_found = 0;
-    while (var2.hasNext())
-    {
-      var3 = (Entity)var2.next();
-      var4 = (EntityLivingBase)var3;
-
-      if (isSuitableTarget(var4, false))
-      {
-        if (ret == null) ret = var4;
-      }
-      if ((ret == null) || (this.head_found == 0)) continue;
-    }
-    return ret;
-  }
-
-  public void setGuardMode(int i)
-  {
-    this.guard_mode = i;
-  }
-
-  public void setFree()
-  {
-    this.isEnd = 1;
-  }
-
-  public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
-  {
-    super.writeEntityToNBT(par1NBTTagCompound);
-
-    par1NBTTagCompound.setInteger("KingHomeX", this.homex);
-    par1NBTTagCompound.setInteger("KingHomeZ", this.homez);
-    par1NBTTagCompound.setInteger("GuardMode", this.guard_mode);
-    par1NBTTagCompound.setInteger("PlayerHits", this.player_hit_count);
-    par1NBTTagCompound.setInteger("IsEnd", this.isEnd);
-    par1NBTTagCompound.setInteger("EndCounter", this.endCounter);
-  }
-
-  public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
-  {
-    super.readEntityFromNBT(par1NBTTagCompound);
-
-    this.homex = par1NBTTagCompound.getInteger("KingHomeX");
-    this.homez = par1NBTTagCompound.getInteger("KingHomeZ");
-    this.guard_mode = par1NBTTagCompound.getInteger("GuardMode");
-    this.player_hit_count = par1NBTTagCompound.getInteger("PlayerHits");
-    this.isEnd = par1NBTTagCompound.getInteger("IsEnd");
-    this.endCounter = par1NBTTagCompound.getInteger("EndCounter");
-  }
-
-  public static Entity spawnCreature(World par0World, String par1, double par2, double par4, double par6)
-  {
-    Entity var8 = null;
-    net.minecraft.util.ResourceLocation res = par1.contains(":") ? new net.minecraft.util.ResourceLocation(par1) : new net.minecraft.util.ResourceLocation("chaospersists", par1);
-    var8 = EntityList.createEntityByIDFromName(res, par0World);
-    if (var8 != null)
-    {
-      var8.setLocationAndAngles(par2, par4, par6, par0World.rand.nextFloat() * 360.0F, 0.0F);
-
-      par0World.spawnEntity(var8);
-    }
-    return var8;
-  }
-
-  private EntityLivingBase doJumpDamage(double X, double Y, double Z, double dist, double damage, int knock)
-  {
-    AxisAlignedBB bb = new AxisAlignedBB(X - dist, Y - 10.0D, Z - dist, X + dist, Y + 10.0D, Z + dist);
-    List var5 = this.world.getEntitiesWithinAABB(EntityLivingBase.class, bb);
-    Collections.sort(var5, this.TargetSorter);
-    Iterator var2 = var5.iterator();
-    Entity var3 = null;
-    EntityLivingBase var4 = null;
-
-    while (var2.hasNext())
-    {
-      var3 = (Entity)var2.next();
-      var4 = (EntityLivingBase)var3;
-
-      if ((var4 == null) || 
-        (var4 == this) || 
-        (!var4.isEntityAlive()) || 
-        (MyUtils.isRoyalty(var4)) || 
-        ((var4 instanceof Ghost)) || 
-        ((var4 instanceof GhostSkelly)))
-        continue;
-      DamageSource var21 = null;
-      var21 = DamageSource.causeExplosionDamage(this);
-      var4.attackEntityFrom(var21, (float)damage / 2.0F);
-      var4.attackEntityFrom(DamageSource.FALL, (float)damage / 2.0F);
-      this.world.playSound(null, var4.posX, var4.posY, var4.posZ, net.minecraft.init.SoundEvents.ENTITY_GENERIC_EXPLODE, this.getSoundCategory(), 0.65F, 1.0F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.5F);
-      if (knock != 0) {
-        double ks = 2.75D;
-        double inair = 0.65D;
-        float f3 = (float)Math.atan2(var4.posZ - this.posZ, var4.posX - this.posX);
-        var4.addVelocity(Math.cos(f3) * ks, inair, Math.sin(f3) * ks);
-      }
+        ItemEntity var3 =
+                new ItemEntity(
+                        this.level(),
+                        this.getX()
+                                + (double) ChaosPersists.ChaosRand.nextInt(20)
+                                - (double) ChaosPersists.ChaosRand.nextInt(20),
+                        this.getY() + 12.0,
+                        this.getZ()
+                                + (double) ChaosPersists.ChaosRand.nextInt(20)
+                                - (double) ChaosPersists.ChaosRand.nextInt(20),
+                        new ItemStack(index, par1));
+        this.level().addFreshEntity(var3);
     }
 
-    return null;
-  }
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        Item it;
+        Block bl;
+        spawnCreature(this.level(), "The Prince", this.getX(), this.getY() + 10.0, this.getZ());
+        this.dropRegistryItem("royal_chest", 1);
+        this.dropRegistryItem("royal_helmet", 1);
+        this.dropRegistryItem("royal_leggings", 1);
+        this.dropRegistryItem("royal_boots", 1);
+        this.dropRegistryItem("royalsmall", 1);
+        List<Item> itemList = new ArrayList<>();
+        for (Item itemObj : ForgeRegistries.ITEMS.getValues()) {
+            if (itemObj != null) {
+                itemList.add(itemObj);
+            }
+        }
+        int icount = itemList.size();
+        int j = 0;
+        while (j < 150) {
+            it = itemList.get(this.level().getRandom().nextInt(icount));
+            if (it == null) {
+                continue;
+            }
+            ++j;
+            this.dropItemRand(it, 1);
+        }
+        List<Block> blockList = new ArrayList<>();
+        for (Block blk : ForgeRegistries.BLOCKS.getValues()) {
+            if (blk != null) {
+                blockList.add(blk);
+            }
+        }
+        int bcount = blockList.size();
+        j = 0;
+        while (j < 150) {
+            bl = blockList.get(this.level().getRandom().nextInt(bcount));
+            if (bl == null) {
+                continue;
+            }
+            ++j;
+            this.dropItemRand(Item.byBlock(bl), 1);
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        this.wing_sound += 1;
+        if (this.wing_sound > 30) {
+            if (!this.level().isClientSide && ChaosSounds.MOTHRA_WINGS != null) {
+                this.level()
+                        .playSound(
+                                null,
+                                this.getX(),
+                                this.getY(),
+                                this.getZ(),
+                                ChaosSounds.MOTHRA_WINGS,
+                                this.getSoundSource(),
+                                1.75f,
+                                0.75f);
+            }
+            this.wing_sound = 0;
+        }
+        this.noPhysics = true;
+        Vec3 dm = this.getDeltaMovement();
+        this.setDeltaMovement(dm.x, dm.y * 0.6, dm.z);
+        if (this.player_hit_count < 10 && this.getHealth() < (float) (this.mygetMaxHealth() * 2 / 3)) {
+            this.attdam = ChaosPersists.TheKing_stats.attack * 2;
+        }
+        if (this.player_hit_count < 10 && this.getHealth() < (float) (this.mygetMaxHealth() / 2)) {
+            this.attdam = ChaosPersists.TheKing_stats.attack * 4;
+        }
+        if (this.player_hit_count < 10 && this.getHealth() < (float) (this.mygetMaxHealth() / 4)) {
+            this.attdam = ChaosPersists.TheKing_stats.attack * 8;
+        }
+        if (this.player_hit_count < 10 && this.getHealth() < (float) (this.mygetMaxHealth() / 8)) {
+            this.attdam = ChaosPersists.TheKing_stats.attack * 16;
+        }
+        if (this.level().isClientSide) {
+            float f = 7.0f;
+            this.isEnd = this.entityData.get(IS_END);
+            if (this.isEnd != 0 && this.level().getRandom().nextInt(3) == 1) {
+                for (int i = 0; i < 10; i++) {
+                    this.level()
+                            .addParticle(
+                                    ParticleTypes.FIREWORK,
+                                    this.getX() - (double) f * Math.sin(Math.toRadians(this.getYRot())),
+                                    this.getY() + 14.0,
+                                    this.getZ() + (double) f * Math.cos(Math.toRadians(this.getYRot())),
+                                    (this.level().getRandom().nextGaussian()
+                                                    - this.level().getRandom().nextGaussian())
+                                            / 4.0
+                                            + dm.x * 6.0,
+                                    (this.level().getRandom().nextGaussian()
+                                                    - this.level().getRandom().nextGaussian())
+                                            / 4.0,
+                                    (this.level().getRandom().nextGaussian()
+                                                    - this.level().getRandom().nextGaussian())
+                                            / 4.0
+                                            + dm.z * 6.0);
+                }
+            }
+        }
+    }
+
+    @Override
+    public boolean doHurtTarget(Entity par1Entity) {
+        if (par1Entity instanceof LivingEntity living) {
+            float s = living.getBbHeight() * living.getBbWidth();
+            if (s > 30.0f
+                    && !MyUtils.isRoyalty(par1Entity)
+                    && !isGodzilla(par1Entity)
+                    && !isGodzillaHead(par1Entity)
+                    && !(par1Entity instanceof PitchBlack)
+                    && !(par1Entity instanceof Kraken)) {
+                living.setHealth(living.getHealth() / 2.0f);
+                living.hurt(this.damageSources().mobAttack(this), (float) this.attdam * 10.0f);
+                this.large_unknown_detected = 1;
+            }
+        }
+        if (par1Entity instanceof EnderDragon dr) {
+            DamageSource var21 = this.damageSources().explosion(null);
+            if (this.getRandom().nextInt(6) == 1) {
+                dr.hurt(dr.head, var21, (float) this.attdam);
+            } else {
+                dr.hurt(var21, (float) this.attdam);
+            }
+        }
+        boolean var4 = par1Entity.hurt(this.damageSources().mobAttack(this), (float) this.attdam);
+        if (var4 && par1Entity instanceof LivingEntity living) {
+            double ks = 3.3;
+            double inair = 0.25;
+            float f3 = (float) Math.atan2(living.getZ() - this.getZ(), living.getX() - this.getX());
+            inair += (double) this.getRandom().nextFloat() * 0.25;
+            if (!living.isAlive() || par1Entity instanceof Player) {
+                inair *= 1.5;
+            }
+            living.push(Math.cos(f3) * ks, inair, Math.sin(f3) * ks);
+        }
+        return var4;
+    }
+
+    public boolean canSeeTarget(double pX, double pY, double pZ) {
+        return this.level()
+                        .clip(
+                                new net.minecraft.world.level.ClipContext(
+                                        new Vec3(this.getX(), this.getY() + 8.75, this.getZ()),
+                                        new Vec3(pX, pY, pZ),
+                                        net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                                        net.minecraft.world.level.ClipContext.Fluid.NONE,
+                                        this))
+                        .getType()
+                == net.minecraft.world.phys.HitResult.Type.MISS;
+    }
+
+    private boolean tooFarFromHome() {
+        float d1 = (float) (this.getX() - (double) this.homex);
+        float d2 = (float) (this.getZ() - (double) this.homez);
+        d1 = (float) Math.sqrt(d1 * d1 + d2 * d2);
+        return d1 > 120.0f;
+    }
+
+    private void msgToPlayers(String s) {
+        List<Player> var5 =
+                this.level()
+                        .getEntitiesOfClass(
+                                Player.class, this.getBoundingBox().inflate(80.0, 64.0, 80.0));
+        Collections.sort(var5, this.targetSorter);
+        for (Player var4 : var5) {
+            var4.sendSystemMessage(Component.literal(s));
+        }
+    }
+
+    private Player findNearestPlayer() {
+        List<Player> var5 =
+                this.level()
+                        .getEntitiesOfClass(
+                                Player.class, this.getBoundingBox().inflate(80.0, 64.0, 80.0));
+        Collections.sort(var5, this.targetSorter);
+        Player var4 = null;
+        for (Player var3 : var5) {
+            var4 = var3;
+        }
+        return var4;
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        int xdir = 1;
+        int zdir = 1;
+        int attrand = 5;
+        LivingEntity e = null;
+        LivingEntity f = null;
+        double rr;
+        double rhdir;
+        double rdd;
+        double pi = 3.1415926545;
+        double var1;
+        double var3;
+        double var5;
+        float var7;
+        float var8;
+        int which;
+        Player p;
+        if (this.isDeadOrDying()) {
+            return;
+        }
+        super.customServerAiStep();
+        this.entityData.set(IS_END, this.isEnd);
+        this.entityData.set(PLAY_NICELY, ChaosPersists.PlayNicely);
+        if (this.isEnd == 1) {
+            this.endCounter += 1;
+            this.noPhysics = true;
+            this.setDeltaMovement(0.0, 0.0, 0.0);
+            this.hurt_timer = 10;
+            if (this.isDeadOrDying()) {
+                return;
+            }
+            p = this.findNearestPlayer();
+            if (p != null) {
+                this.getLookControl().setLookAt(p, 10.0f, 10.0f);
+                p.setDeltaMovement(0.0, 0.0, 0.0);
+                double dd0 = this.getX() - p.getX();
+                double dd1 = this.getZ() - p.getZ();
+                float f2 = (float) (Math.atan2(dd1, dd0) * 180.0 / Math.PI) - 90.0f;
+                p.setYRot(f2);
+                p.setHealth(1.0f);
+            }
+            if (this.endCounter == 10) {
+                this.msgToPlayers(
+                        "The King: Enough of this charade. I am done. You have shown me what I wanted to know.");
+                return;
+            }
+            if (this.endCounter == 80) {
+                this.msgToPlayers(
+                        "The King: That's right my little pet. It has all been a game. You never killed me. You can't.");
+                return;
+            }
+            if (this.endCounter == 160) {
+                this.msgToPlayers(
+                        "The King: I am the one. The only. The many. I exist within both space and time. Everywhere and always.");
+                return;
+            }
+            if (this.endCounter == 240) {
+                this.msgToPlayers(
+                        "The King: I used you to learn your ways, and I have reached my conclusion on your species.");
+                return;
+            }
+            if (this.endCounter == 300) {
+                this.msgToPlayers("The King: You have 10 seconds to run...");
+                return;
+            }
+            if (this.endCounter == 320) {
+                this.msgToPlayers("9.");
+                return;
+            }
+            if (this.endCounter == 340) {
+                this.msgToPlayers("8.");
+                return;
+            }
+            if (this.endCounter == 360) {
+                this.msgToPlayers("7.");
+                return;
+            }
+            if (this.endCounter == 380) {
+                this.msgToPlayers("6.");
+                return;
+            }
+            if (this.endCounter == 400) {
+                this.msgToPlayers("5.");
+                return;
+            }
+            if (this.endCounter == 420) {
+                this.msgToPlayers("4.");
+                return;
+            }
+            if (this.endCounter == 440) {
+                this.msgToPlayers("3.");
+                return;
+            }
+            if (this.endCounter == 460) {
+                this.msgToPlayers("2.");
+                return;
+            }
+            if (this.endCounter == 480) {
+                this.msgToPlayers("1.");
+                return;
+            }
+            if (this.endCounter == 500) {
+                this.msgToPlayers("The King: Prepare to die!");
+                this.isEnd = 2;
+                return;
+            }
+            return;
+        }
+        if (this.isEnd == 2) {
+            this.hurt_timer = 10;
+            this.player_hit_count = 0;
+            this.stream_count = 10;
+            this.stream_count_l = 10;
+            this.stream_count_i = 10;
+            attrand = 3;
+            this.guard_mode = 0;
+            this.large_unknown_detected = 1;
+            if (this.backoff_timer > 0) {
+                this.backoff_timer -= 1;
+            }
+        }
+        if (this.hurt_timer > 0) {
+            this.hurt_timer -= 1;
+        }
+        if ((this.homex == 0 && this.homez == 0) || this.guard_mode == 0) {
+            this.homex = (int) this.getX();
+            this.homez = (int) this.getZ();
+        }
+        this.ticker += 1;
+        if (this.ticker > 30000) {
+            this.ticker = 0;
+        }
+        if (this.ticker % 80 == 0) {
+            this.stream_count = 10;
+        }
+        if (this.ticker % 90 == 0) {
+            this.stream_count_l = 5;
+        }
+        if (this.ticker % 70 == 0) {
+            this.stream_count_i = 8;
+        }
+        if (this.backoff_timer > 0) {
+            this.backoff_timer -= 1;
+        }
+        if (this.player_hit_count < 10 && this.getHealth() < (float) (this.mygetMaxHealth() / 2)) {
+            attrand = 3;
+        }
+        this.noPhysics = true;
+        if (this.currentFlightTarget == null) {
+            this.currentFlightTarget = BlockPos.containing(this.getX(), this.getY(), this.getZ());
+        }
+        if (this.tooFarFromHome()
+                || this.getRandom().nextInt(200) == 0
+                || this.currentFlightTarget.distToCenterSqr(this.getX(), this.getY(), this.getZ())
+                        < 9.1) {
+            zdir = this.getRandom().nextInt(120);
+            xdir = this.getRandom().nextInt(120);
+            if (this.getRandom().nextInt(2) == 0) {
+                zdir = -zdir;
+            }
+            if (this.getRandom().nextInt(2) == 0) {
+                xdir = -xdir;
+            }
+            int dist = 0;
+            for (int i = -5; i <= 5; i += 5) {
+                for (int j = -5; j <= 5; j += 5) {
+                    Block bid =
+                            this.level()
+                                    .getBlockState(
+                                            new BlockPos(
+                                                    this.homex + j, (int) this.getY(), this.homez + i))
+                                    .getBlock();
+                    if (!bid.defaultBlockState().isAir()) {
+                        for (int k = 1; k < 20; k++) {
+                            bid =
+                                    this.level()
+                                            .getBlockState(
+                                                    new BlockPos(
+                                                            this.homex + j,
+                                                            (int) this.getY() + k,
+                                                            this.homez + i))
+                                            .getBlock();
+                            dist++;
+                            if (bid.defaultBlockState().isAir()) {
+                                break;
+                            }
+                        }
+                    }
+                    for (int k = 1; k < 20; k++) {
+                        bid =
+                                this.level()
+                                        .getBlockState(
+                                                new BlockPos(
+                                                        this.homex + j,
+                                                        (int) this.getY() - k,
+                                                        this.homez + i))
+                                        .getBlock();
+                        dist--;
+                        if (!bid.defaultBlockState().isAir()) {
+                            break;
+                        }
+                    }
+                }
+            }
+            dist = dist / 9 + 2;
+            if ((int) (this.getY() + (double) dist) > 230) {
+                dist = 230 - (int) this.getY();
+            }
+            this.currentFlightTarget =
+                    new BlockPos(this.homex + xdir, (int) (this.getY() + (double) dist), this.homez + zdir);
+        } else if (this.getRandom().nextInt(attrand) == 0) {
+            e = this.rt;
+            if (ChaosPersists.PlayNicely != 0) {
+                e = null;
+            }
+            if (e != null
+                    && (e instanceof TheKing || e instanceof KingHead)) {
+                this.rt = null;
+                e = null;
+            }
+            if (e != null) {
+                float d1 = (float) (e.getX() - (double) this.homex);
+                float d2 = (float) (e.getZ() - (double) this.homez);
+                d1 = (float) Math.sqrt(d1 * d1 + d2 * d2);
+                if (e.isDeadOrDying()
+                        || this.getRandom().nextInt(250) == 1
+                        || (d1 > 128.0f && this.guard_mode == 1)) {
+                    e = null;
+                    this.rt = null;
+                }
+                if (e != null && !this.MyCanSee(e)) {
+                    e = null;
+                }
+            }
+            f = this.findSomethingToAttack();
+            if (this.head_found == 0) {
+                spawnCreature(this.level(), "KingHead", this.getX(), this.getY() + 20.0, this.getZ());
+            }
+            if (e == null) {
+                e = f;
+            }
+            if (e != null) {
+                this.setAttacking(1);
+                if (this.backoff_timer == 0) {
+                    int dist = (int) (e.getY() + (double) (e.getBbHeight() / 2.0f) + 1.0);
+                    if (dist > 230) {
+                        dist = 230;
+                    }
+                    this.currentFlightTarget = new BlockPos((int) e.getX(), dist, (int) e.getZ());
+                    if (this.getRandom().nextInt(70) == 1) {
+                        this.backoff_timer = 80 + this.getRandom().nextInt(80);
+                    }
+                } else if (this.currentFlightTarget.distToCenterSqr(this.getX(), this.getY(), this.getZ())
+                        < 9.1) {
+                    zdir = this.getRandom().nextInt(20) + 30;
+                    xdir = this.getRandom().nextInt(20) + 30;
+                    if (this.getRandom().nextInt(2) == 0) {
+                        zdir = -zdir;
+                    }
+                    if (this.getRandom().nextInt(2) == 0) {
+                        xdir = -xdir;
+                    }
+                    int dist = 0;
+                    for (int i = -5; i <= 5; i += 5) {
+                        for (int j = -5; j <= 5; j += 5) {
+                            Block bid =
+                                    this.level()
+                                            .getBlockState(
+                                                    new BlockPos(
+                                                            (int) e.getX() + j,
+                                                            (int) this.getY(),
+                                                            (int) e.getZ() + i))
+                                            .getBlock();
+                            if (!bid.defaultBlockState().isAir()) {
+                                for (int k = 1; k < 20; k++) {
+                                    bid =
+                                            this.level()
+                                                    .getBlockState(
+                                                            new BlockPos(
+                                                                    (int) e.getX() + j,
+                                                                    (int) this.getY() + k,
+                                                                    (int) e.getZ() + i))
+                                                    .getBlock();
+                                    dist++;
+                                    if (bid.defaultBlockState().isAir()) {
+                                        break;
+                                    }
+                                }
+                            }
+                            for (int k = 1; k < 20; k++) {
+                                bid =
+                                        this.level()
+                                                .getBlockState(
+                                                        new BlockPos(
+                                                                (int) e.getX() + j,
+                                                                (int) this.getY() - k,
+                                                                (int) e.getZ() + i))
+                                                .getBlock();
+                                dist--;
+                                if (!bid.defaultBlockState().isAir()) {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    dist = dist / 9 + 2;
+                    if ((int) (this.getY() + (double) dist) > 230) {
+                        dist = 230 - (int) this.getY();
+                    }
+                    this.currentFlightTarget =
+                            new BlockPos(
+                                    (int) e.getX() + xdir,
+                                    (int) (this.getY() + (double) dist),
+                                    (int) e.getZ() + zdir);
+                }
+                if (this.distanceToSqr(e) < 900.0) {
+                    if (this.getRandom().nextInt(2) == 1) {
+                        this.doJumpDamage(
+                                this.getX(),
+                                this.getY(),
+                                this.getZ(),
+                                15.0,
+                                (double) (ChaosPersists.TheKing_stats.attack / 4),
+                                0);
+                    }
+                    this.doHurtTarget(e);
+                }
+                double dx =
+                        this.getX() + 20.0 * Math.sin(Math.toRadians((double) this.getYHeadRot()));
+                double dz =
+                        this.getZ()
+                                - 20.0 * Math.cos(Math.toRadians((double) this.getYHeadRot()));
+                if (this.getRandom().nextInt(3) == 1) {
+                    this.doJumpDamage(
+                            dx,
+                            this.getY() + 10.0,
+                            dz,
+                            15.0,
+                            (double) (ChaosPersists.TheKing_stats.attack / 2),
+                            1);
+                }
+                if (this.getHorizontalDistanceSqToEntity(e) > 900.0) {
+                    which = this.getRandom().nextInt(3);
+                    if (which == 0) {
+                        if (this.stream_count > 0) {
+                            this.setAttacking(1);
+                            rr = Math.atan2(e.getZ() - this.getZ(), e.getX() - this.getX());
+                            rhdir = Math.toRadians((this.getYHeadRot() + 90.0f) % 360.0f);
+                            rdd = Math.abs(rr - rhdir) % (pi * 2.0);
+                            if (rdd > pi) {
+                                rdd -= pi * 2.0;
+                            }
+                            rdd = Math.abs(rdd);
+                            if (rdd < 0.5) {
+                                this.firecanon(e);
+                            }
+                        }
+                    } else if (which == 1) {
+                        if (this.stream_count_l > 0) {
+                            this.setAttacking(1);
+                            rr = Math.atan2(e.getZ() - this.getZ(), e.getX() - this.getX());
+                            rhdir = Math.toRadians((this.getYHeadRot() + 90.0f) % 360.0f);
+                            rdd = Math.abs(rr - rhdir) % (pi * 2.0);
+                            if (rdd > pi) {
+                                rdd -= pi * 2.0;
+                            }
+                            rdd = Math.abs(rdd);
+                            if (rdd < 0.5) {
+                                this.firecanonl(e);
+                            }
+                        }
+                    } else if (this.stream_count_i > 0) {
+                        this.setAttacking(1);
+                        rr = Math.atan2(e.getZ() - this.getZ(), e.getX() - this.getX());
+                        rhdir = Math.toRadians((this.getYHeadRot() + 90.0f) % 360.0f);
+                        rdd = Math.abs(rr - rhdir) % (pi * 2.0);
+                        if (rdd > pi) {
+                            rdd -= pi * 2.0;
+                        }
+                        rdd = Math.abs(rdd);
+                        if (rdd < 0.5) {
+                            this.firecanoni(e);
+                        }
+                    }
+                }
+            } else {
+                this.setAttacking(0);
+                this.stream_count = 10;
+                this.stream_count_l = 5;
+                this.stream_count_i = 8;
+            }
+        }
+        if (this.getAttacking() != 0 && this.isEnd == 2) {
+            double xzoff = 10.0;
+            double yoff = 14.0;
+            Entity ppwr =
+                    spawnCreature(
+                            this.level(),
+                            "PurplePower",
+                            this.getX() - xzoff * Math.sin(Math.toRadians(this.getYRot())),
+                            this.getY() + yoff,
+                            this.getZ() + xzoff * Math.cos(Math.toRadians(this.getYRot())));
+            if (ppwr instanceof PurplePower pwr) {
+                Vec3 kingMotion = this.getDeltaMovement();
+                pwr.setDeltaMovement(kingMotion.x * 3.0, kingMotion.y * 3.0, kingMotion.z * 3.0);
+                pwr.setPurpleType(10);
+            }
+        }
+        var1 = (double) this.currentFlightTarget.getX() + 0.5 - this.getX();
+        var3 = (double) this.currentFlightTarget.getY() + 0.1 - this.getY();
+        var5 = (double) this.currentFlightTarget.getZ() + 0.5 - this.getZ();
+        Vec3 motion = this.getDeltaMovement();
+        this.setDeltaMovement(
+                motion.add(
+                        (Math.signum(var1) * 0.7 - motion.x) * 0.35,
+                        (Math.signum(var3) * 0.69999 - motion.y) * 0.3,
+                        (Math.signum(var5) * 0.7 - motion.z) * 0.35));
+        motion = this.getDeltaMovement();
+        var7 = (float) (Math.atan2(motion.z, motion.x) * 180.0 / Math.PI) - 90.0f;
+        var8 = Mth.wrapDegrees(var7 - this.getYRot());
+        this.setYRot(this.getYRot() + var8 / 8.0f);
+        if (this.getRandom().nextInt(30) == 1 && this.getHealth() < (float) this.mygetMaxHealth()) {
+            this.heal(5.0f);
+            if (this.large_unknown_detected != 0) {
+                this.heal(200.0f);
+            }
+        }
+        if (this.player_hit_count < 10 && this.getHealth() < 2000.0f) {
+            this.heal(2000.0f - this.getHealth());
+        }
+    }
+
+    private double getHorizontalDistanceSqToEntity(Entity e) {
+        double d1 = e.getZ() - this.getZ();
+        double d2 = e.getX() - this.getX();
+        return d1 * d1 + d2 * d2;
+    }
+
+    private void firecanon(LivingEntity e) {
+        double yoff = 14.0;
+        double xzoff = 32.0;
+        BetterFireball bf;
+        double cx = this.getX() - xzoff * Math.sin(Math.toRadians(this.getYRot()));
+        double cz = this.getZ() + xzoff * Math.cos(Math.toRadians(this.getYRot()));
+        if (this.stream_count > 0) {
+            bf =
+                    new BetterFireball(
+                            this.level(),
+                            this,
+                            e.getX() - cx,
+                            e.getY() + (double) (e.getBbHeight() / 2.0f) - (this.getY() + yoff),
+                            e.getZ() - cz);
+            bf.moveTo(cx, this.getY() + yoff, cz, this.getYRot(), 0.0f);
+            bf.setReallyBig();
+            this.level()
+                    .playSound(
+                            null,
+                            this.getX(),
+                            this.getY(),
+                            this.getZ(),
+                            SoundEvents.TNT_PRIMED,
+                            this.getSoundSource(),
+                            1.0f,
+                            1.0f / (this.getRandom().nextFloat() * 0.4f + 0.8f));
+            this.level().addFreshEntity(bf);
+            for (int i = 0; i < 6; i++) {
+                float r1 = 5.0f * (this.getRandom().nextFloat() - this.getRandom().nextFloat());
+                float r2 = 3.0f * (this.getRandom().nextFloat() - this.getRandom().nextFloat());
+                float r3 = 5.0f * (this.getRandom().nextFloat() - this.getRandom().nextFloat());
+                bf =
+                        new BetterFireball(
+                                this.level(),
+                                this,
+                                e.getX() - cx + (double) r1,
+                                e.getY()
+                                                + (double) (e.getBbHeight() / 2.0f)
+                                                - (this.getY() + yoff)
+                                        + (double) r2,
+                                e.getZ() - cz + (double) r3);
+                bf.moveTo(cx, this.getY() + yoff, cz, this.getYRot(), 0.0f);
+                bf.setBig();
+                if (this.getRandom().nextInt(2) == 1) {
+                    bf.setSmall();
+                }
+                this.level()
+                        .playSound(
+                                null,
+                                this.getX(),
+                                this.getY(),
+                                this.getZ(),
+                                SoundEvents.ARROW_SHOOT,
+                                this.getSoundSource(),
+                                1.0f,
+                                1.0f / (this.getRandom().nextFloat() * 0.4f + 0.8f));
+                this.level().addFreshEntity(bf);
+            }
+            this.stream_count -= 1;
+        }
+    }
+
+    private void firecanonl(LivingEntity e) {
+        double yoff = 14.0;
+        double xzoff = 32.0;
+        double var3;
+        double var5;
+        double var7;
+        float var9;
+        double cx = this.getX() - xzoff * Math.sin(Math.toRadians(this.getYRot()));
+        double cz = this.getZ() + xzoff * Math.cos(Math.toRadians(this.getYRot()));
+        if (this.stream_count_l > 0) {
+            this.level()
+                    .playSound(
+                            null,
+                            this.getX(),
+                            this.getY(),
+                            this.getZ(),
+                            SoundEvents.ARROW_SHOOT,
+                            this.getSoundSource(),
+                            1.0f,
+                            1.0f / (this.getRandom().nextFloat() * 0.4f + 0.8f));
+            for (int i = 0; i < 3; i++) {
+                float r1 = 5.0f * (this.getRandom().nextFloat() - this.getRandom().nextFloat());
+                float r2 = 3.0f * (this.getRandom().nextFloat() - this.getRandom().nextFloat());
+                float r3 = 5.0f * (this.getRandom().nextFloat() - this.getRandom().nextFloat());
+                ThunderBolt lb =
+                        new ThunderBolt(
+                                ChaosPersists.ENTITY_TYPE_THUNDER_BOLT.get(),
+                                cx,
+                                this.getY() + yoff,
+                                cz,
+                                this.level());
+                lb.moveTo(cx, this.getY() + yoff, cz, 0.0f, 0.0f);
+                var3 = e.getX() - lb.getX() + (double) r1;
+                var5 = e.getY() + 0.25 - lb.getY() + (double) r2;
+                var7 = e.getZ() - lb.getZ() + (double) r3;
+                var9 = Mth.sqrt((float) (var3 * var3 + var7 * var7)) * 0.2f;
+                lb.shoot(var3, var5 + (double) var9, var7, 1.4f, 4.0f);
+                Vec3 lbdm = lb.getDeltaMovement();
+                lb.setDeltaMovement(lbdm.x * 3.0, lbdm.y * 3.0, lbdm.z * 3.0);
+                this.level().addFreshEntity(lb);
+            }
+            this.stream_count_l -= 1;
+        }
+    }
+
+    private void firecanoni(LivingEntity e) {
+        double yoff = 14.0;
+        double xzoff = 32.0;
+        double var3;
+        double var5;
+        double var7;
+        float var9;
+        double cx = this.getX() - xzoff * Math.sin(Math.toRadians(this.getYRot()));
+        double cz = this.getZ() + xzoff * Math.cos(Math.toRadians(this.getYRot()));
+        if (this.stream_count_i > 0) {
+            this.level()
+                    .playSound(
+                            null,
+                            this.getX(),
+                            this.getY(),
+                            this.getZ(),
+                            SoundEvents.ARROW_SHOOT,
+                            this.getSoundSource(),
+                            1.0f,
+                            1.0f / (this.getRandom().nextFloat() * 0.4f + 0.8f));
+            for (int i = 0; i < 5; i++) {
+                float r1 = 5.0f * (this.getRandom().nextFloat() - this.getRandom().nextFloat());
+                float r2 = 3.0f * (this.getRandom().nextFloat() - this.getRandom().nextFloat());
+                float r3 = 5.0f * (this.getRandom().nextFloat() - this.getRandom().nextFloat());
+                IceBall lb =
+                        new IceBall(
+                                ChaosPersists.ENTITY_TYPE_ICE_BALL.get(),
+                                cx,
+                                this.getY() + yoff,
+                                cz,
+                                this.level());
+                lb.setIceMaker(1);
+                lb.moveTo(cx, this.getY() + yoff, cz, 0.0f, 0.0f);
+                var3 = e.getX() - lb.getX() + (double) r1;
+                var5 = e.getY() + 0.25 - lb.getY() + (double) r2;
+                var7 = e.getZ() - lb.getZ() + (double) r3;
+                var9 = Mth.sqrt((float) (var3 * var3 + var7 * var7)) * 0.2f;
+                lb.shoot(var3, var5 + (double) var9, var7, 1.4f, 4.0f);
+                Vec3 lbdm = lb.getDeltaMovement();
+                lb.setDeltaMovement(lbdm.x * 3.0, lbdm.y * 3.0, lbdm.z * 3.0);
+                this.level().addFreshEntity(lb);
+            }
+            this.stream_count_i -= 1;
+        }
+    }
+
+    @Override
+    public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {
+        return false;
+    }
+
+    @Override
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
+        this.fallDistance = 0.0f;
+    }
+
+    @Override
+    public boolean hurt(DamageSource par1DamageSource, float par2) {
+        boolean ret = false;
+        float dm = par2;
+        if (this.hurt_timer > 0) {
+            return false;
+        }
+        if (dm > 750.0f) {
+            dm = 750.0f;
+        }
+        if (par1DamageSource.is(DamageTypes.IN_WALL)) {
+            return false;
+        }
+        Entity ent = par1DamageSource.getEntity();
+        if (ent instanceof LivingEntity enl) {
+            float s = enl.getBbHeight() * enl.getBbWidth();
+            if (s > 30.0f
+                    && !MyUtils.isRoyalty(ent)
+                    && !isGodzilla(ent)
+                    && !isGodzillaHead(ent)
+                    && !(ent instanceof PitchBlack)
+                    && !(ent instanceof Kraken)) {
+                dm /= 10.0f;
+                this.hurt_timer = 50;
+                this.large_unknown_detected = 1;
+            }
+            if (ent instanceof Monster && s < 3.0f) {
+                ent.discard();
+                return false;
+            }
+        }
+        if (!par1DamageSource.is(DamageTypes.CACTUS)) {
+            this.hurt_timer = 20;
+            ret = super.hurt(par1DamageSource, dm);
+            if (ent instanceof Player) {
+                this.player_hit_count += 1;
+            }
+            if (ent instanceof LivingEntity living && this.currentFlightTarget != null) {
+                if (!MyUtils.isRoyalty(ent)) {
+                    this.rt = living;
+                    int dist = (int) living.getY();
+                    if (dist > 230) {
+                        dist = 230;
+                    }
+                    this.currentFlightTarget = new BlockPos((int) living.getX(), dist, (int) living.getZ());
+                }
+            }
+        }
+        return ret;
+    }
+
+    @Override
+    public int getArmorValue() {
+        if (this.large_unknown_detected != 0) {
+            return 25;
+        }
+        if (this.player_hit_count < 10
+                && this.getHealth() < (float) (this.mygetMaxHealth() * 2 / 3)) {
+            return ChaosPersists.TheKing_stats.defense + 1;
+        }
+        if (this.player_hit_count < 10 && this.getHealth() < (float) (this.mygetMaxHealth() / 2)) {
+            return ChaosPersists.TheKing_stats.defense + 2;
+        }
+        if (this.player_hit_count < 10 && this.getHealth() < (float) (this.mygetMaxHealth() / 4)) {
+            return ChaosPersists.TheKing_stats.defense + 3;
+        }
+        return ChaosPersists.TheKing_stats.defense;
+    }
+
+    public boolean MyCanSee(LivingEntity e) {
+        double xzoff = 22.0;
+        int nblks = 20;
+        double cx = this.getX() - xzoff * Math.sin(Math.toRadians(this.getYRot()));
+        double cz = this.getZ() + xzoff * Math.cos(Math.toRadians(this.getYRot()));
+        float startx = (float) cx;
+        float starty = (float) (this.getY() + (double) (this.getBbHeight() * 7.0f / 8.0f));
+        float startz = (float) cz;
+        float dx = (float) ((e.getX() - (double) startx) / 20.0);
+        float dy = (float) ((e.getY() + (double) (e.getBbHeight() / 2.0f) - (double) starty) / 20.0);
+        float dz = (float) ((e.getZ() - (double) startz) / 20.0);
+        if (Math.abs(dx) > 1.0) {
+            dy /= Math.abs(dx);
+            dz /= Math.abs(dx);
+            nblks = (int) ((double) nblks * Math.abs(dx));
+            if (dx > 1.0f) {
+                dx = 1.0f;
+            }
+            if (dx < -1.0f) {
+                dx = -1.0f;
+            }
+        }
+        if (Math.abs(dy) > 1.0) {
+            dx /= Math.abs(dy);
+            dz /= Math.abs(dy);
+            nblks = (int) ((double) nblks * Math.abs(dy));
+            if (dy > 1.0f) {
+                dy = 1.0f;
+            }
+            if (dy < -1.0f) {
+                dy = -1.0f;
+            }
+        }
+        if (Math.abs(dz) > 1.0) {
+            dy /= Math.abs(dz);
+            dx /= Math.abs(dz);
+            nblks = (int) ((double) nblks * Math.abs(dz));
+            if (dz > 1.0f) {
+                dz = 1.0f;
+            }
+            if (dz < -1.0f) {
+                dz = -1.0f;
+            }
+        }
+        for (int i = 0; i < nblks; i++) {
+            startx += dx;
+            starty += dy;
+            startz += dz;
+            BlockState bstate =
+                    this.level()
+                            .getBlockState(new BlockPos((int) startx, (int) starty, (int) startz));
+            if (!bstate.isAir()
+                    && !bstate.is(Blocks.WATER)
+                    && !bstate.is(Blocks.KELP)
+                    && !bstate.is(Blocks.KELP_PLANT)
+                    && !bstate.is(Blocks.VINE)
+                    && !bstate.is(net.minecraft.tags.BlockTags.LEAVES)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isSuitableTarget(LivingEntity par1EntityLiving, boolean par2) {
+        if (par1EntityLiving == null) {
+            return false;
+        }
+        if (par1EntityLiving == this) {
+            return false;
+        }
+        if (!par1EntityLiving.isAlive()) {
+            return false;
+        }
+        if (par1EntityLiving instanceof KingHead) {
+            this.head_found = 1;
+            return false;
+        }
+        if (MyUtils.isRoyalty(par1EntityLiving)) {
+            return false;
+        }
+        float d1 = (float) (par1EntityLiving.getX() - (double) this.homex);
+        float d2 = (float) (par1EntityLiving.getZ() - (double) this.homez);
+        d1 = (float) Math.sqrt(d1 * d1 + d2 * d2);
+        if (d1 > 144.0f) {
+            return false;
+        }
+        if (MyUtils.isIgnoreable(par1EntityLiving)) {
+            return false;
+        }
+        if (this.isEnd == 2) {
+            if (par1EntityLiving instanceof Player player) {
+                return !player.getAbilities().instabuild;
+            }
+            if (par1EntityLiving instanceof Girlfriend
+                    || "Girlfriend".equals(par1EntityLiving.getClass().getSimpleName())) {
+                return true;
+            }
+            if (par1EntityLiving instanceof Boyfriend
+                    || "Boyfriend".equals(par1EntityLiving.getClass().getSimpleName())) {
+                return true;
+            }
+            if (par1EntityLiving instanceof Villager) {
+                return true;
+            }
+        }
+        if (!this.MyCanSee(par1EntityLiving)) {
+            return false;
+        }
+        if (par1EntityLiving instanceof Player player) {
+            return !player.getAbilities().instabuild;
+        }
+        if (par1EntityLiving instanceof Horse) {
+            return true;
+        }
+        if (par1EntityLiving instanceof Monster) {
+            return true;
+        }
+        if (par1EntityLiving instanceof EnderDragon) {
+            return true;
+        }
+        return MyUtils.isAttackableNonMob(par1EntityLiving);
+    }
+
+    private LivingEntity findSomethingToAttack() {
+        if (ChaosPersists.PlayNicely != 0) {
+            this.head_found = 1;
+            return null;
+        }
+        if (this.isEnd == 2) {
+            List<Player> var5p =
+                    this.level()
+                            .getEntitiesOfClass(
+                                    Player.class, this.getBoundingBox().inflate(80.0, 64.0, 80.0));
+            Collections.sort(var5p, this.targetSorter);
+            for (LivingEntity var4p : var5p) {
+                if (this.isSuitableTarget(var4p, false)) {
+                    return var4p;
+                }
+            }
+        }
+        List<LivingEntity> var5 =
+                this.level()
+                        .getEntitiesOfClass(
+                                LivingEntity.class, this.getBoundingBox().inflate(80.0, 64.0, 80.0));
+        Collections.sort(var5, this.targetSorter);
+        LivingEntity ret = null;
+        this.head_found = 0;
+        for (LivingEntity var4 : var5) {
+            if (this.isSuitableTarget(var4, false)) {
+                if (ret == null) {
+                    ret = var4;
+                }
+            }
+            if (ret != null && this.head_found != 0) {
+                continue;
+            }
+        }
+        return ret;
+    }
+
+    public void setGuardMode(int i) {
+        this.guard_mode = i;
+    }
+
+    public void setFree() {
+        this.isEnd = 1;
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("KingHomeX", this.homex);
+        tag.putInt("KingHomeZ", this.homez);
+        tag.putInt("GuardMode", this.guard_mode);
+        tag.putInt("PlayerHits", this.player_hit_count);
+        tag.putInt("IsEnd", this.isEnd);
+        tag.putInt("EndCounter", this.endCounter);
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.homex = tag.getInt("KingHomeX");
+        this.homez = tag.getInt("KingHomeZ");
+        this.guard_mode = tag.getInt("GuardMode");
+        this.player_hit_count = tag.getInt("PlayerHits");
+        this.isEnd = tag.getInt("IsEnd");
+        this.endCounter = tag.getInt("EndCounter");
+    }
+
+    public static Entity spawnCreature(Level level, String par1, double par2, double par4, double par6) {
+        ResourceLocation res = resolveSpawnId(par1);
+        EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(res);
+        if (type == null || !(level instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        Entity entity = type.create(serverLevel);
+        if (entity == null) {
+            return null;
+        }
+        entity.moveTo(par2, par4, par6, level.getRandom().nextFloat() * 360.0f, 0.0f);
+        serverLevel.addFreshEntity(entity);
+        return entity;
+    }
+
+    private static ResourceLocation resolveSpawnId(String par1) {
+        if (par1.contains(":")) {
+            return ResourceLocation.parse(par1);
+        }
+        return switch (par1) {
+            case "KingHead" -> ResourceLocation.fromNamespaceAndPath("chaospersists", "king_head");
+            case "PurplePower" -> ResourceLocation.fromNamespaceAndPath("chaospersists", "purple_power");
+            case "The Prince" -> ResourceLocation.fromNamespaceAndPath("chaospersists", "the_prince");
+            default ->
+                    ResourceLocation.fromNamespaceAndPath(
+                            "chaospersists", par1.toLowerCase(Locale.ROOT).replace(' ', '_'));
+        };
+    }
+
+    private static void invokePurpleType(Entity entity, int type) {
+        try {
+            Method m = entity.getClass().getMethod("setPurpleType", int.class);
+            m.invoke(entity, type);
+        } catch (ReflectiveOperationException ignored) {
+        }
+    }
+
+    private static boolean isGodzilla(Entity e) {
+        return "Godzilla".equals(e.getClass().getSimpleName());
+    }
+
+    private static boolean isGodzillaHead(Entity e) {
+        return "GodzillaHead".equals(e.getClass().getSimpleName());
+    }
+
+    private LivingEntity doJumpDamage(double X, double Y, double Z, double dist, double damage, int knock) {
+        AABB bb = new AABB(X - dist, Y - 10.0, Z - dist, X + dist, Y + 10.0, Z + dist);
+        List<LivingEntity> var5 = this.level().getEntitiesOfClass(LivingEntity.class, bb);
+        Collections.sort(var5, this.targetSorter);
+        for (LivingEntity var4 : var5) {
+            if (var4 == null
+                    || var4 == this
+                    || !var4.isAlive()
+                    || MyUtils.isRoyalty(var4)
+                    || var4 instanceof Ghost
+                    || var4 instanceof GhostSkelly) {
+                continue;
+            }
+            var4.hurt(this.damageSources().explosion(null), (float) damage / 2.0f);
+            var4.hurt(this.damageSources().fall(), (float) damage / 2.0f);
+            this.level()
+                    .playSound(
+                            null,
+                            var4.getX(),
+                            var4.getY(),
+                            var4.getZ(),
+                            SoundEvents.GENERIC_EXPLODE,
+                            this.getSoundSource(),
+                            0.65f,
+                            1.0f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 0.5f);
+            if (knock != 0) {
+                double ks = 2.75;
+                double inair = 0.65;
+                float f3 = (float) Math.atan2(var4.getZ() - this.getZ(), var4.getX() - this.getX());
+                var4.push(Math.cos(f3) * ks, inair, Math.sin(f3) * ks);
+            }
+        }
+        return null;
+    }
 }

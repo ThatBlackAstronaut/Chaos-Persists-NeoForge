@@ -1,179 +1,184 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.EntityMosquito
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.passive.EntityAmbientCreature
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.init.Blocks
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.ChunkCoordinates
- *  net.minecraft.util.MathHelper
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.passive.EntityAmbientCreature;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.core.ChaosSounds;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ambient.AmbientCreature;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
-public class EntityMosquito
-extends EntityAmbientCreature {
+public class EntityMosquito extends AmbientCreature {
     private BlockPos currentFlightTarget = null;
 
-    public EntityMosquito(World par1World) {
-        super(par1World);
-        this.setSize(0.2f, 0.2f);
-                this.experienceValue = 5;
+    public EntityMosquito(EntityType<? extends EntityMosquito> type, Level level) {
+        super(type, level);
+        this.xpReward = 5;
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.10000000149011612);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(0.0);
+    public static AttributeSupplier.Builder createAttributes() {
+        return AmbientCreature.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 2.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.10000000149011612)
+                .add(Attributes.ATTACK_DAMAGE, 0.0);
     }
 
-    protected void entityInit() {
-        super.entityInit();
-    }
-
-    protected boolean canDespawn() {
-        if (this.isNoDespawnRequired()) {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        if (this.isPersistenceRequired()) {
             return false;
         }
         return true;
     }
 
+    @Override
     protected float getSoundVolume() {
         return 0.4f;
     }
 
-    protected float getSoundPitch() {
+    @Override
+    public float getVoicePitch() {
         return 1.5f;
     }
 
-    protected net.minecraft.util.SoundEvent getAmbientSound() {
-        return com.astryxion.chaospersists.core.ChaosSounds.MOSQUITO;
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return ChaosSounds.MOSQUITO;
     }
 
-    protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource damageSource) {
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return null;
     }
 
-    protected net.minecraft.util.SoundEvent getDeathSound() {
+    @Override
+    protected SoundEvent getDeathSound() {
         return null;
     }
 
-    public boolean canBePushed() {
+    @Override
+    public boolean isPushable() {
         return false;
     }
 
-    protected void collideWithEntity(Entity par1Entity) {
+    @Override
+    public void push(Entity par1Entity) {
     }
 
-    protected void collideWithNearbyEntities() {
+    @Override
+    protected void pushEntities() {
     }
 
     public int mygetMaxHealth() {
         return 2;
     }
 
-    protected boolean isAIEnabled() {
-        return true;
+    @Override
+    public void tick() {
+        super.tick();
+        this.setDeltaMovement(this.getDeltaMovement().multiply(1.0, 0.6000000238418579, 1.0));
     }
 
-    public void onUpdate() {
-        super.onUpdate();
-        this.motionY *= 0.6000000238418579;
-    }
-
-    protected void updateAITasks() {
+    @Override
+    protected void customServerAiStep() {
         int keep_trying = 50;
-        if (this.isDead) {
+        if (this.isDeadOrDying()) {
             return;
         }
-        super.updateAITasks();
+        super.customServerAiStep();
         if (this.currentFlightTarget == null) {
-            this.currentFlightTarget = new BlockPos((int)this.posX, (int)this.posY, (int)this.posZ);
+            this.currentFlightTarget = BlockPos.containing(this.getX(), this.getY(), this.getZ());
         }
-        if (this.rand.nextInt(20) == 0 || this.currentFlightTarget.distanceSq(this.posX, this.posY, this.posZ) < 3.0f) {
-            EntityPlayer target = null;
+        if (this.getRandom().nextInt(20) == 0
+                || this.currentFlightTarget.distToCenterSqr(this.getX(), this.getY(), this.getZ()) < 3.0) {
+            Player target = null;
             if (ChaosPersists.ChaosRand.nextInt(4) == 0) {
-                target = (EntityPlayer)this.world.findNearestEntityWithinAABB(EntityPlayer.class, this.getEntityBoundingBox().expand(10.0, 6.0, 10.0), (Entity)this);
+                AABB search = this.getBoundingBox().inflate(10.0, 6.0, 10.0);
+                List<Player> players = this.level().getEntitiesOfClass(Player.class, search);
+                double best = Double.MAX_VALUE;
+                for (Player player : players) {
+                    double dist = this.distanceToSqr(player);
+                    if (dist < best) {
+                        best = dist;
+                        target = player;
+                    }
+                }
                 if (target != null) {
-                    this.currentFlightTarget = new BlockPos((int)target.posX, (int)target.posY + 2, (int)target.posZ);
+                    this.currentFlightTarget =
+                            new BlockPos((int) target.getX(), (int) target.getY() + 2, (int) target.getZ());
                 } else {
-                    Block bid = Blocks.STONE;
-                    while (bid != Blocks.AIR && keep_trying != 0) {
-                        this.currentFlightTarget = new BlockPos((int)this.posX + this.rand.nextInt(6) - this.rand.nextInt(6), (int)this.posY + this.rand.nextInt(6) - 2, (int)this.posZ + this.rand.nextInt(6) - this.rand.nextInt(6));
-                        bid = this.world.getBlockState(this.currentFlightTarget).getBlock();
+                    BlockState bid = Blocks.STONE.defaultBlockState();
+                    while (bid.getBlock() != Blocks.AIR && keep_trying != 0) {
+                        this.currentFlightTarget = new BlockPos(
+                                (int) this.getX() + this.getRandom().nextInt(6) - this.getRandom().nextInt(6),
+                                (int) this.getY() + this.getRandom().nextInt(6) - 2,
+                                (int) this.getZ() + this.getRandom().nextInt(6) - this.getRandom().nextInt(6));
+                        bid = this.level().getBlockState(this.currentFlightTarget);
                         --keep_trying;
                     }
                 }
             } else {
-                Block bid = Blocks.STONE;
-                while (bid != Blocks.AIR && keep_trying != 0) {
-                    this.currentFlightTarget = new BlockPos((int)this.posX + this.rand.nextInt(6) - this.rand.nextInt(6), (int)this.posY + this.rand.nextInt(6) - 2, (int)this.posZ + this.rand.nextInt(6) - this.rand.nextInt(6));
-                    bid = this.world.getBlockState(this.currentFlightTarget).getBlock();
+                BlockState bid = Blocks.STONE.defaultBlockState();
+                while (bid.getBlock() != Blocks.AIR && keep_trying != 0) {
+                    this.currentFlightTarget = new BlockPos(
+                            (int) this.getX() + this.getRandom().nextInt(6) - this.getRandom().nextInt(6),
+                            (int) this.getY() + this.getRandom().nextInt(6) - 2,
+                            (int) this.getZ() + this.getRandom().nextInt(6) - this.getRandom().nextInt(6));
+                    bid = this.level().getBlockState(this.currentFlightTarget);
                     --keep_trying;
                 }
             }
         }
-        double var1 = (double)this.currentFlightTarget.getX() + 0.5 - this.posX;
-        double var3 = (double)this.currentFlightTarget.getY() + 0.1 - this.posY;
-        double var5 = (double)this.currentFlightTarget.getZ() + 0.5 - this.posZ;
-        this.motionX += (Math.signum(var1) * 0.5 - this.motionX) * 0.10000000149011612;
-        this.motionY += (Math.signum(var3) * 0.699999988079071 - this.motionY) * 0.10000000149011612;
-        this.motionZ += (Math.signum(var5) * 0.5 - this.motionZ) * 0.10000000149011612;
-        float var7 = (float)(Math.atan2(this.motionZ, this.motionX) * 180.0 / 3.141592653589793) - 90.0f;
-        float var8 = MathHelper.wrapDegrees((float)(var7 - this.rotationYaw));
-        this.moveForward = 0.3f;
-        this.rotationYaw += var8;
+        double var1 = (double) this.currentFlightTarget.getX() + 0.5 - this.getX();
+        double var3 = (double) this.currentFlightTarget.getY() + 0.1 - this.getY();
+        double var5 = (double) this.currentFlightTarget.getZ() + 0.5 - this.getZ();
+        Vec3 motion = this.getDeltaMovement();
+        this.setDeltaMovement(
+                motion.add(
+                        (Math.signum(var1) * 0.5 - motion.x) * 0.10000000149011612,
+                        (Math.signum(var3) * 0.699999988079071 - motion.y) * 0.10000000149011612,
+                        (Math.signum(var5) * 0.5 - motion.z) * 0.10000000149011612));
+        motion = this.getDeltaMovement();
+        float var7 = (float) (Mth.atan2(motion.z, motion.x) * 180.0 / Math.PI) - 90.0f;
+        float var8 = Mth.wrapDegrees(var7 - this.getYRot());
+        this.setYRot(this.getYRot() + var8);
     }
 
-    protected boolean canTriggerWalking() {
+    @Override
+    public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {
         return false;
     }
 
-    public void fall(float distance, float damageMultiplier) {
+    @Override
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
+        this.fallDistance = 0.0f;
     }
 
-    protected void updateFallState(double y, boolean onGroundIn, net.minecraft.block.state.IBlockState state, net.minecraft.util.math.BlockPos pos) {
-        fallDistance = 0.0f;
-    }
-
-    public boolean doesEntityNotTriggerPressurePlate() {
+    public static boolean checkMosquitoSpawnRules(
+            EntityType<EntityMosquito> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            net.minecraft.util.RandomSource random) {
         return true;
     }
 
-    public boolean getCanSpawnHere() {
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
         return true;
-    }
-
-    public void initCreature() {
     }
 }
-

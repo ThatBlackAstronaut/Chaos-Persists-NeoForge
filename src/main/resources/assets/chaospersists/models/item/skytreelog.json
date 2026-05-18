@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "chaospersists:items/skytreelog"
+    "layer0": "chaospersists:block/skytreelog"
   }
 }

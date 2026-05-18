@@ -1,25 +1,16 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.ItemSalt
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.item.Item
- *  net.minecraft.util.IIcon
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.Item;
+import net.minecraft.world.item.Item;
 
-public class ItemSalt
-extends Item {
-    public ItemSalt(int i) {
-        this.setCreativeTab(CreativeTabs.MISC);
-    }}
+/** Simple material item; reused for many drops/ingredients in ChaosPersists. */
+public class ItemSalt extends Item {
 
+    public ItemSalt() {
+        super(new Properties());
+    }
+
+    /** Legacy hub offset constructor (unused). */
+    public ItemSalt(int ignored) {
+        this();
+    }
+}

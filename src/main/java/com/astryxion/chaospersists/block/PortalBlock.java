@@ -1,34 +1,28 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.PortalBlock
- *  net.minecraft.block.BlockPortal
- *  net.minecraft.entity.Entity
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.block;
 
-import java.util.Random;
-import net.minecraft.block.BlockPortal;
-import net.minecraft.entity.Entity;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.NetherPortalBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class PortalBlock
-extends BlockPortal {
+public class PortalBlock extends NetherPortalBlock {
+
     public PortalBlock(int i, int j) {
+        super(net.minecraft.world.level.block.Block.Properties.of());
     }
 
-    public void updateTick(World par1World, int par2, int par3, int par4, Random par5Random) {
-    }
+    @Override
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {}
 
-    public boolean tryToCreatePortal(World par1World, int par2, int par3, int par4) {
-        return false;
-    }
+    @Override
+    public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {}
 
-    public void onNeighborBlockChange(World par1World, int par2, int par3, int par4, int par5) {
-    }
-
-    public void onEntityCollidedWithBlock(World par1World, int par2, int par3, int par4, Entity entity) {
-    }
+    @Override
+    public void neighborChanged(
+            BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {}
 }

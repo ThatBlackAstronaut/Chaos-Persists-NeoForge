@@ -1,75 +1,38 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.GhostSkelly
- *  com.astryxion.chaospersists.RenderInfo
- *  net.minecraft.block.Block
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.passive.EntityAmbientCreature
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.init.Blocks
- *  net.minecraft.pathfinding.PathNavigate
- *  net.minecraft.tileentity.MobSpawnerBaseLogic
- *  net.minecraft.tileentity.TileEntity
- *  net.minecraft.tileentity.TileEntityMobSpawner
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.ChunkCoordinates
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.MathHelper
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
+import com.astryxion.chaospersists.util.MyUtils;
 
+import com.astryxion.chaospersists.core.ChaosSounds;
 import com.astryxion.chaospersists.render.RenderInfo;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.passive.EntityAmbientCreature;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.tileentity.MobSpawnerBaseLogic;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.util.SpawnerFixHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ambient.AmbientCreature;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
-public class GhostSkelly
-extends EntityAmbientCreature {
+public class GhostSkelly extends AmbientCreature {
     private BlockPos currentFlightTarget = null;
     private RenderInfo renderdata = new RenderInfo();
 
-    public GhostSkelly(World par1World) {
-        super(par1World);
-        this.setSize(1.5f, 2.0f);
-                this.experienceValue = 10;
-        this.noClip = true;
-    }
-
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)this.mygetMaxHealth());
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.10000000149011612);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(0.0);
-    }
-
-    protected void entityInit() {
-        super.entityInit();
+    public GhostSkelly(EntityType<? extends GhostSkelly> type, Level par1World) {
+        super(type, par1World);
+        this.xpReward = 10;
+        this.noPhysics = true;
         if (this.renderdata == null) {
             this.renderdata = new RenderInfo();
         }
@@ -81,6 +44,13 @@ extends EntityAmbientCreature {
         this.renderdata.ri2 = 0;
         this.renderdata.ri3 = 0;
         this.renderdata.ri4 = 0;
+    }
+
+    public static AttributeSupplier.Builder createAttributes() {
+        return AmbientCreature.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 5.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.10000000149011612)
+                .add(Attributes.ATTACK_DAMAGE, 0.0);
     }
 
     public RenderInfo getRenderInfo() {
@@ -98,145 +68,192 @@ extends EntityAmbientCreature {
         this.renderdata.ri4 = r.ri4;
     }
 
-    protected boolean canDespawn() {
-        if (this.isNoDespawnRequired()) {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        if (this.isPersistenceRequired()) {
             return false;
         }
         return true;
     }
 
+    @Override
     protected float getSoundVolume() {
         return 0.5f;
     }
 
-    protected float getSoundPitch() {
+    @Override
+    public float getVoicePitch() {
         return 1.5f;
     }
 
+    @Override
     protected SoundEvent getAmbientSound() {
-        if (this.world.rand.nextInt(2) == 0) {
-            return com.astryxion.chaospersists.core.ChaosSounds.CHAIN_RATTLES;
+        if (this.level().getRandom().nextInt(2) == 0) {
+            return ChaosSounds.CHAIN_RATTLES;
         }
         return null;
     }
 
+    @Override
     protected SoundEvent getHurtSound(DamageSource ds) {
         return null;
     }
 
+    @Override
     protected SoundEvent getDeathSound() {
         return null;
     }
 
-    public boolean canBePushed() {
+    @Override
+    public boolean isPushable() {
         return false;
     }
 
-    protected void collideWithEntity(Entity par1Entity) {
+    @Override
+    public void push(Entity par1Entity) {
     }
 
-    protected void collideWithNearbyEntities() {
+    @Override
+    protected void pushEntities() {
     }
 
     public int mygetMaxHealth() {
         return 5;
     }
 
-    protected boolean isAIEnabled() {
-        return true;
-    }
-
-    public void onUpdate() {
-        if (this.isNoDespawnRequired()) {
-            this.noClip = false;
+    @Override
+    public void tick() {
+        if (this.isPersistenceRequired()) {
+            this.noPhysics = false;
         }
-        super.onUpdate();
-        this.motionY *= 0.65;
+        super.tick();
+        this.setDeltaMovement(this.getDeltaMovement().multiply(1.0, 0.65, 1.0));
     }
 
-    protected void updateAITasks() {
-        Block bid = Blocks.AIR;
-        int i = 0;
-        int j = 0;
-        if (this.isDead) {
+    @Override
+    protected void customServerAiStep() {
+        if (this.isDeadOrDying()) {
             return;
         }
-        super.updateAITasks();
+        super.customServerAiStep();
+        int i = 0;
+        int j = 0;
         if (this.currentFlightTarget == null) {
-            this.currentFlightTarget = new BlockPos((int)this.posX, (int)this.posY, (int)this.posZ);
+            this.currentFlightTarget = BlockPos.containing(this.getX(), this.getY(), this.getZ());
         }
-        if (this.world.rand.nextInt(40) == 1 || this.currentFlightTarget.distanceSq(this.posX, this.posY, this.posZ) < 2.0) {
-            EntityPlayer target = null;
-            target = (EntityPlayer)this.world.findNearestEntityWithinAABB(EntityPlayer.class, this.getEntityBoundingBox().expand(16.0, 16.0, 16.0), (Entity)this);
+        if (this.level().getRandom().nextInt(40) == 1
+                || this.currentFlightTarget.distToCenterSqr(this.getX(), this.getY(), this.getZ()) < 2.0) {
+            Player target = this.level().getNearestPlayer(this.getX(), this.getY(), this.getZ(), 16.0, false);
             if (target != null) {
-                this.currentFlightTarget = new BlockPos((int)target.posX + this.rand.nextInt(3) - this.rand.nextInt(3), (int)(target.posY + 1.0), (int)target.posZ + this.rand.nextInt(3) - this.rand.nextInt(3));
+                this.currentFlightTarget = new BlockPos(
+                        (int) target.getX() + this.getRandom().nextInt(3) - this.getRandom().nextInt(3),
+                        (int) (target.getY() + 1.0),
+                        (int) target.getZ() + this.getRandom().nextInt(3) - this.getRandom().nextInt(3));
             } else {
-                for (i = 0; i < 3 && (bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)this.posY + i, (int)this.posZ)).getBlock()) != Blocks.AIR; ++i) {
+                BlockState bid;
+                for (i = 0;
+                        i < 3
+                                && (bid = this.level()
+                                                .getBlockState(
+                                                        BlockPos.containing(this.getX(), this.getY() + i, this.getZ())))
+                                        .getBlock()
+                                != Blocks.AIR;
+                        ++i) {
                 }
-                for (j = -1; j >= -3 && (bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)this.posY + j, (int)this.posZ)).getBlock()) == Blocks.AIR; --j) {
+                for (j = -1;
+                        j >= -3
+                                && (bid = this.level()
+                                                .getBlockState(
+                                                        BlockPos.containing(
+                                                                this.getX(), this.getY() + j, this.getZ())))
+                                        .getBlock()
+                                == Blocks.AIR;
+                        --j) {
                 }
-                this.currentFlightTarget = new BlockPos((int)this.posX + this.rand.nextInt(10) - this.rand.nextInt(10), (int)this.posY + i + j + this.rand.nextInt(4) + 1, (int)this.posZ + this.rand.nextInt(10) - this.rand.nextInt(10));
+                this.currentFlightTarget = new BlockPos(
+                        (int) this.getX() + this.getRandom().nextInt(10) - this.getRandom().nextInt(10),
+                        (int) this.getY() + i + j + this.getRandom().nextInt(4) + 1,
+                        (int) this.getZ() + this.getRandom().nextInt(10) - this.getRandom().nextInt(10));
             }
         }
-        double var1 = (double)this.currentFlightTarget.getX() + 0.5 - this.posX;
-        double var3 = (double)this.currentFlightTarget.getY() + 0.1 - this.posY;
-        double var5 = (double)this.currentFlightTarget.getZ() + 0.5 - this.posZ;
-        this.motionX += (Math.signum(var1) * 0.1 - this.motionX) * 0.05;
-        this.motionY += (Math.signum(var3) * 0.7 - this.motionY) * 0.1;
-        this.motionZ += (Math.signum(var5) * 0.1 - this.motionZ) * 0.05;
-        float var7 = (float)(Math.atan2(this.motionZ, this.motionX) * 180.0 / 3.141592653589793) - 90.0f;
-        float var8 = MathHelper.wrapDegrees(var7 - this.rotationYaw);
-        this.moveForward = 0.05f;
-        this.rotationYaw += var8 / 6.0f;
+        double var1 = (double) this.currentFlightTarget.getX() + 0.5 - this.getX();
+        double var3 = (double) this.currentFlightTarget.getY() + 0.1 - this.getY();
+        double var5 = (double) this.currentFlightTarget.getZ() + 0.5 - this.getZ();
+        Vec3 motion = this.getDeltaMovement();
+        this.setDeltaMovement(
+                motion.add((Math.signum(var1) * 0.1 - motion.x) * 0.05, (Math.signum(var3) * 0.7 - motion.y) * 0.1, (Math.signum(var5) * 0.1 - motion.z) * 0.05));
+        motion = this.getDeltaMovement();
+        float var7 = (float) (Mth.atan2(motion.z, motion.x) * 180.0 / Math.PI) - 90.0f;
+        float var8 = Mth.wrapDegrees(var7 - this.getYRot());
+        this.setYRot(this.getYRot() + var8 / 6.0f);
     }
 
-    protected boolean canTriggerWalking() {
+    @Override
+    public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {
         return false;
     }
 
-    public void fall(float distance, float damageMultiplier) {
+    @Override
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
+        this.fallDistance = 0.0f;
     }
 
-    protected void updateFallState(double y, boolean onGroundIn, net.minecraft.block.state.IBlockState state, net.minecraft.util.math.BlockPos pos) {
-        fallDistance = 0.0f;
+    @Override
+    public boolean canBeCollidedWith() {
+        return false;
     }
 
-    public boolean doesEntityNotTriggerPressurePlate() {
-        return true;
+    private static boolean isDaytime(LevelAccessor level) {
+        if (level instanceof Level world) {
+            return world.isDay();
+        }
+        return false;
     }
 
-    public boolean getCanSpawnHere() {
+    public static boolean checkGhostSkellySpawnRules(
+            EntityType<GhostSkelly> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        if (!isDaytime(level)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
         for (int k = -2; k < 2; ++k) {
             for (int j = -2; j < 2; ++j) {
                 for (int i = 0; i < 5; ++i) {
-                    Block bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k)).getBlock();
-                    if (bid != Blocks.MOB_SPAWNER) continue;
-                    TileEntityMobSpawner tileentitymobspawner = null;
-                    tileentitymobspawner = (TileEntityMobSpawner)this.world.getTileEntity(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k));
-                                        String s = null;
-                    net.minecraft.util.ResourceLocation id = com.astryxion.chaospersists.util.SpawnerFixHelper.getMobSpawnerEntityId(tileentitymobspawner.getSpawnerBaseLogic());
-                    if (id != null) s = id.getPath();
-                    if (s == null || !s.equals("Ghost Pumpkin Skelly")) continue;
-                    return true;
+                    checkPos.set((int) this.getX() + j, (int) this.getY() + i, (int) this.getZ() + k);
+                    BlockState state = MyUtils.getBlockStateForSpawnRules(level, checkPos);
+                    if (state.getBlock() != Blocks.SPAWNER) {
+                        continue;
+                    }
+                    if (!(MyUtils.getBlockEntityForSpawnRules(level, checkPos) instanceof SpawnerBlockEntity spawner)) {
+                        continue;
+                    }
+                    ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityIdFromBlockEntity(spawner);
+                    if (id != null && "Ghost Pumpkin Skelly".equals(id.getPath())) {
+                        return true;
+                    }
                 }
             }
         }
-        if (this.world.isDaytime()) {
+        if (isDaytime(level)) {
             return false;
         }
         return true;
     }
 
-    public void initCreature() {
-    }
-
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-        boolean ret = false;
-        if (par1DamageSource.getDamageType().equals("inWall")) {
-            return ret;
+    @Override
+    public boolean hurt(DamageSource par1DamageSource, float par2) {
+        if (par1DamageSource.is(DamageTypes.IN_WALL)) {
+            return false;
         }
-        ret = super.attackEntityFrom(par1DamageSource, par2);
-        return ret;
+        return super.hurt(par1DamageSource, par2);
     }
 }
-

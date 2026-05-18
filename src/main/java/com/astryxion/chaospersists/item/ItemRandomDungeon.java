@@ -1,61 +1,68 @@
 package com.astryxion.chaospersists.item;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
-import net.minecraft.block.Block;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Enchantments;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
 import java.util.Random;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class ItemRandomDungeon extends Item {
 
     Random rand = ChaosPersists.ChaosRand;
 
     public ItemRandomDungeon(int i) {
-        this.setMaxStackSize(1);
-        this.setCreativeTab(CreativeTabs.REDSTONE);
+        super(new Properties().stacksTo(1));
+    }
+
+    private static Block modBlock(Object block) {
+        return (Block) block;
     }
 
     @Override
-    public void onCreated(ItemStack stack, World world, EntityPlayer player) {
-        stack.addEnchantment(Enchantments.FORTUNE, 2);
+    public void onCraftedBy(ItemStack stack, Level world, Player player) {
+        stack.enchant(Enchantments.BLOCK_FORTUNE, 2);
     }
 
     @Override
-    public void onUpdate(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        int lvl = EnchantmentHelper.getEnchantmentLevel(Enchantments.FORTUNE, stack);
+    public void inventoryTick(ItemStack stack, Level world, net.minecraft.world.entity.Entity entity, int slot, boolean selected) {
+        int lvl = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLOCK_FORTUNE, stack);
         if (lvl <= 0) {
-            stack.addEnchantment(Enchantments.FORTUNE, 2);
+            stack.enchant(Enchantments.BLOCK_FORTUNE, 2);
         }
     }
 
     @Override
-    public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-        ItemStack stack = player.getHeldItem(hand);
+    public InteractionResult useOn(UseOnContext context) {
+        Player player = context.getPlayer();
+        Level world = context.getLevel();
+        if (player == null) {
+            return InteractionResult.FAIL;
+        }
+        ItemStack stack = context.getItemInHand();
+        BlockPos pos = context.getClickedPos();
         Block clicked = world.getBlockState(pos).getBlock();
-        if (clicked != Blocks.STONE && clicked != Blocks.COBBLESTONE && clicked != Blocks.GRASS && clicked != Blocks.DIRT) {
-            return EnumActionResult.FAIL;
+        if (clicked != Blocks.STONE && clicked != Blocks.COBBLESTONE && clicked != Blocks.GRASS_BLOCK && clicked != Blocks.DIRT) {
+            return InteractionResult.FAIL;
         }
         if (pos.getY() < 40) {
-            return EnumActionResult.FAIL;
+            return InteractionResult.FAIL;
         }
-        if (!world.isRemote) {
-            world.setBlockState(pos.up(), ChaosPersists.MyDungeonSpawnerBlock.getDefaultState(), 2);
+        if (!world.isClientSide()) {
+            BlockState spawner = modBlock(ChaosPersists.MyDungeonSpawnerBlock).defaultBlockState();
+            world.setBlock(pos.above(), spawner, 2);
         }
-        if (!player.capabilities.isCreativeMode) {
+        if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
-        return EnumActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 }

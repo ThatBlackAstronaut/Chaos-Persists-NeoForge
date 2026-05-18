@@ -1,185 +1,143 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.Boyfriend
- *  com.astryxion.chaospersists.Girlfriend
- *  com.astryxion.chaospersists.ChaosPersists
- *  com.astryxion.chaospersists.UltimateSword
- *  com.astryxion.chaospersists.WeaponStats
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockLeaves
- *  net.minecraft.block.BlockTallGrass
- *  net.minecraft.block.material.Material
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.enchantment.Enchantment
- *  net.minecraft.enchantment.EnchantmentHelper
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.passive.EntityTameable
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.init.Blocks
- *  net.minecraft.item.Item
- *  net.minecraft.item.Item$ToolMaterial
- *  net.minecraft.item.ItemStack
- *  net.minecraft.item.ItemSword
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
 import com.astryxion.chaospersists.entity.Boyfriend;
 import com.astryxion.chaospersists.entity.Girlfriend;
-import com.astryxion.chaospersists.core.ChaosPersists;
-import com.astryxion.chaospersists.util.WeaponStats;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockLeaves;
-import net.minecraft.block.BlockTallGrass;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.block.material.Material;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.passive.EntityTameable;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.DamageSource;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 
-public class UltimateSword
-extends ItemSword {
+public class UltimateSword extends SwordItem {
     private int swingtimer = 0;
     private boolean leaf = false;
 
-    public UltimateSword(Item.ToolMaterial par2EnumToolMaterial) {
-        super(par2EnumToolMaterial);
-        this.maxStackSize = 1;
-        this.setMaxDamage(3000);
-        this.setCreativeTab(CreativeTabs.COMBAT);
-    }
-
-    public void onCreated(ItemStack par1ItemStack, World par2World, EntityPlayer par3EntityPlayer) {
-        if (this == ChaosPersists.MyChainsaw) {
-            return;
-        }
-        if (this != ChaosPersists.MyBattleAxe) {
-            par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(16), ChaosPersists.UltimateSwordMagic);
-            par1ItemStack.addEnchantment(net.minecraft.init.Enchantments.SMITE, ChaosPersists.UltimateSwordMagic);
-            par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(18), ChaosPersists.UltimateSwordMagic);
-            par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(19), 1 + ChaosPersists.UltimateSwordMagic / 2);
-            par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(21), 1 + ChaosPersists.UltimateSwordMagic / 2);
-            par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(34), 1 + ChaosPersists.UltimateSwordMagic / 2);
-            par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(20), 1 + ChaosPersists.UltimateSwordMagic / 3);
-        } else {
-            par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(21), 1 + ChaosPersists.UltimateSwordMagic / 2);
-            par1ItemStack.addEnchantment(Enchantment.getEnchantmentByID(34), 1 + ChaosPersists.UltimateSwordMagic / 2);
-        }
-    }
-
-    public boolean onEntitySwing(EntityLivingBase entityLiving, ItemStack stack) {
-        if (this == ChaosPersists.MyChainsaw && entityLiving != null && this.swingtimer == 0) {
-            entityLiving.playSound(com.astryxion.chaospersists.core.ChaosSounds.CHAINSAWSHORT, 1.0f, entityLiving.world.rand.nextFloat() * 0.2f + 0.9f);
-            this.swingtimer = 50;
-        }
-        return false;
+    public UltimateSword(Tier tier) {
+        super(tier, 3, -2.4f, new Properties().stacksTo(1).durability(3000));
     }
 
     @Override
-    public void onUsingTick(ItemStack stack, EntityLivingBase player, int count) {
-        if (this == ChaosPersists.MyChainsaw) {
-            return;
-        }
-        int lvl = EnchantmentHelper.getEnchantmentLevel(Enchantment.getEnchantmentByID(21), (ItemStack)stack);
-        if (lvl <= 0) {
-            if (this != ChaosPersists.MyBattleAxe) {
-                stack.addEnchantment(Enchantment.getEnchantmentByID(16), ChaosPersists.UltimateSwordMagic);
-                stack.addEnchantment(net.minecraft.init.Enchantments.SMITE, ChaosPersists.UltimateSwordMagic);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(18), ChaosPersists.UltimateSwordMagic);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(19), 1 + ChaosPersists.UltimateSwordMagic / 2);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(21), 1 + ChaosPersists.UltimateSwordMagic / 2);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(34), 1 + ChaosPersists.UltimateSwordMagic / 2);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(20), 1 + ChaosPersists.UltimateSwordMagic / 3);
-            } else {
-                stack.addEnchantment(Enchantment.getEnchantmentByID(21), 1 + ChaosPersists.UltimateSwordMagic / 2);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(34), 1 + ChaosPersists.UltimateSwordMagic / 2);
-            }
-        }
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
+        ensureEnchantments(stack);
     }
 
-    public void onUpdate(ItemStack stack, World par2World, Entity par3Entity, int par4, boolean par5) {
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         if (this == ChaosPersists.MyChainsaw) {
             if (this.swingtimer > 0) {
                 --this.swingtimer;
             }
-            if (par2World.isRemote && this.swingtimer > 0) {
+            if (level.isClientSide && this.swingtimer > 0) {
                 float f = 1.0f;
-                float dx = (float)((double)f * Math.cos(Math.toRadians(par3Entity.rotationYaw + 90.0f + 45.0f)));
-                float dz = (float)((double)f * Math.sin(Math.toRadians(par3Entity.rotationYaw + 90.0f + 45.0f)));
-                if (par2World.rand.nextInt(8) == 0) {
-                    par2World.spawnParticle(net.minecraft.util.EnumParticleTypes.FLAME, par3Entity.posX + (double)dx, par3Entity.posY, par3Entity.posZ + (double)dz, (double)((par2World.rand.nextFloat() - par2World.rand.nextFloat()) / 20.0f), (double)(par2World.rand.nextFloat() / 10.0f), (double)((par2World.rand.nextFloat() - par2World.rand.nextFloat()) / 20.0f));
+                float dx = (float) (f * Math.cos(Math.toRadians(entity.getYRot() + 90.0f + 45.0f)));
+                float dz = (float) (f * Math.sin(Math.toRadians(entity.getYRot() + 90.0f + 45.0f)));
+                if (level.getRandom().nextInt(8) == 0) {
+                    level.addParticle(
+                            ParticleTypes.FLAME,
+                            entity.getX() + dx,
+                            entity.getY(),
+                            entity.getZ() + dz,
+                            (level.getRandom().nextFloat() - level.getRandom().nextFloat()) / 20.0f,
+                            level.getRandom().nextFloat() / 10.0f,
+                            (level.getRandom().nextFloat() - level.getRandom().nextFloat()) / 20.0f);
                 }
-                if (par2World.rand.nextInt(2) == 0) {
-                    par2World.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, par3Entity.posX + (double)dx, par3Entity.posY, par3Entity.posZ + (double)dz, (double)((par2World.rand.nextFloat() - par2World.rand.nextFloat()) / 20.0f), (double)(par2World.rand.nextFloat() / 10.0f), (double)((par2World.rand.nextFloat() - par2World.rand.nextFloat()) / 20.0f));
+                if (level.getRandom().nextInt(2) == 0) {
+                    level.addParticle(
+                            ParticleTypes.SMOKE,
+                            entity.getX() + dx,
+                            entity.getY(),
+                            entity.getZ() + dz,
+                            (level.getRandom().nextFloat() - level.getRandom().nextFloat()) / 20.0f,
+                            level.getRandom().nextFloat() / 10.0f,
+                            (level.getRandom().nextFloat() - level.getRandom().nextFloat()) / 20.0f);
                 }
-                if (par2World.rand.nextInt(10) == 0) {
-                    par2World.spawnParticle(net.minecraft.util.EnumParticleTypes.FIREWORKS_SPARK, par3Entity.posX + (double)dx, par3Entity.posY, par3Entity.posZ + (double)dz, (double)((par2World.rand.nextFloat() - par2World.rand.nextFloat()) / 20.0f), (double)(par2World.rand.nextFloat() / 5.0f), (double)((par2World.rand.nextFloat() - par2World.rand.nextFloat()) / 20.0f));
+                if (level.getRandom().nextInt(10) == 0) {
+                    level.addParticle(
+                            ParticleTypes.FIREWORK,
+                            entity.getX() + dx,
+                            entity.getY(),
+                            entity.getZ() + dz,
+                            (level.getRandom().nextFloat() - level.getRandom().nextFloat()) / 20.0f,
+                            level.getRandom().nextFloat() / 5.0f,
+                            (level.getRandom().nextFloat() - level.getRandom().nextFloat()) / 20.0f);
                 }
             }
             return;
         }
-        int lvl = EnchantmentHelper.getEnchantmentLevel(Enchantment.getEnchantmentByID(21), (ItemStack)stack);
+        ensureEnchantments(stack);
+    }
+
+    private void ensureEnchantments(ItemStack stack) {
+        if (this == ChaosPersists.MyChainsaw) {
+            return;
+        }
+        int lvl = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.MOB_LOOTING, stack);
         if (lvl <= 0) {
+            int m = ChaosPersists.UltimateSwordMagic;
             if (this != ChaosPersists.MyBattleAxe) {
-                stack.addEnchantment(Enchantment.getEnchantmentByID(16), ChaosPersists.UltimateSwordMagic);
-                stack.addEnchantment(net.minecraft.init.Enchantments.SMITE, ChaosPersists.UltimateSwordMagic);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(18), ChaosPersists.UltimateSwordMagic);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(19), 1 + ChaosPersists.UltimateSwordMagic / 2);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(21), 1 + ChaosPersists.UltimateSwordMagic / 2);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(34), 1 + ChaosPersists.UltimateSwordMagic / 2);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(20), 1 + ChaosPersists.UltimateSwordMagic / 3);
+                stack.enchant(Enchantments.SHARPNESS, m);
+                stack.enchant(Enchantments.SMITE, m);
+                stack.enchant(Enchantments.BANE_OF_ARTHROPODS, m);
+                stack.enchant(Enchantments.KNOCKBACK, 1 + m / 2);
+                stack.enchant(Enchantments.MOB_LOOTING, 1 + m / 2);
+                stack.enchant(Enchantments.UNBREAKING, 1 + m / 2);
+                stack.enchant(Enchantments.FIRE_ASPECT, 1 + m / 3);
             } else {
-                stack.addEnchantment(Enchantment.getEnchantmentByID(21), 1 + ChaosPersists.UltimateSwordMagic / 2);
-                stack.addEnchantment(Enchantment.getEnchantmentByID(34), 1 + ChaosPersists.UltimateSwordMagic / 2);
+                stack.enchant(Enchantments.MOB_LOOTING, 1 + m / 2);
+                stack.enchant(Enchantments.UNBREAKING, 1 + m / 2);
             }
         }
+    }
+
+    @Override
+    public boolean onEntitySwing(ItemStack stack, LivingEntity entityLiving) {
+        if (this == ChaosPersists.MyChainsaw && entityLiving != null && this.swingtimer == 0) {
+            entityLiving.playSound(
+                    ChaosSounds.CHAINSAWSHORT,
+                    1.0f,
+                    entityLiving.getRandom().nextFloat() * 0.2f + 0.9f);
+            this.swingtimer = 50;
+        }
+        return false;
     }
 
     public String getMaterialName() {
         return "Uranium/Titanium";
     }
 
-    public boolean hitEntity(ItemStack par1ItemStack, EntityLiving par2EntityLiving, EntityLiving par3EntityLiving) {
-        par1ItemStack.damageItem(1, (EntityLivingBase)par3EntityLiving);
+    @Override
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        stack.hurtAndBreak(1, attacker, e -> e.broadcastBreakEvent(EquipmentSlot.MAINHAND));
         return true;
     }
 
-    public boolean onLeftClickEntity(ItemStack stack, EntityPlayer player, Entity entity) {
+    @Override
+    public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
         if (entity != null && ChaosPersists.ultimate_sword_pvp == 0) {
-            EntityTameable t;
-            if (entity instanceof EntityPlayer || entity instanceof Girlfriend || entity instanceof Boyfriend) {
-                return true;
-            }
-            if (entity instanceof EntityTameable && (t = (EntityTameable)entity).isTamed()) {
+            if (entity instanceof Player
+                    || entity instanceof Girlfriend
+                    || entity instanceof Boyfriend
+                    || (entity instanceof TamableAnimal t && t.isTame())) {
                 return true;
             }
         }
@@ -189,62 +147,68 @@ extends ItemSword {
         return false;
     }
 
-    public int getMaxItemUseDuration(ItemStack par1ItemStack) {
+    @Override
+    public int getUseDuration(ItemStack stack) {
         return 9000;
     }
 
-    private void findSomethingToHit(EntityPlayer player) {
-        List var5 = player.world.getEntitiesWithinAABB(EntityLivingBase.class, player.getEntityBoundingBox().expand(5.0, 5.0, 5.0));
-        Iterator var2 = var5.iterator();
-        Entity var3 = null;
-        EntityLivingBase var4 = null;
+    private void findSomethingToHit(Player player) {
+        List<LivingEntity> candidates =
+                player.level()
+                        .getEntitiesOfClass(
+                                LivingEntity.class, player.getBoundingBox().inflate(5.0, 5.0, 5.0));
+        Iterator<LivingEntity> var2 = candidates.iterator();
         while (var2.hasNext()) {
-            var3 = (Entity)var2.next();
-            var4 = (EntityLivingBase)var3;
-            if (!this.isSuitableTarget(var4, false, player)) continue;
-            var4.attackEntityFrom(DamageSource.causePlayerDamage((EntityPlayer)player), (float)ChaosPersists.chainsaw_stats.damage);
+            LivingEntity var4 = var2.next();
+            if (!this.isSuitableTarget(var4, player)) {
+                continue;
+            }
+            var4.hurt(
+                    player.damageSources().playerAttack(player),
+                    (float) ChaosPersists.chainsaw_stats.damage);
         }
     }
 
-    private boolean isSuitableTarget(EntityLivingBase par1EntityLiving, boolean par2, EntityPlayer player) {
+    private boolean isSuitableTarget(LivingEntity par1EntityLiving, Player player) {
         if (par1EntityLiving == null) {
             return false;
         }
         if (par1EntityLiving == player) {
             return false;
         }
-        if (!par1EntityLiving.isEntityAlive()) {
+        if (!par1EntityLiving.isAlive()) {
             return false;
         }
         if (ChaosPersists.ultimate_sword_pvp == 0) {
-            EntityTameable t;
-            if (par1EntityLiving instanceof EntityPlayer || par1EntityLiving instanceof Girlfriend || par1EntityLiving instanceof Boyfriend) {
+            if (par1EntityLiving instanceof Player
+                    || par1EntityLiving instanceof Girlfriend
+                    || par1EntityLiving instanceof Boyfriend) {
                 return false;
             }
-            if (par1EntityLiving instanceof EntityTameable && (t = (EntityTameable)par1EntityLiving).isTamed()) {
+            if (par1EntityLiving instanceof TamableAnimal t && t.isTame()) {
                 return false;
             }
         }
-        if (!this.MyCanSee(par1EntityLiving, player)) {
+        if (!this.myCanSee(par1EntityLiving, player)) {
             return false;
         }
         return true;
     }
 
-    public boolean MyCanSee(EntityLivingBase e, EntityPlayer player) {
+    public boolean myCanSee(LivingEntity e, Player player) {
         int nblks = 10;
-        double cx = player.posX;
-        double cz = player.posZ;
-        float startx = (float)cx;
-        float starty = (float)(player.posY + 1.399999976158142);
-        float startz = (float)cz;
-        float dx = (float)((e.posX - (double)startx) / 10.0);
-        float dy = (float)((e.posY + (double)(e.height / 2.0f) - (double)starty) / 10.0);
-        float dz = (float)((e.posZ - (double)startz) / 10.0);
-        if ((double)Math.abs(dx) > 1.0) {
+        double cx = player.getX();
+        double cz = player.getZ();
+        float startx = (float) cx;
+        float starty = (float) (player.getY() + 1.399999976158142);
+        float startz = (float) cz;
+        float dx = (float) ((e.getX() - (double) startx) / 10.0);
+        float dy = (float) ((e.getY() + (double) (e.getBbHeight() / 2.0f) - (double) starty) / 10.0);
+        float dz = (float) ((e.getZ() - (double) startz) / 10.0);
+        if ((double) Math.abs(dx) > 1.0) {
             dy /= Math.abs(dx);
             dz /= Math.abs(dx);
-            nblks = (int)((float)nblks * Math.abs(dx));
+            nblks = (int) ((float) nblks * Math.abs(dx));
             if (dx > 1.0f) {
                 dx = 1.0f;
             }
@@ -252,10 +216,10 @@ extends ItemSword {
                 dx = -1.0f;
             }
         }
-        if ((double)Math.abs(dy) > 1.0) {
+        if ((double) Math.abs(dy) > 1.0) {
             dx /= Math.abs(dy);
             dz /= Math.abs(dy);
-            nblks = (int)((float)nblks * Math.abs(dy));
+            nblks = (int) ((float) nblks * Math.abs(dy));
             if (dy > 1.0f) {
                 dy = 1.0f;
             }
@@ -263,10 +227,10 @@ extends ItemSword {
                 dy = -1.0f;
             }
         }
-        if ((double)Math.abs(dz) > 1.0) {
+        if ((double) Math.abs(dz) > 1.0) {
             dy /= Math.abs(dz);
             dx /= Math.abs(dz);
-            nblks = (int)((float)nblks * Math.abs(dz));
+            nblks = (int) ((float) nblks * Math.abs(dz));
             if (dz > 1.0f) {
                 dz = 1.0f;
             }
@@ -274,43 +238,55 @@ extends ItemSword {
                 dz = -1.0f;
             }
         }
+        Level level = player.level();
         for (int i = 0; i < nblks; ++i) {
-            Block bid = player.world.getBlockState(new net.minecraft.util.math.BlockPos((int)(startx += dx), (int)(starty += dy), (int)(startz += dz))).getBlock();
-            if (bid == Blocks.AIR) continue;
+            BlockPos pos = BlockPos.containing(startx += dx, starty += dy, startz += dz);
+            if (level.getBlockState(pos).isAir()) {
+                continue;
+            }
             return false;
         }
         return true;
     }
 
     @Override
-    public boolean canHarvestBlock(IBlockState state) {
+    public boolean isCorrectToolForDrops(ItemStack stack, BlockState state) {
         if (this == ChaosPersists.MyChainsaw) {
             return this.canCrush(state.getBlock());
         }
-        return super.canHarvestBlock(state);
+        return super.isCorrectToolForDrops(stack, state);
     }
 
     private boolean canCrush(Block blockID) {
         if (this == ChaosPersists.MyChainsaw) {
-            if (blockID == Blocks.WEB) {
+            if (blockID == Blocks.COBWEB) {
                 return true;
             }
-            if (blockID == Blocks.LOG || blockID == Blocks.LOG2) {
-                return true;
-            }
-            if (blockID == Blocks.LEAVES || blockID == Blocks.LEAVES2) {
-                return true;
-            }
-            if (blockID == Blocks.PLANKS) {
-                return true;
-            }
-            if (blockID == Blocks.SAPLING) {
-                return true;
-            }
-            if (blockID == Blocks.TALLGRASS) {
-                return true;
-            }
-            if (blockID == Blocks.CACTUS) {
+            if (blockID == Blocks.OAK_LOG
+                    || blockID == Blocks.BIRCH_LOG
+                    || blockID == Blocks.SPRUCE_LOG
+                    || blockID == Blocks.JUNGLE_LOG
+                    || blockID == Blocks.ACACIA_LOG
+                    || blockID == Blocks.DARK_OAK_LOG
+                    || blockID == Blocks.MANGROVE_LOG
+                    || blockID == Blocks.CHERRY_LOG
+                    || blockID == Blocks.CRIMSON_STEM
+                    || blockID == Blocks.WARPED_STEM
+                    || blockID == Blocks.OAK_LEAVES
+                    || blockID == Blocks.BIRCH_LEAVES
+                    || blockID == Blocks.SPRUCE_LEAVES
+                    || blockID == Blocks.JUNGLE_LEAVES
+                    || blockID == Blocks.ACACIA_LEAVES
+                    || blockID == Blocks.DARK_OAK_LEAVES
+                    || blockID == Blocks.MANGROVE_LEAVES
+                    || blockID == Blocks.CHERRY_LEAVES
+                    || blockID == Blocks.AZALEA_LEAVES
+                    || blockID == Blocks.FLOWERING_AZALEA_LEAVES
+                    || blockID == Blocks.OAK_PLANKS
+                    || blockID == Blocks.OAK_SAPLING
+                    || blockID == net.minecraft.world.level.block.Blocks.GRASS
+                    || blockID == Blocks.TALL_GRASS
+                    || blockID == Blocks.CACTUS) {
                 return true;
             }
             if (blockID == ChaosPersists.CrystalPlanksBlock) {
@@ -351,20 +327,26 @@ extends ItemSword {
             }
             return false;
         }
-        return blockID == Blocks.WEB;
+        return blockID == Blocks.COBWEB;
     }
 
     private boolean isLeaves(Block blockID) {
-        if (blockID == Blocks.WEB) {
+        if (blockID == Blocks.COBWEB) {
             return true;
         }
-        if (blockID == Blocks.LEAVES || blockID == Blocks.LEAVES2) {
-            return true;
-        }
-        if (blockID == Blocks.SAPLING) {
-            return true;
-        }
-        if (blockID == Blocks.TALLGRASS) {
+        if (blockID == Blocks.OAK_LEAVES
+                || blockID == Blocks.BIRCH_LEAVES
+                || blockID == Blocks.SPRUCE_LEAVES
+                || blockID == Blocks.JUNGLE_LEAVES
+                || blockID == Blocks.ACACIA_LEAVES
+                || blockID == Blocks.DARK_OAK_LEAVES
+                || blockID == Blocks.MANGROVE_LEAVES
+                || blockID == Blocks.CHERRY_LEAVES
+                || blockID == Blocks.AZALEA_LEAVES
+                || blockID == Blocks.FLOWERING_AZALEA_LEAVES
+                || blockID == Blocks.OAK_SAPLING
+                || blockID == net.minecraft.world.level.block.Blocks.GRASS
+                || blockID == Blocks.TALL_GRASS) {
             return true;
         }
         if (blockID == ChaosPersists.MyAppleLeaves) {
@@ -394,52 +376,74 @@ extends ItemSword {
         return false;
     }
 
-    public boolean onBlockDestroyed(ItemStack par1ItemStack, World par2World, net.minecraft.block.state.IBlockState state, net.minecraft.util.math.BlockPos pos, EntityLivingBase par7EntityLivingBase) {
+    @Override
+    public boolean mineBlock(
+            ItemStack stack,
+            Level level,
+            BlockState state,
+            BlockPos pos,
+            LivingEntity entityLiving) {
         Block par3 = state.getBlock();
         int par4 = pos.getX();
         int par5 = pos.getY();
         int par6 = pos.getZ();
-        if (this == ChaosPersists.MyChainsaw && !par2World.isRemote) {
+        if (this == ChaosPersists.MyChainsaw && !level.isClientSide) {
             for (int i = -5; i <= 5; ++i) {
                 for (int j = -5; j <= 10; ++j) {
                     for (int k = -5; k <= 5; ++k) {
-                        Block bid = par2World.getBlockState(new net.minecraft.util.math.BlockPos(par4 + i, par5 + j, par6 + k)).getBlock();
+                        BlockPos targetPos = new BlockPos(par4 + i, par5 + j, par6 + k);
+                        Block bid = level.getBlockState(targetPos).getBlock();
                         if (this.leaf) {
-                            if (!this.isLeaves(bid)) continue;
-                            this.dropItemRand(par2World, Item.getItemFromBlock((Block)bid), 1, par4 + i, par5 + j, par6 + k);
-                            par2World.setBlockState(new net.minecraft.util.math.BlockPos(par4 + i, par5 + j, par6 + k), Blocks.AIR.getDefaultState());
+                            if (!this.isLeaves(bid)) {
+                                continue;
+                            }
+                            this.dropItemRand(
+                                    level,
+                                    bid.asItem(),
+                                    1,
+                                    par4 + i,
+                                    par5 + j,
+                                    par6 + k);
+                            level.setBlockAndUpdate(targetPos, Blocks.AIR.defaultBlockState());
                             continue;
                         }
-                        if (!this.canCrush(bid)) continue;
-                        this.dropItemRand(par2World, Item.getItemFromBlock((Block)bid), 1, par4 + i, par5 + j, par6 + k);
-                        par2World.setBlockState(new net.minecraft.util.math.BlockPos(par4 + i, par5 + j, par6 + k), Blocks.AIR.getDefaultState());
+                        if (!this.canCrush(bid)) {
+                            continue;
+                        }
+                        this.dropItemRand(
+                                level, bid.asItem(), 1, par4 + i, par5 + j, par6 + k);
+                        level.setBlockAndUpdate(targetPos, Blocks.AIR.defaultBlockState());
                     }
                 }
             }
         }
-        return super.onBlockDestroyed(par1ItemStack, par2World, state, pos, par7EntityLivingBase);
+        return super.mineBlock(stack, level, state, pos, entityLiving);
     }
 
-    private ItemStack dropItemRand(World world, Item index, int par1, int x, int y, int z) {
-        EntityItem var3 = null;
-        ItemStack is = new ItemStack(index, par1, 0);
-        var3 = new EntityItem(world, (double)(x + ChaosPersists.ChaosRand.nextInt(5) - ChaosPersists.ChaosRand.nextInt(5)), (double)y + 1.0 + (double)world.rand.nextInt(5), (double)(z + ChaosPersists.ChaosRand.nextInt(5) - ChaosPersists.ChaosRand.nextInt(5)), is);
-        if (var3 != null) {
-            world.spawnEntity((Entity)var3);
+    private void dropItemRand(Level world, Item index, int count, int x, int y, int z) {
+        if (index == null) {
+            return;
         }
-        return is;
+        ItemStack is = new ItemStack(index, count);
+        ItemEntity drop =
+                new ItemEntity(
+                        world,
+                        (double) (x + ChaosPersists.ChaosRand.nextInt(5) - ChaosPersists.ChaosRand.nextInt(5)),
+                        (double) y + 1.0 + (double) world.getRandom().nextInt(5),
+                        (double) (z + ChaosPersists.ChaosRand.nextInt(5) - ChaosPersists.ChaosRand.nextInt(5)),
+                        is);
+        world.addFreshEntity(drop);
     }
 
-    /**
-     * 1.7.10 used {@code getStrVsBlock}; 1.12.2 uses {@link #getDestroySpeed(ItemStack, IBlockState)} for mining speed.
-     */
     @Override
-    public float getDestroySpeed(ItemStack stack, IBlockState state) {
+    public float getDestroySpeed(ItemStack stack, BlockState state) {
         Block block = state.getBlock();
         if (this == ChaosPersists.MyChainsaw && block != null) {
             this.leaf = this.isLeaves(block);
-            Material mat = state.getMaterial();
-            if (mat == Material.WOOD || mat == Material.PLANTS || mat == Material.VINE) {
+            if (state.is(BlockTags.LOGS)
+                    || state.is(BlockTags.LEAVES)
+                    || state.is(BlockTags.SAPLINGS)
+                    || state.is(BlockTags.REPLACEABLE)) {
                 return ChaosPersists.chainsaw_stats.efficiency;
             }
             if (this.canCrush(block)) {
@@ -448,5 +452,18 @@ extends ItemSword {
         }
         return super.getDestroySpeed(stack, state);
     }
-}
 
+    @Override
+    public void initializeClient(java.util.function.Consumer<IClientItemExtensions> consumer) {
+        net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer renderer =
+                com.astryxion.chaospersists.client.TeisrHandBakedModelWrapper.getCustomRenderer(this);
+        if (renderer != null) {
+            consumer.accept(new IClientItemExtensions() {
+                @Override
+                public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                    return renderer;
+                }
+            });
+        }
+    }
+}

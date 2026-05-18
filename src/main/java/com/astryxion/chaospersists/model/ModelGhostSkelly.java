@@ -1,129 +1,118 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.GhostSkelly
- *  com.astryxion.chaospersists.ModelGhostSkelly
- *  com.astryxion.chaospersists.RenderInfo
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- *  net.minecraft.world.World
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.model;
 
 import com.astryxion.chaospersists.entity.GhostSkelly;
 import com.astryxion.chaospersists.render.RenderInfo;
-import java.util.Random;
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.util.Mth;
 
-public class ModelGhostSkelly
-extends ModelBase {
-    ModelRenderer body;
-    ModelRenderer shirt;
-    ModelRenderer head;
-    ModelRenderer stem;
-    ModelRenderer rarm;
-    ModelRenderer larm;
-    ModelRenderer rsleeve;
-    ModelRenderer lsleeve;
-    ModelRenderer lchains;
-    ModelRenderer rchains;
+public class ModelGhostSkelly extends EntityModel<GhostSkelly> {
+    private final ModelPart body;
+    private final ModelPart shirt;
+    private final ModelPart head;
+    private final ModelPart stem;
+    private final ModelPart rarm;
+    private final ModelPart larm;
+    private final ModelPart rsleeve;
+    private final ModelPart lsleeve;
+    private final ModelPart lchains;
+    private final ModelPart rchains;
 
     public ModelGhostSkelly() {
-        this.textureWidth = 128;
-        this.textureHeight = 64;
-        this.body = new ModelRenderer((ModelBase)this, 0, 0);
-        this.body.addBox(0.0f, 0.0f, 0.0f, 1, 21, 1);
-        this.body.setRotationPoint(0.0f, -1.0f, 0.0f);
-        this.body.setTextureSize(128, 64);
-        this.body.mirror = true;
-        this.setRotation(this.body, 0.0f, 0.0f, 0.0f);
-        this.shirt = new ModelRenderer((ModelBase)this, 42, 43);
-        this.shirt.addBox(-2.0f, 0.0f, -2.0f, 5, 12, 5);
-        this.shirt.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.shirt.setTextureSize(128, 64);
-        this.shirt.mirror = true;
-        this.setRotation(this.shirt, 0.0f, 0.0f, 0.0f);
-        this.head = new ModelRenderer((ModelBase)this, 40, 29);
-        this.head.addBox(-3.0f, 0.0f, -3.0f, 7, 5, 7);
-        this.head.setRotationPoint(0.0f, -6.0f, 0.0f);
-        this.head.setTextureSize(128, 64);
-        this.head.mirror = true;
-        this.setRotation(this.head, 0.0f, 0.0f, 0.0f);
-        this.stem = new ModelRenderer((ModelBase)this, 49, 23);
-        this.stem.addBox(0.0f, 0.0f, 0.0f, 1, 2, 1);
-        this.stem.setRotationPoint(0.0f, -8.0f, 0.0f);
-        this.stem.setTextureSize(128, 64);
-        this.stem.mirror = true;
-        this.setRotation(this.stem, 0.1745329f, 0.0f, 0.1745329f);
-        this.rarm = new ModelRenderer((ModelBase)this, 26, 0);
-        this.rarm.addBox(-14.0f, 0.0f, 0.0f, 15, 1, 1);
-        this.rarm.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.rarm.setTextureSize(128, 64);
-        this.rarm.mirror = true;
-        this.setRotation(this.rarm, 0.0f, 0.0f, 0.0f);
-        this.larm = new ModelRenderer((ModelBase)this, 63, 0);
-        this.larm.addBox(0.0f, 0.0f, 0.0f, 15, 1, 1);
-        this.larm.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.larm.setTextureSize(128, 64);
-        this.larm.mirror = true;
-        this.setRotation(this.larm, 0.0f, 0.0f, 0.0f);
-        this.rsleeve = new ModelRenderer((ModelBase)this, 31, 7);
-        this.rsleeve.addBox(-11.0f, 0.0f, -1.0f, 9, 8, 3);
-        this.rsleeve.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.rsleeve.setTextureSize(128, 64);
-        this.rsleeve.mirror = true;
-        this.setRotation(this.rsleeve, 0.0f, 0.0f, 0.0f);
-        this.lsleeve = new ModelRenderer((ModelBase)this, 71, 7);
-        this.lsleeve.addBox(3.0f, 0.0f, -1.0f, 9, 8, 3);
-        this.lsleeve.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.lsleeve.setTextureSize(128, 64);
-        this.lsleeve.mirror = true;
-        this.setRotation(this.lsleeve, 0.0f, 0.0f, 0.0f);
-        this.lchains = new ModelRenderer((ModelBase)this, 98, 0);
-        this.lchains.addBox(11.0f, -1.0f, 0.0f, 3, 16, 1);
-        this.lchains.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.lchains.setTextureSize(128, 64);
-        this.lchains.mirror = true;
-        this.setRotation(this.lchains, 0.0f, 0.0f, 0.0f);
-        this.rchains = new ModelRenderer((ModelBase)this, 12, 0);
-        this.rchains.addBox(-13.0f, -1.0f, 0.0f, 3, 10, 1);
-        this.rchains.setRotationPoint(0.0f, 0.0f, 0.0f);
-        this.rchains.setTextureSize(128, 64);
-        this.rchains.mirror = true;
-        this.setRotation(this.rchains, 0.0f, 0.0f, 0.0f);
+        this(LayerDefinition.create(createMesh(), 128, 64).bakeRoot());
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
-        GhostSkelly e = (GhostSkelly)entity;
-        RenderInfo r = null;
-        float newangle = 0.0f;
-        float newrf1 = 0.0f;
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        r = e.getRenderInfo();
-        this.lsleeve.rotateAngleZ = this.lchains.rotateAngleZ = MathHelper.cos((float)(f2 * 0.2f)) * 3.1415927f * 0.05f;
-        this.larm.rotateAngleZ = this.lchains.rotateAngleZ;
-        this.rsleeve.rotateAngleZ = this.rchains.rotateAngleZ = MathHelper.cos((float)(f2 * 0.22f)) * 3.1415927f * 0.05f;
-        this.rarm.rotateAngleZ = this.rchains.rotateAngleZ;
-        this.lsleeve.rotateAngleY = this.lchains.rotateAngleY = MathHelper.cos((float)(f2 * 0.24f)) * 3.1415927f * 0.05f;
-        this.larm.rotateAngleY = this.lchains.rotateAngleY;
-        this.rsleeve.rotateAngleY = this.rchains.rotateAngleY = MathHelper.cos((float)(f2 * 0.26f)) * 3.1415927f * 0.05f;
-        this.rarm.rotateAngleY = this.rchains.rotateAngleY;
-        newangle = MathHelper.cos((float)(f2 * 0.05f)) * 3.1415927f * 2.0f;
-        newrf1 = f2 * 0.05f % 6.2831855f;
+    public ModelGhostSkelly(ModelPart root) {
+        this.body = root.getChild("body");
+        this.shirt = root.getChild("shirt");
+        this.head = root.getChild("head");
+        this.stem = root.getChild("stem");
+        this.rarm = root.getChild("rarm");
+        this.larm = root.getChild("larm");
+        this.rsleeve = root.getChild("rsleeve");
+        this.lsleeve = root.getChild("lsleeve");
+        this.lchains = root.getChild("lchains");
+        this.rchains = root.getChild("rchains");
+    }
+
+    private static MeshDefinition createMesh() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild(
+                "body",
+                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 21.0f, 1.0f),
+                PartPose.offset(0.0f, -1.0f, 0.0f));
+        root.addOrReplaceChild(
+                "shirt",
+                CubeListBuilder.create().texOffs(42, 43).mirror().addBox(-2.0f, 0.0f, -2.0f, 5.0f, 12.0f, 5.0f),
+                PartPose.ZERO);
+        root.addOrReplaceChild(
+                "head",
+                CubeListBuilder.create().texOffs(40, 29).mirror().addBox(-3.0f, 0.0f, -3.0f, 7.0f, 5.0f, 7.0f),
+                PartPose.offset(0.0f, -6.0f, 0.0f));
+        root.addOrReplaceChild(
+                "stem",
+                CubeListBuilder.create().texOffs(49, 23).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 2.0f, 1.0f),
+                PartPose.offsetAndRotation(0.0f, -8.0f, 0.0f, 0.1745329f, 0.0f, 0.1745329f));
+        root.addOrReplaceChild(
+                "rarm",
+                CubeListBuilder.create().texOffs(26, 0).mirror().addBox(-14.0f, 0.0f, 0.0f, 15.0f, 1.0f, 1.0f),
+                PartPose.ZERO);
+        root.addOrReplaceChild(
+                "larm",
+                CubeListBuilder.create().texOffs(63, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 15.0f, 1.0f, 1.0f),
+                PartPose.ZERO);
+        root.addOrReplaceChild(
+                "rsleeve",
+                CubeListBuilder.create().texOffs(31, 7).mirror().addBox(-11.0f, 0.0f, -1.0f, 9.0f, 8.0f, 3.0f),
+                PartPose.ZERO);
+        root.addOrReplaceChild(
+                "lsleeve",
+                CubeListBuilder.create().texOffs(71, 7).mirror().addBox(3.0f, 0.0f, -1.0f, 9.0f, 8.0f, 3.0f),
+                PartPose.ZERO);
+        root.addOrReplaceChild(
+                "lchains",
+                CubeListBuilder.create().texOffs(98, 0).mirror().addBox(11.0f, -1.0f, 0.0f, 3.0f, 16.0f, 1.0f),
+                PartPose.ZERO);
+        root.addOrReplaceChild(
+                "rchains",
+                CubeListBuilder.create().texOffs(12, 0).mirror().addBox(-13.0f, -1.0f, 0.0f, 3.0f, 10.0f, 1.0f),
+                PartPose.ZERO);
+        return mesh;
+    }
+
+    @Override
+    public void setupAnim(GhostSkelly entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        RenderInfo r = entity.getRenderInfo();
+        float chainZ = Mth.cos(ageInTicks * 0.2f) * (float) Math.PI * 0.05f;
+        this.lsleeve.zRot = chainZ;
+        this.lchains.zRot = chainZ;
+        this.larm.zRot = chainZ;
+        float chainZ2 = Mth.cos(ageInTicks * 0.22f) * (float) Math.PI * 0.05f;
+        this.rsleeve.zRot = chainZ2;
+        this.rchains.zRot = chainZ2;
+        this.rarm.zRot = chainZ2;
+        float chainY = Mth.cos(ageInTicks * 0.24f) * (float) Math.PI * 0.05f;
+        this.lsleeve.yRot = chainY;
+        this.lchains.yRot = chainY;
+        this.larm.yRot = chainY;
+        float chainY2 = Mth.cos(ageInTicks * 0.26f) * (float) Math.PI * 0.05f;
+        this.rsleeve.yRot = chainY2;
+        this.rchains.yRot = chainY2;
+        this.rarm.yRot = chainY2;
+        float newangle = Mth.cos(ageInTicks * 0.05f) * (float) Math.PI * 2.0f;
+        float newrf1 = ageInTicks * 0.05f % 6.2831855f;
         newrf1 = Math.abs(newrf1);
         if (newrf1 < r.rf2) {
             r.ri2 = 0;
-            if (e.world.rand.nextInt(3) == 1) {
+            if (entity.getRandom().nextInt(3) == 1) {
                 r.ri2 |= 1;
             }
         }
@@ -131,35 +120,29 @@ extends ModelBase {
         if ((r.ri2 & 1) == 0) {
             newangle = 0.0f;
         }
-        this.head.rotateAngleY = newangle;
-        e.setRenderInfo(r);
-        GL11.glPushMatrix();
-        GL11.glEnable((int)2977);
-        GL11.glEnable((int)3042);
-        GL11.glBlendFunc((int)770, (int)771);
-        GL11.glColor4f((float)0.75f, (float)0.75f, (float)0.75f, (float)0.25f);
-        this.body.render(f5);
-        this.shirt.render(f5);
-        this.head.render(f5);
-        this.stem.render(f5);
-        this.rarm.render(f5);
-        this.larm.render(f5);
-        this.rsleeve.render(f5);
-        this.lsleeve.render(f5);
-        this.lchains.render(f5);
-        this.rchains.render(f5);
-        GL11.glDisable((int)3042);
-        GL11.glPopMatrix();
+        this.head.yRot = newangle;
+        entity.setRenderInfo(r);
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
-    }
-
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+    @Override
+    public void renderToBuffer(
+            PoseStack poseStack,
+            VertexConsumer buffer,
+            int packedLight,
+            int packedOverlay,
+            float red,
+            float green,
+            float blue,
+            float alpha) {
+        this.body.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.shirt.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.head.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.stem.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rarm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.larm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rsleeve.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.lsleeve.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.lchains.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.rchains.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

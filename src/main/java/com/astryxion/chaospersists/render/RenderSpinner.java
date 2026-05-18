@@ -1,73 +1,94 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.RenderSpinner
- *  net.minecraft.client.renderer.Tessellator
- *  net.minecraft.client.renderer.entity.Render
- *  net.minecraft.client.renderer.entity.RenderManager
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.ResourceLocation
- *  org.lwjgl.opengl.GL11
- */
 package com.astryxion.chaospersists.render;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.entity.Render;
-import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
-@SideOnly(value=Side.CLIENT)
-public class RenderSpinner
-extends Render {
+public class RenderSpinner extends EntityRenderer<Entity> {
     public int spinItemIconIndex = 160;
-    private static final ResourceLocation texture = new ResourceLocation("chaospersists", "textures/entity/spinners.png");
+    private static final ResourceLocation TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/spinners.png");
 
-    public RenderSpinner(RenderManager manager) {
-        super(manager);
+    public RenderSpinner(EntityRendererProvider.Context context) {
+        super(context);
     }
 
-    public void doRender(Entity par1Entity, double par2, double par4, double par6, float par8, float par9) {
-        this.bindTexture(texture);
-        GL11.glPushMatrix();
-        GL11.glTranslatef((float)((float)par2), (float)((float)par4), (float)((float)par6));
-        GL11.glEnable((int)32826);
-        GL11.glScalef((float)0.5f, (float)0.5f, (float)0.5f);
-        this.func_77026_a(this.spinItemIconIndex, par1Entity.rotationPitch);
-        GL11.glDisable((int)32826);
-        GL11.glPopMatrix();
+    @Override
+    public void render(
+            Entity entity,
+            float entityYaw,
+            float partialTicks,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight) {
+        poseStack.pushPose();
+        poseStack.scale(0.5f, 0.5f, 0.5f);
+        float pitch = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
+        Camera camera = this.entityRenderDispatcher.camera;
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f - camera.getYRot()));
+        poseStack.mulPose(Axis.XP.rotationDegrees(-camera.getXRot()));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(pitch));
+        VertexConsumer vertexConsumer =
+                buffer.getBuffer(RenderType.entityCutoutNoCull(this.getTextureLocation(entity)));
+        this.drawSpinnerQuad(poseStack, vertexConsumer, packedLight, this.spinItemIconIndex);
+        poseStack.popPose();
     }
 
-    private void func_77026_a(int par2, float par3) {
-        float var3 = (float)(par2 % 16 * 16 + 0) / 256.0f;
-        float var4 = (float)(par2 % 16 * 16 + 16) / 256.0f;
-        float var5 = (float)(par2 / 16 * 16 + 0) / 256.0f;
-        float var6 = (float)(par2 / 16 * 16 + 16) / 256.0f;
-        float var7 = 1.0f;
-        float var8 = 0.5f;
-        float var9 = 0.25f;
-        GL11.glRotatef((float)(180.0f - this.renderManager.playerViewY), (float)0.0f, (float)1.0f, (float)0.0f);
-        GL11.glRotatef((float)(- this.renderManager.playerViewX), (float)1.0f, (float)0.0f, (float)0.0f);
-        GL11.glRotatef((float)par3, (float)0.0f, (float)0.0f, (float)1.0f);
-        BufferBuilder buf = Tessellator.getInstance().getBuffer();
-        buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);
-        buf.pos((double)(0.0f - var8), (double)(0.0f - var9), 0.0).tex((double)var3, (double)var6).normal(0.0f, 1.0f, 0.0f).endVertex();
-        buf.pos((double)(var7 - var8), (double)(0.0f - var9), 0.0).tex((double)var4, (double)var6).normal(0.0f, 1.0f, 0.0f).endVertex();
-        buf.pos((double)(var7 - var8), (double)(var7 - var9), 0.0).tex((double)var4, (double)var5).normal(0.0f, 1.0f, 0.0f).endVertex();
-        buf.pos((double)(0.0f - var8), (double)(var7 - var9), 0.0).tex((double)var3, (double)var5).normal(0.0f, 1.0f, 0.0f).endVertex();
-        Tessellator.getInstance().draw();
+    protected void drawSpinnerQuad(
+            PoseStack poseStack, VertexConsumer buffer, int packedLight, int spriteIndex) {
+        float u0 = (float) (spriteIndex % 16 * 16 + 0) / 256.0f;
+        float u1 = (float) (spriteIndex % 16 * 16 + 16) / 256.0f;
+        float v0 = (float) (spriteIndex / 16 * 16 + 0) / 256.0f;
+        float v1 = (float) (spriteIndex / 16 * 16 + 16) / 256.0f;
+        float size = 1.0f;
+        float hx = 0.5f;
+        float hy = 0.25f;
+        PoseStack.Pose pose = poseStack.last();
+        Matrix4f matrix = pose.pose();
+        Matrix3f normal = pose.normal();
+        buffer.vertex(matrix, 0.0f - hx, 0.0f - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u0, v1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
+        buffer.vertex(matrix, size - hx, 0.0f - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u1, v1)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
+        buffer.vertex(matrix, size - hx, size - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u1, v0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
+        buffer.vertex(matrix, 0.0f - hx, size - hy, 0.0f)
+                .color(255, 255, 255, 255)
+                .uv(u0, v0)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(packedLight)
+                .normal(normal, 0.0f, 1.0f, 0.0f)
+                .endVertex();
     }
 
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        return texture;
+    @Override
+    public ResourceLocation getTextureLocation(Entity entity) {
+        return TEXTURE;
     }
 }
-

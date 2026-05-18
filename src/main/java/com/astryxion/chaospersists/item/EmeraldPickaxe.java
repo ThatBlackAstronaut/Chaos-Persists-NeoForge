@@ -1,68 +1,42 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.EmeraldPickaxe
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.enchantment.Enchantment
- *  net.minecraft.enchantment.EnchantmentHelper
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.item.Item
- *  net.minecraft.item.Item$ToolMaterial
- *  net.minecraft.item.ItemPickaxe
- *  net.minecraft.item.ItemStack
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemPickaxe;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.PickaxeItem;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
 
-public class EmeraldPickaxe
-extends ItemPickaxe {
-    private int weaponDamage = 10;
+public class EmeraldPickaxe extends PickaxeItem {
+    private static final int WEAPON_DAMAGE = 10;
 
-    public EmeraldPickaxe(Item.ToolMaterial par2) {
-        super(par2);
-        this.maxStackSize = 1;
-        this.setMaxDamage(1300);
-        this.setCreativeTab(CreativeTabs.TOOLS);
-    }
-
-    public void onUsingTick(ItemStack stack, EntityPlayer player, int count) {
-        int lvl = EnchantmentHelper.getEnchantmentLevel(net.minecraft.init.Enchantments.SILK_TOUCH, stack);
-        if (lvl <= 0) {
-            stack.addEnchantment(net.minecraft.init.Enchantments.SILK_TOUCH, 1);
-        }
-    }
-
-    public void onUpdate(ItemStack stack, World par2World, Entity par3Entity, int par4, boolean par5) {
-        this.onUsingTick(stack, (EntityPlayer)null, 0);
-    }
-
-    public int getDamageVsEntity(Entity par1Entity) {
-        return this.weaponDamage;
-    }
-
-    public int getDamageVsEntity() {
-        return this.weaponDamage;
+    public EmeraldPickaxe(Tier tier) {
+        super(
+                tier,
+                (int)(WEAPON_DAMAGE - tier.getAttackDamageBonus()),
+                -2.8f,
+                new Properties().stacksTo(1).durability(1300));
     }
 
     public String getMaterialName() {
         return "Emerald";
-    }}
+    }
 
+    @Override
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
+        ensureSilkTouch(stack);
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        ensureSilkTouch(stack);
+    }
+
+    private void ensureSilkTouch(ItemStack stack) {
+        if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, stack) <= 0) {
+            stack.enchant(Enchantments.SILK_TOUCH, 1);
+        }
+    }
+}

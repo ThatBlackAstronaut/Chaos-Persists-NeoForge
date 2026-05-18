@@ -1,80 +1,49 @@
 package com.astryxion.chaospersists.block;
 
-import java.util.Random;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.common.IPlantable;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
+import java.util.Collections;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
 public class CrystalGrass extends Block {
 
     public CrystalGrass(float hardness, float resistance) {
-        super(Material.GRASS);
-        this.setHardness(hardness);
-        this.setResistance(resistance);
-        this.setCreativeTab(CreativeTabs.BUILDING_BLOCKS);
-        this.setSoundType(SoundType.PLANT);
+        super(net.minecraft.world.level.block.Block.Properties.of()
+                .mapColor(net.minecraft.world.level.material.MapColor.COLOR_LIGHT_BLUE)
+                .strength(hardness, resistance)
+                .sound(SoundType.GRASS)
+                .noOcclusion()
+                .isValidSpawn((state, level, pos, entityType) -> Blocks.GRASS.defaultBlockState().isValidSpawn(level, pos, entityType))
+                .isSuffocating((state, level, pos) -> false)
+                .isViewBlocking((state, level, pos) -> false));
     }
 
     @Override
-    public Item getItemDropped(IBlockState state, Random rand, int fortune) {
-        return Item.getItemFromBlock(this);
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        return Collections.singletonList(new ItemStack(this));
     }
 
     @Override
-    public boolean canSustainPlant(IBlockState state, IBlockAccess world,
-                                   BlockPos pos, EnumFacing direction,
-                                   IPlantable plantable) {
-        return true;
-    }
-
-    /**
-     * Non-opaque for rendering, so Forge's default {@code canCreatureSpawn} (top side solid) is false
-     * and natural spawning never runs. Match vanilla grass so surface mobs can spawn.
-     */
-    @Override
-    public boolean canCreatureSpawn(IBlockState state, IBlockAccess world, BlockPos pos,
-                                    EntityLiving.SpawnPlacementType type) {
-        return Blocks.GRASS.canCreatureSpawn(Blocks.GRASS.getDefaultState(), world, pos, type);
-    }
-
-    // 🔥 Transparency Fixes
-
-    @Override
-    public boolean isOpaqueCube(IBlockState state) {
+    public boolean useShapeForLightOcclusion(BlockState state) {
         return false;
     }
 
     @Override
-    public boolean isFullCube(IBlockState state) {
-        return false;
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public BlockRenderLayer getRenderLayer() {
-        return BlockRenderLayer.CUTOUT;
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public boolean shouldSideBeRendered(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
-        IBlockState adjacent = world.getBlockState(pos.offset(side));
-        if (adjacent.getBlock() == this) {
-            return false;
+    public boolean skipRendering(BlockState state, BlockState adjacentState, Direction side) {
+        if (adjacentState.getBlock() == this) {
+            return true;
         }
-        return super.shouldSideBeRendered(state, world, pos, side);
+        return super.skipRendering(state, adjacentState, side);
+    }
+
+    @Override
+    public boolean canSustainPlant(BlockState state, BlockGetter level, BlockPos pos, Direction direction, net.minecraftforge.common.IPlantable plantable) {
+        return true;
     }
 }

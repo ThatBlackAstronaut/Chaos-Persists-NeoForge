@@ -1,63 +1,59 @@
 package com.astryxion.chaospersists.item;
 
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.monster.EntityCreeper;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.world.World;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 public class ItemCreeperLauncher extends Item {
 
     public ItemCreeperLauncher(int i) {
-        this.setCreativeTab(CreativeTabs.REDSTONE);
-        this.setMaxStackSize(16);
+        super(new Properties().stacksTo(16));
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
 
-        ItemStack stack = player.getHeldItem(hand);
-
-        // Play launch sound
-        world.playSound(null,
-                player.posX,
-                player.posY,
-                player.posZ,
-                SoundEvents.ENTITY_FIREWORK_LAUNCH,
-                SoundCategory.PLAYERS,
+        level.playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.FIREWORK_ROCKET_LAUNCH,
+                SoundSource.PLAYERS,
                 1.0f,
                 1.0f);
 
-        if (!world.isRemote) {
-
-            EntityCreeper creeper = new EntityCreeper(world);
-
-            // Spawn slightly in front of player
-            creeper.setPosition(
-                    player.posX,
-                    player.posY + player.getEyeHeight(),
-                    player.posZ
-            );
-
-            // Make it shoot forward like a projectile
-            creeper.motionX = -Math.sin(Math.toRadians(player.rotationYaw)) * Math.cos(Math.toRadians(player.rotationPitch)) * 1.5;
-            creeper.motionZ =  Math.cos(Math.toRadians(player.rotationYaw)) * Math.cos(Math.toRadians(player.rotationPitch)) * 1.5;
-            creeper.motionY = -Math.sin(Math.toRadians(player.rotationPitch)) * 1.5;
-
-            world.spawnEntity(creeper);
+        if (!level.isClientSide) {
+            Creeper creeper = EntityType.CREEPER.create(level);
+            if (creeper != null) {
+                creeper.moveTo(
+                        player.getX(),
+                        player.getY() + player.getEyeHeight(),
+                        player.getZ());
+                creeper.setDeltaMovement(
+                        -Math.sin(Math.toRadians(player.getYRot()))
+                                * Math.cos(Math.toRadians(player.getXRot()))
+                                * 1.5,
+                        -Math.sin(Math.toRadians(player.getXRot())) * 1.5,
+                        Math.cos(Math.toRadians(player.getYRot()))
+                                * Math.cos(Math.toRadians(player.getXRot()))
+                                * 1.5);
+                level.addFreshEntity(creeper);
+            }
         }
 
-        if (!player.capabilities.isCreativeMode) {
+        if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
 
-        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 }

@@ -1,99 +1,82 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.Boyfriend
- *  com.astryxion.chaospersists.Elevator
- *  com.astryxion.chaospersists.Girlfriend
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockGrass
- *  net.minecraft.block.BlockLiquid
- *  net.minecraft.block.BlockTallGrass
- *  net.minecraft.client.entity.EntityClientPlayerMP
- *  net.minecraft.client.network.NetHandlerPlayClient
- *  net.minecraft.entity.DataWatcher
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.attributes.BaseAttributeMap
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.InventoryPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.nbt.NBTTagCompound
- *  net.minecraft.network.Packet
- *  net.minecraft.network.play.client.C03PacketPlayer
- *  net.minecraft.network.play.client.C03PacketPlayer$C05PacketPlayerLook
- *  net.minecraft.network.play.client.C0CPacketInput
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.MathHelper
- *  net.minecraft.util.MovementInput
- *  net.minecraft.util.ResourceLocation
- *  net.minecraft.world.GameRules
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import com.astryxion.chaospersists.entity.Boyfriend;
-import com.astryxion.chaospersists.entity.Girlfriend;
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.core.ChaosSounds;
 import java.util.List;
-import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockGrass;
-import net.minecraft.block.BlockLiquid;
-import net.minecraft.block.BlockTallGrass;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.play.client.CPacketInput;
-import net.minecraft.network.play.client.CPacketPlayer;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.MovementInput;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
+import org.joml.Vector3f;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
+import java.util.Collections;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
-public class Elevator
-extends EntityLiving {
-    private static final DataParameter<Integer> I20 = EntityDataManager.createKey(Elevator.class, DataSerializers.VARINT);
-    private static final DataParameter<Integer> I21 = EntityDataManager.createKey(Elevator.class, DataSerializers.VARINT);
-    private static final DataParameter<Integer> I22 = EntityDataManager.createKey(Elevator.class, DataSerializers.VARINT);
-    private static final DataParameter<Integer> I23 = EntityDataManager.createKey(Elevator.class, DataSerializers.VARINT);
-    private static final DataParameter<Float> F24 = EntityDataManager.createKey(Elevator.class, DataSerializers.FLOAT);
+public class Elevator extends Mob {
+    private static final EntityDataAccessor<Integer> I20 =
+            SynchedEntityData.defineId(Elevator.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> I21 =
+            SynchedEntityData.defineId(Elevator.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> I22 =
+            SynchedEntityData.defineId(Elevator.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> I23 =
+            SynchedEntityData.defineId(Elevator.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> F24 =
+            SynchedEntityData.defineId(Elevator.class, EntityDataSerializers.FLOAT);
+
+    private static final ResourceLocation TEXTURE1 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/elevator1.png");
+    private static final ResourceLocation TEXTURE2 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/elevator2.png");
+    private static final ResourceLocation TEXTURE3 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/elevator3.png");
+    private static final ResourceLocation TEXTURE4 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/elevator4.png");
+    private static final ResourceLocation TEXTURE5 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/elevator5.png");
+    private static final ResourceLocation TEXTURE6 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/elevator6.png");
+    private static final ResourceLocation TEXTURE7 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/elevator7.png");
+    private static final ResourceLocation TEXTURE8 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/elevator8.png");
+    private static final ResourceLocation TEXTURE9 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/elevator9.png");
+    private static final ResourceLocation TEXTURE10 =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/elevator10.png");
+
     private int boatPosRotationIncrements;
     private double boatX;
     private double boatY;
@@ -103,287 +86,250 @@ extends EntityLiving {
     private double velocityX;
     private double velocityY;
     private double velocityZ;
-    private int damage_counter = 100;
     private int exploding = 0;
     private int color = 1;
     private int playing = 0;
-    private static final ResourceLocation texture1 = new ResourceLocation("chaospersists", "textures/entity/elevator1.png");
-    private static final ResourceLocation texture2 = new ResourceLocation("chaospersists", "textures/entity/elevator2.png");
-    private static final ResourceLocation texture3 = new ResourceLocation("chaospersists", "textures/entity/elevator3.png");
-    private static final ResourceLocation texture4 = new ResourceLocation("chaospersists", "textures/entity/elevator4.png");
-    private static final ResourceLocation texture5 = new ResourceLocation("chaospersists", "textures/entity/elevator5.png");
-    private static final ResourceLocation texture6 = new ResourceLocation("chaospersists", "textures/entity/elevator6.png");
-    private static final ResourceLocation texture7 = new ResourceLocation("chaospersists", "textures/entity/elevator7.png");
-    private static final ResourceLocation texture8 = new ResourceLocation("chaospersists", "textures/entity/elevator8.png");
-    private static final ResourceLocation texture9 = new ResourceLocation("chaospersists", "textures/entity/elevator9.png");
-    private static final ResourceLocation texture10 = new ResourceLocation("chaospersists", "textures/entity/elevator10.png");
 
-    public Elevator(World par1World) {
-        super(par1World);
-        this.setSize(1.25f, 1.0f);
+    public Elevator(EntityType<? extends Elevator> type, Level level) {
+        super(type, level);
         this.setNoGravity(true);
-        // No pathfinding / AI tasks fighting custom hover movement (1.12.2 EntityLiving still ticks AI unless disabled).
-        this.setNoAI(true);
+        this.setNoAi(true);
+        this.setPersistenceRequired();
     }
 
-    public Elevator(World par1World, double par2, double par4, double par6) {
-        this(par1World);
-        this.setPosition(par2, par4 + (double)this.getYOffset(), par6);
-        this.motionX = 0.0;
-        this.motionY = 0.0;
-        this.motionZ = 0.0;
-        this.prevPosX = par2;
-        this.prevPosY = par4;
-        this.prevPosZ = par6;
+    public Elevator(Level level, double x, double y, double z) {
+        this(ChaosPersists.ENTITY_TYPE_ELEVATOR.get(), level);
+        this.moveTo(x, y + this.getMyRidingOffset(), z, 0.0f, 0.0f);
+        this.setDeltaMovement(Vec3.ZERO);
+        this.xo = x;
+        this.yo = y;
+        this.zo = z;
     }
+
+    public static AttributeSupplier.Builder createAttributes() {
+        return LivingEntity.createLivingAttributes()
+                .add(Attributes.MAX_HEALTH, 60.0)
+                .add(Attributes.MOVEMENT_SPEED, 1.3300000429153442)
+                .add(Attributes.ATTACK_DAMAGE, 0.0);
+    }
+
+    @Override
+    public HumanoidArm getMainArm() {
+        return HumanoidArm.RIGHT;
+    }
+
+    @Override
+    public Iterable<ItemStack> getArmorSlots() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public ItemStack getItemBySlot(EquipmentSlot slot) {
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public void setItemSlot(EquipmentSlot slot, ItemStack stack) {}
 
     public ResourceLocation getTexture() {
-        switch (this.getColor()) {
-            case 1: {
-                return texture1;
-            }
-            case 2: {
-                return texture2;
-            }
-            case 3: {
-                return texture3;
-            }
-            case 4: {
-                return texture4;
-            }
-            case 5: {
-                return texture5;
-            }
-            case 6: {
-                return texture6;
-            }
-            case 7: {
-                return texture7;
-            }
-            case 8: {
-                return texture8;
-            }
-            case 9: {
-                return texture9;
-            }
-            case 10: {
-                return texture10;
-            }
-        }
-        return texture1;
+        return switch (this.getColor()) {
+            case 2 -> TEXTURE2;
+            case 3 -> TEXTURE3;
+            case 4 -> TEXTURE4;
+            case 5 -> TEXTURE5;
+            case 6 -> TEXTURE6;
+            case 7 -> TEXTURE7;
+            case 8 -> TEXTURE8;
+            case 9 -> TEXTURE9;
+            case 10 -> TEXTURE10;
+            default -> TEXTURE1;
+        };
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(60.0);
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(1.3300000429153442);
-        this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(0.0);
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(I22, 0);
+        this.entityData.define(I23, 1);
+        this.entityData.define(F24, 0.0f);
+        this.entityData.define(I20, 0);
+        this.entityData.define(I21, 1);
     }
 
-    protected boolean canDespawn() {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return false;
     }
 
+    @Override
     public boolean shouldRiderSit() {
         return false;
     }
 
-    public int getTrackingRange() {
-        return 128;
-    }
-
-    public int getUpdateFrequency() {
-        return 10;
-    }
-
-    public boolean sendsVelocityUpdates() {
+    @Override
+    public boolean isPushable() {
         return true;
     }
 
-    protected void fall(float par1) {
-    }
-
-    protected void updateFallState(double par1, boolean par3) {
-    }
-
-    protected boolean canTriggerWalking() {
-        return false;
-    }
-
-    protected void entityInit() {
-        super.entityInit();
-        this.getDataManager().register(I22, 0);
-        this.getDataManager().register(I23, 1);
-        this.getDataManager().register(F24, Float.valueOf(0.0f));
-        this.getDataManager().register(I20, 0);
-        this.getDataManager().register(I21, 0);
-        this.enablePersistence();
-    }
-
-    public boolean canBePushed() {
-        return true;
-    }
-
-    public double getMountedYOffset() {
+    @Override
+    public double getPassengersRidingOffset() {
         return 0.5;
     }
 
     @Override
-    public boolean canFitPassenger(Entity passenger) {
+    public boolean canAddPassenger(Entity passenger) {
         return this.getPassengers().isEmpty();
     }
 
     @Override
-    public boolean canPassengerSteer() {
-        return true;
-    }
-
-    /**
-     * Vanilla requires this for player movement input ({@code moveForward} / {@code moveStrafing}) to apply while riding
-     * a living entity; otherwise the client/server treat the mount like a non-steerable mob.
-     */
-    @Override
-    public boolean canBeSteered() {
-        return true;
+    public LivingEntity getControllingPassenger() {
+        Entity passenger = this.getFirstPassenger();
+        return passenger instanceof LivingEntity living ? living : null;
     }
 
     @Override
-    public Entity getControllingPassenger() {
-        if (this.getPassengers().isEmpty()) {
-            return null;
-        }
-        Entity passenger = this.getPassengers().get(0);
-        return passenger instanceof EntityLivingBase ? passenger : null;
-    }
-
-    @Override
-    public void updatePassenger(Entity passenger) {
-        if (this.isPassenger(passenger)) {
-            passenger.setPosition(this.posX, this.posY + this.getMountedYOffset() + passenger.getYOffset(), this.posZ);
+    protected void positionRider(Entity passenger, MoveFunction moveFunction) {
+        if (this.hasPassenger(passenger)) {
+            moveFunction.accept(
+                    passenger,
+                    this.getX(),
+                    this.getY() + this.getPassengersRidingOffset() + passenger.getMyRidingOffset(),
+                    this.getZ());
         }
     }
 
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-        boolean p = par1DamageSource.getTrueSource() instanceof EntityPlayer;
+    @Override
+    public void travel(Vec3 travelVector) {
+        if (this.getControllingPassenger() != null) {
+            return;
+        }
+        super.travel(travelVector);
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        boolean p = source.getEntity() instanceof Player;
         if (this.getControllingPassenger() != null && !p) {
             return false;
         }
-        if (par1DamageSource.getDamageType().equals("inWall")) {
+        if (source.getMsgId().equals("inWall")) {
             return false;
         }
-        if (!this.world.isRemote && !this.isDead) {
-            boolean flag;
-            this.setForwardDirection(- this.getForwardDirection());
+        if (!this.level().isClientSide && !this.isRemoved()) {
+            this.setForwardDirection(-this.getForwardDirection());
             this.setTimeSinceHit(10);
-            this.setDamageTaken(this.getDamageTaken() + par2 * 10.0f);
-            boolean bl = flag = par1DamageSource.getTrueSource() instanceof EntityPlayer && ((EntityPlayer)par1DamageSource.getTrueSource()).capabilities.isCreativeMode;
-            if (flag || this.getDamageTaken() > 40.0f) {
+            this.setDamageTaken(this.getDamageTaken() + amount * 10.0f);
+            boolean creative =
+                    source.getEntity() instanceof Player player && player.getAbilities().instabuild;
+            if (creative || this.getDamageTaken() > 40.0f) {
                 if (this.getControllingPassenger() != null) {
-                    this.removePassengers();
+                    this.ejectPassengers();
                 }
-                if (!flag) {
-                    this.dropItem(ChaosPersists.MyElevator, 1);
+                if (!creative && ChaosPersists.MyElevator != null) {
+                    this.spawnAtLocation(ChaosPersists.MyElevator);
                 }
-                this.setDead();
+                this.discard();
             }
             return true;
         }
         return true;
     }
 
-    @SideOnly(value=Side.CLIENT)
-    public void performHurtAnimation() {
-        this.setForwardDirection(- this.getForwardDirection());
+    @Override
+    public void animateHurt(float yaw) {
+        this.setForwardDirection(-this.getForwardDirection());
         this.setTimeSinceHit(10);
         this.setDamageTaken(this.getDamageTaken() * 11.0f);
     }
 
-    public boolean canBeCollidedWith() {
-        return !this.isDead;
-    }
-
-    /**
-     * 1.12.2 uses {@link Entity#setPositionAndRotationDirect} for server→client motion sync; 1.7's
-     * {@code setPositionAndRotation2} is not invoked by the network layer anymore.
-     */
-    @SideOnly(value = Side.CLIENT)
     @Override
-    public void setPositionAndRotationDirect(double x, double y, double z, float yaw, float pitch, int posRotationIncrements, boolean teleport) {
-        this.boatPosRotationIncrements = this.getControllingPassenger() != null ? posRotationIncrements + 8 : 6;
+    @OnlyIn(Dist.CLIENT)
+    public void lerpTo(double x, double y, double z, float yaw, float pitch, int steps, boolean interpolate) {
+        this.boatPosRotationIncrements = this.getControllingPassenger() != null ? steps + 8 : 6;
         this.boatX = x;
         this.boatY = y;
         this.boatZ = z;
         this.boatYaw = yaw;
         this.boatPitch = pitch;
-        this.motionX = this.velocityX;
-        this.motionY = this.velocityY;
-        this.motionZ = this.velocityZ;
-    }
-
-    @SideOnly(value=Side.CLIENT)
-    public void setVelocity(double par1, double par3, double par5) {
-        this.velocityX = this.motionX = par1;
-        this.velocityY = this.motionY = par3;
-        this.velocityZ = this.motionZ = par5;
-    }
-
-    /**
-     * Vanilla copies the rider's {@code moveForward} / {@code moveStrafing} onto the mount inside
-     * {@link EntityLivingBase#onLivingUpdate()} before {@link #travel(float, float, float)}. Skipping
-     * {@code super} while ridden (old 1.7 port) left those fields at 0 on the server, so WASD did nothing.
-     * We suppress default {@code travel} motion and still apply hover physics below.
-     */
-    @Override
-    public void travel(float strafe, float vertical, float forward) {
-        if (this.getControllingPassenger() != null) {
-            return;
-        }
-        super.travel(strafe, vertical, forward);
+        Vec3 m = this.getDeltaMovement();
+        this.velocityX = m.x;
+        this.velocityY = m.y;
+        this.velocityZ = m.z;
     }
 
     @Override
-    public void onLivingUpdate() {
-        if (this.isDead) {
+    @OnlyIn(Dist.CLIENT)
+    public void lerpMotion(double x, double y, double z) {
+        this.velocityX = x;
+        this.velocityY = y;
+        this.velocityZ = z;
+        this.setDeltaMovement(x, y, z);
+    }
+
+    @Override
+    protected void checkFallDamage(double y, boolean onGroundIn, BlockState state, BlockPos pos) {}
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+        return false;
+    }
+
+    @Override
+    protected void updateWalkAnimation(float partialTick) {}
+
+    @Override
+    public void tick() {
+        if (this.isRemoved()) {
             return;
         }
-        super.onLivingUpdate();
+        super.tick();
         int k;
         double d5;
         Block bid;
         int i;
         double d4;
-        List list = null;
-        double velocity = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
-        double d6 = this.rand.nextFloat() * 2.0f - 1.0f;
-        double d7 = (double)(this.rand.nextInt(2) * 2 - 1) * 0.7;
+        double d6;
+        double d7;
+        List<Entity> list = null;
+        Vec3 motion = this.getDeltaMovement();
+        double mx = motion.x;
+        double my = motion.y;
+        double mz = motion.z;
+        double velocity = Math.sqrt(mx * mx + mz * mz);
         double obstruction_factor = 0.0;
         double relative_g = 0.0;
         double max_speed = 0.85;
         double gh = 0.75;
-        int dist = 2;
-        this.isAirBorne = true;
+        this.setNoGravity(true);
         if (this.getTimeSinceHit() > 0) {
             this.setTimeSinceHit(this.getTimeSinceHit() - 1);
         }
         if (this.getDamageTaken() > 0.0f) {
             this.setDamageTaken(this.getDamageTaken() - 1.0f);
         }
-        this.prevPosX = this.posX;
-        this.prevPosY = this.posY;
-        this.prevPosZ = this.posZ;
         if (this.playing > 0) {
             --this.playing;
         }
-        if (this.getControllingPassenger() != null && this.playing == 0 && this.world.rand.nextInt(80) == 1) {
-            this.world.playSound(null, this.posX, this.posY, this.posZ, com.astryxion.chaospersists.core.ChaosSounds.HOVER, net.minecraft.util.SoundCategory.NEUTRAL, 0.45f, 1.0f);
+        if (this.getControllingPassenger() != null
+                && this.playing == 0
+                && this.getRandom().nextInt(80) == 1) {
+            this.level()
+                    .playSound(
+                            null,
+                            this.getX(),
+                            this.getY(),
+                            this.getZ(),
+                            ChaosSounds.HOVER,
+                            SoundSource.NEUTRAL,
+                            0.45f,
+                            1.0f);
             this.playing = 55;
         }
-        if (!this.world.isRemote) {
+        if (!this.level().isClientSide) {
             if (this.exploding > 0) {
                 --this.exploding;
             }
-            if (this.exploding == 0 && velocity > 0.65 && this.world.rand.nextInt(20000) == 1) {
+            if (this.exploding == 0 && velocity > 0.65 && this.getRandom().nextInt(20000) == 1) {
                 this.exploding = 45;
                 this.playing = 50;
             }
@@ -392,109 +338,189 @@ extends EntityLiving {
             this.exploding = this.getExploding();
         }
         if (this.getExploding() > 0 && this.getControllingPassenger() != null) {
-            if (this.world.rand.nextInt(10) == 1) {
-                this.world.playSound(null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_GENERIC_EXPLODE, net.minecraft.util.SoundCategory.NEUTRAL, 0.55f, 0.75f + this.world.rand.nextFloat());
+            if (this.getRandom().nextInt(10) == 1) {
+                this.level()
+                        .playSound(
+                                null,
+                                this.getX(),
+                                this.getY(),
+                                this.getZ(),
+                                SoundEvents.GENERIC_EXPLODE,
+                                SoundSource.NEUTRAL,
+                                0.55f,
+                                0.75f + this.getRandom().nextFloat());
             }
             for (i = 0; i < 15; ++i) {
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.EXPLOSION_NORMAL, (double)((int)(this.posX + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 4.0f))), (double)((int)(this.posY + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 4.0f))), (double)((int)(this.posZ + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 4.0f))), this.motionX, 0.0, this.motionZ);
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.EXPLOSION_LARGE, (double)((int)(this.posX + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 2.0f))), (double)((int)(this.posY + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 2.0f))), (double)((int)(this.posZ + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 2.0f))), this.motionX, 0.0, this.motionZ);
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, (double)((int)(this.posX + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 5.0f))), (double)((int)(this.posY + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 5.0f))), (double)((int)(this.posZ + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 5.0f))), this.motionX, 0.0, this.motionZ);
-                this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_LARGE, (double)((int)(this.posX + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 3.0f))), (double)((int)(this.posY + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 3.0f))), (double)((int)(this.posZ + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 3.0f))), this.motionX, 0.0, this.motionZ);
+                this.level()
+                        .addParticle(
+                                ParticleTypes.EXPLOSION,
+                                (int) (this.getX()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 4.0f)),
+                                (int) (this.getY()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 4.0f)),
+                                (int) (this.getZ()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 4.0f)),
+                                mx,
+                                0.0,
+                                mz);
+                this.level()
+                        .addParticle(
+                                ParticleTypes.EXPLOSION_EMITTER,
+                                (int) (this.getX()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 2.0f)),
+                                (int) (this.getY()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 2.0f)),
+                                (int) (this.getZ()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 2.0f)),
+                                mx,
+                                0.0,
+                                mz);
+                this.level()
+                        .addParticle(
+                                ParticleTypes.SMOKE,
+                                (int) (this.getX()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 5.0f)),
+                                (int) (this.getY()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 5.0f)),
+                                (int) (this.getZ()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 5.0f)),
+                                mx,
+                                0.0,
+                                mz);
+                this.level()
+                        .addParticle(
+                                ParticleTypes.LARGE_SMOKE,
+                                (int) (this.getX()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 3.0f)),
+                                (int) (this.getY()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 3.0f)),
+                                (int) (this.getZ()
+                                        + (double) ((this.getRandom().nextFloat() - this.getRandom().nextFloat()) * 3.0f)),
+                                mx,
+                                0.0,
+                                mz);
             }
         }
-        if (this.world.isRemote) {
+        if (this.level().isClientSide) {
             if (this.getControllingPassenger() == null) {
-                bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)((float)this.posY - (float)gh), (int)this.posZ)).getBlock();
+                bid = this.level()
+                        .getBlockState(new BlockPos((int) this.getX(), (int) ((float) this.getY() - (float) gh), (int) this.getZ()))
+                        .getBlock();
                 if (bid != Blocks.AIR) {
-                    this.motionY += 0.06;
-                    this.posY += 0.07;
+                    my += 0.06;
+                    this.setPos(this.getX(), this.getY() + 0.07, this.getZ());
                     this.boatY += 0.07;
                 } else {
-                    this.motionY -= 0.003;
+                    my -= 0.003;
                 }
             }
-
-            // Mirror 1.7.10-style input sync: ensure the server sees WASD while riding.
-            if (this.getControllingPassenger() instanceof EntityPlayerSP) {
-                EntityPlayerSP pp = (EntityPlayerSP)this.getControllingPassenger();
-                pp.connection.sendPacket(new CPacketPlayer.Rotation(pp.rotationYaw, pp.rotationPitch, pp.onGround));
-                pp.connection.sendPacket(new CPacketInput(pp.moveStrafing, pp.moveForward, pp.movementInput.jump, pp.movementInput.sneak));
+            if (this.getControllingPassenger() instanceof LocalPlayer pp) {
+                pp.connection.send(new ServerboundMovePlayerPacket.Rot(pp.getYRot(), pp.getXRot(), pp.onGround()));
+                pp.connection.send(
+                        new ServerboundPlayerInputPacket(pp.xxa, pp.zza, pp.input.jumping, pp.input.shiftKeyDown));
             }
             if (this.boatPosRotationIncrements > 0) {
-                d4 = this.posX + (this.boatX - this.posX) / (double)this.boatPosRotationIncrements;
-                d5 = this.posY + (this.boatY - this.posY) / (double)this.boatPosRotationIncrements;
-                double d11 = this.posZ + (this.boatZ - this.posZ) / (double)this.boatPosRotationIncrements;
-                this.setPosition(d4, d5, d11);
-                this.rotationPitch = (float)((double)this.rotationPitch + (this.boatPitch - (double)this.rotationPitch) / (double)this.boatPosRotationIncrements);
-                double d10 = MathHelper.wrapDegrees((double)(this.boatYaw - (double)this.rotationYaw));
+                d4 = this.getX() + (this.boatX - this.getX()) / (double) this.boatPosRotationIncrements;
+                d5 = this.getY() + (this.boatY - this.getY()) / (double) this.boatPosRotationIncrements;
+                double d11 = this.getZ() + (this.boatZ - this.getZ()) / (double) this.boatPosRotationIncrements;
+                this.setPos(d4, d5, d11);
+                this.setXRot(
+                        (float)
+                                ((double) this.getXRot()
+                                        + (this.boatPitch - (double) this.getXRot())
+                                                / (double) this.boatPosRotationIncrements));
+                double d10 = Mth.wrapDegrees(this.boatYaw - (double) this.getYRot());
                 if (this.getControllingPassenger() != null) {
-                    d10 = MathHelper.wrapDegrees((double)((double)this.getControllingPassenger().rotationYaw - (double)this.rotationYaw));
+                    d10 = Mth.wrapDegrees(
+                            (double) this.getControllingPassenger().getYRot() - (double) this.getYRot());
                 }
-                this.rotationYaw = (float)((double)this.rotationYaw + d10 / (double)this.boatPosRotationIncrements);
-                this.setRotation(this.rotationYaw, this.rotationPitch);
+                this.setYRot((float) ((double) this.getYRot() + d10 / (double) this.boatPosRotationIncrements));
+                this.setRot(this.getYRot(), this.getXRot());
                 --this.boatPosRotationIncrements;
             } else {
-                d4 = this.posX + this.motionX;
-                d5 = this.posY + this.motionY;
-                double d11 = this.posZ + this.motionZ;
-                this.setPosition(d4, d5, d11);
-                this.motionX *= 0.99;
-                this.motionY *= 0.95;
-                this.motionZ *= 0.99;
+                d4 = this.getX() + mx;
+                d5 = this.getY() + my;
+                double d11 = this.getZ() + mz;
+                this.setPos(d4, d5, d11);
+                mx *= 0.99;
+                my *= 0.95;
+                mz *= 0.99;
             }
+            this.setDeltaMovement(mx, my, mz);
         } else {
             if (this.getControllingPassenger() != null) {
                 gh = 1.25;
             }
-            if ((bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)((float)this.posY - (float)gh), (int)this.posZ)).getBlock()) != Blocks.AIR) {
-                this.motionY += 0.06;
-                this.posY += 0.1;
-                if (bid == Blocks.TALLGRASS && this.getControllingPassenger() != null && this.world.rand.nextInt(200) == 1 && this.world.getGameRules().getBoolean("mobGriefing")) {
-                    this.world.setBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)(this.posY - gh), (int)this.posZ), Blocks.AIR.getDefaultState());
+            bid = this.level()
+                    .getBlockState(new BlockPos((int) this.getX(), (int) ((float) this.getY() - (float) gh), (int) this.getZ()))
+                    .getBlock();
+            if (bid != Blocks.AIR) {
+                my += 0.06;
+                this.setPos(this.getX(), this.getY() + 0.1, this.getZ());
+                if (bid == Blocks.TALL_GRASS
+                        && this.getControllingPassenger() != null
+                        && this.getRandom().nextInt(200) == 1
+                        && this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+                    this.level()
+                            .setBlock(
+                                    new BlockPos((int) this.getX(), (int) (this.getY() - gh), (int) this.getZ()),
+                                    Blocks.AIR.defaultBlockState(),
+                                    2);
                 }
-                if (bid == Blocks.GRASS && this.getControllingPassenger() != null && this.world.rand.nextInt(200) == 1 && this.world.getGameRules().getBoolean("mobGriefing")) {
-                    this.world.setBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)(this.posY - gh), (int)this.posZ), Blocks.DIRT.getDefaultState());
+                if (bid == Blocks.GRASS_BLOCK
+                        && this.getControllingPassenger() != null
+                        && this.getRandom().nextInt(200) == 1
+                        && this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+                    this.level()
+                            .setBlock(
+                                    new BlockPos((int) this.getX(), (int) (this.getY() - gh), (int) this.getZ()),
+                                    Blocks.DIRT.defaultBlockState(),
+                                    2);
                 }
             } else {
-                this.motionY -= 0.01;
+                my -= 0.01;
             }
             if (this.getControllingPassenger() != null) {
                 double rdv;
-                EntityPlayer pp = (EntityPlayer)this.getControllingPassenger();
-                // Let Shift always dismount immediately while riding.
-                if (pp.isSneaking()) {
-                    pp.dismountRidingEntity();
+                Player pp = (Player) this.getControllingPassenger();
+                if (pp.isShiftKeyDown()) {
+                    pp.stopRiding();
+                    this.setDeltaMovement(mx, my, mz);
                     return;
                 }
                 obstruction_factor = 0.0;
-                // IMPORTANT: do not mutate loop bounds inside the condition.
-                // Old logic used: k < (dist += velocity*8), which can grow faster than k and stall the game.
-                int scanDepth = 3 + (int)(Math.max(0.0, velocity) * 8.0);
+                int scanDepth = 3 + (int) (Math.max(0.0, velocity) * 8.0);
                 if (scanDepth > 24) {
                     scanDepth = 24;
                 }
                 for (k = 1; k < scanDepth; ++k) {
                     for (i = 1; i < scanDepth * 2; ++i) {
-                        double dz;
-                        double dx = (double)i * Math.cos(Math.toRadians(this.rotationYaw + 90.0f));
-                        bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)(this.posX + dx), (int)this.posY - k, (int)(this.posZ + (dz = (double)i * Math.sin(Math.toRadians(this.rotationYaw + 90.0f)))))).getBlock();
-                        if (bid == Blocks.AIR) continue;
+                        double dz = (double) i * Math.sin(Math.toRadians(this.getYRot() + 90.0f));
+                        double dx = (double) i * Math.cos(Math.toRadians(this.getYRot() + 90.0f));
+                        bid = this.level()
+                                .getBlockState(
+                                        new BlockPos((int) (this.getX() + dx), (int) this.getY() - k, (int) (this.getZ() + dz)))
+                                .getBlock();
+                        if (bid == Blocks.AIR) {
+                            continue;
+                        }
                         obstruction_factor += 0.05;
                     }
                 }
-                this.motionY += obstruction_factor * 0.11;
-                this.posY += obstruction_factor * 0.11;
-                d4 = this.getControllingPassenger().rotationYaw;
+                my += obstruction_factor * 0.11;
+                this.setPos(this.getX(), this.getY() + obstruction_factor * 0.11, this.getZ());
+                d4 = this.getControllingPassenger().getYRot();
                 d4 %= 360.0;
                 while (d4 < 0.0) {
                     d4 += 360.0;
                 }
-                d5 = this.rotationYaw;
+                d5 = this.getYRot();
                 d5 %= 360.0;
                 while (d5 < 0.0) {
                     d5 += 360.0;
                 }
                 for (relative_g = (d4 - d5) % 180.0; relative_g < 0.0; relative_g += 180.0) {
+                    // 1.12 empty for-loop condition body
                 }
                 if (relative_g > 90.0) {
                     relative_g -= 180.0;
@@ -507,29 +533,25 @@ extends EntityLiving {
                     if (d4 > 0.9) {
                         d4 = 0.9;
                     }
-                    this.rotationYaw = this.getControllingPassenger().rotationYaw + (float)(relative_g * d4);
+                    this.setYRot(this.getControllingPassenger().getYRot() + (float) (relative_g * d4));
                 } else {
-                    this.rotationYaw = this.getControllingPassenger().rotationYaw;
+                    this.setYRot(this.getControllingPassenger().getYRot());
                 }
                 relative_g = Math.abs(relative_g) * velocity;
                 if (relative_g > 50.0) {
                     relative_g = 0.0;
                 }
-                this.rotationPitch = 10.0f * (float)velocity;
-                this.setRotation(this.rotationYaw, this.rotationPitch);
-                double newvelocity = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
+                this.setXRot(10.0f * (float) velocity);
+                this.setRot(this.getYRot(), this.getXRot());
+                double newvelocity = Math.sqrt(mx * mx + mz * mz);
                 if (this.exploding != 0 && (newvelocity -= 0.05) < 0.0) {
                     newvelocity = 0.0;
                 }
-                double rr = Math.atan2(this.getControllingPassenger().motionZ, this.getControllingPassenger().motionX);
-                double rhm = Math.atan2(this.motionZ, this.motionX);
-                double rhdir = Math.toRadians((this.getControllingPassenger().rotationYaw + 90.0f) % 360.0f);
-                double rt = 0.0;
+                double rhm = Math.atan2(mz, mx);
+                double rhdir = Math.toRadians((this.getControllingPassenger().getYRot() + 90.0f) % 360.0f);
                 double pi = 3.1415926545;
                 double deltav = 0.0;
-                // Prefer mounted input copied onto this entity by vanilla riding flow.
-                // Fallback to player input field for compatibility with prior packet sync behavior.
-                float im = Math.abs(this.moveForward) > 0.001f ? this.moveForward : pp.moveForward;
+                float im = Math.abs(this.zza) > 0.001f ? this.zza : pp.zza;
                 if (ChaosPersists.flyup_keystate != 0) {
                     max_speed += 1.0;
                 }
@@ -541,7 +563,7 @@ extends EntityLiving {
                     rdv = 0.0;
                 }
                 if (rdv > 1.5) {
-                    newvelocity = - newvelocity;
+                    newvelocity = -newvelocity;
                 }
                 if (Math.abs(im) > 0.001f) {
                     if (im > 0.0f) {
@@ -557,114 +579,132 @@ extends EntityLiving {
                         if (newvelocity > max_speed) {
                             newvelocity = max_speed;
                         }
-                        this.motionX = Math.cos(Math.toRadians(this.rotationYaw + 90.0f)) * newvelocity;
-                        this.motionZ = Math.sin(Math.toRadians(this.rotationYaw + 90.0f)) * newvelocity;
+                        mx = Math.cos(Math.toRadians(this.getYRot() + 90.0f)) * newvelocity;
+                        mz = Math.sin(Math.toRadians(this.getYRot() + 90.0f)) * newvelocity;
                     } else {
-                        if (newvelocity < - max_speed) {
-                            newvelocity = - max_speed;
+                        if (newvelocity < -max_speed) {
+                            newvelocity = -max_speed;
                         }
-                        newvelocity = - newvelocity;
-                        this.motionX = Math.cos(Math.toRadians(this.rotationYaw + 270.0f)) * newvelocity;
-                        this.motionZ = Math.sin(Math.toRadians(this.rotationYaw + 270.0f)) * newvelocity;
+                        newvelocity = -newvelocity;
+                        mx = Math.cos(Math.toRadians(this.getYRot() + 270.0f)) * newvelocity;
+                        mz = Math.sin(Math.toRadians(this.getYRot() + 270.0f)) * newvelocity;
                     }
                 } else if (newvelocity >= 0.0) {
-                    this.motionX = Math.cos(Math.toRadians(this.rotationYaw + 90.0f)) * newvelocity;
-                    this.motionZ = Math.sin(Math.toRadians(this.rotationYaw + 90.0f)) * newvelocity;
+                    mx = Math.cos(Math.toRadians(this.getYRot() + 90.0f)) * newvelocity;
+                    mz = Math.sin(Math.toRadians(this.getYRot() + 90.0f)) * newvelocity;
                 } else {
-                    this.motionX = Math.cos(Math.toRadians(this.rotationYaw + 270.0f)) * (newvelocity * -1.0);
-                    this.motionZ = Math.sin(Math.toRadians(this.rotationYaw + 270.0f)) * (newvelocity * -1.0);
+                    mx = Math.cos(Math.toRadians(this.getYRot() + 270.0f)) * (newvelocity * -1.0);
+                    mz = Math.sin(Math.toRadians(this.getYRot() + 270.0f)) * (newvelocity * -1.0);
                 }
             } else if (this.getControllingPassenger() == null) {
-                this.motionX = 0.0;
-                this.motionZ = 0.0;
+                mx = 0.0;
+                mz = 0.0;
             }
-            this.move(net.minecraft.entity.MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-            if (this.collidedHorizontally && velocity > 0.75) {
-                this.setDead();
-                int p = this.world.rand.nextInt(10);
+            this.move(MoverType.SELF, new Vec3(mx, my, mz));
+            motion = this.getDeltaMovement();
+            mx = motion.x;
+            my = motion.y;
+            mz = motion.z;
+            velocity = Math.sqrt(mx * mx + mz * mz);
+            if (this.horizontalCollision && velocity > 0.75) {
+                this.discard();
+                int p = this.getRandom().nextInt(10);
                 for (k = 0; k < 6 + p; ++k) {
-                    this.dropItem(Items.STICK, 1);
+                    this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.STICK));
                 }
                 for (k = 0; k < 2; ++k) {
-                    this.dropItem(Items.DIAMOND, 1);
+                    this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.DIAMOND));
                 }
             } else {
-                this.motionX *= 0.98;
-                this.motionY *= 0.94;
-                this.motionZ *= 0.98;
+                mx *= 0.98;
+                my *= 0.94;
+                mz *= 0.98;
             }
-            if ((list = this.world.getEntitiesWithinAABBExcludingEntity((Entity)this, this.getEntityBoundingBox().expand(0.25, 0.0, 0.25))) != null && !list.isEmpty()) {
-                for (int l = 0; l < list.size(); ++l) {
-                    Entity entity = (Entity)list.get(l);
-                    if (entity == this.getControllingPassenger() || !entity.canBePushed() || entity instanceof Girlfriend || entity instanceof Boyfriend) continue;
-                    entity.applyEntityCollision((Entity)this);
+            list = this.level().getEntities(this, this.getBoundingBox().inflate(0.25, 0.0, 0.25));
+            if (!list.isEmpty()) {
+                for (Entity entity : list) {
+                    if (entity == this.getControllingPassenger()
+                            || !entity.isPushable()
+                            || "Girlfriend".equals(entity.getClass().getSimpleName())
+                            || "Boyfriend".equals(entity.getClass().getSimpleName())) {
+                        continue;
+                    }
+                    entity.push(this);
                 }
             }
-            if (this.getControllingPassenger() != null && this.getControllingPassenger().isDead) {
-                this.removePassengers();
+            if (this.getControllingPassenger() != null && !this.getControllingPassenger().isAlive()) {
+                this.ejectPassengers();
             }
+            this.setDeltaMovement(mx, my, mz);
         }
-        // Motion is often ~0 on the client while position still updates (interpolation / packets). Use displacement for trail FX.
-        double horizSpeed = Math.sqrt(
-                (this.posX - this.prevPosX) * (this.posX - this.prevPosX)
-                + (this.posZ - this.prevPosZ) * (this.posZ - this.prevPosZ));
+        double horizSpeed =
+                Math.sqrt(
+                        (this.getX() - this.xo) * (this.getX() - this.xo)
+                                + (this.getZ() - this.zo) * (this.getZ() - this.zo));
         if (horizSpeed > 0.15 && this.getControllingPassenger() != null) {
-            d4 = Math.cos(Math.toRadians(this.rotationYaw + 270.0f));
-            d5 = Math.sin(Math.toRadians(this.rotationYaw + 270.0f));
+            d4 = Math.cos(Math.toRadians(this.getYRot() + 270.0f));
+            d5 = Math.sin(Math.toRadians(this.getYRot() + 270.0f));
             bid = Blocks.AIR;
-            for (i = 1; i < 10 && (bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX, (int)this.posY - i, (int)this.posZ)).getBlock()) == Blocks.AIR; ++i) {
+            for (i = 1; i < 10
+                    && (bid = this.level()
+                                    .getBlockState(new BlockPos((int) this.getX(), (int) this.getY() - i, (int) this.getZ()))
+                                    .getBlock())
+                            == Blocks.AIR;
+                    ++i) {
             }
             int j = 0;
-            while ((double)j < 1.0 + horizSpeed * 10.0) {
+            DustParticleOptions dust = new DustParticleOptions(new Vector3f(1.0f, 0.0f, 0.0f), 1.0f);
+            while ((double) j < 1.0 + horizSpeed * 10.0) {
                 double d9;
                 double d8;
-                d6 = this.rand.nextFloat() * 2.0f - 1.0f;
-                d7 = (double)(this.rand.nextInt(2) * 2 - 1) * 0.7;
-                if (this.rand.nextBoolean()) {
-                    d8 = this.posX - d4 * d6 * 0.8 + d5 * d7;
-                    d9 = this.posZ - d5 * d6 * 0.8 - d4 * d7;
-                    if (this.rand.nextBoolean()) {
-                        this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, d8, this.posY - 0.25, d9, this.motionX, this.motionY, this.motionZ);
+                d6 = this.getRandom().nextFloat() * 2.0f - 1.0f;
+                d7 = (double) (this.getRandom().nextInt(2) * 2 - 1) * 0.7;
+                if (this.getRandom().nextBoolean()) {
+                    d8 = this.getX() - d4 * d6 * 0.8 + d5 * d7;
+                    d9 = this.getZ() - d5 * d6 * 0.8 - d4 * d7;
+                    if (this.getRandom().nextBoolean()) {
+                        this.level().addParticle(ParticleTypes.SMOKE, d8, this.getY() - 0.25, d9, mx, my, mz);
                     } else {
-                        this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.REDSTONE, d8, this.posY - 0.25, d9, this.motionX, this.motionY, this.motionZ);
+                        this.level().addParticle(dust, d8, this.getY() - 0.25, d9, mx, my, mz);
                     }
                 } else {
-                    d8 = this.posX + d4 + d5 * d6 * 0.7;
-                    d9 = this.posZ + d5 - d4 * d6 * 0.7;
-                    if (this.rand.nextBoolean()) {
-                        this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, d8, this.posY - 0.225, d9, this.motionX, this.motionY, this.motionZ);
+                    d8 = this.getX() + d4 + d5 * d6 * 0.7;
+                    d9 = this.getZ() + d5 - d4 * d6 * 0.7;
+                    if (this.getRandom().nextBoolean()) {
+                        this.level().addParticle(ParticleTypes.SMOKE, d8, this.getY() - 0.225, d9, mx, my, mz);
                     } else {
-                        this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.REDSTONE, d8, this.posY - 0.225, d9, this.motionX, this.motionY, this.motionZ);
+                        this.level().addParticle(dust, d8, this.getY() - 0.225, d9, mx, my, mz);
                     }
                 }
-                if (bid == Blocks.WATER || bid == Blocks.FLOWING_WATER) {
+                if (bid == Blocks.WATER) {
                     for (k = 0; k < 5; ++k) {
-                        this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.WATER_SPLASH, this.posX + (double)this.rand.nextFloat(), this.posY - (double)i + 1.25, this.posZ + (double)this.rand.nextFloat(), this.motionX / 2.0, this.motionY + horizSpeed, this.motionZ / 2.0);
+                        this.level()
+                                .addParticle(
+                                        ParticleTypes.SPLASH,
+                                        this.getX() + (double) this.getRandom().nextFloat(),
+                                        this.getY() - (double) i + 1.25,
+                                        this.getZ() + (double) this.getRandom().nextFloat(),
+                                        mx / 2.0,
+                                        my + horizSpeed,
+                                        mz / 2.0);
                     }
                 }
                 ++j;
             }
         }
+        this.clearFire();
     }
 
     @Override
-    public void onUpdate() {
-        super.onUpdate();
-        this.setFire(0);
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("HoverColor", this.getColor());
     }
 
-    public void updateRiderPosition() {
-        if (this.getControllingPassenger() != null) {
-            this.getControllingPassenger().setPosition(this.posX, this.posY + this.getMountedYOffset() + this.getControllingPassenger().getYOffset(), this.posZ);
-        }
-    }
-
-    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {
-        par1NBTTagCompound.setInteger("HoverColor", this.getColor());
-    }
-
-    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound) {
-        this.color = par1NBTTagCompound.getInteger("HoverColor");
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.color = tag.getInt("HoverColor");
         if (this.color < 1) {
             this.color = 1;
         }
@@ -674,74 +714,72 @@ extends EntityLiving {
         this.setColor(this.color);
     }
 
-    public float getShadowSize() {
-        return 0.25f;
-    }
-
     @Override
-    public boolean processInteract(EntityPlayer player, EnumHand hand) {
-        ItemStack stack = player.getHeldItem(hand);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
         if (!stack.isEmpty() && stack.getCount() <= 0) {
-            player.setHeldItem(hand, ItemStack.EMPTY);
+            player.setItemInHand(hand, ItemStack.EMPTY);
             stack = ItemStack.EMPTY;
         }
-        if (!stack.isEmpty() && stack.getItem() == ChaosPersists.MyUltimateSword && player.getDistanceSq(this) < 16.0) {
-            if (!this.world.isRemote) {
+        if (!stack.isEmpty()
+                && stack.getItem() == ChaosPersists.MyUltimateSword
+                && player.distanceToSqr(this) < 16.0) {
+            if (!this.level().isClientSide) {
                 int c = this.getColor() + 1;
                 if (c > 10) {
                     c = 1;
                 }
                 this.setColor(c);
             }
-            return true;
+            return InteractionResult.SUCCESS;
         }
-        if (this.getControllingPassenger() != null && this.getControllingPassenger() instanceof EntityPlayer && this.getControllingPassenger() != player) {
-            return true;
+        if (this.getControllingPassenger() instanceof Player rider
+                && rider != player) {
+            return InteractionResult.SUCCESS;
         }
-        if (!this.world.isRemote) {
+        if (!this.level().isClientSide) {
             player.startRiding(this);
         }
-        return true;
+        return InteractionResult.SUCCESS;
     }
 
     public void setDamageTaken(float f) {
-        this.getDataManager().set(F24, Float.valueOf(f));
+        this.entityData.set(F24, f);
     }
 
     public float getDamageTaken() {
-        return this.getDataManager().get(F24).floatValue();
+        return this.entityData.get(F24);
     }
 
     public void setTimeSinceHit(int par1) {
-        this.getDataManager().set(I22, par1);
+        this.entityData.set(I22, par1);
     }
 
     public int getTimeSinceHit() {
-        return this.getDataManager().get(I22).intValue();
+        return this.entityData.get(I22);
     }
 
     public void setForwardDirection(int par1) {
-        this.getDataManager().set(I23, par1);
+        this.entityData.set(I23, par1);
     }
 
     public int getForwardDirection() {
-        return this.getDataManager().get(I23).intValue();
+        return this.entityData.get(I23);
     }
 
     public void setExploding(int par1) {
-        this.getDataManager().set(I20, par1);
+        this.entityData.set(I20, par1);
     }
 
     public int getExploding() {
-        return this.getDataManager().get(I20).intValue();
+        return this.entityData.get(I20);
     }
 
     public void setColor(int par1) {
-        this.getDataManager().set(I21, par1);
+        this.entityData.set(I21, par1);
     }
 
     public int getColor() {
-        return this.getDataManager().get(I21).intValue();
+        return this.entityData.get(I21);
     }
 }
-

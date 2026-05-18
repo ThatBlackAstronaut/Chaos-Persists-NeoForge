@@ -13,16 +13,16 @@
  *  com.astryxion.chaospersists.OreStats
  *  com.astryxion.chaospersists.RubyBirdDungeon
  *  com.astryxion.chaospersists.Trees
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockChest
- *  net.minecraft.block.BlockGrass
- *  net.minecraft.block.BlockLeaves
- *  net.minecraft.block.BlockLiquid
- *  net.minecraft.block.BlockSand
+ *  com.astryxion.chaospersists.compat.minecraft.block.Block
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockChest
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockGrass
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockLeaves
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockLiquid
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockSand
  *  net.minecraft.entity.Entity
  *  net.minecraft.entity.EntityList
  *  net.minecraft.entity.EntityLiving
- *  net.minecraft.init.Blocks
+ *  com.astryxion.chaospersists.compat.minecraft.init.Blocks
  *  net.minecraft.inventory.IInventory
  *  net.minecraft.item.Item
  *  net.minecraft.tileentity.MobSpawnerBaseLogic
@@ -30,16 +30,17 @@
  *  net.minecraft.tileentity.TileEntityChest
  *  net.minecraft.tileentity.TileEntityMobSpawner
  *  net.minecraft.util.WeightedRandomChestContent
- *  net.minecraft.world.World
- *  net.minecraft.world.WorldProvider
- *  net.minecraft.world.biome.Biome
- *  net.minecraft.world.chunk.Chunk
- *  net.minecraft.world.chunk.IChunkProvider
- *  net.minecraft.world.gen.feature.WorldGenMinable
+ *  com.astryxion.chaospersists.compat.minecraft.world.World
+ *  com.astryxion.chaospersists.compat.minecraft.world.WorldProvider
+ *  com.astryxion.chaospersists.compat.minecraft.world.biome.Biome
+ *  com.astryxion.chaospersists.compat.minecraft.world.chunk.Chunk
+ *  com.astryxion.chaospersists.compat.minecraft.world.chunk.IChunkProvider
+ *  com.astryxion.chaospersists.compat.minecraft.world.gen.feature.WorldGenMinable
  */
 package com.astryxion.chaospersists.core;
 
-import net.minecraftforge.fml.common.IWorldGenerator;
+import com.astryxion.chaospersists.util.MyUtils;
+
 import com.astryxion.chaospersists.world.dimension.structure.BasiliskMaze;
 import com.astryxion.chaospersists.world.dimension.structure.GenericDungeon;
 import com.astryxion.chaospersists.item.ItemAppleSeed;
@@ -51,263 +52,548 @@ import com.astryxion.chaospersists.world.dimension.structure.RubyBirdDungeon;
 import com.astryxion.chaospersists.util.Trees;
 import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import com.astryxion.chaospersists.util.WeightedRandomChestContent;
-import java.util.Random;
+import java.util.ArrayList;
 import java.util.Locale;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockChest;
-import net.minecraft.block.BlockGrass;
-import net.minecraft.block.BlockLeaves;
-import net.minecraft.block.BlockLiquid;
-import net.minecraft.block.BlockSand;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.init.Biomes;
-import net.minecraft.init.Blocks;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.Item;
-import net.minecraft.tileentity.MobSpawnerBaseLogic;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityChest;
-import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldProvider;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.IChunkProvider;
-import net.minecraft.world.gen.IChunkGenerator;
-import net.minecraft.world.gen.feature.WorldGenMinable;
-import net.minecraft.block.state.pattern.BlockMatcher;
-import net.minecraftforge.event.terraingen.DecorateBiomeEvent;
-import net.minecraftforge.fml.common.FMLLog;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import java.util.Queue;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.Holder;
+import net.minecraft.tags.BiomeTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.registries.ForgeRegistries;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public class ChaosWorld
-implements IWorldGenerator {
+public class ChaosWorld {
+    private static final Logger LOGGER = LogManager.getLogger();
     public static int recently_placed = 50;
     private static final boolean DEBUG_NATURAL_DUPLICATOR_SPAWNS = true;
 
-    public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider) {
-        if (world.isRemote) {
+    private record PendingChunkGen(ResourceKey<Level> dimension, int chunkX, int chunkZ) {}
+
+    /** Chunks that loaded before the server main loop; processed on {@link ServerStartedEvent}. */
+    private static final Set<PendingChunkGen> PENDING_CHUNK_GEN = ConcurrentHashMap.newKeySet();
+
+    /** Deferred world-gen so chunk load / save never blocks the server thread for long stretches. */
+    private static final Queue<PendingChunkGen> CHUNK_GEN_QUEUE = new ConcurrentLinkedQueue<>();
+
+    private static final int MAX_CHUNK_GEN_PER_TICK = 1;
+
+    private static final long CHUNK_GEN_TICK_BUDGET_NS = 25_000_000L;
+
+    public void generate(
+            Random random,
+            int chunkX,
+            int chunkZ,
+            Level level,
+            LevelChunk levelChunk,
+            Object chunkGenerator,
+            Object chunkProvider) {
+        if (level.isClientSide()) {
             return;
         }
-        Chunk chunk = world.getChunk(chunkX, chunkZ);
+        LevelChunk chunk =
+                levelChunk != null ? levelChunk : level.getChunk(chunkX, chunkZ);
         if (recently_placed > 0) {
             --recently_placed;
         }
-        if (world.provider.getDimension() == ChaosPersists.getDimension()) {
-            this.generateSurface(world, random, chunkX * 16, chunkZ * 16);
-            if (!this.addHugeTree(world, random, chunkX * 16, chunkZ * 16, chunk)) {
-                if (!this.addAppleTrees(world, random, chunkX * 16, chunkZ * 16, chunk) && !this.addOtherTrees(world, random, chunkX * 16, chunkZ * 16) && recently_placed == 0) {
-                    this.addKingAltar(world, random, chunkX * 16, chunkZ * 16);
+        if (level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())) {
+            this.generateSurface(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
+            if (!this.addHugeTree(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16,
+                    chunk)) {
+                if (!this.addAppleTrees(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16,
+                                chunk)
+                        && !this.addOtherTrees(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16)
+                        && recently_placed == 0) {
+                    this.addKingAltar(
+                            level,
+                            net.minecraft.util.RandomSource.create(random.nextLong()),
+                            chunkX * 16,
+                            chunkZ * 16);
                 }
-                this.addVeggies(world, random, chunkX * 16, chunkZ * 16);
+                this.addVeggies(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()), chunkX * 16, chunkZ * 16);
             }
             boolean rbd = false;
-            rbd = this.addRubyDungeon(world, random, chunkX * 16, chunkZ * 16);
+            rbd = this.addRubyDungeon(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
             if (!rbd) {
-                this.addGenericDungeon(world, random, chunkX * 16, chunkZ * 16);
+                this.addGenericDungeon(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        chunkX * 16,
+                        chunkZ * 16);
             }
             return;
         }
-        if (world.provider.getDimension() == ChaosPersists.getDimension(2)) {
+        if (level.dimension().equals(ChaosPersists.getMiningDimensionKey())) {
             int i;
-            this.generateRuby(world, random, chunkX * 16, chunkZ * 16);
+            int baseX = chunkX * 16;
+            int baseZ = chunkZ * 16;
+            net.minecraft.util.RandomSource chunkOreRandom =
+                    net.minecraft.util.RandomSource.create(random.nextLong());
+            ChaosPersists.Chunker.generateOresInChunk(level, chunkOreRandom, baseX, baseZ, chunk);
+            if (ChaosPersists.LessOre == 0) {
+                ChaosPersists.Chunker.generateOresInChunk(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        baseX,
+                        baseZ,
+                        chunk);
+                ChaosPersists.Chunker.generateOresInChunk(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        baseX,
+                        baseZ,
+                        chunk);
+            }
+            this.generateRuby(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
             if (ChaosPersists.LessOre == 0) {
                 int randPosY;
                 int randPosX;
                 int randPosZ;
-                this.generateRuby(world, random, chunkX * 16, chunkZ * 16);
-                this.generateRuby(world, random, chunkX * 16, chunkZ * 16);
+                net.minecraft.util.RandomSource oreRandom =
+                        net.minecraft.util.RandomSource.create(random.nextLong());
+                this.generateRuby(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        chunkX * 16,
+                        chunkZ * 16);
+                this.generateRuby(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        chunkX * 16,
+                        chunkZ * 16);
                 for (i = 0; i < 45; ++i) {
                     randPosX = chunkX * 16 + random.nextInt(16);
                     randPosY = random.nextInt(128);
                     randPosZ = chunkZ * 16 + random.nextInt(16);
                     if (randPosY >= 50) continue;
-                    new WorldGenMinable(Blocks.LAPIS_ORE.getDefaultState(), 7).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                    ChaosPersists.Chunker.generateBlockOre(
+                            level, oreRandom, randPosX, randPosY, randPosZ, chunk, Blocks.LAPIS_ORE, 7);
                 }
                 for (i = 0; i < 25; ++i) {
                     randPosX = chunkX * 16 + random.nextInt(16);
                     randPosY = random.nextInt(128);
                     randPosZ = chunkZ * 16 + random.nextInt(16);
                     if (randPosY >= 50) continue;
-                    new WorldGenMinable(Blocks.LAPIS_ORE.getDefaultState(), 4).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                    ChaosPersists.Chunker.generateBlockOre(
+                            level, oreRandom, randPosX, randPosY, randPosZ, chunk, Blocks.LAPIS_ORE, 4);
                 }
             }
             if (recently_placed == 0 && random.nextInt(95) == 1) {
                 i = random.nextInt(7);
                 if (i == 0) {
-                    this.addBasiliskMaze(world, random, chunkX * 16, chunkZ * 16);
+                    this.addBasiliskMaze(level, chunkX * 16, chunkZ * 16);
                 }
                 if (i == 1) {
-                    this.addKyuubiDungeon(world, random, chunkX * 16, chunkZ * 16);
+                    this.addKyuubiDungeon(
+                            level,
+                            chunkX * 16,
+                            chunkZ * 16);
                 }
                 if (i == 2) {
-                    this.addBeeHive(world, random, chunkX * 16, chunkZ * 16);
+                    this.addBeeHive(level, chunkX * 16, chunkZ * 16);
                 }
                 if (i == 3) {
-                    this.addShadowDungeon(world, random, chunkX * 16, chunkZ * 16);
+                    this.addShadowDungeon(level, chunkX * 16, chunkZ * 16);
                 }
                 if (i == 4) {
-                    this.addAlienWTF(world, random, chunkX * 16, chunkZ * 16);
+                    this.addAlienWTF(level, chunkX * 16, chunkZ * 16);
                 }
                 if (i == 5) {
-                    this.addEnderKnight(world, random, chunkX * 16, chunkZ * 16);
+                    this.addEnderKnight(level, chunkX * 16, chunkZ * 16);
                 }
                 if (i == 6) {
-                    this.addLeonNest(world, random, chunkX * 16, chunkZ * 16);
+                    this.addLeonNest(level, chunkX * 16, chunkZ * 16);
                 }
             } else {
-                this.addGenericDungeon(world, random, chunkX * 16, chunkZ * 16);
+                this.addGenericDungeon(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        chunkX * 16,
+                        chunkZ * 16);
             }
-            this.addLavaAndWater(world, random, chunkX * 16, chunkZ * 16);
-            this.addAnts(world, random, chunkX * 16, chunkZ * 16, 2);
-            this.addAnts(world, random, chunkX * 16, chunkZ * 16, 2);
-            this.addMosquitos(world, random, chunkX * 16, chunkZ * 16);
-            this.addMosquitos(world, random, chunkX * 16, chunkZ * 16);
-            this.addVeggies(world, random, chunkX * 16, chunkZ * 16);
-            this.addRocks(world, random, chunkX * 16, chunkZ * 16);
+            this.addLavaAndWater(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
+            this.addAnts(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16,
+                    2);
+            this.addAnts(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16,
+                    2);
+            this.addMosquitos(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
+            this.addMosquitos(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
+            this.addVeggies(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()), chunkX * 16, chunkZ * 16);
+            this.exposeMiningStonePlatforms(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
+            this.addRocks(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
             return;
         }
-        if (world.provider.getDimension() == ChaosPersists.getDimension(3)) {
+        if (level.dimension().equals(ChaosPersists.getDimensionKey(3))) {
             if (ChaosPersists.MosquitoEnable != 0) {
-                this.addMosquitos(world, random, chunkX, chunkZ);
+                this.addMosquitos(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        chunkX,
+                        chunkZ);
             }
-            this.addAnts(world, random, chunkX * 16, chunkZ * 16, 4);
-            this.addAppleTrees(world, random, chunkX * 16, chunkZ * 16, chunk);
-            this.addGenericDungeon(world, random, chunkX * 16, chunkZ * 16);
+            this.addAnts(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16,
+                    4);
+            this.addAppleTrees(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16,
+                    chunk);
+            this.addGenericDungeon(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
             if (recently_placed == 0) {
-                this.addDamselInDistress(world, random, chunkX * 16, chunkZ * 16);
+                this.addDamselInDistress(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        chunkX * 16,
+                        chunkZ * 16);
             }
             if (recently_placed == 0) {
-                this.addSpiderHangout(world, random, chunkX * 16, chunkZ * 16);
+                this.addSpiderHangout(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        chunkX * 16,
+                        chunkZ * 16);
             }
             if (recently_placed == 0) {
-                this.addRedAntHangout(world, random, chunkX * 16, chunkZ * 16);
+                this.addRedAntHangout(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        chunkX * 16,
+                        chunkZ * 16);
             }
             return;
         }
-        if (world.provider.getDimension() == ChaosPersists.getDimension(4)) {
+        if (level.dimension().equals(ChaosPersists.getDimensionKey(4))) {
             int i;
-            if (recently_placed == 0 && random.nextInt(100) == 0 && this.D4BigSpaceCheck(world, chunkX * 16, 7, chunkZ * 16)) {
+            if (recently_placed == 0
+                    && random.nextInt(100) == 0
+                    && this.D4BigSpaceCheck(
+                            level, chunkX * 16, 7, chunkZ * 16)) {
                 i = random.nextInt(19);
                 if (i < 3) {
-                    this.addD4Castle(world, random, chunkX * 16, chunkZ * 16);
+                    this.addD4Castle(
+                            level,
+                            net.minecraft.util.RandomSource.create(random.nextLong()),
+                            chunkX * 16,
+                            chunkZ * 16);
                 } else if (i < 7) {
-                    this.addD4GenericDungeon(world, random, chunkX * 16, chunkZ * 16);
+                    this.addD4GenericDungeon(
+                            level,
+                            net.minecraft.util.RandomSource.create(random.nextLong()),
+                            chunkX * 16,
+                            chunkZ * 16);
                 } else {
                     if (i == 7) {
-                        this.addD4EnderCastle(world, random, chunkX * 16, chunkZ * 16);
+                        this.addD4EnderCastle(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                     if (i == 8) {
-                        this.addD4IncaPyramid(world, random, chunkX * 16, chunkZ * 16);
+                        this.addD4IncaPyramid(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                     if (i == 9) {
-                        this.addD4RobotLab(world, random, chunkX * 16, chunkZ * 16);
+                        this.addD4RobotLab(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                     if (i == 10) {
-                        this.addD4Mini(world, random, chunkX * 16, chunkZ * 16);
+                        this.addD4Mini(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                     if (i == 11) {
-                        this.addD4RubyDungeon(world, random, chunkX * 16, chunkZ * 16);
+                        this.addD4RubyDungeon(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                     if (i == 12) {
-                        this.addD4CephadromeAltar(world, random, chunkX * 16, chunkZ * 16);
+                        this.addD4CephadromeAltar(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                     if (i == 13) {
-                        this.addD4Greenhouse(world, random, chunkX * 16, chunkZ * 16);
+                        this.addD4Greenhouse(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                     if (i == 14) {
-                        this.addD4NightmareRookery(world, random, chunkX * 16, chunkZ * 16);
+                        this.addD4NightmareRookery(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                     if (i == 15) {
-                        this.addD4StinkyHouse(world, random, chunkX * 16, chunkZ * 16);
+                        this.addD4StinkyHouse(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                     if (i == 16) {
-                        this.addD4WhiteHouse(world, random, chunkX * 16, chunkZ * 16);
+                        this.addD4WhiteHouse(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                     if (i == 17) {
-                        this.addPumpkin(world, random, chunkX * 16, chunkZ * 16);
+                        this.addPumpkin(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                     if (i == 18) {
-                        this.addD4Rainbow(world, random, chunkX * 16, chunkZ * 16);
+                        this.addD4Rainbow(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
                 }
             }
             if ((i = random.nextInt(300)) == 0) {
-                this.addD4CloudShark(world, random, chunkX * 16, chunkZ * 16);
+                this.addD4CloudShark(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        chunkX * 16,
+                        chunkZ * 16);
             }
-            this.addUnstableAnts(world, random, chunkX * 16, chunkZ * 16);
-            this.addIslands(world, random, chunkX * 16, chunkZ * 16);
-            this.addD4Rocks(world, random, chunkX * 16, chunkZ * 16);
+            this.addUnstableAnts(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
+            this.addIslands(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
+            this.addD4Rocks(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
             return;
         }
-        if (world.provider.getDimension() == ChaosPersists.getDimension(5)) {
-            if (!this.addFairyTree(world, random, chunkX * 16, chunkZ * 16)) {
-                this.addCrystalTermites(world, random, chunkX * 16, chunkZ * 16);
+        if (level.dimension().equals(ChaosPersists.getDimensionKey(5))) {
+            if (!this.addFairyTree(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16)) {
+                this.addCrystalTermites(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        chunkX * 16,
+                        chunkZ * 16);
                 if (recently_placed == 0) {
-                    if (!(this.addRotatorStation(world, random, chunkX * 16, chunkZ * 16) || this.addUrchinSpawner(world, random, chunkX * 16, chunkZ * 16) || this.addCrystalHauntedHouse(world, random, chunkX * 16, chunkZ * 16) || this.addRoundRotator(world, random, chunkX * 16, chunkZ * 16))) {
-                        this.addCrystalBattleTower(world, random, chunkX * 16, chunkZ * 16);
+                    if (!(this.addRotatorStation(level, net.minecraft.util.RandomSource.create(random.nextLong()), chunkX * 16, chunkZ * 16) || this.addUrchinSpawner(level, net.minecraft.util.RandomSource.create(random.nextLong()), chunkX * 16, chunkZ * 16) || this.addCrystalHauntedHouse(level, net.minecraft.util.RandomSource.create(random.nextLong()), chunkX * 16, chunkZ * 16) || this.addRoundRotator(level, net.minecraft.util.RandomSource.create(random.nextLong()), chunkX * 16, chunkZ * 16))) {
+                        this.addCrystalBattleTower(
+                                level,
+                                net.minecraft.util.RandomSource.create(random.nextLong()),
+                                chunkX * 16,
+                                chunkZ * 16);
                     }
-                    this.addIrukandji(world, random, chunkX * 16, chunkZ * 16);
+                    this.addIrukandji(
+                            level,
+                            net.minecraft.util.RandomSource.create(random.nextLong()),
+                            chunkX * 16,
+                            chunkZ * 16);
                 }
             }
-            this.addCrystalChestsAndSpawners(world, random, chunkX * 16, chunkZ * 16);
-            if (world.rand.nextInt(4) == 1) {
-                this.addRocks(world, random, chunkX * 16, chunkZ * 16);
+            this.addCrystalChestsAndSpawners(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
+            if (level.getRandom().nextInt(4) == 1) {
+                this.addRocks(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        chunkX * 16,
+                        chunkZ * 16);
             }
             return;
         }
-        if (world.provider.getDimension() == ChaosPersists.getDimension(6)) {
-            this.addButterfliesAndMoths(world, random, chunkX * 16, chunkZ * 16);
-            this.addVeggies(world, random, chunkX * 16, chunkZ * 16);
-            this.addAnts(world, random, chunkX * 16, chunkZ * 16, 2);
+        if (level.dimension().equals(ChaosPersists.getDimensionKey(6))) {
+            this.addButterfliesAndMoths(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
+            this.addVeggies(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()), chunkX * 16, chunkZ * 16);
+            this.addAnts(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16,
+                    2);
             return;
         }
-        switch (world.provider.getDimension()) {
-            case -1: {
-                this.generateNether(world, random, chunkX * 16, chunkZ * 16);
-                break;
-            }
-            case 0: {
-                this.generateSurface(world, random, chunkX * 16, chunkZ * 16);
-                this.generateOres(world, random, chunkX * 16, chunkZ * 16);
-                break;
-            }
-            case 1: {
-                this.generateEnd(world, random, chunkX * 16, chunkZ * 16);
-                break;
-            }
+        if (level.dimension() == net.minecraft.world.level.Level.NETHER) {
+            this.generateNether(level, random, chunkX * 16, chunkZ * 16, chunk);
+        } else if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+            this.generateSurface(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
+            this.generateOres(level, random, chunkX * 16, chunkZ * 16, chunk);
+        } else if (level.dimension() == net.minecraft.world.level.Level.END) {
+            this.generateEnd(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16);
         }
     }
 
-    private void generateEnd(World world, Random random, int chunkX, int chunkZ) {
-        this.addEndAnts(world, random, chunkX, chunkZ);
-        int i = world.rand.nextInt(4);
+    private void generateEnd(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
+        this.addEndAnts(level, random, chunkX, chunkZ);
+        int i = random.nextInt(4);
         if (i == 0) {
-            this.addEndKnights(world, random, chunkX, chunkZ);
+            this.addEndKnights(level, random, chunkX, chunkZ);
         }
         if (i == 1) {
-            this.addEndReapers(world, random, chunkX, chunkZ);
+            this.addEndReapers(level, random, chunkX, chunkZ);
         }
         if (i == 2) {
-            this.addHospital(world, random, chunkX, chunkZ);
+            this.addHospital(level, random, chunkX, chunkZ);
         }
         if (i == 3) {
-            this.addEnderCastle(world, random, chunkX, chunkZ);
+            this.addEnderCastle(level, random, chunkX, chunkZ);
         }
     }
 
-    private void generateNether(World world, Random random, int chunkX, int chunkZ) {
+    private void generateNether(
+            net.minecraft.world.level.Level level,
+            Random random,
+            int chunkX,
+            int chunkZ,
+            LevelChunk providedChunk) {
+        net.minecraft.world.level.chunk.LevelChunk levelChunk =
+                providedChunk != null
+                        ? providedChunk
+                        : (net.minecraft.world.level.chunk.LevelChunk)
+                                level.getChunk(chunkX / 16, chunkZ / 16);
+        net.minecraft.util.RandomSource oreRandom =
+                net.minecraft.util.RandomSource.create(random.nextLong());
         int i;
         int randPosY;
         int randPosZ;
         int randPosX;
         if (ChaosPersists.MosquitoEnable != 0) {
-            this.addNetherMosquitos(world, random, chunkX, chunkZ);
+            this.addNetherMosquitos(
+                    level, net.minecraft.util.RandomSource.create(random.nextLong()), chunkX, chunkZ);
         }
-        this.addNetherAnts(world, random, chunkX, chunkZ);
+        this.addNetherAnts(level, net.minecraft.util.RandomSource.create(random.nextLong()), chunkX, chunkZ);
         int patchy = 15 + random.nextInt(10);
         if (ChaosPersists.LessOre != 0) {
             patchy /= 3;
@@ -316,7 +602,16 @@ implements IWorldGenerator {
             randPosX = 3 + chunkX + random.nextInt(13);
             randPosY = random.nextInt(108) + 10;
             randPosZ = 3 + chunkZ + random.nextInt(13);
-            new WorldGenMinable(ChaosPersists.MyLavafoamBlock.getDefaultState(), 6, BlockMatcher.forBlock(Blocks.NETHERRACK)).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+            ChaosPersists.Chunker.generateBlockOre(
+                    level,
+                    oreRandom,
+                    randPosX,
+                    randPosY,
+                    randPosZ,
+                    levelChunk,
+                    ChaosPersists.MyLavafoamBlock,
+                    6,
+                    Blocks.NETHERRACK);
         }
         patchy = 5 + random.nextInt(5);
         if (ChaosPersists.LessOre != 0) {
@@ -326,85 +621,192 @@ implements IWorldGenerator {
             randPosX = 3 + chunkX + random.nextInt(13);
             randPosY = random.nextInt(108) + 10;
             randPosZ = 3 + chunkZ + random.nextInt(13);
-            new WorldGenMinable(ChaosPersists.MyOreRubyBlock.getDefaultState(), 2, BlockMatcher.forBlock(Blocks.NETHERRACK)).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+            ChaosPersists.Chunker.generateBlockOre(
+                    level,
+                    oreRandom,
+                    randPosX,
+                    randPosY,
+                    randPosZ,
+                    levelChunk,
+                    ChaosPersists.MyOreRubyBlock,
+                    2,
+                    Blocks.NETHERRACK);
         }
     }
 
-    public void generateSurface(World world, Random random, int chunkX, int chunkZ) {
-        boolean ahh = false;
-        this.addStrawberries(world, random, chunkX, chunkZ);
-        this.addTomatoes(world, random, chunkX, chunkZ);
-        this.addVeggies(world, random, chunkX, chunkZ);
-        this.addButterfliesAndMoths(world, random, chunkX, chunkZ);
-        if (ChaosPersists.MosquitoEnable != 0) {
-            this.addMosquitos(world, random, chunkX, chunkZ);
+    /**
+     * 1.20.1 replacement for {@code GameRegistry.registerWorldGenerator(chaospersistsGen, 10)}.
+     * Never calls {@link Level#getChunk} from inside {@link ChunkEvent.Load} (re-entrant load deadlock).
+     * {@link net.minecraft.server.MinecraftServer#isRunning()} is true during {@code prepareLevels}
+     * (spawn-prep at 0%), so use {@link net.minecraft.server.MinecraftServer#isReady()} and flush on
+     * {@link ServerStartedEvent} instead.
+     */
+    @SubscribeEvent
+    public void onChunkLoadForWorldGen(ChunkEvent.Load event) {
+        if (!event.isNewChunk()) {
+            return;
         }
-        if (ChaosPersists.DisableOverworldDungeons == 0 && world.provider.getDimension() == 0 && recently_placed == 0) {
-            int i = world.rand.nextInt(6);
+        if (!(event.getLevel() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        LevelChunk chunk = (LevelChunk) event.getChunk();
+        if (!serverLevel.getServer().isReady()) {
+            PENDING_CHUNK_GEN.add(
+                    new PendingChunkGen(serverLevel.dimension(), chunk.getPos().x, chunk.getPos().z));
+            return;
+        }
+        CHUNK_GEN_QUEUE.add(
+                new PendingChunkGen(serverLevel.dimension(), chunk.getPos().x, chunk.getPos().z));
+    }
+
+    @SubscribeEvent
+    public void onServerStarted(ServerStartedEvent event) {
+        if (!PENDING_CHUNK_GEN.isEmpty()) {
+            CHUNK_GEN_QUEUE.addAll(PENDING_CHUNK_GEN);
+            PENDING_CHUNK_GEN.clear();
+        }
+    }
+
+    @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent event) {
+        CHUNK_GEN_QUEUE.clear();
+        PENDING_CHUNK_GEN.clear();
+    }
+
+    @SubscribeEvent
+    public void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || CHUNK_GEN_QUEUE.isEmpty()) {
+            return;
+        }
+        MinecraftServer server = event.getServer();
+        if (server == null || !server.isReady()) {
+            return;
+        }
+        long deadline = System.nanoTime() + CHUNK_GEN_TICK_BUDGET_NS;
+        int processed = 0;
+        PendingChunkGen pending;
+        while (processed < MAX_CHUNK_GEN_PER_TICK
+                && System.nanoTime() < deadline
+                && (pending = CHUNK_GEN_QUEUE.poll()) != null) {
+            ServerLevel level = server.getLevel(pending.dimension);
+            if (level == null || !level.hasChunk(pending.chunkX, pending.chunkZ)) {
+                continue;
+            }
+            this.runChunkWorldGen(level, level.getChunk(pending.chunkX, pending.chunkZ));
+            ++processed;
+        }
+    }
+
+    private void runChunkWorldGen(ServerLevel serverLevel, LevelChunk chunk) {
+        int chunkX = chunk.getPos().x;
+        int chunkZ = chunk.getPos().z;
+        Random random = new Random();
+        random.setSeed(serverLevel.getSeed());
+        random.setSeed(random.nextLong() ^ ((long) chunkX << 16) ^ (long) chunkZ);
+        this.generate(random, chunkX, chunkZ, serverLevel, chunk, null, null);
+        this.tryDecorateGrassForCorn(serverLevel, random, chunkX, chunkZ);
+    }
+
+    public void generateSurface(
+            Level level, RandomSource random, int chunkX, int chunkZ) {
+        boolean ahh = false;
+        this.addStrawberries(level, random, chunkX, chunkZ);
+        this.addTomatoes(level, random, chunkX, chunkZ);
+        this.addVeggies(level, random, chunkX, chunkZ);
+        this.addButterfliesAndMoths(level, random, chunkX, chunkZ);
+        if (ChaosPersists.MosquitoEnable != 0) {
+            this.addMosquitos(level, random, chunkX, chunkZ);
+        }
+        if (ChaosPersists.DisableOverworldDungeons == 0
+                && level.dimension() == net.minecraft.world.level.Level.OVERWORLD
+                && recently_placed == 0) {
+            int i = random.nextInt(6);
             if (i == 0) {
-                this.addPlayPool(world, random, chunkX, chunkZ);
+                this.addPlayPool(level, random, chunkX, chunkZ);
             }
             if (i == 1) {
-                this.addWaterDragonLair(world, random, chunkX, chunkZ);
+                this.addWaterDragonLair(level, random, chunkX, chunkZ);
             }
             if (i == 2) {
-                this.addGoldFishBowl(world, random, chunkX, chunkZ);
+                this.addGoldFishBowl(level, random, chunkX, chunkZ);
             }
             if (i == 3) {
-                this.addGirlfriendIsland(world, random, chunkX, chunkZ);
+                this.addGirlfriendIsland(level, random, chunkX, chunkZ);
             }
             if (i == 4) {
-                this.addMonsterIsland(world, random, chunkX, chunkZ);
+                this.addMonsterIsland(level, random, chunkX, chunkZ);
             }
             if (i == 5) {
-                this.addFrogPond(world, random, chunkX, chunkZ);
+                this.addFrogPond(level, random, chunkX, chunkZ);
             }
-            if (!(ahh = this.addANest(world, random, chunkX, chunkZ))) {
-                ahh = this.addHauntedHouse(world, random, chunkX, chunkZ);
-            }
-            if (!ahh) {
-                ahh = this.addLeafMonster(world, random, chunkX, chunkZ);
+            if (!(ahh = this.addANest(level, random, chunkX, chunkZ))) {
+                ahh = this.addHauntedHouse(level, random, chunkX, chunkZ);
             }
             if (!ahh) {
-                ahh = this.addSpitBug(world, random, chunkX, chunkZ);
+                ahh = this.addLeafMonster(level, random, chunkX, chunkZ);
             }
             if (!ahh) {
-                ahh = this.addIgloo(world, random, chunkX, chunkZ);
+                ahh = this.addSpitBug(level, random, chunkX, chunkZ);
             }
             if (!ahh) {
-                ahh = this.addBouncyCastle(world, random, chunkX, chunkZ);
+                ahh = this.addIgloo(level, random, chunkX, chunkZ);
             }
             if (!ahh) {
-                ahh = this.addRubberDuckyPond(world, random, chunkX, chunkZ);
+                ahh = this.addBouncyCastle(level, random, chunkX, chunkZ);
+            }
+            if (!ahh) {
+                ahh = this.addRubberDuckyPond(level, random, chunkX, chunkZ);
             }
         }
-        this.addAnts(world, random, chunkX, chunkZ, 4);
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.RIVER || b == Biomes.EXTREME_HILLS || b == Biomes.DESERT) {
-            this.addRocks(world, random, chunkX, chunkZ);
+        this.addAnts(level, random, chunkX, chunkZ, 4);
+        Holder<Biome> biome = level.getBiome(new BlockPos(chunkX, 0, chunkZ));
+        if (biome.is(Biomes.RIVER) || biome.is(Biomes.WINDSWEPT_HILLS) || biome.is(Biomes.DESERT)) {
+            this.addRocks(level, random, chunkX, chunkZ);
         }
     }
 
-    public void generateRuby(World world, Random random, int chunkX, int chunkZ) {
+    public void generateRuby(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.Ruby_stats.rate <= 0) {
             return;
         }
         int patchy = ChaosPersists.Ruby_stats.rate + random.nextInt(7);
-        block0 : for (int i = 0; i < patchy; ++i) {
+        block0:
+        for (int i = 0; i < patchy; ++i) {
             int randPosX = 3 + chunkX + random.nextInt(10);
             int randPosY = random.nextInt(128);
             int randPosZ = 3 + chunkZ + random.nextInt(10);
-            if (randPosY > ChaosPersists.Ruby_stats.maxdepth || randPosY < ChaosPersists.Ruby_stats.mindepth) continue;
+            if (randPosY > ChaosPersists.Ruby_stats.maxdepth || randPosY < ChaosPersists.Ruby_stats.mindepth) {
+                continue;
+            }
             for (int m = randPosY; m > 5; --m) {
-                Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(randPosX, m, randPosZ)).getBlock();
-                    if (bid != Blocks.LAVA && bid != Blocks.FLOWING_LAVA || (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(randPosX, m - 1, randPosZ)).getBlock()) != Blocks.STONE) continue;
-                ChaosPersists.setBlockFast((World)world, (int)randPosX, (int)(m - 1), (int)randPosZ, (Block)ChaosPersists.MyOreRubyBlock, (int)0, (int)2);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(randPosX, m, randPosZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(randPosX, m - 1, randPosZ);
+                Block bid = level.getBlockState(pos).getBlock();
+                if (!level.getBlockState(pos).is(Blocks.LAVA)
+                        || !level.getBlockState(below).is(Blocks.STONE)) {
+                    continue;
+                }
+                ChaosPersists.setBlockFast(
+                        level, randPosX, m - 1, randPosZ, (Block) ChaosPersists.MyOreRubyBlock, 0, 2);
                 continue block0;
             }
         }
     }
 
-    public void generateOres(World world, Random random, int chunkX, int chunkZ) {
+    public void generateOres(
+            net.minecraft.world.level.Level level,
+            Random random,
+            int chunkX,
+            int chunkZ,
+            net.minecraft.world.level.chunk.LevelChunk providedChunk) {
+        net.minecraft.world.level.chunk.LevelChunk levelChunk =
+                providedChunk != null
+                        ? providedChunk
+                        : (net.minecraft.world.level.chunk.LevelChunk)
+                                level.getChunk(chunkX / 16, chunkZ / 16);
+        net.minecraft.util.RandomSource oreRandom =
+                net.minecraft.util.RandomSource.create(random.nextLong());
         int i;
         int randPosY;
         int randPosZ;
@@ -458,7 +860,15 @@ implements IWorldGenerator {
                             break;
                         }
                     }
-                    new WorldGenMinable(b.getDefaultState(), ChaosPersists.SpawnOres_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                    ChaosPersists.Chunker.generateBlockOre(
+                            level,
+                            oreRandom,
+                            randPosX,
+                            randPosY,
+                            randPosZ,
+                            levelChunk,
+                            b,
+                            ChaosPersists.SpawnOres_stats.clumpsize);
                     continue;
                 }
                 j = random.nextInt(98);
@@ -857,7 +1267,15 @@ implements IWorldGenerator {
                         break;
                     }
                 }
-                new WorldGenMinable(b.getDefaultState(), ChaosPersists.SpawnOres_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                ChaosPersists.Chunker.generateBlockOre(
+                        level,
+                        oreRandom,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        levelChunk,
+                        b,
+                        ChaosPersists.SpawnOres_stats.clumpsize);
             }
         }
         if (ChaosPersists.Uranium_stats.rate > 0) {
@@ -870,7 +1288,15 @@ implements IWorldGenerator {
                 randPosY = random.nextInt(128);
                 randPosZ = 3 + chunkZ + random.nextInt(10);
                 if (randPosY > ChaosPersists.Uranium_stats.maxdepth || randPosY < ChaosPersists.Uranium_stats.mindepth) continue;
-                new WorldGenMinable(ChaosPersists.MyOreUraniumBlock.getDefaultState(), ChaosPersists.Uranium_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                ChaosPersists.Chunker.generateBlockOre(
+                        level,
+                        oreRandom,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        levelChunk,
+                        ChaosPersists.MyOreUraniumBlock,
+                        ChaosPersists.Uranium_stats.clumpsize);
             }
         }
         if (ChaosPersists.Titanium_stats.rate > 0) {
@@ -883,7 +1309,15 @@ implements IWorldGenerator {
                 randPosY = random.nextInt(128);
                 randPosZ = 3 + chunkZ + random.nextInt(10);
                 if (randPosY > ChaosPersists.Titanium_stats.maxdepth || randPosY < ChaosPersists.Titanium_stats.mindepth) continue;
-                new WorldGenMinable(ChaosPersists.MyOreTitaniumBlock.getDefaultState(), ChaosPersists.Titanium_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                ChaosPersists.Chunker.generateBlockOre(
+                        level,
+                        oreRandom,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        levelChunk,
+                        ChaosPersists.MyOreTitaniumBlock,
+                        ChaosPersists.Titanium_stats.clumpsize);
             }
         }
         if (ChaosPersists.Amethyst_stats.rate > 0) {
@@ -896,7 +1330,15 @@ implements IWorldGenerator {
                 randPosY = random.nextInt(128);
                 randPosZ = 3 + chunkZ + random.nextInt(10);
                 if (randPosY > ChaosPersists.Amethyst_stats.maxdepth || randPosY < ChaosPersists.Amethyst_stats.mindepth) continue;
-                new WorldGenMinable(ChaosPersists.MyOreAmethystBlock.getDefaultState(), ChaosPersists.Amethyst_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                ChaosPersists.Chunker.generateBlockOre(
+                        level,
+                        oreRandom,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        levelChunk,
+                        ChaosPersists.MyOreAmethystBlock,
+                        ChaosPersists.Amethyst_stats.clumpsize);
             }
         }
         if (ChaosPersists.Salt_stats.rate > 0) {
@@ -909,7 +1351,15 @@ implements IWorldGenerator {
                 randPosY = random.nextInt(128);
                 randPosZ = 3 + chunkZ + random.nextInt(10);
                 if (randPosY > ChaosPersists.Salt_stats.maxdepth || randPosY < ChaosPersists.Salt_stats.mindepth) continue;
-                new WorldGenMinable(ChaosPersists.MyOreSaltBlock.getDefaultState(), ChaosPersists.Salt_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                ChaosPersists.Chunker.generateBlockOre(
+                        level,
+                        oreRandom,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        levelChunk,
+                        ChaosPersists.MyOreSaltBlock,
+                        ChaosPersists.Salt_stats.clumpsize);
             }
         }
         patchy = 4 + random.nextInt(4);
@@ -921,7 +1371,8 @@ implements IWorldGenerator {
             randPosY = random.nextInt(128);
             randPosZ = 3 + chunkZ + random.nextInt(10);
             if (randPosY > 50 || randPosY < 5) continue;
-            new WorldGenMinable(ChaosPersists.RedAntTroll.getDefaultState(), 4).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+            ChaosPersists.Chunker.generateBlockOre(
+                    level, oreRandom, randPosX, randPosY, randPosZ, levelChunk, ChaosPersists.RedAntTroll, 4);
         }
         patchy = 4 + random.nextInt(4);
         if (ChaosPersists.LessOre != 0) {
@@ -932,7 +1383,8 @@ implements IWorldGenerator {
             randPosY = random.nextInt(128);
             randPosZ = 3 + chunkZ + random.nextInt(10);
             if (randPosY > 50 || randPosY < 5) continue;
-            new WorldGenMinable(ChaosPersists.TermiteTroll.getDefaultState(), 4).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+            ChaosPersists.Chunker.generateBlockOre(
+                    level, oreRandom, randPosX, randPosY, randPosZ, levelChunk, ChaosPersists.TermiteTroll, 4);
         }
         if (ChaosPersists.Ruby_stats.rate > 0) {
             patchy = ChaosPersists.Ruby_stats.rate + random.nextInt(5);
@@ -942,9 +1394,15 @@ implements IWorldGenerator {
                 randPosZ = 3 + chunkZ + random.nextInt(10);
                 if (randPosY > ChaosPersists.Ruby_stats.maxdepth || randPosY < ChaosPersists.Ruby_stats.mindepth) continue;
                 for (int m = randPosY; m > 5; --m) {
-                    Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(randPosX, m, randPosZ)).getBlock();
-                    if (bid != Blocks.LAVA && bid != Blocks.FLOWING_LAVA || (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(randPosX, m - 1, randPosZ)).getBlock()) != Blocks.STONE) continue;
-                    ChaosPersists.setBlockFast((World)world, (int)randPosX, (int)(m - 1), (int)randPosZ, (Block)ChaosPersists.MyOreRubyBlock, (int)0, (int)2);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(randPosX, m, randPosZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(randPosX, m - 1, randPosZ);
+                    Block bid = level.getBlockState(pos).getBlock();
+                    if (!level.getBlockState(pos).is(Blocks.LAVA)
+                            || !level.getBlockState(below).is(Blocks.STONE)) {
+                        continue;
+                    }
+                    ChaosPersists.setBlockFast(
+                            level, randPosX, m - 1, randPosZ, (Block) ChaosPersists.MyOreRubyBlock, 0, 2);
                     continue block116;
                 }
             }
@@ -956,7 +1414,15 @@ implements IWorldGenerator {
                     randPosY = random.nextInt(128);
                     randPosZ = 3 + chunkZ + random.nextInt(10);
                     if (randPosY > ChaosPersists.Diamond_stats.maxdepth || randPosY < ChaosPersists.Diamond_stats.mindepth) continue;
-                    new WorldGenMinable(Blocks.DIAMOND_ORE.getDefaultState(), ChaosPersists.Diamond_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                    ChaosPersists.Chunker.generateBlockOre(
+                            level,
+                            oreRandom,
+                            randPosX,
+                            randPosY,
+                            randPosZ,
+                            levelChunk,
+                            Blocks.DIAMOND_ORE,
+                            ChaosPersists.Diamond_stats.clumpsize);
                 }
             }
             if (ChaosPersists.BlkDiamond_stats.rate > 0) {
@@ -965,7 +1431,15 @@ implements IWorldGenerator {
                     randPosY = random.nextInt(128);
                     randPosZ = 3 + chunkZ + random.nextInt(10);
                     if (randPosY > ChaosPersists.BlkDiamond_stats.maxdepth || randPosY < ChaosPersists.BlkDiamond_stats.mindepth) continue;
-                    new WorldGenMinable(Blocks.DIAMOND_BLOCK.getDefaultState(), ChaosPersists.BlkDiamond_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                    ChaosPersists.Chunker.generateBlockOre(
+                            level,
+                            oreRandom,
+                            randPosX,
+                            randPosY,
+                            randPosZ,
+                            levelChunk,
+                            Blocks.DIAMOND_BLOCK,
+                            ChaosPersists.BlkDiamond_stats.clumpsize);
                 }
             }
             if (ChaosPersists.Emerald_stats.rate > 0) {
@@ -974,7 +1448,15 @@ implements IWorldGenerator {
                     randPosY = random.nextInt(128);
                     randPosZ = 3 + chunkZ + random.nextInt(10);
                     if (randPosY > ChaosPersists.Emerald_stats.maxdepth || randPosY < ChaosPersists.Emerald_stats.mindepth) continue;
-                    new WorldGenMinable(Blocks.EMERALD_ORE.getDefaultState(), ChaosPersists.Emerald_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                    ChaosPersists.Chunker.generateBlockOre(
+                            level,
+                            oreRandom,
+                            randPosX,
+                            randPosY,
+                            randPosZ,
+                            levelChunk,
+                            Blocks.EMERALD_ORE,
+                            ChaosPersists.Emerald_stats.clumpsize);
                 }
             }
             if (ChaosPersists.BlkEmerald_stats.rate > 0) {
@@ -983,7 +1465,15 @@ implements IWorldGenerator {
                     randPosY = random.nextInt(128);
                     randPosZ = 3 + chunkZ + random.nextInt(10);
                     if (randPosY > ChaosPersists.BlkEmerald_stats.maxdepth || randPosY < ChaosPersists.BlkEmerald_stats.mindepth) continue;
-                    new WorldGenMinable(Blocks.EMERALD_BLOCK.getDefaultState(), ChaosPersists.BlkEmerald_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                    ChaosPersists.Chunker.generateBlockOre(
+                            level,
+                            oreRandom,
+                            randPosX,
+                            randPosY,
+                            randPosZ,
+                            levelChunk,
+                            Blocks.EMERALD_BLOCK,
+                            ChaosPersists.BlkEmerald_stats.clumpsize);
                 }
             }
             if (ChaosPersists.Gold_stats.rate > 0) {
@@ -992,7 +1482,15 @@ implements IWorldGenerator {
                     randPosY = random.nextInt(128);
                     randPosZ = 3 + chunkZ + random.nextInt(10);
                     if (randPosY > ChaosPersists.Gold_stats.maxdepth || randPosY < ChaosPersists.Gold_stats.mindepth) continue;
-                    new WorldGenMinable(Blocks.GOLD_ORE.getDefaultState(), ChaosPersists.Gold_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                    ChaosPersists.Chunker.generateBlockOre(
+                            level,
+                            oreRandom,
+                            randPosX,
+                            randPosY,
+                            randPosZ,
+                            levelChunk,
+                            Blocks.GOLD_ORE,
+                            ChaosPersists.Gold_stats.clumpsize);
                 }
             }
             if (ChaosPersists.BlkGold_stats.rate > 0) {
@@ -1001,7 +1499,15 @@ implements IWorldGenerator {
                     randPosY = random.nextInt(128);
                     randPosZ = 3 + chunkZ + random.nextInt(10);
                     if (randPosY > ChaosPersists.BlkGold_stats.maxdepth || randPosY < ChaosPersists.BlkGold_stats.mindepth) continue;
-                    new WorldGenMinable(Blocks.GOLD_BLOCK.getDefaultState(), ChaosPersists.BlkGold_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                    ChaosPersists.Chunker.generateBlockOre(
+                            level,
+                            oreRandom,
+                            randPosX,
+                            randPosY,
+                            randPosZ,
+                            levelChunk,
+                            Blocks.GOLD_BLOCK,
+                            ChaosPersists.BlkGold_stats.clumpsize);
                 }
             }
             if (ChaosPersists.BlkRuby_stats.rate > 0) {
@@ -1010,42 +1516,75 @@ implements IWorldGenerator {
                     randPosY = random.nextInt(128);
                     randPosZ = 3 + chunkZ + random.nextInt(10);
                     if (randPosY > ChaosPersists.BlkRuby_stats.maxdepth || randPosY < ChaosPersists.BlkRuby_stats.mindepth) continue;
-                    new WorldGenMinable(ChaosPersists.MyBlockRubyBlock.getDefaultState(), ChaosPersists.BlkRuby_stats.clumpsize).generate(world, random, new BlockPos(randPosX, randPosY, randPosZ));
+                    ChaosPersists.Chunker.generateBlockOre(
+                            level,
+                            oreRandom,
+                            randPosX,
+                            randPosY,
+                            randPosZ,
+                            levelChunk,
+                            ChaosPersists.MyBlockRubyBlock,
+                            ChaosPersists.BlkRuby_stats.clumpsize);
                 }
             }
         }
     }
 
-    public void addStrawberries(World world, Random random, int chunkX, int chunkZ) {
+    public void addStrawberries(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(20) != 0) {
             return;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (world.provider.getDimension() == ChaosPersists.getDimension() || b == Biomes.FOREST || b == Biomes.FOREST_HILLS || b == Biomes.BIRCH_FOREST_HILLS || b == Biomes.BIRCH_FOREST) {
-            block0 : for (int i = 0; i < 5; ++i) {
+        Holder<Biome> biome = level.getBiome(new BlockPos(chunkX, 0, chunkZ));
+        if (level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
+                || biome.is(Biomes.FOREST)
+                || biome.is(Biomes.WINDSWEPT_FOREST)
+                || biome.is(Biomes.OLD_GROWTH_BIRCH_FOREST)
+                || biome.is(Biomes.BIRCH_FOREST)) {
+            block0:
+            for (int i = 0; i < 5; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                for (int posY = 100; posY > 40 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyStrawberryPlant, (int)0, (int)2);
+                for (int posY = 100; posY > 40; --posY) {
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(pos).isAir()) {
+                        break;
+                    }
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                            .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
+                    ChaosPersists.setBlockFast(
+                            level, posX, posY, posZ, (Block) ChaosPersists.MyStrawberryPlant, 0, 2);
                     continue block0;
                 }
             }
         }
     }
 
-    public boolean addHauntedHouse(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addHauntedHouse(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(285) != 0) {
             return false;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.PLAINS || b == Biomes.TAIGA || b == Biomes.SWAMPLAND) {
+        net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> biomeHolder =
+                level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ));
+        if (biomeHolder.is(net.minecraft.world.level.biome.Biomes.PLAINS)
+                || biomeHolder.is(net.minecraft.world.level.biome.Biomes.TAIGA)
+                || biomeHolder.is(net.minecraft.world.level.biome.Biomes.SWAMP)) {
             for (int i = 0; i < 5; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                for (int posY = 100; posY > 40 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                    ChaosPersists.MyDungeon.makeHauntedHouse(world, posX, posY, posZ);
+                for (int posY = 100; posY > 40; --posY) {
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(pos).isAir()) {
+                        break;
+                    }
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                            .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makeHauntedHouse(level, posX, posY, posZ);
                     recently_placed = 50;
                     return true;
                 }
@@ -1054,21 +1593,34 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addANest(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addANest(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(230) != 0) {
             return false;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.FOREST || b == Biomes.FOREST_HILLS || b == Biomes.JUNGLE || b == Biomes.JUNGLE_HILLS || b == Biomes.BIRCH_FOREST || b == Biomes.BIRCH_FOREST_HILLS) {
+        Holder<Biome> biome = level.getBiome(new BlockPos(chunkX, 0, chunkZ));
+        if (biome.is(Biomes.FOREST)
+                || biome.is(Biomes.WINDSWEPT_FOREST)
+                || biome.is(Biomes.JUNGLE)
+                || biome.is(Biomes.SPARSE_JUNGLE)
+                || biome.is(Biomes.BIRCH_FOREST)
+                || biome.is(Biomes.OLD_GROWTH_BIRCH_FOREST)) {
             for (int i = 0; i < 5; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                for (int posY = 128; posY > 40 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
+                for (int posY = 128; posY > 40; --posY) {
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(pos).isAir()) {
+                        break;
+                    }
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                            .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
                     if (random.nextInt(2) == 0) {
-                        ChaosPersists.MyDungeon.makeSmallBeeHive(world, posX, posY, posZ);
+                        ChaosPersists.MyDungeon.makeSmallBeeHive(level, posX, posY, posZ);
                     } else {
-                        ChaosPersists.MyDungeon.makeMantisHive(world, posX, posY, posZ);
+                        ChaosPersists.MyDungeon.makeMantisHive(level, posX, posY, posZ);
                     }
                     recently_placed = 50;
                     return true;
@@ -1079,22 +1631,28 @@ implements IWorldGenerator {
     }
 
     /**
-     * Official 1.12.2 corn runs on {@link DecorateBiomeEvent.Decorate.EventType#GRASS} with 1% chance (see {@link #onDecorateGrassForCorn}).
+     * Official 1.12.2 corn runs on grass decoration with 1% chance (see {@link #tryDecorateGrassForCorn}).
      */
-    private void placeCornClusters(World world, Random random, int baseX, int baseZ) {
+    private void placeCornClusters(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int baseX, int baseZ) {
         block0:
         for (int j = 0; j < 32; ++j) {
             int posX = baseX + random.nextInt(8) - random.nextInt(8);
             int posZ = baseZ + random.nextInt(8) - random.nextInt(8);
 
-            for (int posY = 100; posY > 40 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                if (world.getBlockState(new BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) {
+            for (int posY = 100; posY > 40; --posY) {
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                if (!level.getBlockState(pos).isAir()) {
+                    break;
+                }
+                if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                        .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
                     continue;
                 }
 
                 boolean is_all_air = true;
                 for (int i = 1; i < 10; ++i) {
-                    if (!world.isAirBlock(new BlockPos(posX, posY + i, posZ))) {
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY + i, posZ)).isAir()) {
                         is_all_air = false;
                         break;
                     }
@@ -1107,122 +1665,175 @@ implements IWorldGenerator {
                 int height = 0;
                 int yCursor = posY;
 
-                while (height < maxHeight && yCursor < 255 && world.isAirBlock(new BlockPos(posX, yCursor, posZ))) {
-                    ChaosPersists.setBlockFast((World)world, posX, yCursor, posZ, (Block)ChaosPersists.MyCornPlant4, 0, 2);
+                while (height < maxHeight
+                        && yCursor < 255
+                        && level.getBlockState(new net.minecraft.core.BlockPos(posX, yCursor, posZ)).isAir()) {
+                    ChaosPersists.setBlockFast(level, posX, yCursor, posZ, (Block) ChaosPersists.MyCornPlant4, 0, 2);
                     height += random.nextInt(5) + 3;
                     ++yCursor;
                 }
 
-                if (yCursor < 255 && world.isAirBlock(new BlockPos(posX, yCursor, posZ))) {
-                    ChaosPersists.setBlockFast((World)world, posX, yCursor, posZ, (Block)ChaosPersists.MyCornPlant1, 0, 2);
+                if (yCursor < 255
+                        && level.getBlockState(new net.minecraft.core.BlockPos(posX, yCursor, posZ)).isAir()) {
+                    ChaosPersists.setBlockFast(level, posX, yCursor, posZ, (Block) ChaosPersists.MyCornPlant1, 0, 2);
                 }
                 continue block0;
             }
         }
     }
 
-    @SubscribeEvent
-    public void onDecorateGrassForCorn(DecorateBiomeEvent.Decorate event) {
-        if (event.getType() != DecorateBiomeEvent.Decorate.EventType.GRASS) {
+    /**
+     * 1.20.1: {@code DecorateBiomeEvent.Decorate} (GRASS, 1% chance) has no Forge equivalent;
+     * invoked from new-chunk world gen with the same odds and column placement as 1.12.2.
+     */
+    private void tryDecorateGrassForCorn(Level level, Random rand, int chunkX, int chunkZ) {
+        if (level.isClientSide()) {
             return;
         }
-        World world = event.getWorld();
-        if (world.isRemote || !world.provider.isSurfaceWorld()) {
+        if (!(level.dimension() == Level.OVERWORLD
+                || level.dimension().equals(ChaosPersists.getUtopiaDimensionKey()))) {
             return;
         }
-        Random rand = event.getRand();
         if (rand.nextDouble() > 0.01D) {
             return;
         }
         int ox = rand.nextInt(16) + 8;
         int oz = rand.nextInt(16) + 8;
-        BlockPos column = event.getPos().add(ox, 0, oz);
-        BlockPos surface = world.getHeight(column);
-        this.placeCornClusters(world, rand, surface.getX(), surface.getZ());
+        int x = chunkX * 16 + ox;
+        int z = chunkZ * 16 + oz;
+        BlockPos surface = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos(x, 0, z));
+        this.placeCornClusters(level, RandomSource.create(rand.nextLong()), surface.getX(), surface.getZ());
     }
 
-    public void addTomatoes(World world, Random random, int chunkX, int chunkZ) {
+    public void addTomatoes(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         boolean is_all_air = true;
         if (random.nextInt(15) != 1) {
             return;
         }
-        block0 : for (int j = 0; j < 8; ++j) {
+        block0:
+        for (int j = 0; j < 8; ++j) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             is_all_air = true;
-            for (int posY = 100; posY > 40 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
+            for (int posY = 100; posY > 40; --posY) {
                 int i;
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                if (!level.getBlockState(pos).isAir()) {
+                    break;
+                }
+                if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                        .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                    continue;
+                }
                 for (i = 1; i < 10; ++i) {
-                    if (world.isAirBlock(new BlockPos(posX, posY + i, posZ))) continue;
+                    if (level.getBlockState(new net.minecraft.core.BlockPos(posX, posY + i, posZ)).isAir()) {
+                        continue;
+                    }
                     is_all_air = false;
                 }
-                if (!is_all_air) continue block0;
-                Biome biome = world.getBiome(new BlockPos(posX, posY, posZ));
-                float temp = biome.getTemperature(new BlockPos(posX, posY, posZ));
-                boolean validBiome = temp > 0.2F && !(biome instanceof net.minecraft.world.biome.BiomeOcean);
-                if ((world.provider.getDimension() == ChaosPersists.getDimension() || world.provider.getDimension() == 0 || world.provider.getDimension() == ChaosPersists.getDimension(2)) && validBiome) {
+                if (!is_all_air) {
+                    continue block0;
+                }
+                Holder<Biome> biomeHolder = level.getBiome(new BlockPos(posX, posY, posZ));
+                float temp = biomeHolder.value().getBaseTemperature();
+                boolean validBiome = temp > 0.2F && !biomeHolder.is(BiomeTags.IS_OCEAN);
+                if ((level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
+                                || level.dimension() == net.minecraft.world.level.Level.OVERWORLD
+                                || level.dimension().equals(ChaosPersists.getMiningDimensionKey()))
+                        && validBiome) {
                     int corn_height = random.nextInt(3);
                     if (++corn_height == 1) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyTomatoPlant1, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(
+                                level, posX, posY, posZ, (Block) ChaosPersists.MyTomatoPlant1, 0, 2);
                     }
                     if (corn_height == 2) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyTomatoPlant2, (int)0, (int)2);
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY + 1), (int)posZ, (Block)ChaosPersists.MyTomatoPlant1, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(
+                                level, posX, posY, posZ, (Block) ChaosPersists.MyTomatoPlant2, 0, 2);
+                        ChaosPersists.setBlockFast(
+                                level, posX, posY + 1, posZ, (Block) ChaosPersists.MyTomatoPlant1, 0, 2);
                     }
-                    if (corn_height <= 2) continue block0;
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyTomatoPlant3, (int)0, (int)2);
+                    if (corn_height <= 2) {
+                        continue block0;
+                    }
+                    ChaosPersists.setBlockFast(
+                            level, posX, posY, posZ, (Block) ChaosPersists.MyTomatoPlant3, 0, 2);
                     for (i = 1; i < corn_height; ++i) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY + i), (int)posZ, (Block)ChaosPersists.MyTomatoPlant4, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(
+                                level, posX, posY + i, posZ, (Block) ChaosPersists.MyTomatoPlant4, 0, 2);
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY + corn_height), (int)posZ, (Block)ChaosPersists.MyTomatoPlant1, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(
+                            level, posX, posY + corn_height, posZ, (Block) ChaosPersists.MyTomatoPlant1, 0, 2);
                     continue block0;
                 }
             }
         }
     }
 
-    public void addButterfliesAndMoths(World world, Random random, int chunkX, int chunkZ) {
+    public void addButterfliesAndMoths(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(10 + ChaosPersists.LessLag * 2) != 0) {
             return;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (world.provider.getDimension() == ChaosPersists.getDimension() || world.provider.getDimension() == ChaosPersists.getDimension(6) || b == Biomes.FOREST || b == Biomes.FOREST_HILLS || b == Biomes.RIVER || b == Biomes.JUNGLE || b == Biomes.JUNGLE_HILLS || b == Biomes.SWAMPLAND || b == Biomes.BIRCH_FOREST || b == Biomes.BIRCH_FOREST_HILLS || b == Biomes.ROOFED_FOREST) {
-            block0 : for (int i = 0; i < 4; ++i) {
+        Holder<Biome> biome = level.getBiome(new BlockPos(chunkX, 0, chunkZ));
+        if (level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
+                || level.dimension().equals(ChaosPersists.getDimensionKey(6))
+                || biome.is(Biomes.FOREST)
+                || biome.is(Biomes.WINDSWEPT_FOREST)
+                || biome.is(Biomes.RIVER)
+                || biome.is(Biomes.JUNGLE)
+                || biome.is(Biomes.SPARSE_JUNGLE)
+                || biome.is(Biomes.SWAMP)
+                || biome.is(Biomes.BIRCH_FOREST)
+                || biome.is(Biomes.OLD_GROWTH_BIRCH_FOREST)
+                || biome.is(Biomes.DARK_FOREST)) {
+            block0:
+            for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                int which = 0;
-                for (int posY = 100; posY > 40 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                    which = random.nextInt(3);
+                for (int posY = 100; posY > 40; --posY) {
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(pos).isAir()) {
+                        break;
+                    }
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                            .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
+                    int which = random.nextInt(3);
                     if (which == 0) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyButterflyPlant, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(
+                                level, posX, posY, posZ, (Block) ChaosPersists.MyButterflyPlant, 0, 2);
                         continue block0;
                     }
                     if (which == 1) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyMothPlant, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(
+                                level, posX, posY, posZ, (Block) ChaosPersists.MyMothPlant, 0, 2);
                         continue block0;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyFireflyPlant, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(
+                            level, posX, posY, posZ, (Block) ChaosPersists.MyFireflyPlant, 0, 2);
                     continue block0;
                 }
             }
         }
     }
 
-    public void addPlayPool(World world, Random random, int chunkX, int chunkZ) {
+    public void addPlayPool(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(350) != 0) {
             return;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.OCEAN) {
+        if (level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ)).is(net.minecraft.world.level.biome.Biomes.OCEAN)) {
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                boolean which = false;
                 for (int posY = 100; posY > 40; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.WATER) continue;
-                    ChaosPersists.MyDungeon.makePlayPool(world, posX, posY, posZ);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                    if (!level.getBlockState(pos).isAir() || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.WATER)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makePlayPool(level, posX, posY, posZ);
                     recently_placed = 50;
                     return;
                 }
@@ -1230,19 +1841,22 @@ implements IWorldGenerator {
         }
     }
 
-    public void addFrogPond(World world, Random random, int chunkX, int chunkZ) {
+    public void addFrogPond(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(350) != 0) {
             return;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.PLAINS) {
+        if (level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ)).is(net.minecraft.world.level.biome.Biomes.PLAINS)) {
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                boolean which = false;
                 for (int posY = 100; posY > 40; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                    ChaosPersists.MyDungeon.makeFrogPond(world, posX, posY - 1, posZ);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                    if (!level.getBlockState(pos).isAir()
+                            || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makeFrogPond(level, posX, posY - 1, posZ);
                     recently_placed = 50;
                     return;
                 }
@@ -1250,19 +1864,22 @@ implements IWorldGenerator {
         }
     }
 
-    public void addGoldFishBowl(World world, Random random, int chunkX, int chunkZ) {
+    public void addGoldFishBowl(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(350) != 0) {
             return;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.OCEAN) {
+        if (level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ)).is(net.minecraft.world.level.biome.Biomes.OCEAN)) {
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                boolean which = false;
                 for (int posY = 100; posY > 40; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.WATER) continue;
-                    ChaosPersists.MyDungeon.makeGoldFishBowl(world, posX, posY - 1, posZ);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                    if (!level.getBlockState(pos).isAir()
+                            || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.WATER)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makeGoldFishBowl(level, posX, posY - 1, posZ);
                     recently_placed = 50;
                     return;
                 }
@@ -1270,19 +1887,22 @@ implements IWorldGenerator {
         }
     }
 
-    public boolean addLeafMonster(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addLeafMonster(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(275) != 0) {
             return false;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.PLAINS) {
+        if (level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ)).is(net.minecraft.world.level.biome.Biomes.PLAINS)) {
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                boolean which = false;
                 for (int posY = 100; posY > 40; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                    ChaosPersists.MyDungeon.makeLeafMonsterDungeon(world, posX, posY, posZ);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                    if (!level.getBlockState(pos).isAir()
+                            || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makeLeafMonsterDungeon(level, posX, posY, posZ);
                     recently_placed = 50;
                     return true;
                 }
@@ -1291,19 +1911,22 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addRubberDuckyPond(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addRubberDuckyPond(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(275) != 0) {
             return false;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.PLAINS) {
+        if (level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ)).is(net.minecraft.world.level.biome.Biomes.PLAINS)) {
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                boolean which = false;
                 for (int posY = 100; posY > 40; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                    ChaosPersists.MyDungeon.makeRubberDuckyPond(world, posX, posY, posZ);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                    if (!level.getBlockState(pos).isAir()
+                            || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makeRubberDuckyPond(level, posX, posY, posZ);
                     recently_placed = 50;
                     return true;
                 }
@@ -1312,19 +1935,22 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addSpitBug(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addSpitBug(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(190) != 0) {
             return false;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.SWAMPLAND) {
+        if (level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ)).is(net.minecraft.world.level.biome.Biomes.SWAMP)) {
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                boolean which = false;
                 for (int posY = 100; posY > 40; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                    ChaosPersists.MyDungeon.makeSpitBugLair(world, posX, posY, posZ);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                    if (!level.getBlockState(pos).isAir()
+                            || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makeSpitBugLair(level, posX, posY, posZ);
                     recently_placed = 50;
                     return true;
                 }
@@ -1333,19 +1959,22 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addIgloo(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addIgloo(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(220) != 0) {
             return false;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.ICE_PLAINS) {
+        if (level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ)).is(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS)) {
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                boolean which = false;
                 for (int posY = 100; posY > 40; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.SNOW) continue;
-                    ChaosPersists.MyDungeon.makeIgloo(world, posX, posY - 2, posZ);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                    if (!level.getBlockState(pos).isAir()
+                            || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.SNOW)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makeIgloo(level, posX, posY - 2, posZ);
                     recently_placed = 50;
                     return true;
                 }
@@ -1354,19 +1983,22 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addBouncyCastle(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addBouncyCastle(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(230) != 0) {
             return false;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.DESERT) {
+        if (level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ)).is(net.minecraft.world.level.biome.Biomes.DESERT)) {
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                boolean which = false;
                 for (int posY = 100; posY > 40; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.SAND) continue;
-                    ChaosPersists.MyDungeon.makeBouncyCastle(world, posX, posY - 1, posZ);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                    if (!level.getBlockState(pos).isAir()
+                            || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.SAND)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makeBouncyCastle(level, posX, posY - 1, posZ);
                     recently_placed = 50;
                     return true;
                 }
@@ -1375,17 +2007,22 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addDamselInDistress(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addDamselInDistress(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(250) != 0) {
             return false;
         }
         for (int i = 0; i < 4; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
-            boolean which = false;
             for (int posY = 100; posY > 40; --posY) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS || !this.quickSpaceCheck(world, posX, posY - 1, posZ)) continue;
-                ChaosPersists.MyDungeon.makeDamselInDistress(world, posX, posY - 1, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)
+                        || !this.quickSpaceCheck(level, posX, posY - 1, posZ)) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeDamselInDistress(level, posX, posY - 1, posZ);
                 recently_placed = 50;
                 return true;
             }
@@ -1393,7 +2030,7 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addSpiderHangout(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addSpiderHangout(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(350) != 0) {
             return false;
         }
@@ -1403,10 +2040,15 @@ implements IWorldGenerator {
         for (int i = 0; i < 4; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
-            boolean which = false;
             for (int posY = 100; posY > 40; --posY) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS || !this.quickSpaceCheck(world, posX, posY - 1, posZ)) continue;
-                ChaosPersists.MyDungeon.makeSpiderHangout(world, posX, posY - 1, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)
+                        || !this.quickSpaceCheck(level, posX, posY - 1, posZ)) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeSpiderHangout(level, posX, posY - 1, posZ);
                 recently_placed = 50;
                 return true;
             }
@@ -1414,17 +2056,22 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addRedAntHangout(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addRedAntHangout(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(250) != 0) {
             return false;
         }
         for (int i = 0; i < 4; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
-            boolean which = false;
             for (int posY = 100; posY > 40; --posY) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS || !this.quickSpaceCheck(world, posX, posY - 1, posZ)) continue;
-                ChaosPersists.MyDungeon.makeRedAntHangout(world, posX, posY - 1, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)
+                        || !this.quickSpaceCheck(level, posX, posY - 1, posZ)) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeRedAntHangout(level, posX, posY - 1, posZ);
                 recently_placed = 50;
                 return true;
             }
@@ -1432,19 +2079,21 @@ implements IWorldGenerator {
         return false;
     }
 
-    public void addWaterDragonLair(World world, Random random, int chunkX, int chunkZ) {
+    public void addWaterDragonLair(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(350) != 0) {
             return;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.OCEAN) {
+        if (level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ)).is(net.minecraft.world.level.biome.Biomes.OCEAN)) {
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                boolean which = false;
                 for (int posY = 100; posY > 40; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.WATER) continue;
-                    ChaosPersists.MyDungeon.makeWaterDragonLair(world, posX, posY - 1, posZ);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                    if (!level.getBlockState(pos).isAir() || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.WATER)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makeWaterDragonLair(level, posX, posY - 1, posZ);
                     recently_placed = 50;
                     return;
                 }
@@ -1452,19 +2101,22 @@ implements IWorldGenerator {
         }
     }
 
-    public void addGirlfriendIsland(World world, Random random, int chunkX, int chunkZ) {
+    public void addGirlfriendIsland(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(300) != 0) {
             return;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.OCEAN) {
+        if (level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ)).is(net.minecraft.world.level.biome.Biomes.OCEAN)) {
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                boolean which = false;
                 for (int posY = 100; posY > 40; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.WATER) continue;
-                    ChaosPersists.MyDungeon.makeGirlfriendIsland(world, posX, posY - 1, posZ);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                    if (!level.getBlockState(pos).isAir()
+                            || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.WATER)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makeGirlfriendIsland(level, posX, posY - 1, posZ);
                     recently_placed = 50;
                     return;
                 }
@@ -1472,19 +2124,22 @@ implements IWorldGenerator {
         }
     }
 
-    public void addMonsterIsland(World world, Random random, int chunkX, int chunkZ) {
+    public void addMonsterIsland(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(300) != 0) {
             return;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (b == Biomes.OCEAN) {
+        if (level.getBiome(new net.minecraft.core.BlockPos(chunkX, 0, chunkZ)).is(net.minecraft.world.level.biome.Biomes.OCEAN)) {
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                boolean which = false;
                 for (int posY = 100; posY > 40; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.WATER) continue;
-                    ChaosPersists.MyDungeon.makeMonsterIsland(world, posX, posY - 1, posZ);
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                    if (!level.getBlockState(pos).isAir()
+                            || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.WATER)) {
+                        continue;
+                    }
+                    ChaosPersists.MyDungeon.makeMonsterIsland(level, posX, posY - 1, posZ);
                     recently_placed = 50;
                     return;
                 }
@@ -1492,62 +2147,102 @@ implements IWorldGenerator {
         }
     }
 
-    public void addMosquitos(World world, Random random, int chunkX, int chunkZ) {
+    public void addMosquitos(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(25 + ChaosPersists.LessLag * 2) != 0) {
             return;
         }
-        if ((world.provider.getDimension() == ChaosPersists.getDimension() || world.provider.getDimension() == ChaosPersists.getDimension(3)) && random.nextInt(3) != 0) {
+        if ((level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
+                        || level.dimension().equals(ChaosPersists.getDimensionKey(3)))
+                && random.nextInt(3) != 0) {
             return;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (world.provider.getDimension() == ChaosPersists.getDimension() || world.provider.getDimension() == ChaosPersists.getDimension(2) || world.provider.getDimension() == ChaosPersists.getDimension(3) || b == Biomes.JUNGLE || b == Biomes.SWAMPLAND) {
-            block0 : for (int i = 0; i < 2; ++i) {
+        Holder<Biome> biome = level.getBiome(new BlockPos(chunkX, 0, chunkZ));
+        if (level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
+                || level.dimension().equals(ChaosPersists.getMiningDimensionKey())
+                || level.dimension().equals(ChaosPersists.getDimensionKey(3))
+                || biome.is(Biomes.JUNGLE)
+                || biome.is(Biomes.SWAMP)) {
+            block0:
+            for (int i = 0; i < 2; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                for (int posY = 100; posY > 40 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyMosquitoPlant, (int)0, (int)2);
+                for (int posY = 100; posY > 40; --posY) {
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(pos).isAir()) {
+                        break;
+                    }
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                            .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
+                    ChaosPersists.setBlockFast(
+                            level, posX, posY, posZ, (Block) ChaosPersists.MyMosquitoPlant, 0, 2);
                     continue block0;
                 }
             }
         }
     }
 
-    public void addNetherMosquitos(World world, Random random, int chunkX, int chunkZ) {
+    public void addNetherMosquitos(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(25) != 0) {
             return;
         }
-        block0 : for (int i = 0; i < 3; ++i) {
+        block0:
+        for (int i = 0; i < 3; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 90; posY > 20; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.NETHERRACK) continue;
-                ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyMosquitoPlant, (int)0, (int)2);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.NETHERRACK)) {
+                    continue;
+                }
+                ChaosPersists.setBlockFast(
+                        level, posX, posY, posZ, (Block) ChaosPersists.MyMosquitoPlant, 0, 2);
                 continue block0;
             }
         }
     }
 
-    public void addNetherAnts(World world, Random random, int chunkX, int chunkZ) {
+    public void addNetherAnts(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.RedAntEnable == 0) {
             return;
         }
         if (random.nextInt(25) != 0) {
             return;
         }
-        block0 : for (int i = 0; i < 3; ++i) {
+        block0:
+        for (int i = 0; i < 3; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 90; posY > 20; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.NETHERRACK) continue;
-                ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 1), (int)posZ, (Block)ChaosPersists.MyRedAntBlock, (int)0, (int)2);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.NETHERRACK)) {
+                    continue;
+                }
+                ChaosPersists.setBlockFast(
+                        level, posX, posY - 1, posZ, (Block) ChaosPersists.MyRedAntBlock, 0, 2);
                 continue block0;
             }
         }
     }
 
-    public void addAnts(World world, Random random, int chunkX, int chunkZ, int redfreq) {
-        if (ChaosPersists.RedAntEnable == 0 && ChaosPersists.BlackAntEnable == 0 && ChaosPersists.RainbowAntEnable == 0 && ChaosPersists.UnstableAntEnable == 0) {
+    public void addAnts(
+            net.minecraft.world.level.Level level,
+            net.minecraft.util.RandomSource random,
+            int chunkX,
+            int chunkZ,
+            int redfreq) {
+        if (ChaosPersists.RedAntEnable == 0
+                && ChaosPersists.BlackAntEnable == 0
+                && ChaosPersists.RainbowAntEnable == 0
+                && ChaosPersists.UnstableAntEnable == 0) {
             return;
         }
         if (redfreq < 2) {
@@ -1556,37 +2251,55 @@ implements IWorldGenerator {
         if (random.nextInt(30 + ChaosPersists.LessLag * 4) != 0) {
             return;
         }
-        block0 : for (int i = 0; i < 4; ++i) {
+        block0:
+        for (int i = 0; i < 4; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
-            for (int posY = 100; posY > 40 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
+            for (int posY = 100; posY > 40; --posY) {
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                if (!level.getBlockState(pos).isAir()) {
+                    break;
+                }
+                if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                        .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                    continue;
+                }
                 if (random.nextInt(redfreq) == 0) {
                     int which = random.nextInt(4);
                     if (which == 0 && ChaosPersists.RedAntEnable != 0) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 1), (int)posZ, (Block)ChaosPersists.MyRedAntBlock, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(
+                                level, posX, posY - 1, posZ, (Block) ChaosPersists.MyRedAntBlock, 0, 2);
                     }
                     if (which == 1 && ChaosPersists.RainbowAntEnable != 0) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 1), (int)posZ, (Block)ChaosPersists.MyRainbowAntBlock, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(
+                                level, posX, posY - 1, posZ, (Block) ChaosPersists.MyRainbowAntBlock, 0, 2);
                     }
                     if (which == 2 && ChaosPersists.UnstableAntEnable != 0) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 1), (int)posZ, (Block)ChaosPersists.MyUnstableAntBlock, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(
+                                level, posX, posY - 1, posZ, (Block) ChaosPersists.MyUnstableAntBlock, 0, 2);
                     }
-                    if (which != 3 || ChaosPersists.TermiteEnable == 0) continue block0;
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 1), (int)posZ, (Block)ChaosPersists.TermiteBlock, (int)0, (int)2);
+                    if (which != 3 || ChaosPersists.TermiteEnable == 0) {
+                        continue block0;
+                    }
+                    ChaosPersists.setBlockFast(
+                            level, posX, posY - 1, posZ, (Block) ChaosPersists.TermiteBlock, 0, 2);
                     continue block0;
                 }
-                if (ChaosPersists.BlackAntEnable == 0) continue block0;
-                ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 1), (int)posZ, (Block)ChaosPersists.MyAntBlock, (int)0, (int)2);
+                if (ChaosPersists.BlackAntEnable == 0) {
+                    continue block0;
+                }
+                ChaosPersists.setBlockFast(level, posX, posY - 1, posZ, (Block) ChaosPersists.MyAntBlock, 0, 2);
                 continue block0;
             }
         }
     }
 
-    public void addEndAnts(World world, Random random, int chunkX, int chunkZ) {
+    public void addEndAnts(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
     }
 
-    public void addEndKnights(World world, Random random, int chunkX, int chunkZ) {
+    public void addEndKnights(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(25) != 0) {
             return;
         }
@@ -1594,14 +2307,20 @@ implements IWorldGenerator {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 90; posY > 10; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.END_STONE || !this.quickSpaceCheck(world, posX, posY, posZ)) continue;
-                ChaosPersists.MyDungeon.makeEnderKnightDungeon(world, posX, posY, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.END_STONE)
+                        || !this.quickSpaceCheck(level, posX, posY, posZ)) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeEnderKnightDungeon(level, posX, posY, posZ);
                 return;
             }
         }
     }
 
-    public void addEndReapers(World world, Random random, int chunkX, int chunkZ) {
+    public void addEndReapers(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(25) != 0) {
             return;
         }
@@ -1609,14 +2328,20 @@ implements IWorldGenerator {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 90; posY > 10; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.END_STONE || !this.quickSpaceCheck(world, posX, posY, posZ)) continue;
-                ChaosPersists.MyDungeon.makeEnderReaperGraveyard(world, posX, posY, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.END_STONE)
+                        || !this.quickSpaceCheck(level, posX, posY, posZ)) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeEnderReaperGraveyard(level, posX, posY, posZ);
                 return;
             }
         }
     }
 
-    public void addHospital(World world, Random random, int chunkX, int chunkZ) {
+    public void addHospital(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(25) != 0) {
             return;
         }
@@ -1624,14 +2349,20 @@ implements IWorldGenerator {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 90; posY > 10; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.END_STONE || !this.quickSpaceCheck(world, posX, posY, posZ)) continue;
-                ChaosPersists.MyDungeon.makeEnderDragonHospital(world, posX, posY, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.END_STONE)
+                        || !this.quickSpaceCheck(level, posX, posY, posZ)) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeEnderDragonHospital(level, posX, posY, posZ);
                 return;
             }
         }
     }
 
-    public void addEnderCastle(World world, Random random, int chunkX, int chunkZ) {
+    public void addEnderCastle(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(50) != 0) {
             return;
         }
@@ -1639,62 +2370,92 @@ implements IWorldGenerator {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 90; posY > 10; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.END_STONE || !this.quickBigSpaceCheck(world, posX, posY, posZ)) continue;
-                ChaosPersists.MyDungeon.makeEnderCastle(world, posX, posY, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.END_STONE)
+                        || !this.quickBigSpaceCheck(level, posX, posY, posZ)) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeEnderCastle(level, posX, posY, posZ);
                 return;
             }
         }
     }
 
-    public void addUnstableAnts(World world, Random random, int chunkX, int chunkZ) {
+    public void addUnstableAnts(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.UnstableAntEnable == 0) {
             return;
         }
         if (random.nextInt(30) != 0) {
             return;
         }
-        block0 : for (int i = 0; i < 3; ++i) {
+        block0:
+        for (int i = 0; i < 3; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
-            for (int posY = 20; posY > 2 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 1), (int)posZ, (Block)ChaosPersists.MyUnstableAntBlock, (int)0, (int)2);
+            for (int posY = 20; posY > 2; --posY) {
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                if (!level.getBlockState(pos).isAir()) {
+                    break;
+                }
+                if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                        .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                    continue;
+                }
+                ChaosPersists.setBlockFast(
+                        level, posX, posY - 1, posZ, (Block) ChaosPersists.MyUnstableAntBlock, 0, 2);
                 continue block0;
             }
         }
     }
 
-    public void addCrystalTermites(World world, Random random, int chunkX, int chunkZ) {
+    public void addCrystalTermites(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.TermiteEnable == 0) {
             return;
         }
         if (random.nextInt(40) != 0) {
             return;
         }
-        block0 : for (int i = 0; i < 3; ++i) {
+        block0:
+        for (int i = 0; i < 3; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 100; posY > 50; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != ChaosPersists.CrystalGrass) continue;
-                ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 1), (int)posZ, (Block)ChaosPersists.CrystalTermiteBlock, (int)0, (int)2);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || level.getBlockState(below).getBlock() != ChaosPersists.CrystalGrass) {
+                    continue;
+                }
+                ChaosPersists.setBlockFast(
+                        level, posX, posY - 1, posZ, (Block) ChaosPersists.CrystalTermiteBlock, 0, 2);
                 continue block0;
             }
         }
     }
 
-    public boolean addRotatorStation(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addRotatorStation(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.RotatorEnable == 0) {
             return false;
         }
         if (random.nextInt(150) != 0) {
             return false;
         }
+        net.minecraft.world.level.block.Block crystalGrass =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalGrass;
         for (int i = 0; i < 3; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 100; posY > 50; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != ChaosPersists.CrystalGrass) continue;
-                ChaosPersists.MyDungeon.makeRotatorStation(world, posX, posY, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir() || !level.getBlockState(below).is(crystalGrass)) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeRotatorStation(level, posX, posY, posZ);
                 recently_placed = 50;
                 return true;
             }
@@ -1702,19 +2463,25 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addRoundRotator(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addRoundRotator(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.RotatorEnable == 0) {
             return false;
         }
         if (random.nextInt(150) != 0) {
             return false;
         }
+        net.minecraft.world.level.block.Block crystalGrass =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalGrass;
         for (int i = 0; i < 3; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 100; posY > 50; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != ChaosPersists.CrystalGrass) continue;
-                ChaosPersists.MyDungeon.makeRoundRotator(world, posX, posY, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir() || !level.getBlockState(below).is(crystalGrass)) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeRoundRotator(level, posX, posY, posZ);
                 recently_placed = 50;
                 return true;
             }
@@ -1722,19 +2489,25 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addUrchinSpawner(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addUrchinSpawner(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.UrchinEnable == 0) {
             return false;
         }
         if (random.nextInt(180) != 0) {
             return false;
         }
+        net.minecraft.world.level.block.Block crystalGrass =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalGrass;
         for (int i = 0; i < 3; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 100; posY > 50; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != ChaosPersists.CrystalGrass) continue;
-                ChaosPersists.MyDungeon.makeUrchinSpawner(world, posX, posY, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir() || !level.getBlockState(below).is(crystalGrass)) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeUrchinSpawner(level, posX, posY, posZ);
                 recently_placed = 50;
                 return true;
             }
@@ -1742,16 +2515,23 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addCrystalHauntedHouse(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addCrystalHauntedHouse(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(230) != 0) {
             return false;
         }
+        net.minecraft.world.level.block.Block crystalGrass =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalGrass;
         for (int i = 0; i < 3; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 100; posY > 50; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != ChaosPersists.CrystalGrass) continue;
-                ChaosPersists.MyDungeon.makeCrystalHauntedHouse(world, posX, posY, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(below).is(crystalGrass)) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeCrystalHauntedHouse(level, posX, posY, posZ);
                 recently_placed = 50;
                 return true;
             }
@@ -1759,16 +2539,23 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addCrystalBattleTower(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addCrystalBattleTower(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(280) != 0) {
             return false;
         }
+        net.minecraft.world.level.block.Block crystalGrass =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalGrass;
         for (int i = 0; i < 3; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 100; posY > 50; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != ChaosPersists.CrystalGrass) continue;
-                ChaosPersists.MyDungeon.makeCrystalBattleTower(world, posX, posY, posZ);
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || level.getBlockState(below).getBlock() != crystalGrass) {
+                    continue;
+                }
+                ChaosPersists.MyDungeon.makeCrystalBattleTower(level, posX, posY, posZ);
                 recently_placed = 50;
                 return true;
             }
@@ -1776,7 +2563,8 @@ implements IWorldGenerator {
         return false;
     }
 
-    public void addIrukandji(World world, Random random, int chunkX, int chunkZ) {
+    public void addIrukandji(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.IrukandjiEnable == 0) {
             return;
         }
@@ -1787,90 +2575,142 @@ implements IWorldGenerator {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
             for (int posY = 100; posY > 50; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.WATER) continue;
-                ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)Blocks.MOB_SPAWNER, (int)0, (int)2);
-                TileEntityMobSpawner tileentitymobspawner = (TileEntityMobSpawner)world.getTileEntity(new BlockPos(posX, posY, posZ));
-                if (tileentitymobspawner != null) {
-                    tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "irukandji"));
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(below).is(net.minecraft.world.level.block.Blocks.WATER)) {
+                    continue;
                 }
+                this.placeChaosWorldSpawner(level, posX, posY, posZ, "irukandji");
                 return;
             }
         }
     }
 
-    public void addCrystalChestsAndSpawners(World world, Random random, int chunkX, int chunkZ) {
-        Block bid = Blocks.AIR;
+    public void addCrystalChestsAndSpawners(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         for (int i = 0; i < 3; ++i) {
-            int posY;
-            int posZ;
             int posX = 1 + chunkX + random.nextInt(14);
-            posY = 25;
-            posZ = 1 + chunkZ + random.nextInt(14);
-            if (!world.isAirBlock(new BlockPos(posX, posY, posZ))) continue;
-            bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.AIR) break;
-            bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + 1, posY, posZ)).getBlock();
-            if (bid == Blocks.AIR) {
-                this.addCrystalChest(world, posX, posY, posZ, 5);
+            int posY = 25;
+            int posZ = 1 + chunkZ + random.nextInt(14);
+            net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+            if (!level.getBlockState(pos).isAir()) {
+                continue;
+            }
+            if (level.getBlockState(new net.minecraft.core.BlockPos(posX + 1, posY, posZ)).isAir()) {
+                this.addCrystalChest(level, random, posX, posY, posZ, 5);
                 break;
             }
-            bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX - 1, posY, posZ)).getBlock();
-            if (bid == Blocks.AIR) {
-                this.addCrystalChest(world, posX, posY, posZ, 4);
+            if (level.getBlockState(new net.minecraft.core.BlockPos(posX - 1, posY, posZ)).isAir()) {
+                this.addCrystalChest(level, random, posX, posY, posZ, 4);
                 break;
             }
-            bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ + 1)).getBlock();
-            if (bid == Blocks.AIR) {
-                this.addCrystalChest(world, posX, posY, posZ, 2);
+            if (level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ + 1)).isAir()) {
+                this.addCrystalChest(level, random, posX, posY, posZ, 2);
                 break;
             }
-            bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ - 1)).getBlock();
-            if (bid != Blocks.AIR) break;
-            this.addCrystalChest(world, posX, posY, posZ, 3);
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ - 1)).isAir()) {
+                break;
+            }
+            this.addCrystalChest(level, random, posX, posY, posZ, 3);
             break;
         }
     }
 
-    public void addCrystalChest(World world, int x, int y, int z, int dir) {
-        int i = world.rand.nextInt(3);
+    public void addCrystalChest(
+            net.minecraft.world.level.Level level,
+            net.minecraft.util.RandomSource random,
+            int x,
+            int y,
+            int z,
+            int dir) {
+        int i = random.nextInt(3);
         if (i == 0) {
-            ChaosPersists.setBlockFast((World)world, (int)x, (int)y, (int)z, (Block)Blocks.CHEST, (int)0, (int)2);
-            world.setBlockState(new net.minecraft.util.math.BlockPos(x, y, z), world.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)).getBlock().getStateFromMeta(dir), 3);
-            TileEntityChest chest = (TileEntityChest)world.getTileEntity(new BlockPos(x, y, z));
-            if (chest != null) {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])Trees.CrystalChestContentsList, (IInventory)chest, (int)(1 + world.rand.nextInt(3)));
+            net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
+            level.setBlock(
+                    pos,
+                    net.minecraft.world.level.block.Blocks.CHEST
+                            .defaultBlockState()
+                            .setValue(
+                                    net.minecraft.world.level.block.ChestBlock.FACING,
+                                    this.crystalChestFacingFromLegacyMeta(dir)),
+                    3);
+            net.minecraft.world.level.block.entity.BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
+                WeightedRandomChestContent.generateChestContents(
+                        random,
+                        Trees.CrystalChestContentsList,
+                        chest,
+                        1 + random.nextInt(3));
             }
         } else {
-            ChaosPersists.setBlockFast((World)world, (int)x, (int)y, (int)z, (Block)Blocks.MOB_SPAWNER, (int)0, (int)2);
-            TileEntityMobSpawner tileentitymobspawner = (TileEntityMobSpawner)world.getTileEntity(new BlockPos(x, y, z));
-            if (tileentitymobspawner != null) {
-                int t = world.rand.nextInt(2);
-                if (t == 0) {
-                    tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "dungeon_beast"));
-                }
-                if (t == 1) {
-                    tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rat"));
-                }
+            int t = random.nextInt(2);
+            if (t == 0) {
+                this.placeChaosWorldSpawner(level, x, y, z, "dungeon_beast");
+            }
+            if (t == 1) {
+                this.placeChaosWorldSpawner(level, x, y, z, "rat");
             }
         }
     }
 
-    public void addIslands(World world, Random random, int chunkX, int chunkZ) {
+    private static net.minecraft.core.Direction crystalChestFacingFromLegacyMeta(int meta) {
+        return switch (meta) {
+            case 2 -> net.minecraft.core.Direction.NORTH;
+            case 3 -> net.minecraft.core.Direction.SOUTH;
+            case 4 -> net.minecraft.core.Direction.WEST;
+            case 5 -> net.minecraft.core.Direction.EAST;
+            default -> net.minecraft.core.Direction.NORTH;
+        };
+    }
+
+    private void placeChaosWorldSpawner(
+            net.minecraft.world.level.Level level, int x, int y, int z, String mobPath) {
+        net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
+        ChaosPersists.setBlockFast(level, x, y, z, net.minecraft.world.level.block.Blocks.SPAWNER, 0, 2);
+        net.minecraft.world.level.block.entity.BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof net.minecraft.world.level.block.entity.SpawnerBlockEntity spawner) {
+            net.minecraft.resources.ResourceLocation id =
+                    SpawnerFixHelper.normalizeSpawnerEntityId(
+                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                                    "chaospersists", mobPath));
+            net.minecraft.world.entity.EntityType<?> type =
+                    net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(id);
+            if (type != null) {
+                spawner.setEntityId(type, level.getRandom());
+            }
+        }
+    }
+
+    public void addIslands(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         int posX = 2 + chunkX + random.nextInt(12);
         int posZ = 2 + chunkZ + random.nextInt(12);
         if (random.nextInt(10 + ChaosPersists.LessLag * 2) != 1) {
             return;
         }
-        for (int posY = 20; posY > 2 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-            if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-            ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyIslandBlock, (int)0, (int)2);
+        for (int posY = 20; posY > 2; --posY) {
+            net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+            if (!level.getBlockState(pos).isAir()) {
+                break;
+            }
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
+            ChaosPersists.setBlockFast(level, posX, posY, posZ, (Block) ChaosPersists.MyIslandBlock, 0, 2);
             // 1.7.10: island blocks used random block ticks (setTickRandomly), so growth spread over time.
             // Do not scheduleUpdate here — that made every new chunk fire islands together and tank TPS.
             break;
         }
     }
 
-    public boolean addAppleTrees(World world, Random random, int chunkX, int chunkZ, Chunk chunk) {
+    public boolean addAppleTrees(
+            net.minecraft.world.level.Level level,
+            net.minecraft.util.RandomSource random,
+            int chunkX,
+            int chunkZ,
+            LevelChunk chunk) {
         int freq = Math.abs(chunkX / 16) + Math.abs(chunkZ / 16);
         int howmany = 2;
         int which = 0;
@@ -1886,20 +2726,28 @@ implements IWorldGenerator {
         if (ChaosPersists.LessLag == 2 && (howmany /= 4) < 1) {
             return false;
         }
-        block0 : for (int i = 0; i < howmany; ++i) {
+        block0:
+        for (int i = 0; i < howmany; ++i) {
             int posX = 2 + chunkX + random.nextInt(12);
             int posZ = 2 + chunkZ + random.nextInt(12);
-            for (int posY = 100; posY > 50 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                ItemAppleSeed a = (ItemAppleSeed)ChaosPersists.MyAppleSeed;
+            for (int posY = 100; posY > 50; --posY) {
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                if (!level.getBlockState(pos).isAir()) {
+                    break;
+                }
+                if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                        .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                    continue;
+                }
+                ItemAppleSeed a = (ItemAppleSeed) ChaosPersists.MyAppleSeed;
                 if (which < 8) {
-                    a.makeTree(world, posX, posY - 1, posZ, ChaosPersists.MyAppleLeaves, chunk);
+                    a.makeTree(level, posX, posY - 1, posZ, ChaosPersists.MyAppleLeaves, chunk);
                 }
                 if (which == 8) {
-                    a.makeTree(world, posX, posY - 1, posZ, ChaosPersists.MyCherryLeaves, chunk);
+                    a.makeTree(level, posX, posY - 1, posZ, ChaosPersists.MyCherryLeaves, chunk);
                 }
                 if (which == 9) {
-                    a.makeTree(world, posX, posY - 1, posZ, ChaosPersists.MyPeachLeaves, chunk);
+                    a.makeTree(level, posX, posY - 1, posZ, ChaosPersists.MyPeachLeaves, chunk);
                 }
                 added = true;
                 continue block0;
@@ -1908,102 +2756,194 @@ implements IWorldGenerator {
         return added;
     }
 
-    public boolean addHugeTree(World world, Random random, int chunkX, int chunkZ, Chunk chunk)
-    {
-      int made_one = 0;
+    public boolean addHugeTree(
+            net.minecraft.world.level.Level level,
+            net.minecraft.util.RandomSource random,
+            int chunkX,
+            int chunkZ,
+            LevelChunk chunk) {
+        int made_one = 0;
+        LevelChunk levelChunk = chunk;
 
-      if (random.nextInt(50) != 0) return false;
-      if ((ChaosPersists.LessLag == 1) && 
-        (random.nextInt(2) != 0)) return false;
-
-      if ((ChaosPersists.LessLag == 2) && 
-        (random.nextInt(4) != 0)) return false;
-
-      for (int i = 0; (i < 3) && (made_one == 0); i++) {
-        int posX = 4 + chunkX + random.nextInt(8);
-        int posZ = 4 + chunkZ + random.nextInt(8);
-        for (int posY = 127; (posY > 50) && (made_one == 0); posY--)
-        {
-          if ((!world.isAirBlock(new BlockPos(posX, posY, posZ))) || (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS)) {
-            continue;
-          }
-          ItemMagicApple a = (ItemMagicApple)ChaosPersists.MagicApple;
-
-          int tree_type = random.nextInt(4);
-          int tree_radius = 6 - random.nextInt(2);
-          boolean no_critters = false;
-          Block leaf_type = Blocks.LEAVES;
-
-          if (random.nextInt(100) > 25) {
-            no_critters = true;
-          }
-          int rand_treetype = random.nextInt(100);
-          if (rand_treetype > 75) {
-            if ((tree_type != 3) && (random.nextInt(20) == 0)) leaf_type = ChaosPersists.MyAppleLeaves;
-            a.MakeBigSquareTree(world, posX, posY - 1, posZ, Blocks.LOG, leaf_type, Blocks.MOSSY_COBBLESTONE, tree_type, tree_radius, no_critters, chunk);
-          } else if (rand_treetype == 0) {
-            tree_radius = 6;
-            no_critters = true;
-            if (random.nextInt(2) == 0)
-              a.MakeBigSquareTree(world, posX, posY - 1, posZ, Blocks.GOLD_BLOCK, Blocks.EMERALD_BLOCK, Blocks.DIAMOND_BLOCK, -1, tree_radius, no_critters, chunk);
-            else {
-              a.MakeBigSquareTree(world, posX, posY - 1, posZ, Blocks.OBSIDIAN, ChaosPersists.MyBlockRubyBlock, ChaosPersists.MyBlockAmethystBlock, -1, tree_radius, no_critters, chunk);
-            }
-          }
-          else if (rand_treetype > 15) {
-            tree_radius = 6 - random.nextInt(3);
-            a.MakeBigCircularTree(world, posX, posY - 1, posZ, Blocks.LOG, leaf_type, Blocks.MOSSY_COBBLESTONE, tree_type, tree_radius, no_critters, chunk);
-          } else {
-            tree_radius = 6 - random.nextInt(3);
-            a.MakeBigRoundTree(world, posX, posY - 1, posZ, Blocks.LOG, leaf_type, Blocks.MOSSY_COBBLESTONE, tree_type, tree_radius, chunk);
-          }
-
-          made_one = 1;
-          break;
+        if (random.nextInt(50) != 0) {
+            return false;
+        }
+        if ((ChaosPersists.LessLag == 1) && (random.nextInt(2) != 0)) {
+            return false;
         }
 
-      }
+        if ((ChaosPersists.LessLag == 2) && (random.nextInt(4) != 0)) {
+            return false;
+        }
 
-      return made_one != 0;
+        for (int i = 0; (i < 3) && (made_one == 0); i++) {
+            int posX = 4 + chunkX + random.nextInt(8);
+            int posZ = 4 + chunkZ + random.nextInt(8);
+            for (int posY = 127; (posY > 50) && (made_one == 0); posY--) {
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                                .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                    continue;
+                }
+                ItemMagicApple a = (ItemMagicApple) (Object) ChaosPersists.MagicApple;
+                if (a == null) {
+                    continue;
+                }
+
+                int tree_type = random.nextInt(4);
+                int tree_radius = 6 - random.nextInt(2);
+                boolean no_critters = false;
+                Block leaf_type = Blocks.OAK_LEAVES;
+
+                if (random.nextInt(100) > 25) {
+                    no_critters = true;
+                }
+                int rand_treetype = random.nextInt(100);
+                if (rand_treetype > 75) {
+                    if ((tree_type != 3) && (random.nextInt(20) == 0)) {
+                        leaf_type = ChaosPersists.MyAppleLeaves;
+                    }
+                    a.MakeBigSquareTree(
+                            level,
+                            posX,
+                            posY - 1,
+                            posZ,
+                            Blocks.OAK_LOG,
+                            leaf_type,
+                            Blocks.MOSSY_COBBLESTONE,
+                            tree_type,
+                            tree_radius,
+                            no_critters,
+                            levelChunk);
+                } else if (rand_treetype == 0) {
+                    tree_radius = 6;
+                    no_critters = true;
+                    if (random.nextInt(2) == 0) {
+                        a.MakeBigSquareTree(
+                                level,
+                                posX,
+                                posY - 1,
+                                posZ,
+                                Blocks.GOLD_BLOCK,
+                                Blocks.EMERALD_BLOCK,
+                                Blocks.DIAMOND_BLOCK,
+                                -1,
+                                tree_radius,
+                                no_critters,
+                                levelChunk);
+                    } else {
+                        a.MakeBigSquareTree(
+                                level,
+                                posX,
+                                posY - 1,
+                                posZ,
+                                Blocks.OBSIDIAN,
+                                ChaosPersists.MyBlockRubyBlock,
+                                ChaosPersists.MyBlockAmethystBlock,
+                                -1,
+                                tree_radius,
+                                no_critters,
+                                levelChunk);
+                    }
+                } else if (rand_treetype > 15) {
+                    tree_radius = 6 - random.nextInt(3);
+                    a.MakeBigCircularTree(
+                            level,
+                            posX,
+                            posY - 1,
+                            posZ,
+                            Blocks.OAK_LOG,
+                            leaf_type,
+                            Blocks.MOSSY_COBBLESTONE,
+                            tree_type,
+                            tree_radius,
+                            no_critters,
+                            levelChunk);
+                } else {
+                    tree_radius = 6 - random.nextInt(3);
+                    a.MakeBigRoundTree(
+                            level,
+                            posX,
+                            posY - 1,
+                            posZ,
+                            Blocks.OAK_LOG,
+                            leaf_type,
+                            Blocks.MOSSY_COBBLESTONE,
+                            tree_type,
+                            tree_radius,
+                            levelChunk);
+                }
+
+                made_one = 1;
+                break;
+            }
+        }
+
+        return made_one != 0;
     }
 
-    public void addVeggies(World world, Random random, int chunkX, int chunkZ) {
+    public void addVeggies(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(15) != 0) {
             return;
         }
-        Biome b = world.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (world.provider.getDimension() == ChaosPersists.getDimension() || world.provider.getDimension() == ChaosPersists.getDimension(2) || world.provider.getDimension() == ChaosPersists.getDimension(6) || b == Biomes.RIVER || b == Biomes.SWAMPLAND) {
-            block0 : for (int i = 0; i < 8; ++i) {
+        Holder<Biome> biome = level.getBiome(new BlockPos(chunkX, 0, chunkZ));
+        if (level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
+                || level.dimension().equals(ChaosPersists.getMiningDimensionKey())
+                || level.dimension().equals(ChaosPersists.getDimensionKey(6))
+                || biome.is(Biomes.RIVER)
+                || biome.is(Biomes.SWAMP)) {
+            block0:
+            for (int i = 0; i < 8; ++i) {
                 int posX = chunkX + random.nextInt(16);
                 int posZ = chunkZ + random.nextInt(16);
-                for (int posY = 100; posY > 40 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
+                for (int posY = 100; posY > 40; --posY) {
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(pos).isAir()) {
+                        break;
+                    }
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                            .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
                     int what = random.nextInt(6);
                     if (what == 0) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)Blocks.CARROTS, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(level, posX, posY, posZ, Blocks.CARROTS, 0, 2);
                         continue block0;
                     }
                     if (what == 1) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)Blocks.POTATOES, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(level, posX, posY, posZ, Blocks.POTATOES, 0, 2);
                         continue block0;
                     }
                     if (what == 2) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyRadishPlant, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(
+                                level, posX, posY, posZ, (Block) ChaosPersists.MyRadishPlant, 0, 2);
                         continue block0;
                     }
                     if (what == 3) {
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyLettucePlant1, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(
+                                level, posX, posY, posZ, (Block) ChaosPersists.MyLettucePlant1, 0, 2);
                         continue block0;
                     }
                     if (what == 4) {
-                        if (random.nextInt(10) != 0) continue block0;
-                        ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)Blocks.MELON_STEM, (int)0, (int)2);
+                        if (random.nextInt(10) != 0) {
+                            continue block0;
+                        }
+                        ChaosPersists.setBlockFast(level, posX, posY, posZ, Blocks.MELON_STEM, 0, 2);
                         continue block0;
                     }
-                    if (random.nextInt(50) != 1 || ChaosPersists.enableduplicatortree == 0) continue block0;
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)ChaosPersists.MyDT, (int)0, (int)2);
+                    if (random.nextInt(50) != 1 || ChaosPersists.enableduplicatortree == 0) {
+                        continue block0;
+                    }
+                    ChaosPersists.setBlockFast(level, posX, posY, posZ, (Block) ChaosPersists.MyDT, 0, 2);
                     if (DEBUG_NATURAL_DUPLICATOR_SPAWNS) {
-                        FMLLog.log.info("ChaosPersists DEBUG: natural duplicator log placed at dim {} ({}, {}, {})", world.provider.getDimension(), posX, posY, posZ);
+                        LOGGER.info(
+                                "ChaosPersists DEBUG: natural duplicator log placed at dim {} ({}, {}, {})",
+                                level.dimension().location(),
+                                posX,
+                                posY,
+                                posZ);
                     }
                     continue block0;
                 }
@@ -2011,27 +2951,126 @@ implements IWorldGenerator {
         }
     }
 
-    public void addRocks(World world, Random random, int chunkX, int chunkZ) {
+    /**
+     * Large flat stone floors in mining valleys (1.12 amplified extreme-hills stone platforms between peaks).
+     */
+    public void exposeMiningStonePlatforms(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
+        if (!level.dimension().equals(ChaosPersists.getMiningDimensionKey())) {
+            return;
+        }
+        net.minecraft.world.level.levelgen.Heightmap.Types heightmap =
+                net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG;
+        for (int lx = 0; lx < 16; lx += 2) {
+            for (int lz = 0; lz < 16; lz += 2) {
+                int wx = chunkX + lx;
+                int wz = chunkZ + lz;
+                int surfaceY = level.getHeight(heightmap, wx, wz);
+                if (surfaceY < 55 || surfaceY > 150) {
+                    continue;
+                }
+                int minH = surfaceY;
+                int maxH = surfaceY;
+                for (int dx = -4; dx <= 4; dx += 4) {
+                    for (int dz = -4; dz <= 4; dz += 4) {
+                        if (dx == 0 && dz == 0) {
+                            continue;
+                        }
+                        int sample = level.getHeight(heightmap, wx + dx, wz + dz);
+                        minH = Math.min(minH, sample);
+                        maxH = Math.max(maxH, sample);
+                    }
+                }
+                if (maxH - minH > 2) {
+                    continue;
+                }
+                int rimY = surfaceY;
+                for (int dx = -7; dx <= 7; dx += 7) {
+                    rimY = Math.max(rimY, level.getHeight(heightmap, wx + dx, wz));
+                    rimY = Math.max(rimY, level.getHeight(heightmap, wx, wz + dx));
+                    rimY = Math.max(rimY, level.getHeight(heightmap, wx + dx, wz + dx));
+                    rimY = Math.max(rimY, level.getHeight(heightmap, wx + dx, wz - dx));
+                }
+                if (rimY - surfaceY < 8) {
+                    continue;
+                }
+                if (random.nextInt(4) != 0) {
+                    continue;
+                }
+                int radius = 5 + random.nextInt(10);
+                int floorY = surfaceY - 1;
+                for (int px = wx - radius; px <= wx + radius; ++px) {
+                    for (int pz = wz - radius; pz <= wz + radius; ++pz) {
+                        int ddx = px - wx;
+                        int ddz = pz - wz;
+                        if (ddx * ddx + ddz * ddz > radius * radius) {
+                            continue;
+                        }
+                        int colY = level.getHeight(heightmap, px, pz) - 1;
+                        if (Math.abs(colY - floorY) > 2) {
+                            continue;
+                        }
+                        net.minecraft.core.BlockPos surfacePos = new net.minecraft.core.BlockPos(px, colY, pz);
+                        net.minecraft.world.level.block.state.BlockState surfaceState =
+                                level.getBlockState(surfacePos);
+                        if (surfaceState.is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)
+                                || surfaceState.is(net.minecraft.world.level.block.Blocks.DIRT)) {
+                            level.setBlock(
+                                    surfacePos,
+                                    net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),
+                                    2);
+                            for (int depth = 1; depth <= 3; ++depth) {
+                                net.minecraft.core.BlockPos below = surfacePos.below(depth);
+                                net.minecraft.world.level.block.state.BlockState belowState =
+                                        level.getBlockState(below);
+                                if (belowState.is(net.minecraft.world.level.block.Blocks.DIRT)
+                                        || belowState.is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)
+                                        || belowState.is(net.minecraft.world.level.block.Blocks.GRAVEL)) {
+                                    level.setBlock(
+                                            below,
+                                            net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),
+                                            2);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void addRocks(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(5) != 0) {
             return;
         }
         if (ChaosPersists.RockEnable == 0) {
             return;
         }
+        Block crystalGrass = ChaosPersists.CrystalGrass;
         int howmany = 3 + random.nextInt(10);
-        block0 : for (int i = 0; i < howmany; ++i) {
+        block0:
+        for (int i = 0; i < howmany; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
-            for (int posY = 110; posY > 40 && world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() == Blocks.AIR; --posY) {
-                Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock();
-                if (bid != Blocks.GRASS && bid != Blocks.SAND && bid != ChaosPersists.CrystalGrass) continue;
-                this.spawnCreature(world, "Rock", (double)posX, (double)posY, (double)posZ);
+            for (int posY = 110; posY > 40; --posY) {
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                if (!level.getBlockState(pos).isAir()) {
+                    break;
+                }
+                net.minecraft.core.BlockPos below = new net.minecraft.core.BlockPos(posX, posY - 1, posZ);
+                Block bid = level.getBlockState(below).getBlock();
+                if (bid != Blocks.GRASS && bid != Blocks.SAND && bid != crystalGrass) {
+                    continue;
+                }
+                this.spawnCreature(level, "Rock", (double) posX, (double) posY, (double) posZ);
                 continue block0;
             }
         }
     }
 
-    public void addD4Rocks(World world, Random random, int chunkX, int chunkZ) {
+    public void addD4Rocks(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(7) != 0) {
             return;
         }
@@ -2039,46 +3078,61 @@ implements IWorldGenerator {
             return;
         }
         int howmany = 3 + random.nextInt(10);
-        block0 : for (int i = 0; i < howmany; ++i) {
+        block0:
+        for (int i = 0; i < howmany; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
-            for (int posY = 20; posY > 5 && world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() == Blocks.AIR; --posY) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                this.spawnCreature(world, "Rock", (double)posX, (double)posY, (double)posZ);
+            for (int posY = 20; posY > 5; --posY) {
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                if (!level.getBlockState(pos).isAir()) {
+                    break;
+                }
+                if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                        .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                    continue;
+                }
+                this.spawnCreature(level, "Rock", (double) posX, (double) posY, (double) posZ);
                 continue block0;
             }
         }
     }
 
-    public boolean addFairyTree(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addFairyTree(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         int posX = chunkX + 8;
         int posZ = chunkZ + 8;
+        Block crystalGrass = ChaosPersists.CrystalGrass;
         if (random.nextInt(5) != 0) {
             return false;
         }
         for (int posY = 128; posY > 40; --posY) {
-            Block bid;
-            int i;
-            int j;
-            if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != ChaosPersists.CrystalGrass) continue;
-            for (i = -8; i <= 8; ++i) {
-                for (j = -8; j <= 8; ++j) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + i, posY, posZ + j)).getBlock();
-                    if (bid == Blocks.AIR) continue;
+            net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+            if (!level.getBlockState(pos).isAir()
+                    || level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ)).getBlock()
+                            != crystalGrass) {
+                continue;
+            }
+            for (int i = -8; i <= 8; ++i) {
+                for (int j = -8; j <= 8; ++j) {
+                    if (level.getBlockState(new net.minecraft.core.BlockPos(posX + i, posY, posZ + j)).isAir()) {
+                        continue;
+                    }
                     return false;
                 }
             }
-            for (i = -2; i <= 2; ++i) {
-                for (j = -2; j <= 2; ++j) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + i, posY - 1, posZ + j)).getBlock();
-                    if (bid == ChaosPersists.CrystalGrass) continue;
+            for (int i = -2; i <= 2; ++i) {
+                for (int j = -2; j <= 2; ++j) {
+                    if (level.getBlockState(new net.minecraft.core.BlockPos(posX + i, posY - 1, posZ + j)).getBlock()
+                            == crystalGrass) {
+                        continue;
+                    }
                     return false;
                 }
             }
             if (random.nextInt(5) != 1) {
-                ChaosPersists.chaospersistsTrees.FairyTree(world, posX, posY - 1, posZ);
+                ChaosPersists.chaospersistsTrees.FairyTree(level, posX, posY - 1, posZ);
             } else {
-                ChaosPersists.chaospersistsTrees.FairyCastleTree(world, posX, posY, posZ);
+                ChaosPersists.chaospersistsTrees.FairyCastleTree(level, posX, posY, posZ);
             }
             recently_placed = 50;
             break;
@@ -2086,7 +3140,7 @@ implements IWorldGenerator {
         return true;
     }
 
-    public boolean addRubyDungeon(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addRubyDungeon(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(15) != 0) {
             return false;
         }
@@ -2094,15 +3148,19 @@ implements IWorldGenerator {
             int posX = chunkX + random.nextInt(8);
             int posZ = chunkZ + random.nextInt(8);
             for (int posY = 50; posY > 5; --posY) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.LAVA) continue;
-                ChaosPersists.RubyDungeon.makeDungeon(world, posX, posY, posZ);
+                if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                        .is(net.minecraft.world.level.block.Blocks.LAVA)) {
+                    continue;
+                }
+                ChaosPersists.RubyDungeon.makeDungeon(level, posX, posY, posZ);
                 return true;
             }
         }
         return false;
     }
 
-    public boolean addGenericDungeon(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addGenericDungeon(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(16) != 0) {
             return false;
         }
@@ -2115,11 +3173,11 @@ implements IWorldGenerator {
         int posX = chunkX + random.nextInt(4);
         int posZ = chunkZ + random.nextInt(4);
         int posY = 5 + random.nextInt(40);
-        ChaosPersists.MyDungeon.makeDungeon(world, posX, posY, posZ);
+        ChaosPersists.MyDungeon.makeDungeon(level, posX, posY, posZ);
         return true;
     }
 
-    public boolean addBeeHive(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addBeeHive(net.minecraft.world.level.Level level, int chunkX, int chunkZ) {
         int lowestY = 128;
         int lowestX = chunkX;
         int lowestZ = chunkZ;
@@ -2129,7 +3187,12 @@ implements IWorldGenerator {
                 int posX = chunkX + i;
                 int posZ = chunkZ + j;
                 for (int posY = 128; posY > 30; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY + 1, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.GRASS) continue;
+                    net.minecraft.core.BlockPos above = new net.minecraft.core.BlockPos(posX, posY + 1, posZ);
+                    net.minecraft.core.BlockPos ground = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(above).isAir()
+                            || !level.getBlockState(ground).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
                     if (posY >= lowestY) continue block1;
                     lowestY = posY;
                     lowestX = posX;
@@ -2140,14 +3203,14 @@ implements IWorldGenerator {
             }
         }
         if (found && lowestY > 40) {
-            ChaosPersists.MyDungeon.makeBeeHive(world, lowestX, lowestY + 3, lowestZ);
+            ChaosPersists.MyDungeon.makeBeeHive(level, lowestX, lowestY + 3, lowestZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addAlienWTF(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addAlienWTF(net.minecraft.world.level.Level level, int chunkX, int chunkZ) {
         int lowestY = 128;
         int lowestX = chunkX;
         int lowestZ = chunkZ;
@@ -2157,7 +3220,12 @@ implements IWorldGenerator {
                 int posX = chunkX + i;
                 int posZ = chunkZ + j;
                 for (int posY = 128; posY > 30; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY + 1, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.GRASS) continue;
+                    net.minecraft.core.BlockPos above = new net.minecraft.core.BlockPos(posX, posY + 1, posZ);
+                    net.minecraft.core.BlockPos ground = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(above).isAir()
+                            || !level.getBlockState(ground).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
                     if (posY >= lowestY) continue block1;
                     lowestY = posY;
                     lowestX = posX;
@@ -2168,14 +3236,14 @@ implements IWorldGenerator {
             }
         }
         if (found && lowestY > 40) {
-            ChaosPersists.MyDungeon.makeAlienWTFDungeon(world, lowestX, lowestY, lowestZ);
+            ChaosPersists.MyDungeon.makeAlienWTFDungeon(level, lowestX, lowestY, lowestZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addEnderKnight(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addEnderKnight(net.minecraft.world.level.Level level, int chunkX, int chunkZ) {
         int lowestY = 128;
         int lowestX = chunkX;
         int lowestZ = chunkZ;
@@ -2185,7 +3253,12 @@ implements IWorldGenerator {
                 int posX = chunkX + i;
                 int posZ = chunkZ + j;
                 for (int posY = 128; posY > 30; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY + 1, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.GRASS) continue;
+                    net.minecraft.core.BlockPos above = new net.minecraft.core.BlockPos(posX, posY + 1, posZ);
+                    net.minecraft.core.BlockPos ground = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(above).isAir()
+                            || !level.getBlockState(ground).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
                     if (posY >= lowestY) continue block1;
                     lowestY = posY;
                     lowestX = posX;
@@ -2196,14 +3269,14 @@ implements IWorldGenerator {
             }
         }
         if (found && lowestY > 40) {
-            ChaosPersists.MyDungeon.makeEnderKnightDungeon(world, lowestX, lowestY, lowestZ);
+            ChaosPersists.MyDungeon.makeEnderKnightDungeon(level, lowestX, lowestY, lowestZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addLeonNest(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addLeonNest(net.minecraft.world.level.Level level, int chunkX, int chunkZ) {
         int highestY = 30;
         int highestX = chunkX;
         int highestZ = chunkZ;
@@ -2213,7 +3286,12 @@ implements IWorldGenerator {
                 int posX = chunkX + i;
                 int posZ = chunkZ + j;
                 for (int posY = 128; posY > 80; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY + 1, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.GRASS) continue;
+                    net.minecraft.core.BlockPos above = new net.minecraft.core.BlockPos(posX, posY + 1, posZ);
+                    net.minecraft.core.BlockPos ground = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(above).isAir()
+                            || !level.getBlockState(ground).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
                     if (posY <= highestY) continue block1;
                     highestY = posY + 1;
                     highestX = posX;
@@ -2224,14 +3302,14 @@ implements IWorldGenerator {
             }
         }
         if (found && highestY > 80) {
-            ChaosPersists.MyDungeon.makeLeonNest(world, highestX, highestY, highestZ);
+            ChaosPersists.MyDungeon.makeLeonNest(level, highestX, highestY, highestZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addShadowDungeon(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addShadowDungeon(net.minecraft.world.level.Level level, int chunkX, int chunkZ) {
         int lowestY = 128;
         int lowestX = chunkX;
         int lowestZ = chunkZ;
@@ -2241,7 +3319,12 @@ implements IWorldGenerator {
                 int posX = chunkX + i;
                 int posZ = chunkZ + j;
                 for (int posY = 128; posY > 30; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY + 1, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() != Blocks.GRASS) continue;
+                    net.minecraft.core.BlockPos above = new net.minecraft.core.BlockPos(posX, posY + 1, posZ);
+                    net.minecraft.core.BlockPos ground = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(above).isAir()
+                            || !level.getBlockState(ground).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
                     if (posY >= lowestY) continue block1;
                     lowestY = posY;
                     lowestX = posX;
@@ -2252,65 +3335,72 @@ implements IWorldGenerator {
             }
         }
         if (found && lowestY > 40) {
-            ChaosPersists.MyDungeon.makeShadowDungeon(world, lowestX, lowestY, lowestZ);
+            ChaosPersists.MyDungeon.makeShadowDungeon(level, lowestX, lowestY, lowestZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addD4RubyDungeon(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4RubyDungeon(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
-            ChaosPersists.RubyDungeon.makeDungeon(world, posX, posY, posZ);
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
+            ChaosPersists.RubyDungeon.makeDungeon(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addD4CephadromeAltar(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4CephadromeAltar(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
-            ChaosPersists.MyDungeon.makeCephadromeAltar(world, posX, posY, posZ);
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
+            ChaosPersists.MyDungeon.makeCephadromeAltar(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addD4Castle(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4Castle(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
             for (int x = -20; x < 33; ++x) {
                 for (int z = -4; z < 33; ++z) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + x, posY + 18, posZ + z)).getBlock();
-                    if (bid == Blocks.AIR) continue;
-                    return false;
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX + x, posY + 18, posZ + z))
+                            .isAir()) {
+                        return false;
+                    }
                 }
             }
             if (random.nextInt(2) == 1) {
-                ChaosPersists.MyDungeon.makeEnormousCastle(world, posX, posY, posZ);
+                ChaosPersists.MyDungeon.makeEnormousCastle(level, posX, posY, posZ);
             } else {
-                ChaosPersists.MyDungeon.makeEnormousCastleQ(world, posX, posY, posZ);
+                ChaosPersists.MyDungeon.makeEnormousCastleQ(level, posX, posY, posZ);
             }
             recently_placed = 50;
             return true;
@@ -2318,285 +3408,350 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addD4Greenhouse(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4Greenhouse(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
             for (int x = -2; x < 25; ++x) {
                 for (int z = -4; z < 25; ++z) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + x, posY + 18, posZ + z)).getBlock();
-                    if (bid == Blocks.AIR) continue;
-                    return false;
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX + x, posY + 18, posZ + z))
+                            .isAir()) {
+                        return false;
+                    }
                 }
             }
-            ChaosPersists.MyDungeon.makeGreenhouseDungeon(world, posX, posY, posZ);
+            ChaosPersists.MyDungeon.makeGreenhouseDungeon(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addD4NightmareRookery(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4NightmareRookery(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
             for (int x = -5; x < 25; ++x) {
                 for (int z = -4; z < 5; ++z) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + x, posY + 18, posZ + z)).getBlock();
-                    if (bid == Blocks.AIR) continue;
-                    return false;
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX + x, posY + 18, posZ + z))
+                            .isAir()) {
+                        return false;
+                    }
                 }
             }
-            ChaosPersists.MyDungeon.makeNightmareRookery(world, posX, posY, posZ);
+            ChaosPersists.MyDungeon.makeNightmareRookery(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addD4StinkyHouse(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4StinkyHouse(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
             for (int x = -8; x < 20; ++x) {
                 for (int z = -8; z < 20; ++z) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + x, posY + 18, posZ + z)).getBlock();
-                    if (bid == Blocks.AIR) continue;
-                    return false;
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX + x, posY + 18, posZ + z))
+                            .isAir()) {
+                        return false;
+                    }
                 }
             }
-            ChaosPersists.MyDungeon.makeStinkyHouse(world, posX, posY, posZ);
+            ChaosPersists.MyDungeon.makeStinkyHouse(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addD4WhiteHouse(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4WhiteHouse(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
             for (int x = -20; x < 30; ++x) {
                 for (int z = -20; z < 300; ++z) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + x, posY + 18, posZ + z)).getBlock();
-                    if (bid == Blocks.AIR) continue;
-                    return false;
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX + x, posY + 18, posZ + z))
+                            .isAir()) {
+                        return false;
+                    }
                 }
             }
-            ChaosPersists.MyDungeon.makeWhiteHouse(world, posX, posY, posZ);
+            ChaosPersists.MyDungeon.makeWhiteHouse(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addD4EnderCastle(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4EnderCastle(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
             for (int x = -5; x < 25; ++x) {
                 for (int z = -5; z < 25; ++z) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + x, posY + 18, posZ + z)).getBlock();
-                    if (bid == Blocks.AIR) continue;
-                    return false;
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX + x, posY + 18, posZ + z))
+                            .isAir()) {
+                        return false;
+                    }
                 }
             }
-            ChaosPersists.MyDungeon.makeEnderCastle(world, posX, posY, posZ);
+            ChaosPersists.MyDungeon.makeEnderCastle(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addD4IncaPyramid(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4IncaPyramid(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
             for (int x = -10; x < 50; ++x) {
                 for (int z = -10; z < 40; ++z) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + x, posY + 18, posZ + z)).getBlock();
-                    if (bid == Blocks.AIR) continue;
-                    return false;
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX + x, posY + 18, posZ + z))
+                            .isAir()) {
+                        return false;
+                    }
                 }
             }
-            ChaosPersists.MyDungeon.makeIncaPyramid(world, posX, posY, posZ);
+            ChaosPersists.MyDungeon.makeIncaPyramid(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addD4RobotLab(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4RobotLab(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
+        net.minecraft.world.level.block.Block appleLeaves =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyAppleLeaves;
+        net.minecraft.world.level.block.Block scaryLeaves =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyScaryLeaves;
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
             for (int x = -5; x < 60; ++x) {
                 for (int z = -5; z < 70; ++z) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + x, posY + 4, posZ + z)).getBlock();
-                    if (bid == Blocks.AIR || bid == Blocks.LOG || bid == ChaosPersists.MyAppleLeaves || bid == ChaosPersists.MyScaryLeaves || bid == Blocks.AIR) continue;
+                    net.minecraft.world.level.block.Block bid =
+                            level.getBlockState(new net.minecraft.core.BlockPos(posX + x, posY + 4, posZ + z)).getBlock();
+                    if (bid == net.minecraft.world.level.block.Blocks.AIR
+                            || bid == net.minecraft.world.level.block.Blocks.OAK_LOG
+                            || bid == appleLeaves
+                            || bid == scaryLeaves) {
+                        continue;
+                    }
                     return false;
                 }
             }
-            ChaosPersists.MyDungeon.makeRobotLab(world, posX, posY, posZ);
+            ChaosPersists.MyDungeon.makeRobotLab(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addD4Mini(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4Mini(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
-            ChaosPersists.MyDungeon.makeMiniDungeon(world, posX, posY, posZ);
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
+            ChaosPersists.MyDungeon.makeMiniDungeon(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addPumpkin(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addPumpkin(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(2) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
-            ChaosPersists.MyDungeon.makePumpkin(world, posX, posY + 1, posZ);
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
+            ChaosPersists.MyDungeon.makePumpkin(level, posX, posY + 1, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public boolean addD4CloudShark(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4CloudShark(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         int posX = 4 + chunkX + random.nextInt(8);
         int posZ = 4 + chunkZ + random.nextInt(8);
-        ChaosPersists.MyDungeon.makeCloudSharkDungeon(world, posX, 150 + world.rand.nextInt(10), posZ);
+        ChaosPersists.MyDungeon.makeCloudSharkDungeon(level, posX, 150 + random.nextInt(10), posZ);
         return true;
     }
 
-    public boolean addD4Rainbow(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4Rainbow(net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         int posX = 4 + chunkX + random.nextInt(8);
         int posZ = 4 + chunkZ + random.nextInt(8);
-        ChaosPersists.MyDungeon.makeRainbow(world, posX, 70 + world.rand.nextInt(20), posZ);
+        ChaosPersists.MyDungeon.makeRainbow(level, posX, 70 + random.nextInt(20), posZ);
         recently_placed = 50;
         return true;
     }
 
-    public boolean addD4GenericDungeon(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addD4GenericDungeon(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (ChaosPersists.LessLag != 0 && random.nextInt(4) != 0) {
             return false;
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
         for (int posY = 20; posY > 4; --posY) {
-            Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock();
-            if (bid != Blocks.GRASS) continue;
-            ChaosPersists.MyDungeon.makeDungeon(world, posX, posY, posZ);
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
+                    .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                continue;
+            }
+            ChaosPersists.MyDungeon.makeDungeon(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
         }
         return false;
     }
 
-    public void addLavaAndWater(World world, Random random, int chunkX, int chunkZ) {
+    public void addLavaAndWater(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(5) != 0) {
             return;
         }
-        block0 : for (int i = 0; i < 6; ++i) {
+        block0:
+        for (int i = 0; i < 6; ++i) {
             int posX = chunkX + random.nextInt(16);
             int posZ = chunkZ + random.nextInt(16);
-            for (int posY = 128; posY > 75 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 2, posZ)).getBlock();
-                if (bid != Blocks.DIRT && bid != Blocks.STONE) continue block0;
+            for (int posY = 128; posY > 75; --posY) {
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                if (!level.getBlockState(pos).isAir()) {
+                    break;
+                }
+                if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                        .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                    continue;
+                }
+                net.minecraft.core.BlockPos deep =
+                        new net.minecraft.core.BlockPos(posX, posY - 2, posZ);
+                if (!level.getBlockState(deep).is(net.minecraft.world.level.block.Blocks.DIRT)
+                        && !level.getBlockState(deep).is(net.minecraft.world.level.block.Blocks.STONE)) {
+                    continue block0;
+                }
                 int air = 0;
                 int non_air = 0;
-                bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + 1, posY - 1, posZ)).getBlock();
-                if (bid == Blocks.AIR) {
+                net.minecraft.core.BlockPos side =
+                        new net.minecraft.core.BlockPos(posX + 1, posY - 1, posZ);
+                if (level.getBlockState(side).isAir()) {
                     ++air;
                 }
-                if (bid == Blocks.DIRT || bid == Blocks.STONE || bid == Blocks.GRASS) {
+                if (level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.DIRT)
+                        || level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.STONE)
+                        || level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
                     ++non_air;
                 }
-                if ((bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX - 1, posY - 1, posZ)).getBlock()) == Blocks.AIR) {
+                side = new net.minecraft.core.BlockPos(posX - 1, posY - 1, posZ);
+                if (level.getBlockState(side).isAir()) {
                     ++air;
                 }
-                if (bid == Blocks.DIRT || bid == Blocks.STONE || bid == Blocks.GRASS) {
+                if (level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.DIRT)
+                        || level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.STONE)
+                        || level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
                     ++non_air;
                 }
-                if ((bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ + 1)).getBlock()) == Blocks.AIR) {
+                side = new net.minecraft.core.BlockPos(posX, posY - 1, posZ + 1);
+                if (level.getBlockState(side).isAir()) {
                     ++air;
                 }
-                if (bid == Blocks.DIRT || bid == Blocks.STONE || bid == Blocks.GRASS) {
+                if (level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.DIRT)
+                        || level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.STONE)
+                        || level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
                     ++non_air;
                 }
-                if ((bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ - 1)).getBlock()) == Blocks.AIR) {
+                side = new net.minecraft.core.BlockPos(posX, posY - 1, posZ - 1);
+                if (level.getBlockState(side).isAir()) {
                     ++air;
                 }
-                if (bid == Blocks.DIRT || bid == Blocks.STONE || bid == Blocks.GRASS) {
+                if (level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.DIRT)
+                        || level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.STONE)
+                        || level.getBlockState(side).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
                     ++non_air;
                 }
-                if (air == 0 || non_air == 0) continue block0;
+                if (air == 0 || non_air == 0) {
+                    continue block0;
+                }
                 int what = random.nextInt(2);
                 if (what == 0) {
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)Blocks.FLOWING_WATER, (int)0, (int)3);
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 1), (int)posZ, (Block)Blocks.WATER, (int)0, (int)3);
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 2), (int)posZ, (Block)Blocks.WATER, (int)0, (int)3);
+                    ChaosPersists.setBlockFast(level, posX, posY, posZ, Blocks.WATER, 0, 3);
+                    ChaosPersists.setBlockFast(level, posX, posY - 1, posZ, Blocks.WATER, 0, 3);
+                    ChaosPersists.setBlockFast(level, posX, posY - 2, posZ, Blocks.WATER, 0, 3);
                 } else {
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)posY, (int)posZ, (Block)Blocks.FLOWING_LAVA, (int)0, (int)3);
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 1), (int)posZ, (Block)Blocks.LAVA, (int)0, (int)3);
-                    ChaosPersists.setBlockFast((World)world, (int)posX, (int)(posY - 2), (int)posZ, (Block)Blocks.LAVA, (int)0, (int)3);
+                    ChaosPersists.setBlockFast(level, posX, posY, posZ, Blocks.LAVA, 0, 3);
+                    ChaosPersists.setBlockFast(level, posX, posY - 1, posZ, Blocks.LAVA, 0, 3);
+                    ChaosPersists.setBlockFast(level, posX, posY - 2, posZ, Blocks.LAVA, 0, 3);
                 }
                 return;
             }
         }
     }
 
-    public boolean addOtherTrees(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addOtherTrees(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         int nc = 5;
         int count = 0;
         if (random.nextInt(30) != 0) {
@@ -2614,22 +3769,34 @@ implements IWorldGenerator {
             }
             nc = 3;
         }
-        if (world.provider.getDimension() == ChaosPersists.getDimension()) {
+        if (level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())) {
             int dir = 0;
             int what = random.nextInt(2);
-            block0 : for (int i = 0; i < nc; ++i) {
+            block0:
+            for (int i = 0; i < nc; ++i) {
                 int posX = 3 + chunkX + random.nextInt(10);
                 int posZ = 3 + chunkZ + random.nextInt(10);
-                for (int posY = 100; posY > 50 && world.isAirBlock(new BlockPos(posX, posY, posZ)); --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
+                for (int posY = 100; posY > 50; --posY) {
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(pos).isAir()) {
+                        break;
+                    }
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                            .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
                     ++count;
                     if (what == 0) {
-                        ChaosPersists.chaospersistsTrees.WindTree(world, posX, posY - 1, posZ, dir);
-                        if (count < 4) continue block0;
+                        com.astryxion.chaospersists.util.UtopiaBigTrees.windTree(level, posX, posY - 1, posZ, dir);
+                        if (count < 4) {
+                            continue block0;
+                        }
                         return true;
                     }
-                    ChaosPersists.chaospersistsTrees.SkyTree(world, posX, posY - 1, posZ);
-                    if (count < 3) continue block0;
+                    com.astryxion.chaospersists.util.UtopiaBigTrees.skyTree(level, posX, posY - 1, posZ);
+                    if (count < 3) {
+                        continue block0;
+                    }
                     return true;
                 }
             }
@@ -2640,7 +3807,8 @@ implements IWorldGenerator {
         return false;
     }
 
-    public boolean addKingAltar(World world, Random random, int chunkX, int chunkZ) {
+    public boolean addKingAltar(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(2000) != 1) {
             return false;
         }
@@ -2648,14 +3816,19 @@ implements IWorldGenerator {
             int posX = 3 + chunkX + random.nextInt(10);
             int posZ = 3 + chunkZ + random.nextInt(10);
             for (int posY = 100; posY > 50; --posY) {
-                if (!world.isAirBlock(new BlockPos(posX, posY, posZ)) || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY - 1, posZ)).getBlock() != Blocks.GRASS) continue;
-                if (!this.quickReallyBigSpaceCheck(world, posX, posY - 1, posZ)) {
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                if (!level.getBlockState(pos).isAir()
+                        || !level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                                .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                    continue;
+                }
+                if (!this.quickReallyBigSpaceCheck(level, posX, posY - 1, posZ)) {
                     return false;
                 }
                 if (random.nextInt(2) == 0) {
-                    ChaosPersists.MyDungeon.makeKingAltar(world, posX, posY - 1, posZ);
+                    ChaosPersists.MyDungeon.makeKingAltar(level, posX, posY - 1, posZ);
                 } else {
-                    ChaosPersists.MyDungeon.makeQueenAltar(world, posX, posY - 1, posZ);
+                    ChaosPersists.MyDungeon.makeQueenAltar(level, posX, posY - 1, posZ);
                 }
                 recently_placed = 100;
                 return true;
@@ -2664,7 +3837,7 @@ implements IWorldGenerator {
         return false;
     }
 
-    public void addBasiliskMaze(World world, Random random, int chunkX, int chunkZ) {
+    public void addBasiliskMaze(net.minecraft.world.level.Level level, int chunkX, int chunkZ) {
         int lowestY = 128;
         int lowestX = chunkX;
         int lowestZ = chunkZ;
@@ -2674,7 +3847,11 @@ implements IWorldGenerator {
                 int posX = chunkX + i;
                 int posZ = chunkZ + j;
                 for (int posY = 128; posY > 30; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY + 1, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() == Blocks.AIR) continue;
+                    net.minecraft.core.BlockPos above = new net.minecraft.core.BlockPos(posX, posY + 1, posZ);
+                    net.minecraft.core.BlockPos ground = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(above).isAir() || level.getBlockState(ground).isAir()) {
+                        continue;
+                    }
                     if (posY >= lowestY) continue block1;
                     lowestY = posY;
                     lowestX = posX;
@@ -2685,12 +3862,12 @@ implements IWorldGenerator {
             }
         }
         if (found && lowestY > 40) {
-            ChaosPersists.BMaze.buildBasiliskMaze(world, lowestX, lowestY - 2, lowestZ);
+            ChaosPersists.BMaze.buildBasiliskMaze(level, lowestX, lowestY - 2, lowestZ);
             recently_placed = 50;
         }
     }
 
-    public void addKyuubiDungeon(World world, Random random, int chunkX, int chunkZ) {
+    public void addKyuubiDungeon(net.minecraft.world.level.Level level, int chunkX, int chunkZ) {
         int lowestY = 128;
         int lowestX = chunkX;
         int lowestZ = chunkZ;
@@ -2700,7 +3877,12 @@ implements IWorldGenerator {
                 int posX = chunkX + i;
                 int posZ = chunkZ + j;
                 for (int posY = 128; posY > 30; --posY) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY + 1, posZ)).getBlock() != Blocks.AIR || world.getBlockState(new net.minecraft.util.math.BlockPos(posX, posY, posZ)).getBlock() == Blocks.AIR) continue;
+                    net.minecraft.core.BlockPos above = new net.minecraft.core.BlockPos(posX, posY + 1, posZ);
+                    net.minecraft.core.BlockPos ground = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                    if (!level.getBlockState(above).isAir()
+                            || level.getBlockState(ground).isAir()) {
+                        continue;
+                    }
                     if (posY >= lowestY) continue block1;
                     lowestY = posY;
                     lowestX = posX;
@@ -2711,7 +3893,7 @@ implements IWorldGenerator {
             }
         }
         if (found && lowestY > 40) {
-            ChaosPersists.MyDungeon.makeKyuubiDungeon(world, lowestX, lowestY - 2, lowestZ);
+            ChaosPersists.MyDungeon.makeKyuubiDungeon(level, lowestX, lowestY - 2, lowestZ);
             recently_placed = 50;
         }
     }
@@ -2720,8 +3902,9 @@ implements IWorldGenerator {
      * Forces generation/loading of every chunk touched by large multi-chunk structures so
      * later terrain generation does not overwrite pre-placed blocks.
      */
-    private void ensureChunksGenerated(World world, int minX, int minZ, int maxX, int maxZ) {
-        if (world == null) {
+    private void ensureChunksGenerated(
+            net.minecraft.world.level.Level level, int minX, int minZ, int maxX, int maxZ) {
+        if (level == null) {
             return;
         }
         int minChunkX = minX >> 4;
@@ -2730,64 +3913,78 @@ implements IWorldGenerator {
         int maxChunkZ = maxZ >> 4;
         for (int cx = minChunkX; cx <= maxChunkX; ++cx) {
             for (int cz = minChunkZ; cz <= maxChunkZ; ++cz) {
-                world.getChunk(new BlockPos((cx << 4) + 8, 0, (cz << 4) + 8));
+                level.getChunk(new net.minecraft.core.BlockPos((cx << 4) + 8, 0, (cz << 4) + 8));
             }
         }
     }
 
-    private boolean quickSpaceCheck(World world, int posX, int posY, int posZ) {
+    private boolean quickSpaceCheck(net.minecraft.world.level.Level level, int posX, int posY, int posZ) {
         for (int i = -2; i < 10; ++i) {
             for (int k = -2; k < 10; ++k) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX + i, posY + 4, posZ + k)).getBlock() == Blocks.AIR) continue;
+                if (level.getBlockState(new net.minecraft.core.BlockPos(posX + i, posY + 4, posZ + k)).isAir()) {
+                    continue;
+                }
                 return false;
             }
         }
         return true;
     }
 
-    private boolean quickBigSpaceCheck(World world, int posX, int posY, int posZ) {
+    private boolean quickBigSpaceCheck(net.minecraft.world.level.Level level, int posX, int posY, int posZ) {
         for (int i = -5; i < 25; ++i) {
             for (int k = -5; k < 25; ++k) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX + i, posY + 8, posZ + k)).getBlock() == Blocks.AIR) continue;
+                if (level.getBlockState(new net.minecraft.core.BlockPos(posX + i, posY + 8, posZ + k)).isAir()) {
+                    continue;
+                }
                 return false;
             }
         }
         return true;
     }
 
-    private boolean quickReallyBigSpaceCheck(World world, int posX, int posY, int posZ) {
+    private boolean quickReallyBigSpaceCheck(net.minecraft.world.level.Level level, int posX, int posY, int posZ) {
         for (int i = -5; i < 55; ++i) {
             for (int k = -5; k < 55; ++k) {
-                if (world.getBlockState(new net.minecraft.util.math.BlockPos(posX + i, posY + 8, posZ + k)).getBlock() == Blocks.AIR) continue;
+                if (level.getBlockState(new net.minecraft.core.BlockPos(posX + i, posY + 8, posZ + k)).isAir()) {
+                    continue;
+                }
                 return false;
             }
         }
         return true;
     }
 
-    private boolean D4BigSpaceCheck(World world, int posX, int posY, int posZ) {
+    private boolean D4BigSpaceCheck(net.minecraft.world.level.Level level, int posX, int posY, int posZ) {
+        Block appleLeaves = ChaosPersists.MyAppleLeaves;
+        Block scaryLeaves = ChaosPersists.MyScaryLeaves;
         for (int i = -25; i < 40; ++i) {
             for (int k = -25; k < 30; ++k) {
-                Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(posX + i, posY + 4, posZ + k)).getBlock();
-                if (bid == Blocks.AIR || bid == Blocks.LOG || bid == ChaosPersists.MyAppleLeaves || bid == ChaosPersists.MyScaryLeaves) continue;
+                Block bid = level.getBlockState(new net.minecraft.core.BlockPos(posX + i, posY + 4, posZ + k))
+                        .getBlock();
+                if (bid == Blocks.AIR || bid == Blocks.OAK_LOG || bid == appleLeaves || bid == scaryLeaves) {
+                    continue;
+                }
                 return false;
             }
         }
         return true;
     }
 
-    private Entity spawnCreature(World par0World, String par1, double par2, double par4, double par6) {
+    private Entity spawnCreature(Level level, String par1, double par2, double par4, double par6) {
         Entity var8 = null;
-        net.minecraft.util.ResourceLocation requested;
+        net.minecraft.resources.ResourceLocation requested;
         if (par1 != null && par1.contains(":")) {
             String[] parts = par1.split(":", 2);
-            requested = new net.minecraft.util.ResourceLocation(parts[0], parts[1]);
+            requested = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
         } else {
             String normalizedPath = (par1 == null ? "" : par1.trim().toLowerCase(Locale.ROOT).replace(' ', '_'));
-            requested = new net.minecraft.util.ResourceLocation("chaospersists", normalizedPath);
+            requested = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", normalizedPath);
         }
         requested = SpawnerFixHelper.normalizeEntityLookupId(requested);
-        var8 = EntityList.createEntityByIDFromName(requested, (World)par0World);
+        EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(requested);
+        if (entityType != null) {
+            var8 = entityType.create(level);
+        }
         if (var8 != null) {
             if (par2 > 0.0) {
                 par2 += 0.5;
@@ -2801,9 +3998,11 @@ implements IWorldGenerator {
             if (par6 < 0.0) {
                 par6 -= 0.5;
             }
-            var8.setLocationAndAngles(par2, par4 + 0.01, par6, par0World.rand.nextFloat() * 360.0f, 0.0f);
-            par0World.spawnEntity(var8);
-            ((EntityLiving)var8).playLivingSound();
+            var8.moveTo(par2, par4 + 0.01, par6, level.getRandom().nextFloat() * 360.0F, 0.0F);
+            level.addFreshEntity(var8);
+            if (var8 instanceof Mob mob) {
+                MyUtils.playAmbientSound(mob);
+            }
         }
         return var8;
     }

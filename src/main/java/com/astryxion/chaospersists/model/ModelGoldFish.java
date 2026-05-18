@@ -1,184 +1,116 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.ModelGoldFish
- *  net.minecraft.client.model.ModelBase
- *  net.minecraft.client.model.ModelRenderer
- *  net.minecraft.entity.Entity
- *  net.minecraft.util.MathHelper
- */
 package com.astryxion.chaospersists.model;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.model.ModelRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
+import com.astryxion.chaospersists.entity.GoldFish;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.util.Mth;
 
-public class ModelGoldFish
-extends ModelBase {
-    private float wingspeed = 1.0f;
-    ModelRenderer Body;
-    ModelRenderer Head;
-    ModelRenderer Dorsalfin;
-    ModelRenderer Mouth;
-    ModelRenderer Jaw;
-    ModelRenderer Pectoralfin1;
-    ModelRenderer Pectoralfin2;
-    ModelRenderer Pectoralfin3;
-    ModelRenderer Pectoralfin4;
-    ModelRenderer Bottomfin;
-    ModelRenderer Tail1;
-    ModelRenderer Tail2;
-    ModelRenderer Caudalfin1;
-    ModelRenderer Caudalfin2;
-    ModelRenderer Bottomfin1;
-    ModelRenderer Bottomfin2;
+public class ModelGoldFish extends EntityModel<GoldFish> {
+    private final float wingspeed;
+    private final ModelPart Body;
+    private final ModelPart Head;
+    private final ModelPart Dorsalfin;
+    private final ModelPart Mouth;
+    private final ModelPart Jaw;
+    private final ModelPart Pectoralfin1;
+    private final ModelPart Pectoralfin2;
+    private final ModelPart Pectoralfin3;
+    private final ModelPart Pectoralfin4;
+    private final ModelPart Bottomfin;
+    private final ModelPart Tail1;
+    private final ModelPart Tail2;
+    private final ModelPart Caudalfin1;
+    private final ModelPart Caudalfin2;
+    private final ModelPart Bottomfin1;
+    private final ModelPart Bottomfin2;
 
     public ModelGoldFish(float f1) {
-        this.wingspeed = f1;
-        this.textureWidth = 64;
-        this.textureHeight = 64;
-        this.Body = new ModelRenderer((ModelBase)this, 0, 15);
-        this.Body.addBox(-2.0f, -2.0f, 0.0f, 4, 4, 10);
-        this.Body.setRotationPoint(0.0f, 14.0f, -5.0f);
-        this.Body.setTextureSize(64, 64);
-        this.Body.mirror = true;
-        this.setRotation(this.Body, 0.0f, 0.0f, 0.0f);
-        this.Head = new ModelRenderer((ModelBase)this, 0, 30);
-        this.Head.addBox(-1.5f, -2.0f, -3.0f, 3, 4, 3);
-        this.Head.setRotationPoint(0.0f, 14.0f, -5.0f);
-        this.Head.setTextureSize(64, 64);
-        this.Head.mirror = true;
-        this.setRotation(this.Head, 0.0f, 0.0f, 0.0f);
-        this.Dorsalfin = new ModelRenderer((ModelBase)this, 29, 0);
-        this.Dorsalfin.addBox(0.0f, -6.0f, 0.0f, 0, 4, 10);
-        this.Dorsalfin.setRotationPoint(0.0f, 14.0f, -5.0f);
-        this.Dorsalfin.setTextureSize(64, 64);
-        this.Dorsalfin.mirror = true;
-        this.setRotation(this.Dorsalfin, 0.0f, 0.0f, 0.0f);
-        this.Mouth = new ModelRenderer((ModelBase)this, 0, 38);
-        this.Mouth.addBox(-1.5f, 0.6f, -3.5f, 3, 3, 3);
-        this.Mouth.setRotationPoint(0.0f, 14.0f, -5.0f);
-        this.Mouth.setTextureSize(64, 64);
-        this.Mouth.mirror = true;
-        this.setRotation(this.Mouth, -0.7853982f, 0.0f, 0.0f);
-        this.Jaw = new ModelRenderer((ModelBase)this, 13, 30);
-        this.Jaw.addBox(-1.0f, 0.0f, -3.0f, 3, 1, 3);
-        this.Jaw.setRotationPoint(-0.5f, 15.6f, -7.4f);
-        this.Jaw.setTextureSize(64, 64);
-        this.Jaw.mirror = true;
-        this.setRotation(this.Jaw, -0.2284419f, 0.0f, 0.0f);
-        this.Pectoralfin1 = new ModelRenderer((ModelBase)this, 0, 0);
-        this.Pectoralfin1.addBox(0.0f, -1.5f, 0.0f, 0, 3, 5);
-        this.Pectoralfin1.setRotationPoint(-2.0f, 14.0f, -3.0f);
-        this.Pectoralfin1.setTextureSize(64, 64);
-        this.Pectoralfin1.mirror = true;
-        this.setRotation(this.Pectoralfin1, -0.2974289f, -0.3346075f, 0.0f);
-        this.Pectoralfin2 = new ModelRenderer((ModelBase)this, 0, 0);
-        this.Pectoralfin2.addBox(0.0f, -1.5f, 0.0f, 0, 3, 5);
-        this.Pectoralfin2.setRotationPoint(2.0f, 14.0f, -3.0f);
-        this.Pectoralfin2.setTextureSize(64, 64);
-        this.Pectoralfin2.mirror = true;
-        this.setRotation(this.Pectoralfin2, -0.2974216f, 0.3346145f, 0.0f);
-        this.Pectoralfin3 = new ModelRenderer((ModelBase)this, 0, 0);
-        this.Pectoralfin3.addBox(0.0f, -1.5f, 0.0f, 0, 3, 5);
-        this.Pectoralfin3.setRotationPoint(-2.0f, 14.0f, 1.0f);
-        this.Pectoralfin3.setTextureSize(64, 64);
-        this.Pectoralfin3.mirror = true;
-        this.setRotation(this.Pectoralfin3, -0.2974289f, -0.3346075f, 0.0f);
-        this.Pectoralfin4 = new ModelRenderer((ModelBase)this, 0, 0);
-        this.Pectoralfin4.addBox(0.0f, -1.5f, 0.0f, 0, 3, 5);
-        this.Pectoralfin4.setRotationPoint(2.0f, 14.0f, 1.0f);
-        this.Pectoralfin4.setTextureSize(64, 64);
-        this.Pectoralfin4.mirror = true;
-        this.setRotation(this.Pectoralfin4, -0.2974289f, 0.3346145f, 0.0f);
-        this.Bottomfin = new ModelRenderer((ModelBase)this, 20, 8);
-        this.Bottomfin.addBox(0.0f, 2.0f, 6.0f, 0, 3, 4);
-        this.Bottomfin.setRotationPoint(0.0f, 14.0f, -5.0f);
-        this.Bottomfin.setTextureSize(64, 64);
-        this.Bottomfin.mirror = true;
-        this.setRotation(this.Bottomfin, 0.0f, 0.0f, 0.0f);
-        this.Tail1 = new ModelRenderer((ModelBase)this, 29, 15);
-        this.Tail1.addBox(-1.5f, -2.0f, 0.0f, 3, 4, 6);
-        this.Tail1.setRotationPoint(0.0f, 14.0f, 5.0f);
-        this.Tail1.setTextureSize(64, 64);
-        this.Tail1.mirror = true;
-        this.setRotation(this.Tail1, 0.0f, 0.0f, 0.0f);
-        this.Tail2 = new ModelRenderer((ModelBase)this, 0, 8);
-        this.Tail2.addBox(-1.0f, -1.5f, 6.0f, 2, 3, 4);
-        this.Tail2.setRotationPoint(0.0f, 14.0f, 5.0f);
-        this.Tail2.setTextureSize(64, 64);
-        this.Tail2.mirror = true;
-        this.setRotation(this.Tail2, 0.0f, 0.0f, 0.0f);
-        this.Caudalfin1 = new ModelRenderer((ModelBase)this, 13, 35);
-        this.Caudalfin1.addBox(-0.5f, 5.5f, 6.0f, 1, 3, 4);
-        this.Caudalfin1.setRotationPoint(0.0f, 14.0f, 5.0f);
-        this.Caudalfin1.setTextureSize(64, 64);
-        this.Caudalfin1.mirror = true;
-        this.setRotation(this.Caudalfin1, 0.8179294f, 0.0f, 0.0f);
-        this.Caudalfin2 = new ModelRenderer((ModelBase)this, 15, 35);
-        this.Caudalfin2.addBox(-0.5f, 5.5f, 6.0f, 1, 4, 3);
-        this.Caudalfin2.setRotationPoint(0.0f, 14.0f, 5.0f);
-        this.Caudalfin2.setTextureSize(64, 64);
-        this.Caudalfin2.mirror = true;
-        this.setRotation(this.Caudalfin2, 0.8179294f, 0.0f, 0.0f);
-        this.Bottomfin1 = new ModelRenderer((ModelBase)this, 20, 0);
-        this.Bottomfin1.addBox(-1.0f, 2.0f, 1.0f, 0, 5, 2);
-        this.Bottomfin1.setRotationPoint(0.0f, 14.0f, -5.0f);
-        this.Bottomfin1.setTextureSize(64, 64);
-        this.Bottomfin1.mirror = true;
-        this.setRotation(this.Bottomfin1, 0.2974289f, 0.0f, 0.3346145f);
-        this.Bottomfin2 = new ModelRenderer((ModelBase)this, 20, 0);
-        this.Bottomfin2.addBox(1.0f, 2.0f, 1.0f, 0, 5, 2);
-        this.Bottomfin2.setRotationPoint(0.0f, 14.0f, -5.0f);
-        this.Bottomfin2.setTextureSize(64, 64);
-        this.Bottomfin2.mirror = true;
-        this.setRotation(this.Bottomfin2, 0.2974289f, 0.0f, -0.3346075f);
+        this(f1, LayerDefinition.create(createMesh(), 64, 64).bakeRoot());
     }
 
-    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
+    public ModelGoldFish(float wingspeed, ModelPart root) {
+        this.wingspeed = wingspeed;
+        this.Body = root.getChild("Body");
+        this.Head = root.getChild("Head");
+        this.Dorsalfin = root.getChild("Dorsalfin");
+        this.Mouth = root.getChild("Mouth");
+        this.Jaw = root.getChild("Jaw");
+        this.Pectoralfin1 = root.getChild("Pectoralfin1");
+        this.Pectoralfin2 = root.getChild("Pectoralfin2");
+        this.Pectoralfin3 = root.getChild("Pectoralfin3");
+        this.Pectoralfin4 = root.getChild("Pectoralfin4");
+        this.Bottomfin = root.getChild("Bottomfin");
+        this.Tail1 = root.getChild("Tail1");
+        this.Tail2 = root.getChild("Tail2");
+        this.Caudalfin1 = root.getChild("Caudalfin1");
+        this.Caudalfin2 = root.getChild("Caudalfin2");
+        this.Bottomfin1 = root.getChild("Bottomfin1");
+        this.Bottomfin2 = root.getChild("Bottomfin2");
+    }
+
+    private static MeshDefinition createMesh() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition root = mesh.getRoot();
+        root.addOrReplaceChild("Body", CubeListBuilder.create().texOffs(0, 15).mirror().addBox(-2.0f, -2.0f, 0.0f, 4, 4, 10), PartPose.offset(0.0f, 14.0f, -5.0f));
+        root.addOrReplaceChild("Head", CubeListBuilder.create().texOffs(0, 30).mirror().addBox(-1.5f, -2.0f, -3.0f, 3, 4, 3), PartPose.offset(0.0f, 14.0f, -5.0f));
+        root.addOrReplaceChild("Dorsalfin", CubeListBuilder.create().texOffs(29, 0).mirror().addBox(0.0f, -6.0f, 0.0f, 0, 4, 10), PartPose.offset(0.0f, 14.0f, -5.0f));
+        root.addOrReplaceChild("Mouth", CubeListBuilder.create().texOffs(0, 38).mirror().addBox(-1.5f, 0.6f, -3.5f, 3, 3, 3), PartPose.offsetAndRotation(0.0f, 14.0f, -5.0f, -0.7853982f, 0.0f, 0.0f));
+        root.addOrReplaceChild("Jaw", CubeListBuilder.create().texOffs(13, 30).mirror().addBox(-1.0f, 0.0f, -3.0f, 3, 1, 3), PartPose.offsetAndRotation(-0.5f, 15.6f, -7.4f, -0.2284419f, 0.0f, 0.0f));
+        root.addOrReplaceChild("Pectoralfin1", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, -1.5f, 0.0f, 0, 3, 5), PartPose.offsetAndRotation(-2.0f, 14.0f, -3.0f, -0.2974289f, -0.3346075f, 0.0f));
+        root.addOrReplaceChild("Pectoralfin2", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, -1.5f, 0.0f, 0, 3, 5), PartPose.offsetAndRotation(2.0f, 14.0f, -3.0f, -0.2974216f, 0.3346145f, 0.0f));
+        root.addOrReplaceChild("Pectoralfin3", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, -1.5f, 0.0f, 0, 3, 5), PartPose.offsetAndRotation(-2.0f, 14.0f, 1.0f, -0.2974289f, -0.3346075f, 0.0f));
+        root.addOrReplaceChild("Pectoralfin4", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, -1.5f, 0.0f, 0, 3, 5), PartPose.offsetAndRotation(2.0f, 14.0f, 1.0f, -0.2974289f, 0.3346145f, 0.0f));
+        root.addOrReplaceChild("Bottomfin", CubeListBuilder.create().texOffs(20, 8).mirror().addBox(0.0f, 2.0f, 6.0f, 0, 3, 4), PartPose.offset(0.0f, 14.0f, -5.0f));
+        root.addOrReplaceChild("Tail1", CubeListBuilder.create().texOffs(29, 15).mirror().addBox(-1.5f, -2.0f, 0.0f, 3, 4, 6), PartPose.offset(0.0f, 14.0f, 5.0f));
+        root.addOrReplaceChild("Tail2", CubeListBuilder.create().texOffs(0, 8).mirror().addBox(-1.0f, -1.5f, 6.0f, 2, 3, 4), PartPose.offset(0.0f, 14.0f, 5.0f));
+        root.addOrReplaceChild("Caudalfin1", CubeListBuilder.create().texOffs(13, 35).mirror().addBox(-0.5f, 5.5f, 6.0f, 1, 3, 4), PartPose.offsetAndRotation(0.0f, 14.0f, 5.0f, 0.8179294f, 0.0f, 0.0f));
+        root.addOrReplaceChild("Caudalfin2", CubeListBuilder.create().texOffs(15, 35).mirror().addBox(-0.5f, 5.5f, 6.0f, 1, 4, 3), PartPose.offsetAndRotation(0.0f, 14.0f, 5.0f, 0.8179294f, 0.0f, 0.0f));
+        root.addOrReplaceChild("Bottomfin1", CubeListBuilder.create().texOffs(20, 0).mirror().addBox(-1.0f, 2.0f, 1.0f, 0, 5, 2), PartPose.offsetAndRotation(0.0f, 14.0f, -5.0f, 0.2974289f, 0.0f, 0.3346145f));
+        root.addOrReplaceChild("Bottomfin2", CubeListBuilder.create().texOffs(20, 0).mirror().addBox(1.0f, 2.0f, 1.0f, 0, 5, 2), PartPose.offsetAndRotation(0.0f, 14.0f, -5.0f, 0.2974289f, 0.0f, -0.3346075f));
+        return mesh;
+    }
+
+    @Override
+    public void setupAnim(GoldFish entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         float newangle = 0.0f;
-        super.render(entity, f, f1, f2, f3, f4, f5);
-        this.setRotationAngles(f, f1, f2, f3, f4, f5, entity);
-        newangle = MathHelper.cos((float)(f2 * 1.3f * this.wingspeed)) * 3.1415927f * 0.15f;
-        this.Pectoralfin1.rotateAngleY = 0.4f + newangle;
-        newangle = MathHelper.cos((float)(f2 * 1.2f * this.wingspeed)) * 3.1415927f * 0.15f;
-        this.Pectoralfin2.rotateAngleY = -0.4f + newangle;
-        newangle = MathHelper.cos((float)(f2 * 1.1f * this.wingspeed)) * 3.1415927f * 0.15f;
-        this.Pectoralfin3.rotateAngleY = 0.4f + newangle;
-        newangle = MathHelper.cos((float)(f2 * 1.0f * this.wingspeed)) * 3.1415927f * 0.15f;
-        this.Pectoralfin4.rotateAngleY = -0.4f + newangle;
-        this.Bottomfin1.rotateAngleY = newangle = MathHelper.cos((float)(f2 * 1.7f * this.wingspeed)) * 3.1415927f * 0.25f;
-        this.Bottomfin2.rotateAngleY = - newangle;
-        newangle = MathHelper.cos((float)(f2 * 0.7f * this.wingspeed)) * 3.1415927f * 0.1f;
-        this.Jaw.rotateAngleX = -0.25f + newangle;
-        this.Body.render(f5);
-        this.Head.render(f5);
-        this.Dorsalfin.render(f5);
-        this.Mouth.render(f5);
-        this.Jaw.render(f5);
-        this.Pectoralfin1.render(f5);
-        this.Pectoralfin2.render(f5);
-        this.Pectoralfin3.render(f5);
-        this.Pectoralfin4.render(f5);
-        this.Bottomfin.render(f5);
-        this.Tail1.render(f5);
-        this.Tail2.render(f5);
-        this.Caudalfin1.render(f5);
-        this.Caudalfin2.render(f5);
-        this.Bottomfin1.render(f5);
-        this.Bottomfin2.render(f5);
+        newangle = Mth.cos((float)(ageInTicks * 1.3f * this.wingspeed)) * 3.1415927f * 0.15f;
+        this.Pectoralfin1.yRot = 0.4f + newangle;
+        newangle = Mth.cos((float)(ageInTicks * 1.2f * this.wingspeed)) * 3.1415927f * 0.15f;
+        this.Pectoralfin2.yRot = -0.4f + newangle;
+        newangle = Mth.cos((float)(ageInTicks * 1.1f * this.wingspeed)) * 3.1415927f * 0.15f;
+        this.Pectoralfin3.yRot = 0.4f + newangle;
+        newangle = Mth.cos((float)(ageInTicks * 1.0f * this.wingspeed)) * 3.1415927f * 0.15f;
+        this.Pectoralfin4.yRot = -0.4f + newangle;
+        this.Bottomfin1.yRot = newangle = Mth.cos((float)(ageInTicks * 1.7f * this.wingspeed)) * 3.1415927f * 0.25f;
+        this.Bottomfin2.yRot = - newangle;
+        newangle = Mth.cos((float)(ageInTicks * 0.7f * this.wingspeed)) * 3.1415927f * 0.1f;
+        this.Jaw.xRot = -0.25f + newangle;
     }
 
-    private void setRotation(ModelRenderer model, float x, float y, float z) {
-        model.rotateAngleX = x;
-        model.rotateAngleY = y;
-        model.rotateAngleZ = z;
-    }
-
-    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity par7Entity) {
-        super.setRotationAngles(par1, par2, par3, par4, par5, par6, par7Entity);
+    @Override
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+        this.Body.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Head.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Dorsalfin.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Mouth.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Jaw.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Pectoralfin1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Pectoralfin2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Pectoralfin3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Pectoralfin4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Bottomfin.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Tail1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Tail2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Caudalfin1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Caudalfin2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Bottomfin1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.Bottomfin2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }
-

@@ -1,6 +1,6 @@
 {
   "parent": "block/cube_all",
   "textures": {
-    "all": "chaospersists:blocks/crystaltreeleaves"
+    "all": "chaospersists:block/crystaltreeleaves"
   }
 }

@@ -1,96 +1,99 @@
 package com.astryxion.chaospersists.item;
 
-import com.astryxion.chaospersists.item.UltimateArrow;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.projectile.EntityArrow;
-import net.minecraft.init.Enchantments;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.EnumAction;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumHand;
-import net.minecraft.world.World;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
 
 public class UltimateBow extends Item {
 
     public UltimateBow(int par1) {
-        this.maxStackSize = 1;
-        this.setMaxDamage(1000);
-        this.setCreativeTab(CreativeTabs.COMBAT);
+        super(new Item.Properties().stacksTo(1).durability(1000));
     }
 
     @Override
-    public void onCreated(ItemStack stack, World world, EntityPlayer player) {
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
         applyEnchantments(stack);
     }
 
     @Override
-    public void onUsingTick(ItemStack stack, EntityLivingBase entity, int count) {
-        if (EnchantmentHelper.getEnchantmentLevel(Enchantments.INFINITY, stack) <= 0) {
+    public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int count) {
+        if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, stack) <= 0) {
             applyEnchantments(stack);
         }
     }
 
     private void applyEnchantments(ItemStack stack) {
-        stack.addEnchantment(Enchantments.POWER, 5);
-        stack.addEnchantment(Enchantments.FLAME, 3);
-        stack.addEnchantment(Enchantments.PUNCH, 2);
-        stack.addEnchantment(Enchantments.INFINITY, 1);
+        stack.enchant(Enchantments.POWER_ARROWS, 5);
+        stack.enchant(Enchantments.FLAMING_ARROWS, 3);
+        stack.enchant(Enchantments.PUNCH_ARROWS, 2);
+        stack.enchant(Enchantments.INFINITY_ARROWS, 1);
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
-        ItemStack stack = player.getHeldItem(hand);
-        player.setActiveHand(hand);
-        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        player.startUsingItem(hand);
+        return InteractionResultHolder.consume(stack);
     }
 
     @Override
-    public void onPlayerStoppedUsing(ItemStack stack, World world, EntityLivingBase entityLiving, int timeLeft) {
-        if (!(entityLiving instanceof EntityPlayer)) {
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity entityLiving, int timeLeft) {
+        if (!(entityLiving instanceof Player player)) {
             return;
         }
-        EntityPlayer player = (EntityPlayer) entityLiving;
 
-        if (!world.isRemote) {
-            UltimateArrow arrow = new UltimateArrow(world, player, 3.0f);
-            if (world.rand.nextInt(4) == 1) {
-                arrow.setIsCritical(true);
+        if (!level.isClientSide) {
+            UltimateArrow arrow = new UltimateArrow(level, player, 3.0F);
+            if (level.getRandom().nextInt(4) == 1) {
+                arrow.setCritArrow(true);
             }
 
-            int punchLevel = EnchantmentHelper.getEnchantmentLevel(Enchantments.PUNCH, stack);
+            int punchLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.PUNCH_ARROWS, stack);
             if (punchLevel > 0) {
                 arrow.setKnockbackStrength(punchLevel);
             }
-            if (EnchantmentHelper.getEnchantmentLevel(Enchantments.FLAME, stack) > 0) {
-                arrow.setFire(100);
+            if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FLAMING_ARROWS, stack) > 0) {
+                arrow.setSharedFlagOnFire(true);
             }
 
-            arrow.pickupStatus = EntityArrow.PickupStatus.CREATIVE_ONLY;
-            world.spawnEntity(arrow);
+            arrow.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
+            level.addFreshEntity(arrow);
         }
 
-        world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ARROW_SHOOT, player.getSoundCategory(), 1.0f, 1.0f / (itemRand.nextFloat() * 0.4f + 1.2f) + 0.5f);
-        stack.damageItem(1, player);
+        level.playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.ARROW_SHOOT,
+                SoundSource.PLAYERS,
+                1.0F,
+                1.0F / (level.getRandom().nextFloat() * 0.4F + 1.2F) + 0.5F);
+        stack.hurtAndBreak(1, player, p -> p.broadcastBreakEvent(player.getUsedItemHand()));
     }
 
     @Override
-    public EnumAction getItemUseAction(ItemStack stack) {
-        return EnumAction.BOW;
+    public UseAnim getUseAnimation(ItemStack stack) {
+        return UseAnim.BOW;
     }
 
     @Override
-    public int getMaxItemUseDuration(ItemStack stack) {
+    public int getUseDuration(ItemStack stack) {
         return 9000;
     }
 
     @Override
-    public int getItemEnchantability() {
+    public int getEnchantmentValue() {
         return 50;
     }
 }

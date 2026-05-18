@@ -7,25 +7,25 @@
  *  com.astryxion.chaospersists.ItemChaosArmor
  *  com.astryxion.chaospersists.OreGenericEgg
  *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.block.BlockBush
- *  net.minecraft.block.BlockChest
- *  net.minecraft.block.BlockDeadBush
- *  net.minecraft.block.BlockFire
- *  net.minecraft.block.BlockFlower
- *  net.minecraft.block.BlockGrass
- *  net.minecraft.block.BlockLeaves
- *  net.minecraft.block.BlockLiquid
- *  net.minecraft.block.BlockPistonBase
- *  net.minecraft.block.BlockPistonMoving
- *  net.minecraft.block.BlockSand
- *  net.minecraft.block.BlockSlab
- *  net.minecraft.block.BlockTallGrass
+ *  com.astryxion.chaospersists.compat.minecraft.block.Block
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockBush
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockChest
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockDeadBush
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockFire
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockFlower
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockGrass
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockLeaves
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockLiquid
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockPistonBase
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockPistonMoving
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockSand
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockSlab
+ *  com.astryxion.chaospersists.compat.minecraft.block.BlockTallGrass
  *  net.minecraft.entity.Entity
  *  net.minecraft.entity.EntityList
  *  net.minecraft.entity.item.EntityEnderCrystal
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
+ *  com.astryxion.chaospersists.compat.minecraft.init.Blocks
+ *  com.astryxion.chaospersists.compat.minecraft.init.Items
  *  net.minecraft.inventory.IInventory
  *  net.minecraft.item.Item
  *  net.minecraft.item.ItemArmor
@@ -35,9 +35,9 @@
  *  net.minecraft.tileentity.MobSpawnerBaseLogic
  *  net.minecraft.tileentity.TileEntity
  *  net.minecraft.tileentity.TileEntityChest
- *  net.minecraft.tileentity.TileEntityMobSpawner
+ *  net.minecraft.tileentity.SpawnerBlockEntity
  *  net.minecraft.util.WeightedRandomChestContent
- *  net.minecraft.world.World
+ *  com.astryxion.chaospersists.compat.minecraft.world.World
  */
 package com.astryxion.chaospersists.world.dimension.structure;
 
@@ -48,226 +48,393 @@ import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import com.astryxion.chaospersists.util.WeightedRandomChestContent;
 import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockBush;
-import net.minecraft.block.BlockDoor;
-import net.minecraft.block.BlockChest;
-import net.minecraft.block.BlockDeadBush;
-import net.minecraft.block.BlockFire;
-import net.minecraft.block.BlockFlower;
-import net.minecraft.block.BlockGrass;
-import net.minecraft.block.BlockLeaves;
-import net.minecraft.block.BlockLiquid;
-import net.minecraft.block.BlockPistonBase;
-import net.minecraft.block.BlockPistonMoving;
-import net.minecraft.block.BlockSand;
-import net.minecraft.block.BlockSlab;
-import net.minecraft.block.BlockTallGrass;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.item.EntityEnderCrystal;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemArmor;
-import net.minecraft.item.ItemDoor;
-import net.minecraft.item.ItemEmptyMap;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.MobSpawnerBaseLogic;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityChest;
-import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import com.astryxion.chaospersists.compat.forge.common.util.EnumHelper;
 
 public class GenericDungeon {
     private final WeightedRandomChestContent[] RainbowContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MagicApple, 0, 1, 1, 25), new WeightedRandomChestContent(ChaosPersists.CloudSharkEgg, 0, 4, 10, 25), new WeightedRandomChestContent(Items.BONE, 0, 2, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 2, 16, 25), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 3, 10, 25), new WeightedRandomChestContent(Items.EXPERIENCE_BOTTLE, 0, 4, 10, 25)};
     private final WeightedRandomChestContent[] WhiteHouseContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MyCornDog, 0, 6, 12, 35), new WeightedRandomChestContent(ChaosPersists.UraniumNugget, 0, 2, 6, 10), new WeightedRandomChestContent(ChaosPersists.TitaniumNugget, 0, 2, 6, 10), new WeightedRandomChestContent(ChaosPersists.MyAmethyst, 0, 2, 6, 35), new WeightedRandomChestContent(ChaosPersists.MyRuby, 0, 2, 6, 25), new WeightedRandomChestContent(ChaosPersists.CriminalEgg, 0, 4, 10, 35), new WeightedRandomChestContent(Items.EMERALD, 0, 6, 16, 35), new WeightedRandomChestContent(Items.PORKCHOP, 0, 6, 16, 35), new WeightedRandomChestContent(Items.COOKED_PORKCHOP, 0, 6, 16, 35), new WeightedRandomChestContent(Items.DIAMOND, 0, 6, 16, 35), new WeightedRandomChestContent(Items.GOLD_INGOT, 0, 6, 16, 35)};
     private final WeightedRandomChestContent[] RubberDuckyContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MyDeadStinkBug, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyFireFish, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MySunFish, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MySparkFish, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyGreenFish, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyBlueFish, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyPinkFish, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyRockFish, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyWoodFish, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyGreyFish, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.RubberDuckyEgg, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyPeacockFeather, 0, 4, 10, 35), new WeightedRandomChestContent(Items.FEATHER, 0, 6, 16, 35)};
     private final WeightedRandomChestContent[] StinkyHouseContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MyDeadStinkBug, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.StinkyEgg, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.StinkBugEgg, 0, 4, 10, 35), new WeightedRandomChestContent(Items.BONE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.COAL, 0, 6, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 6, 16, 25), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 3, 10, 35)};
-    private final WeightedRandomChestContent[] NightmareRookeryContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MyDeadStinkBug, 0, 4, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.MyFlowerBlackBlock), 0, 4, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.MyFlowerScaryBlock), 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.PitchBlackEgg, 0, 4, 10, 25), new WeightedRandomChestContent(ChaosPersists.AntRobotKit, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.SpiderRobotKit, 0, 1, 1, 10), new WeightedRandomChestContent(Items.BONE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 6, 16, 25), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 3, 10, 35), new WeightedRandomChestContent(Items.EXPERIENCE_BOTTLE, 0, 4, 10, 35)};
-    private final WeightedRandomChestContent[] MonsterIslandContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.CreeperRepellent), 0, 4, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.KrakenRepellent), 0, 4, 10, 35), new WeightedRandomChestContent(Items.DYE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.BONE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 6, 16, 25), new WeightedRandomChestContent(Items.PORKCHOP, 0, 3, 10, 35), new WeightedRandomChestContent(Items.BEEF, 0, 3, 10, 35), new WeightedRandomChestContent(Items.CHICKEN, 0, 3, 10, 35), new WeightedRandomChestContent(Items.FISH, 0, 3, 10, 35), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 3, 10, 35), new WeightedRandomChestContent(Items.EXPERIENCE_BOTTLE, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyRawBacon, 0, 6, 16, 35), new WeightedRandomChestContent(ChaosPersists.MyRawPeacock, 0, 6, 16, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.LOG), 0, 6, 16, 25)};
-    private final WeightedRandomChestContent[] GreenhouseContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.GreenGoo, 0, 4, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.CreeperRepellent), 0, 4, 10, 35), new WeightedRandomChestContent(Items.FLOWER_POT, 0, 6, 16, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.SAPLING), 0, 6, 16, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.LEAVES), 0, 6, 16, 25), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.DIRT), 0, 6, 16, 25), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.LOG), 0, 6, 16, 25)};
-    private final WeightedRandomChestContent[] CrystalBattleTowerRatContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.COOKED_PORKCHOP, 0, 3, 10, 35), new WeightedRandomChestContent(Items.BEEF, 0, 3, 10, 35), new WeightedRandomChestContent(Items.COOKED_CHICKEN, 0, 3, 10, 35), new WeightedRandomChestContent(Items.COOKED_FISH, 0, 3, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyBLT, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MySalad, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyCornDog, 0, 4, 10, 35)};
-    private final WeightedRandomChestContent[] CrystalBattleTowerDungeonBeastContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.DYE, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MySquidZooka, 0, 1, 1, 25), new WeightedRandomChestContent(Items.GOLD_NUGGET, 0, 5, 15, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
+    private final WeightedRandomChestContent[] NightmareRookeryContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MyDeadStinkBug, 0, 4, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.MyFlowerBlackBlock), 0, 4, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.MyFlowerScaryBlock), 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.PitchBlackEgg, 0, 4, 10, 25), new WeightedRandomChestContent(ChaosPersists.AntRobotKit, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.SpiderRobotKit, 0, 1, 1, 10), new WeightedRandomChestContent(Items.BONE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 6, 16, 25), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 3, 10, 35), new WeightedRandomChestContent(Items.EXPERIENCE_BOTTLE, 0, 4, 10, 35)};
+    private final WeightedRandomChestContent[] MonsterIslandContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.CreeperRepellent), 0, 4, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.KrakenRepellent), 0, 4, 10, 35), new WeightedRandomChestContent(Items.INK_SAC, 0, 6, 16, 25), new WeightedRandomChestContent(Items.BONE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 6, 16, 25), new WeightedRandomChestContent(Items.PORKCHOP, 0, 3, 10, 35), new WeightedRandomChestContent(Items.BEEF, 0, 3, 10, 35), new WeightedRandomChestContent(Items.CHICKEN, 0, 3, 10, 35), new WeightedRandomChestContent(Items.COD, 0, 3, 10, 35), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 3, 10, 35), new WeightedRandomChestContent(Items.EXPERIENCE_BOTTLE, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyRawBacon, 0, 6, 16, 35), new WeightedRandomChestContent(ChaosPersists.MyRawPeacock, 0, 6, 16, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.OAK_LOG), 0, 6, 16, 25)};
+    private final WeightedRandomChestContent[] GreenhouseContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.GreenGoo, 0, 4, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.CreeperRepellent), 0, 4, 10, 35), new WeightedRandomChestContent(Items.FLOWER_POT, 0, 6, 16, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.OAK_SAPLING), 0, 6, 16, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.OAK_LEAVES), 0, 6, 16, 25), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DIRT), 0, 6, 16, 25), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.OAK_LOG), 0, 6, 16, 25)};
+    private final WeightedRandomChestContent[] CrystalBattleTowerRatContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.COOKED_PORKCHOP, 0, 3, 10, 35), new WeightedRandomChestContent(Items.BEEF, 0, 3, 10, 35), new WeightedRandomChestContent(Items.COOKED_CHICKEN, 0, 3, 10, 35), new WeightedRandomChestContent(Items.COOKED_COD, 0, 3, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyBLT, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MySalad, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyCornDog, 0, 4, 10, 35)};
+    private final WeightedRandomChestContent[] CrystalBattleTowerDungeonBeastContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.INK_SAC, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MySquidZooka, 0, 1, 1, 25), new WeightedRandomChestContent(Items.GOLD_NUGGET, 0, 5, 15, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
     private final WeightedRandomChestContent[] CrystalBattleTowerUrchinContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkHelmet, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkBody, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkLegs, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkBoots, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyFairySword, 0, 1, 1, 15)};
     private final WeightedRandomChestContent[] CrystalBattleTowerRotatorContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeHelmet, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeBody, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeLegs, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeBoots, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyRatSword, 0, 1, 1, 15)};
-    private final WeightedRandomChestContent[] CrystalBattleTowerVortexContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.CrystalCoal), 0, 6, 10, 10), new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.CrystalCoal), 0, 6, 10, 10), new WeightedRandomChestContent(ChaosPersists.MyTigersEyeSword, 0, 1, 1, 10), new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.MyTigersEyeBlock), 0, 4, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyPoisonSword, 0, 1, 1, 15)};
-    private final WeightedRandomChestContent[] RobotContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.REDSTONE, 0, 1, 10, 35), new WeightedRandomChestContent(Items.REPEATER, 0, 1, 10, 35), new WeightedRandomChestContent(Items.MINECART, 0, 1, 1, 35), new WeightedRandomChestContent(Items.FIRE_CHARGE, 0, 1, 10, 35), new WeightedRandomChestContent(Items.HOPPER_MINECART, 0, 1, 1, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.REDSTONE_BLOCK), 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.RAIL), 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.DETECTOR_RAIL), 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.STICKY_PISTON), 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.PISTON), 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.REDSTONE_TORCH), 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.TNT), 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.RAIL), 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.LEVER), 0, 1, 10, 35), new WeightedRandomChestContent(ChaosPersists.AntRobotKit, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.SpiderRobotKit, 0, 1, 1, 10), new WeightedRandomChestContent(Items.IRON_DOOR, 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.REDSTONE_TORCH), 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.WOODEN_BUTTON), 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.IRON_BARS), 0, 1, 10, 35), new WeightedRandomChestContent(Items.COMPARATOR, 0, 1, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.ACTIVATOR_RAIL), 0, 1, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyRayGun, 0, 1, 1, 35)};
-    private final WeightedRandomChestContent[] IncaPyramidContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.GOLDEN_SWORD, 0, 1, 1, 35), new WeightedRandomChestContent((Item)Items.GOLDEN_BOOTS, 0, 1, 1, 35), new WeightedRandomChestContent((Item)Items.GOLDEN_LEGGINGS, 0, 1, 1, 35), new WeightedRandomChestContent((Item)Items.GOLDEN_HELMET, 0, 1, 1, 35), new WeightedRandomChestContent((Item)Items.GOLDEN_CHESTPLATE, 0, 1, 1, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.YELLOW_FLOWER), 0, 3, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.RED_FLOWER), 0, 3, 10, 35), new WeightedRandomChestContent(Items.GOLD_NUGGET, 0, 3, 10, 35), new WeightedRandomChestContent(Items.GOLD_INGOT, 0, 3, 10, 35), new WeightedRandomChestContent(Items.EXPERIENCE_BOTTLE, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyCornCob, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 25), new WeightedRandomChestContent(Items.BONE, 0, 4, 10, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.GOLD_BLOCK), 0, 4, 10, 35)};
-    private final WeightedRandomChestContent[] DamselContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.IRON_PICKAXE, 0, 1, 1, 35), new WeightedRandomChestContent(Items.IRON_SWORD, 0, 1, 1, 35), new WeightedRandomChestContent(Items.COOKED_PORKCHOP, 0, 3, 10, 35), new WeightedRandomChestContent(Items.BEEF, 0, 3, 10, 35), new WeightedRandomChestContent(Items.COOKED_CHICKEN, 0, 3, 10, 35), new WeightedRandomChestContent(Items.COOKED_FISH, 0, 3, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyBLT, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MySalad, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyCornDog, 0, 4, 10, 35)};
-    private final WeightedRandomChestContent[] EnderCastleContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.ENDER_CHEST), 0, 2, 4, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.DIAMOND_BLOCK), 0, 2, 4, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.DRAGON_EGG), 0, 1, 1, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.MyEnderPearlBlock), 0, 3, 6, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.MyEyeOfEnderBlock), 0, 3, 6, 35), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 25), new WeightedRandomChestContent(Items.ENDER_PEARL, 0, 2, 4, 35), new WeightedRandomChestContent(Items.ENDER_EYE, 0, 2, 4, 35)};
-    private final WeightedRandomChestContent[] BouncyContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 35), new WeightedRandomChestContent(Items.FISH, 0, 6, 16, 25), new WeightedRandomChestContent(Items.BONE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 6, 16, 25), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.RED_FLOWER), 0, 6, 16, 25), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.YELLOW_FLOWER), 0, 6, 16, 25), new WeightedRandomChestContent(Items.ENDER_PEARL, 0, 2, 4, 20)};
-    private final WeightedRandomChestContent[] SpitBugContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 35), new WeightedRandomChestContent(Items.FISH, 0, 6, 16, 25), new WeightedRandomChestContent(Items.BONE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MyAmethystPickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystHoe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystSword, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystBoots, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.InstantGarden, 0, 2, 4, 25), new WeightedRandomChestContent(ChaosPersists.InstantShelter, 0, 2, 4, 25)};
-    private final WeightedRandomChestContent[] GraveContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.ENDER_EYE, 0, 6, 16, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.RED_FLOWER), 0, 6, 16, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.YELLOW_FLOWER), 0, 6, 16, 35), new WeightedRandomChestContent(Items.ENDER_PEARL, 0, 6, 16, 35)};
-    private final WeightedRandomChestContent[] HospitalContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.ENDER_CHEST), 0, 2, 4, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.DIAMOND_BLOCK), 0, 2, 4, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.DRAGON_EGG), 0, 1, 1, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.MyEnderPearlBlock), 0, 3, 6, 35), new WeightedRandomChestContent(Items.ENDER_PEARL, 0, 2, 4, 35), new WeightedRandomChestContent(Items.ENDER_EYE, 0, 2, 4, 35)};
+    private final WeightedRandomChestContent[] CrystalBattleTowerVortexContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.CrystalCoal), 0, 6, 10, 10), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.CrystalCoal), 0, 6, 10, 10), new WeightedRandomChestContent(ChaosPersists.MyTigersEyeSword, 0, 1, 1, 10), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.MyTigersEyeBlock), 0, 4, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyPoisonSword, 0, 1, 1, 15)};
+    private final WeightedRandomChestContent[] RobotContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.REDSTONE, 0, 1, 10, 35), new WeightedRandomChestContent(Items.REPEATER, 0, 1, 10, 35), new WeightedRandomChestContent(Items.MINECART, 0, 1, 1, 35), new WeightedRandomChestContent(Items.FIRE_CHARGE, 0, 1, 10, 35), new WeightedRandomChestContent(Items.HOPPER_MINECART, 0, 1, 1, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.REDSTONE_BLOCK), 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.RAIL), 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DETECTOR_RAIL), 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.STICKY_PISTON), 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.PISTON), 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.REDSTONE_TORCH), 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.TNT), 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.RAIL), 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.LEVER), 0, 1, 10, 35), new WeightedRandomChestContent(ChaosPersists.AntRobotKit, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.SpiderRobotKit, 0, 1, 1, 10), new WeightedRandomChestContent(Items.IRON_DOOR, 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.REDSTONE_TORCH), 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.OAK_BUTTON), 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.IRON_BARS), 0, 1, 10, 35), new WeightedRandomChestContent(Items.COMPARATOR, 0, 1, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.ACTIVATOR_RAIL), 0, 1, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyRayGun, 0, 1, 1, 35)};
+    private final WeightedRandomChestContent[] IncaPyramidContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.GOLDEN_SWORD, 0, 1, 1, 35), new WeightedRandomChestContent((Item)Items.GOLDEN_BOOTS, 0, 1, 1, 35), new WeightedRandomChestContent((Item)Items.GOLDEN_LEGGINGS, 0, 1, 1, 35), new WeightedRandomChestContent((Item)Items.GOLDEN_HELMET, 0, 1, 1, 35), new WeightedRandomChestContent((Item)Items.GOLDEN_CHESTPLATE, 0, 1, 1, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DANDELION), 0, 3, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.POPPY), 0, 3, 10, 35), new WeightedRandomChestContent(Items.GOLD_NUGGET, 0, 3, 10, 35), new WeightedRandomChestContent(Items.GOLD_INGOT, 0, 3, 10, 35), new WeightedRandomChestContent(Items.EXPERIENCE_BOTTLE, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyCornCob, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 25), new WeightedRandomChestContent(Items.BONE, 0, 4, 10, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.GOLD_BLOCK), 0, 4, 10, 35)};
+    private final WeightedRandomChestContent[] DamselContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.IRON_PICKAXE, 0, 1, 1, 35), new WeightedRandomChestContent(Items.IRON_SWORD, 0, 1, 1, 35), new WeightedRandomChestContent(Items.COOKED_PORKCHOP, 0, 3, 10, 35), new WeightedRandomChestContent(Items.BEEF, 0, 3, 10, 35), new WeightedRandomChestContent(Items.COOKED_CHICKEN, 0, 3, 10, 35), new WeightedRandomChestContent(Items.COOKED_COD, 0, 3, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyBLT, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MySalad, 0, 4, 10, 35), new WeightedRandomChestContent(ChaosPersists.MyCornDog, 0, 4, 10, 35)};
+    private final WeightedRandomChestContent[] EnderCastleContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.ENDER_CHEST), 0, 2, 4, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DIAMOND_BLOCK), 0, 2, 4, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DRAGON_EGG), 0, 1, 1, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.MyEnderPearlBlock), 0, 3, 6, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.MyEyeOfEnderBlock), 0, 3, 6, 35), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 25), new WeightedRandomChestContent(Items.ENDER_PEARL, 0, 2, 4, 35), new WeightedRandomChestContent(Items.ENDER_EYE, 0, 2, 4, 35)};
+    private final WeightedRandomChestContent[] BouncyContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 35), new WeightedRandomChestContent(Items.COD, 0, 6, 16, 25), new WeightedRandomChestContent(Items.BONE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 6, 16, 25), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.POPPY), 0, 6, 16, 25), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DANDELION), 0, 6, 16, 25), new WeightedRandomChestContent(Items.ENDER_PEARL, 0, 2, 4, 20)};
+    private final WeightedRandomChestContent[] SpitBugContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 35), new WeightedRandomChestContent(Items.COD, 0, 6, 16, 25), new WeightedRandomChestContent(Items.BONE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MyAmethystPickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystHoe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystSword, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystBoots, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.InstantGarden, 0, 2, 4, 25), new WeightedRandomChestContent(ChaosPersists.InstantShelter, 0, 2, 4, 25)};
+    private final WeightedRandomChestContent[] GraveContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.ENDER_EYE, 0, 6, 16, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.POPPY), 0, 6, 16, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DANDELION), 0, 6, 16, 35), new WeightedRandomChestContent(Items.ENDER_PEARL, 0, 6, 16, 35)};
+    private final WeightedRandomChestContent[] HospitalContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.ENDER_CHEST), 0, 2, 4, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DIAMOND_BLOCK), 0, 2, 4, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DRAGON_EGG), 0, 1, 1, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.MyEnderPearlBlock), 0, 3, 6, 35), new WeightedRandomChestContent(Items.ENDER_PEARL, 0, 2, 4, 35), new WeightedRandomChestContent(Items.ENDER_EYE, 0, 2, 4, 35)};
     private final WeightedRandomChestContent[] MiniContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.GOLDEN_APPLE, 0, 6, 16, 35), new WeightedRandomChestContent(ChaosPersists.MyCrystalApple, 0, 6, 16, 35), new WeightedRandomChestContent(ChaosPersists.MyBacon, 0, 6, 16, 35), new WeightedRandomChestContent(ChaosPersists.MyFireFish, 0, 6, 16, 35), new WeightedRandomChestContent(ChaosPersists.InstantGarden, 0, 2, 4, 25), new WeightedRandomChestContent(ChaosPersists.InstantShelter, 0, 2, 4, 25)};
-    private final WeightedRandomChestContent[] LeafMonsterContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.FLOWER_POT, 0, 6, 16, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.SAPLING), 0, 6, 16, 35), new WeightedRandomChestContent(Items.FLOWER_POT, 0, 6, 16, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.SAPLING), 0, 6, 16, 35), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.LEAVES), 0, 6, 16, 25), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.DIRT), 0, 6, 16, 25), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.LOG), 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MyPoisonSword, 0, 1, 1, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
-    private final WeightedRandomChestContent[] CloudSharkContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.FISH, 0, 6, 16, 25), new WeightedRandomChestContent(Items.BONE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 6, 16, 25), new WeightedRandomChestContent(Items.PAPER, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MyExperienceTreeSeed, 0, 1, 2, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
-    private final WeightedRandomChestContent[] WaterDragonContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.FISH, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MyUltimateAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyUltimatePickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyUltimateShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 25), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.IRON_BLOCK), 0, 6, 16, 25), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
-    private final WeightedRandomChestContent[] SquidContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.DYE, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MySquidZooka, 0, 1, 1, 15), new WeightedRandomChestContent(Items.GOLD_NUGGET, 0, 5, 15, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
-    private final WeightedRandomChestContent[] KnightContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.PAPER, 0, 2, 8, 20), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.PLANKS), 0, 4, 8, 20), new WeightedRandomChestContent(Items.ENDER_EYE, 0, 2, 8, 15), new WeightedRandomChestContent(Items.ENDER_PEARL, 0, 2, 8, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
-    private final WeightedRandomChestContent[] AlienWTFContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.DIAMOND_BLOCK), 0, 1, 2, 15), new WeightedRandomChestContent(ChaosPersists.MyRuby, 0, 1, 1, 20), new WeightedRandomChestContent(ChaosPersists.MyAmethyst, 0, 1, 1, 20), new WeightedRandomChestContent(ChaosPersists.MyIngotUranium, 0, 1, 2, 5), new WeightedRandomChestContent(ChaosPersists.MyIngotTitanium, 0, 1, 2, 5), new WeightedRandomChestContent((Item)ChaosPersists.UltimateHelmet, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.UltimateBody, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.UltimateLegs, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.UltimateBoots, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyUltimateBow, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyNightmareSword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 15), new WeightedRandomChestContent(ChaosPersists.MyRayGun, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.CageEmpty, 0, 1, 10, 20), new WeightedRandomChestContent(ChaosPersists.MyCornDog, 0, 1, 10, 20), new WeightedRandomChestContent(ChaosPersists.MyBacon, 0, 1, 5, 20), new WeightedRandomChestContent(ChaosPersists.MyPopcornBag, 0, 2, 8, 20), new WeightedRandomChestContent(ChaosPersists.MyFireFish, 0, 2, 8, 15)};
-    private final WeightedRandomChestContent[] shadowContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.GLOWSTONE_DUST, 0, 2, 8, 20), new WeightedRandomChestContent(Items.NETHER_WART, 0, 4, 8, 20), new WeightedRandomChestContent(Items.BLAZE_ROD, 0, 2, 8, 15), new WeightedRandomChestContent(Items.BLAZE_POWDER, 0, 2, 8, 15), new WeightedRandomChestContent(Items.FIRE_CHARGE, 0, 4, 8, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25), new WeightedRandomChestContent(Items.DYE, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MyRuby, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyExperienceTreeSeed, 0, 2, 4, 15), new WeightedRandomChestContent(ChaosPersists.MyElevator, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyNightmareSword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyPoisonSword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRatSword, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyRubySword, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyBigHammer, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MySquidZooka, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyIngotTitanium, 0, 1, 1, 5), new WeightedRandomChestContent(ChaosPersists.MyIngotUranium, 0, 1, 1, 5), new WeightedRandomChestContent(ChaosPersists.MyUltimateSword, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyUltimateBow, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.EnderReaperEgg, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.PitchBlackEgg, 0, 2, 8, 15)};
-    private final WeightedRandomChestContent[] kyuubiContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.REDSTONE, 0, 2, 8, 10), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.REDSTONE_BLOCK), 0, 4, 8, 15), new WeightedRandomChestContent(Items.QUARTZ, 0, 2, 8, 15), new WeightedRandomChestContent(Items.COAL, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyNightmareSword, 0, 1, 1, 20), new WeightedRandomChestContent(ChaosPersists.MyPoisonSword, 0, 1, 1, 20), new WeightedRandomChestContent(ChaosPersists.KyuubiEgg, 0, 2, 8, 15)};
-    private final WeightedRandomChestContent[] blazeContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.BLAZE_ROD, 0, 2, 8, 15), new WeightedRandomChestContent(Items.BLAZE_POWDER, 0, 2, 8, 15), new WeightedRandomChestContent(Items.FIRE_CHARGE, 0, 4, 8, 15), new WeightedRandomChestContent(Items.FLINT_AND_STEEL, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelBoots, 0, 1, 1, 15), new WeightedRandomChestContent(Items.SPAWN_EGG, 61, 2, 8, 15)};
-    private final WeightedRandomChestContent[] beeContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.SUGAR, 0, 2, 8, 15), new WeightedRandomChestContent(Item.getItemFromBlock((Block)Blocks.YELLOW_FLOWER), 0, 4, 8, 15), new WeightedRandomChestContent(Items.GOLD_NUGGET, 0, 5, 15, 15), new WeightedRandomChestContent(Items.PAPER, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyFairySword, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkHelmet, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkBody, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkLegs, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkBoots, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyButterCandy, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 10), new WeightedRandomChestContent(ChaosPersists.BeeEgg, 0, 2, 8, 15)};
+    private final WeightedRandomChestContent[] LeafMonsterContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.FLOWER_POT, 0, 6, 16, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.OAK_SAPLING), 0, 6, 16, 35), new WeightedRandomChestContent(Items.FLOWER_POT, 0, 6, 16, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.OAK_SAPLING), 0, 6, 16, 35), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.OAK_LEAVES), 0, 6, 16, 25), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DIRT), 0, 6, 16, 25), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.OAK_LOG), 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MyPoisonSword, 0, 1, 1, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
+    private final WeightedRandomChestContent[] CloudSharkContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.COD, 0, 6, 16, 25), new WeightedRandomChestContent(Items.BONE, 0, 6, 16, 25), new WeightedRandomChestContent(Items.STRING, 0, 6, 16, 25), new WeightedRandomChestContent(Items.PAPER, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MyExperienceTreeSeed, 0, 1, 2, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
+    private final WeightedRandomChestContent[] WaterDragonContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.COD, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MyUltimateAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyUltimatePickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyUltimateShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 25), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.IRON_BLOCK), 0, 6, 16, 25), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
+    private final WeightedRandomChestContent[] SquidContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.INK_SAC, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MySquidZooka, 0, 1, 1, 15), new WeightedRandomChestContent(Items.GOLD_NUGGET, 0, 5, 15, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
+    private final WeightedRandomChestContent[] KnightContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.PAPER, 0, 2, 8, 20), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.OAK_PLANKS), 0, 4, 8, 20), new WeightedRandomChestContent(Items.ENDER_EYE, 0, 2, 8, 15), new WeightedRandomChestContent(Items.ENDER_PEARL, 0, 2, 8, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25)};
+    private final WeightedRandomChestContent[] AlienWTFContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DIAMOND_BLOCK), 0, 1, 2, 15), new WeightedRandomChestContent(ChaosPersists.MyRuby, 0, 1, 1, 20), new WeightedRandomChestContent(ChaosPersists.MyAmethyst, 0, 1, 1, 20), new WeightedRandomChestContent(ChaosPersists.MyIngotUranium, 0, 1, 2, 5), new WeightedRandomChestContent(ChaosPersists.MyIngotTitanium, 0, 1, 2, 5), new WeightedRandomChestContent((Item)ChaosPersists.UltimateHelmet, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.UltimateBody, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.UltimateLegs, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.UltimateBoots, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyUltimateBow, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyNightmareSword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 15), new WeightedRandomChestContent(ChaosPersists.MyRayGun, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.CageEmpty, 0, 1, 10, 20), new WeightedRandomChestContent(ChaosPersists.MyCornDog, 0, 1, 10, 20), new WeightedRandomChestContent(ChaosPersists.MyBacon, 0, 1, 5, 20), new WeightedRandomChestContent(ChaosPersists.MyPopcornBag, 0, 2, 8, 20), new WeightedRandomChestContent(ChaosPersists.MyFireFish, 0, 2, 8, 15)};
+    private final WeightedRandomChestContent[] shadowContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.GLOWSTONE_DUST, 0, 2, 8, 20), new WeightedRandomChestContent(Items.NETHER_WART, 0, 4, 8, 20), new WeightedRandomChestContent(Items.BLAZE_ROD, 0, 2, 8, 15), new WeightedRandomChestContent(Items.BLAZE_POWDER, 0, 2, 8, 15), new WeightedRandomChestContent(Items.FIRE_CHARGE, 0, 4, 8, 15), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25), new WeightedRandomChestContent(Items.INK_SAC, 0, 6, 16, 25), new WeightedRandomChestContent(ChaosPersists.MyRuby, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyExperienceTreeSeed, 0, 2, 4, 15), new WeightedRandomChestContent(ChaosPersists.MyElevator, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyNightmareSword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyPoisonSword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRatSword, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyRubySword, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyBigHammer, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MySquidZooka, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyIngotTitanium, 0, 1, 1, 5), new WeightedRandomChestContent(ChaosPersists.MyIngotUranium, 0, 1, 1, 5), new WeightedRandomChestContent(ChaosPersists.MyUltimateSword, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyUltimateBow, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.EnderReaperEgg, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.PitchBlackEgg, 0, 2, 8, 15)};
+    private final WeightedRandomChestContent[] kyuubiContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.REDSTONE, 0, 2, 8, 10), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.REDSTONE_BLOCK), 0, 4, 8, 15), new WeightedRandomChestContent(Items.QUARTZ, 0, 2, 8, 15), new WeightedRandomChestContent(Items.COAL, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyNightmareSword, 0, 1, 1, 20), new WeightedRandomChestContent(ChaosPersists.MyPoisonSword, 0, 1, 1, 20), new WeightedRandomChestContent(ChaosPersists.KyuubiEgg, 0, 2, 8, 15)};
+    private final WeightedRandomChestContent[] blazeContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.BLAZE_ROD, 0, 2, 8, 15), new WeightedRandomChestContent(Items.BLAZE_POWDER, 0, 2, 8, 15), new WeightedRandomChestContent(Items.FIRE_CHARGE, 0, 4, 8, 15), new WeightedRandomChestContent(Items.FLINT_AND_STEEL, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelBoots, 0, 1, 1, 15), new WeightedRandomChestContent(Items.BLAZE_SPAWN_EGG, 0, 2, 8, 15)};
+    private final WeightedRandomChestContent[] beeContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.SUGAR, 0, 2, 8, 15), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)Blocks.DANDELION), 0, 4, 8, 15), new WeightedRandomChestContent(Items.GOLD_NUGGET, 0, 5, 15, 15), new WeightedRandomChestContent(Items.PAPER, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyFairySword, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkHelmet, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkBody, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkLegs, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkBoots, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyButterCandy, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 10), new WeightedRandomChestContent(ChaosPersists.BeeEgg, 0, 2, 8, 15)};
     private final WeightedRandomChestContent[] mantisContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MyMantisClaw, 0, 1, 1, 10), new WeightedRandomChestContent(Items.GOLD_NUGGET, 0, 4, 8, 15), new WeightedRandomChestContent(ChaosPersists.UraniumNugget, 0, 1, 3, 5), new WeightedRandomChestContent(ChaosPersists.TitaniumNugget, 0, 1, 3, 5), new WeightedRandomChestContent(ChaosPersists.MantisEgg, 0, 2, 4, 20), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeHelmet, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeBody, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeLegs, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeBoots, 0, 1, 1, 10), new WeightedRandomChestContent(Items.ROTTEN_FLESH, 0, 6, 16, 25), new WeightedRandomChestContent(Items.DIAMOND, 0, 1, 3, 15)};
     private final WeightedRandomChestContent[] level1ContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.EMERALD, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MinersDream, 0, 4, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldPickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldHoe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldSword, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.EmeraldBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.EmeraldLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.EmeraldHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.EmeraldBoots, 0, 1, 1, 15)};
     private final WeightedRandomChestContent[] level2ContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(Items.EXPERIENCE_BOTTLE, 0, 2, 8, 15), new WeightedRandomChestContent(Items.EXPERIENCE_BOTTLE, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.CreeperLauncher, 0, 2, 10, 15), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkHelmet, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkBody, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkLegs, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.CrystalPinkBoots, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyFairySword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldPickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldHoe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldSword, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.ExperienceBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.ExperienceLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.ExperienceHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.ExperienceBoots, 0, 1, 1, 15)};
-    private final WeightedRandomChestContent[] level3ContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MySquidZooka, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRatSword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethyst, 0, 2, 8, 15), new WeightedRandomChestContent(Items.DYE, 0, 2, 8, 15), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeHelmet, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeBody, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeLegs, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeBoots, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyAmethystPickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystHoe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystSword, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystBoots, 0, 1, 1, 15)};
-    private final WeightedRandomChestContent[] level4ContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MyRuby, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MagicApple, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRayGun, 0, 1, 1, 15), new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.CreeperRepellent), 0, 4, 10, 15), new WeightedRandomChestContent(Item.getItemFromBlock((Block)ChaosPersists.KrakenRepellent), 0, 4, 10, 15), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 15), new WeightedRandomChestContent(ChaosPersists.ZooKeeper, 0, 10, 16, 15), new WeightedRandomChestContent(ChaosPersists.MyRubyPickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubyShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubyHoe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubyAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubySword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyThunderStaff, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyBoots, 0, 1, 1, 15)};
+    private final WeightedRandomChestContent[] level3ContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MySquidZooka, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRatSword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethyst, 0, 2, 8, 15), new WeightedRandomChestContent(Items.INK_SAC, 0, 2, 8, 15), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeHelmet, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeBody, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeLegs, 0, 1, 1, 10), new WeightedRandomChestContent((Item)ChaosPersists.TigersEyeBoots, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.MyAmethystPickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystHoe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyAmethystSword, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.AmethystBoots, 0, 1, 1, 15)};
+    private final WeightedRandomChestContent[] level4ContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MyRuby, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MagicApple, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRayGun, 0, 1, 1, 15), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.CreeperRepellent), 0, 4, 10, 15), new WeightedRandomChestContent(EnumHelper.getItemFromBlock((Block)ChaosPersists.KrakenRepellent), 0, 4, 10, 15), new WeightedRandomChestContent(ChaosPersists.MyExperienceCatcher, 0, 4, 10, 15), new WeightedRandomChestContent(ChaosPersists.ZooKeeper, 0, 10, 16, 15), new WeightedRandomChestContent(ChaosPersists.MyRubyPickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubyShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubyHoe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubyAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyRubySword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyThunderStaff, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.RubyBoots, 0, 1, 1, 15)};
     private final WeightedRandomChestContent[] level5ContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MyNightmareSword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyPoisonSword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.WitherSkeletonEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.EnderDragonEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SnowGolemEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.IronGolemEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.WitherBossEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.RedCowEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.GoldCowEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.EnchantedCowEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.MOTHRAEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.AloEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CryoEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CamaEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.VeloEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.HydroEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.BasilEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.DragonflyEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.EmperorScorpionEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.ScorpionEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CaveFisherEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SpyroEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.BaryonyxEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CockateilEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.GammaMetroidEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.KyuubiEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.AlienEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.AttackSquidEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.WaterDragonEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CephadromeEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.KrakenEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.LizardEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.DragonEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.BeeEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.TrooperBugEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SpitBugEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.StinkBugEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.OstrichEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.GazelleEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.ChipmunkEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CreepingHorrorEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.TerribleTerrorEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CliffRacerEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.TriffidEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.PitchBlackEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.LurkingTerrorEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SmallWormEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.MediumWormEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.LargeWormEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.TRexEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.GodzillaEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.MantisEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.HerculesEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.VortexEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.RatEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.DungeonBeastEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.FairyEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.WhaleEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SkateEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.IrukandjiEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.Robot1Egg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.Robot2Egg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.Robot3Egg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.Robot4Egg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.Robot5Egg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CriminalEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CoinEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.BoyfriendEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.EasterBunnyEgg, 0, 1, 4, 5), new WeightedRandomChestContent(ChaosPersists.MolenoidEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SeaMonsterEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SeaViperEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CaterKillerEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.LeonEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.HammerheadEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.RubberDuckyEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.NastysaurusEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.PointysaurusEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.BrutalflyEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CricketEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.FrogEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.AntRobotKit, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.SpiderRobotKit, 0, 1, 1, 10), new WeightedRandomChestContent(ChaosPersists.JefferyEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SpiderDriverEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CrabEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CassowaryEgg, 0, 1, 4, 15)};
     private final WeightedRandomChestContent[] chestContentsList = new WeightedRandomChestContent[]{new WeightedRandomChestContent(ChaosPersists.MyBacon, 0, 6, 12, 20), new WeightedRandomChestContent(ChaosPersists.MyButterCandy, 0, 6, 12, 20), new WeightedRandomChestContent(Items.EMERALD, 0, 2, 8, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldPickaxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldShovel, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldHoe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldAxe, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyEmeraldSword, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.EmeraldBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.EmeraldLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.EmeraldHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.EmeraldBoots, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyMothScale, 0, 2, 8, 15), new WeightedRandomChestContent((Item)ChaosPersists.MothScaleBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.MothScaleLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.MothScaleHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.MothScaleBoots, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyLavaEel, 0, 2, 8, 15), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.LavaEelBoots, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.ExperienceBody, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.ExperienceLegs, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.ExperienceHelmet, 0, 1, 1, 15), new WeightedRandomChestContent((Item)ChaosPersists.ExperienceBoots, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.MyExperienceSword, 0, 1, 1, 15), new WeightedRandomChestContent(ChaosPersists.WitherSkeletonEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.EnderDragonEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SnowGolemEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.IronGolemEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.WitherBossEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.RedCowEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.GoldCowEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.EnchantedCowEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.MOTHRAEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.AloEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CryoEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CamaEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.VeloEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.HydroEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.BasilEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.DragonflyEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.EmperorScorpionEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.ScorpionEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CaveFisherEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SpyroEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.BaryonyxEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CockateilEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.GammaMetroidEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.KyuubiEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.AlienEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.AttackSquidEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.WaterDragonEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CephadromeEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.KrakenEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.LizardEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.DragonEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.BeeEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.TrooperBugEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SpitBugEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.StinkBugEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.OstrichEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.GazelleEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.ChipmunkEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CreepingHorrorEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.TerribleTerrorEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CliffRacerEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.TriffidEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.PitchBlackEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.LurkingTerrorEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SmallWormEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.MediumWormEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.LargeWormEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CassowaryEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.MolenoidEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SeaMonsterEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SeaViperEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CaterKillerEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.LeonEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.HammerheadEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.RubberDuckyEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.NastysaurusEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.PointysaurusEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.BrutalflyEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CricketEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.FrogEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.JefferyEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.SpiderDriverEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CrabEgg, 0, 1, 4, 15), new WeightedRandomChestContent(ChaosPersists.CageEmpty, 0, 3, 10, 20)};
     private int[] king = new int[]{-1, -1, 24, 3, -1, 24, 5, -1, 17, 12, -1, 16, 15, -1, 15, 14, -1, 15, 6, 3, 5, -1, 14, 6, 4, 3, -1, 14, 5, -1, 14, 5, -1, 12, 9, -1, 11, 11, -1, 8, 17, -1, 5, 23, -1, 3, 27, -1, 2, 29, -1, 1, 31, -1, 0, 33, -1, 13, 6, -1, 12, 9, -1, 11, 3, 1, 2, 1, 4, -1, 10, 3, 2, 2, 3, 2, -1, 10, 2, 4, 2, 3, 2, -1, 9, 2, 5, 2, 4, 6, -1, 9, 2, 5, 2, 6, 4, -1, 8, 2, 6, 1, -1, 8, 2, 5, 2, -1, 8, 2, 5, 2, -1, 8, 2, 5, 2, -1, 15, 2, -1, -1, -1};
     private int[] queen = new int[]{-1, -1, 24, 3, -1, 24, 5, -1, 17, 12, -1, 16, 15, -1, 15, 14, -1, 15, 6, 3, 5, -1, 14, 6, 4, 3, -1, 14, 5, -1, 14, 5, -1, 12, 9, -1, 11, 11, -1, 8, 17, -1, 5, 23, -1, 3, 27, -1, 2, 29, -1, 1, 31, -1, 0, 33, -1, 13, 6, -1, 12, 9, -1, 11, 3, 1, 2, 1, 4, -1, 10, 3, 2, 2, 3, 2, -1, 10, 2, 4, 2, 3, 2, -1, 9, 2, 5, 2, 4, 6, -1, 9, 2, 5, 2, 6, 4, -1, 8, 2, 6, 1, -1, 8, 2, 5, 2, -1, 8, 2, 5, 2, -1, 8, 2, 5, 2, -1, 15, 2, -1, -1, -1};
     private int[] blkcolors = new int[]{14, 1, 4, 5, 3, 11, 10, 6};
 
-    private void setThisBlock(World world, int cposx, int cposy, int cposz) {
-        if (world.rand.nextInt(2) == 1) {
-            this.FastSetBlock(world, cposx, cposy, cposz, Blocks.MOSSY_COBBLESTONE);
+    private void setThisBlock(Level level, net.minecraft.util.RandomSource rand, int cposx, int cposy, int cposz) {
+        if (rand.nextInt(2) == 1) {
+            this.FastSetBlock(level, cposx, cposy, cposz, Blocks.MOSSY_COBBLESTONE);
         } else {
-            this.FastSetBlock(world, cposx, cposy, cposz, Blocks.COBBLESTONE);
+            this.FastSetBlock(level, cposx, cposy, cposz, Blocks.COBBLESTONE);
         }
     }
 
-    private TileEntityChest getChestTileEntity(World world, int cposx, int cposy, int cposz) {
-        TileEntityChest chest = null;
-        TileEntity t = null;
-        t = world.getTileEntity(new net.minecraft.util.math.BlockPos(cposx, cposy, cposz));
-        if (t != null && t instanceof TileEntityChest) {
-            chest = (TileEntityChest)t;
+    private ChestBlockEntity getChestTileEntity(Level level, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.block.entity.BlockEntity blockEntity =
+                level.getBlockEntity(new BlockPos(cposx, cposy, cposz));
+        if (blockEntity instanceof ChestBlockEntity chest) {
             return chest;
         }
         return null;
     }
 
-    private void setBlockMeta(World world, int x, int y, int z, int meta, int flags) {
+    private void setBlockMeta(Level level, int x, int y, int z, int meta, int flags) {
         BlockPos pos = new BlockPos(x, y, z);
-        world.setBlockState(pos, world.getBlockState(pos).getBlock().getStateFromMeta(meta), flags);
+        level.setBlock(
+                pos,
+                Blocks.CHEST.defaultBlockState().setValue(net.minecraft.world.level.block.ChestBlock.FACING, chestFacingFromLegacyMeta(meta)),
+                flags);
     }
 
-    private void placeDoor(World world, BlockPos pos, EnumFacing facing, BlockDoor door) {
-        world.setBlockState(pos, door.getDefaultState().withProperty(BlockDoor.FACING, facing).withProperty(BlockDoor.HALF, BlockDoor.EnumDoorHalf.LOWER), 2);
-        world.setBlockState(pos.up(), door.getDefaultState().withProperty(BlockDoor.FACING, facing).withProperty(BlockDoor.HALF, BlockDoor.EnumDoorHalf.UPPER), 2);
+    private void placeDoor(Level level, BlockPos pos, Direction facing, net.minecraft.world.level.block.Block doorBlock) {
+        BlockState lower =
+                doorBlock
+                        .defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.DoorBlock.FACING, facing)
+                        .setValue(
+                                net.minecraft.world.level.block.DoorBlock.HALF,
+                                net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER);
+        level.setBlock(pos, lower, 2);
+        level.setBlock(
+                pos.above(),
+                lower.setValue(
+                        net.minecraft.world.level.block.DoorBlock.HALF,
+                        net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER),
+                2);
     }
 
-    private TileEntityMobSpawner getSpawnerTileEntity(World world, int cposx, int cposy, int cposz) {
-        TileEntityMobSpawner chest = null;
-        TileEntity t = null;
-        t = world.getTileEntity(new net.minecraft.util.math.BlockPos(cposx, cposy, cposz));
-        if (t != null && t instanceof TileEntityMobSpawner) {
-            chest = (TileEntityMobSpawner)t;
-            return chest;
+    private void placeLevelDoor(
+            net.minecraft.world.level.Level level,
+            int x,
+            int y,
+            int z,
+            net.minecraft.core.Direction facing,
+            net.minecraft.world.level.block.Block doorBlock) {
+        net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
+        net.minecraft.world.level.block.state.BlockState lower =
+                doorBlock
+                        .defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.DoorBlock.FACING, facing)
+                        .setValue(
+                                net.minecraft.world.level.block.DoorBlock.HALF,
+                                net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER);
+        level.setBlock(pos, lower, 2);
+        level.setBlock(
+                pos.above(),
+                lower.setValue(
+                        net.minecraft.world.level.block.DoorBlock.HALF,
+                        net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER),
+                2);
+    }
+
+    private SpawnerBlockEntity getSpawnerTileEntity(Level level, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.block.entity.BlockEntity blockEntity =
+                level.getBlockEntity(new BlockPos(cposx, cposy, cposz));
+        if (blockEntity instanceof SpawnerBlockEntity spawner) {
+            return spawner;
         }
         return null;
     }
 
-    private void setSpawnerEntityId(TileEntityMobSpawner spawner, net.minecraft.util.ResourceLocation id) {
-        if (spawner == null || id == null) {
-            return;
-        }
-        spawner.getSpawnerBaseLogic().setEntityId(SpawnerFixHelper.normalizeSpawnerEntityId(id));
-    }
-
-    public void makeDungeon(World world, int cposx, int cposy, int cposz) {
+    public void makeDungeon(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int i;
         int k;
         int j;
         int width = 12;
         int height = 6;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         for (i = 0; i < width; ++i) {
             for (j = 0; j < height; ++j) {
                 for (k = 0; k < width; ++k) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
         for (i = 0; i < width; ++i) {
             j = 0;
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.MOSSY_COBBLESTONE);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE);
             }
         }
         for (i = 0; i < width; ++i) {
             j = height - 1;
             for (k = 0; k < width; ++k) {
-                this.setThisBlock(world, cposx + i, cposy + j, cposz + k);
+                this.setThisBlock(level, rand, cposx + i, cposy + j, cposz + k);
             }
         }
         for (i = 0; i < width; ++i) {
             for (j = 0; j < height; ++j) {
                 k = 0;
-                this.setThisBlock(world, cposx + i, cposy + j, cposz + k);
+                this.setThisBlock(level, rand, cposx + i, cposy + j, cposz + k);
                 k = width - 1;
-                this.setThisBlock(world, cposx + i, cposy + j, cposz + k);
+                this.setThisBlock(level, rand, cposx + i, cposy + j, cposz + k);
             }
         }
         for (k = 0; k < width; ++k) {
             for (j = 0; j < height; ++j) {
                 i = 0;
-                this.setThisBlock(world, cposx + i, cposy + j, cposz + k);
+                this.setThisBlock(level, rand, cposx + i, cposy + j, cposz + k);
                 i = width - 1;
-                this.setThisBlock(world, cposx + i, cposy + j, cposz + k);
+                this.setThisBlock(level, rand, cposx + i, cposy + j, cposz + k);
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 1, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        TileEntityMobSpawner tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 1, cposz + width / 2);
-        if (tileentitymobspawner != null) {
-            int t = world.rand.nextInt(12);
+        net.minecraft.core.BlockPos spawnerPos =
+                new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 1, cposz + width / 2);
+        level.setBlock(spawnerPos, net.minecraft.world.level.block.Blocks.SPAWNER.defaultBlockState(), 2);
+        net.minecraft.world.level.block.entity.BlockEntity spawnerEntity = level.getBlockEntity(spawnerPos);
+        if (spawnerEntity instanceof net.minecraft.world.level.block.entity.SpawnerBlockEntity spawner) {
+            int t = rand.nextInt(12);
             if (t == 0) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "scorpion"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "scorpion");
             }
             if (t == 1) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "alien"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "alien");
             }
             if (t == 2) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cryolophosaurus"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "cryolophosaurus");
             }
             if (t == 3) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "gamma_metroid"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "gamma_metroid");
             }
             if (t == 4) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "kyuubi"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "kyuubi");
             }
             if (t == 5) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "bee"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "bee");
             }
             if (t == 6) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cloud_shark"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "cloud_shark");
             }
             if (t == 7) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "lurking_terror"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "lurking_terror");
             }
             if (t == 8) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "terrible_terror"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "terrible_terror");
             }
             if (t == 9) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rotator"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "rotator");
             }
             if (t == 10) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rat"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "rat");
             }
             if (t == 11) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "dungeon_beast"));
+                this.setSpawnerEntityId(spawner, level, "chaospersists", "dungeon_beast");
             }
         }
-        TileEntityChest chest = null;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 1, cposz + 1), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + 1, cposz + 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])this.chestContentsList, (IInventory)chest, (int)(5 + world.rand.nextInt(7)));
+        net.minecraft.core.BlockPos chestPos =
+                new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 1, cposz + 1);
+        level.setBlock(chestPos, net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState(), 2);
+        net.minecraft.world.level.block.entity.BlockEntity chestEntity = level.getBlockEntity(chestPos);
+        if (chestEntity instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
+            WeightedRandomChestContent.generateChestContents(
+                    rand, this.chestContentsList, chest, 5 + rand.nextInt(7));
         }
     }
 
-    public void FastSetBlock(World world, int ix, int iy, int iz, Block id) {
-        ChaosPersists.setBlockFast((World)world, (int)ix, (int)iy, (int)iz, (Block)id, (int)0, (int)2);
+    private void setSpawnerEntityId(
+            net.minecraft.world.level.block.entity.SpawnerBlockEntity spawner,
+            net.minecraft.world.level.Level level,
+            String namespace,
+            String path) {
+        net.minecraft.resources.ResourceLocation id =
+                SpawnerFixHelper.normalizeSpawnerEntityId(
+                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(namespace, path));
+        net.minecraft.world.entity.EntityType<?> type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(id);
+        if (type != null) {
+            spawner.setEntityId(type, level.getRandom());
+        }
     }
 
-    public void makeEnormousCastle(World world, int cposx, int cposy, int cposz) {
+    private void setSpawnerEntityId(
+            SpawnerBlockEntity spawner, net.minecraft.resources.ResourceLocation id) {
+        if (spawner == null || id == null || spawner.getLevel() == null) {
+            return;
+        }
+        this.setSpawnerEntityId(
+                spawner,
+                spawner.getLevel(),
+                id.getNamespace(),
+                id.getPath());
+    }
+
+    private static net.minecraft.core.Direction chestFacingFromLegacyMeta(int meta) {
+        return switch (meta) {
+            case 2 -> net.minecraft.core.Direction.NORTH;
+            case 3 -> net.minecraft.core.Direction.SOUTH;
+            case 4 -> net.minecraft.core.Direction.WEST;
+            case 5 -> net.minecraft.core.Direction.EAST;
+            default -> net.minecraft.core.Direction.NORTH;
+        };
+    }
+
+    private void placeLevelSpawner(
+            net.minecraft.world.level.Level level, int x, int y, int z, String namespace, String path) {
+        net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
+        level.setBlock(pos, net.minecraft.world.level.block.Blocks.SPAWNER.defaultBlockState(), 2);
+        net.minecraft.world.level.block.entity.BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof net.minecraft.world.level.block.entity.SpawnerBlockEntity spawner) {
+            this.setSpawnerEntityId(spawner, level, namespace, path);
+        }
+    }
+
+    private void placeLevelSpawnerFromLegacyMobName(
+            net.minecraft.world.level.Level level, int x, int y, int z, String whichmob) {
+        String path = whichmob.toLowerCase(java.util.Locale.ROOT).replace(' ', '_');
+        this.placeLevelSpawner(level, x, y, z, "chaospersists", path);
+    }
+
+    private void fill_shadow_chests(
+            net.minecraft.world.level.Level level,
+            net.minecraft.util.RandomSource rand,
+            int cposx,
+            int cposy,
+            int cposz,
+            int width,
+            int height) {
+        int j = height;
+        this.fillLevelChestAt(
+                level, rand, cposx + 1, cposy + j, cposz + width / 2, 5, this.shadowContentsList, 3 + rand.nextInt(7));
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx + width - 2,
+                cposy + j,
+                cposz + width / 2,
+                4,
+                this.shadowContentsList,
+                3 + rand.nextInt(7));
+        this.fillLevelChestAt(
+                level, rand, cposx + width / 2, cposy + j, cposz + 1, 3, this.shadowContentsList, 3 + rand.nextInt(7));
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx + width / 2,
+                cposy + j,
+                cposz + width - 2,
+                2,
+                this.shadowContentsList,
+                3 + rand.nextInt(7));
+    }
+
+    private void fill_mantishive_chests(
+            net.minecraft.world.level.Level level,
+            net.minecraft.util.RandomSource rand,
+            int cposx,
+            int cposy,
+            int cposz,
+            int width,
+            int height) {
+        int j = height;
+        this.fillLevelChestAt(
+                level, rand, cposx + 1, cposy + j, cposz + width / 2, 5, this.mantisContentsList, 3 + rand.nextInt(7));
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx + width - 2,
+                cposy + j,
+                cposz + width / 2,
+                4,
+                this.mantisContentsList,
+                3 + rand.nextInt(7));
+        this.fillLevelChestAt(
+                level, rand, cposx + width / 2, cposy + j, cposz + 1, 3, this.mantisContentsList, 3 + rand.nextInt(7));
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx + width / 2,
+                cposy + j,
+                cposz + width - 2,
+                2,
+                this.mantisContentsList,
+                3 + rand.nextInt(7));
+    }
+
+    private void fillLevelChestAt(
+            net.minecraft.world.level.Level level,
+            net.minecraft.util.RandomSource rand,
+            int x,
+            int y,
+            int z,
+            int chestMeta,
+            WeightedRandomChestContent[] contents,
+            int rolls) {
+        net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
+        level.setBlock(
+                pos,
+                net.minecraft.world.level.block.Blocks.CHEST
+                        .defaultBlockState()
+                        .setValue(
+                                net.minecraft.world.level.block.ChestBlock.FACING,
+                                chestFacingFromLegacyMeta(chestMeta)),
+                3);
+        net.minecraft.world.level.block.entity.BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
+            WeightedRandomChestContent.generateChestContents(rand, contents, chest, rolls);
+        }
+    }
+
+    public void FastSetBlock(Object world, int ix, int iy, int iz, Object id) {
+        if (world instanceof net.minecraft.world.level.Level level) {
+            ChaosPersists.setBlockFast(level, ix, iy, iz, (net.minecraft.world.level.block.Block) id, 0, 2);
+        }
+    }
+
+    public void FastSetBlock(Level level, int ix, int iy, int iz, Block id) {
+        this.FastSetBlock((Object) level, ix, iy, iz, id);
+    }
+
+    public void makeEnormousCastle(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level worldLevel = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = worldLevel.getRandom();
+        net.minecraft.world.level.block.Block extremeTorch =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.ExtremeTorch;
         int j;
         int k;
         int i;
@@ -275,127 +442,127 @@ public class GenericDungeon {
         int height = 16;
         int platformwidth = 11;
         int level = 0;
-        if (world.isRemote) {
+        if (worldLevel.isClientSide()) {
             return;
         }
-        level = 1 + world.rand.nextInt(6);
-        if (level <= 3 && world.rand.nextInt(3) != 1) {
+        level = 1 + rand.nextInt(6);
+        if (level <= 3 && rand.nextInt(3) != 1) {
             level += 3;
         }
         for (i = -20; i < width + 4; ++i) {
             for (j = 1; j < height + 10; ++j) {
                 for (k = -4; k < width + 4; ++k) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.AIR);
                 }
             }
         }
         for (i = 0; i < width; ++i) {
             j = 0;
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.STONE);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.STONE);
             }
         }
         for (i = 0; i < width; ++i) {
             j = height;
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
             }
         }
         for (i = 0; i < width; ++i) {
             for (j = 1; j < height; ++j) {
                 k = 0;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
                 k = width - 1;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
             }
         }
         for (k = 0; k < width; ++k) {
             for (j = 1; j < height; ++j) {
                 i = 0;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
                 i = width - 1;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 1, cposz + 1), ChaosPersists.ExtremeTorch.getDefaultState());
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 1, cposz + width - 2), ChaosPersists.ExtremeTorch.getDefaultState());
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 2, cposy + 1, cposz + 1), ChaosPersists.ExtremeTorch.getDefaultState());
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 2, cposy + 1, cposz + width - 2), ChaosPersists.ExtremeTorch.getDefaultState());
+        ChaosPersists.setBlockFast(worldLevel, cposx + 1, cposy + 1, cposz + 1, extremeTorch, 0, 2);
+        ChaosPersists.setBlockFast(worldLevel, cposx + 1, cposy + 1, cposz + width - 2, extremeTorch, 0, 2);
+        ChaosPersists.setBlockFast(worldLevel, cposx + width - 2, cposy + 1, cposz + 1, extremeTorch, 0, 2);
+        ChaosPersists.setBlockFast(worldLevel, cposx + width - 2, cposy + 1, cposz + width - 2, extremeTorch, 0, 2);
         for (i = -4; i < width + 4; ++i) {
             for (k = -4; k < width + 4; ++k) {
                 if (i < 0 || k < 0 || i >= width || k >= width) {
-                    this.FastSetBlock(world, cposx + i, cposy, cposz + k, Blocks.STONE);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy, cposz + k, Blocks.STONE);
                 }
                 if (i != -4 && k != -4 && i != width + 3 && k != width + 3) continue;
-                this.FastSetBlock(world, cposx + i, cposy + 1, cposz + k, Blocks.NETHER_BRICK_FENCE);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + 1, cposz + k, Blocks.NETHER_BRICK_FENCE);
             }
         }
-        TileEntityMobSpawner tileentitymobspawner = null;
+        SpawnerBlockEntity tileentitymobspawner = null;
         for (j = 0; j < 4; ++j) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 3, cposy + 1 + j, cposz - 3), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 3, cposy + 1 + j, cposz - 3);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx - 3, cposy + 1 + j, cposz - 3), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx - 3, cposy + 1 + j, cposz - 3);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "terrible_terror"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "terrible_terror"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 3, cposy + 1 + j, cposz + width + 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 3, cposy + 1 + j, cposz + width + 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx - 3, cposy + 1 + j, cposz + width + 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx - 3, cposy + 1 + j, cposz + width + 2);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "terrible_terror"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "terrible_terror"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width + 2, cposy + 1 + j, cposz - 3), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width + 2, cposy + 1 + j, cposz - 3);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width + 2, cposy + 1 + j, cposz - 3), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width + 2, cposy + 1 + j, cposz - 3);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "terrible_terror"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "terrible_terror"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width + 2, cposy + 1 + j, cposz + width + 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width + 2, cposy + 1 + j, cposz + width + 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width + 2, cposy + 1 + j, cposz + width + 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width + 2, cposy + 1 + j, cposz + width + 2);
             if (tileentitymobspawner == null) continue;
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "terrible_terror"));
+            this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "terrible_terror"));
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+        tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
         if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "emperor_scorpion"));
+            this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "emperor_scorpion"));
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+        tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
         if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "emperor_scorpion"));
+            this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "emperor_scorpion"));
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 4, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 4, cposz + width / 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 4, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+        tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 4, cposz + width / 2);
         if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "emperor_scorpion"));
+            this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "emperor_scorpion"));
         }
         j = height;
-        this.buildLevel(world, cposx + 1, cposy + j, cposz + 1, width - 2, 10, 4, "Cloud Shark", 1, -1, 5, 1, level);
+        this.buildLevel(worldLevel, cposx + 1, cposy + j, cposz + 1, width - 2, 10, 4, "Cloud Shark", 1, -1, 5, 1, level);
         j += 10;
         if (level >= 2) {
-            this.buildLevel(world, cposx + 1, cposy + j, cposz + 1, width - 2, 10, 4, "Lurking Terror", 0, 0, 4, 2, level);
+            this.buildLevel(worldLevel, cposx + 1, cposy + j, cposz + 1, width - 2, 10, 4, "Lurking Terror", 0, 0, 4, 2, level);
         }
         j += 10;
         if (level >= 3) {
-            this.buildLevel(world, cposx + 2, cposy + j, cposz + 2, width - 4, 9, 4, "Rotator", 1, 1, 4, 3, level);
+            this.buildLevel(worldLevel, cposx + 2, cposy + j, cposz + 2, width - 4, 9, 4, "Rotator", 1, 1, 4, 3, level);
         }
         j += 9;
         if (level >= 4) {
-            this.buildLevel(world, cposx + 2, cposy + j, cposz + 2, width - 4, 9, 3, "Bee", 0, 0, 4, 4, level);
+            this.buildLevel(worldLevel, cposx + 2, cposy + j, cposz + 2, width - 4, 9, 3, "Bee", 0, 0, 4, 4, level);
         }
         j += 9;
         if (level >= 5) {
-            this.buildLevel(world, cposx + 3, cposy + j, cposz + 3, width - 6, 8, 3, "Mantis", 1, 1, 4, 5, level);
+            this.buildLevel(worldLevel, cposx + 3, cposy + j, cposz + 3, width - 6, 8, 3, "Mantis", 1, 1, 4, 5, level);
         }
         j += 8;
         if (level >= 6) {
-            this.buildLevel(world, cposx + 3, cposy + j, cposz + 3, width - 6, 16, 3, "Mothra", 0, 0, 3, 6, level);
+            this.buildLevel(worldLevel, cposx + 3, cposy + j, cposz + 3, width - 6, 16, 3, "Mothra", 0, 0, 3, 6, level);
         }
         j += 16;
         for (i = 0; i < platformwidth; ++i) {
             j = height;
             for (k = - platformwidth / 2; k <= platformwidth / 2; ++k) {
-                this.FastSetBlock(world, cposx + i - 20, cposy + j, cposz + k + width / 2, Blocks.QUARTZ_BLOCK);
+                this.FastSetBlock(worldLevel, cposx + i - 20, cposy + j, cposz + k + width / 2, Blocks.QUARTZ_BLOCK);
                 if (i != 0 && i != platformwidth - 1 && k != - platformwidth / 2 && k != platformwidth / 2 || i == 0 && k >= -1 && k <= 1) continue;
-                this.FastSetBlock(world, cposx + i - 20, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
+                this.FastSetBlock(worldLevel, cposx + i - 20, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
             }
         }
         for (i = -10; i <= -3; ++i) {
@@ -403,38 +570,38 @@ public class GenericDungeon {
             for (k = -2; k < 3; ++k) {
                 if (i == -3 || i == -10) {
                     if (k != -2 && k != 2) {
-                        this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.AIR);
+                        this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.AIR);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHERRACK);
-                    this.FastSetBlock(world, cposx + i, cposy + j + 2, cposz + k + width / 2, Blocks.NETHERRACK);
-                    this.FastSetBlock(world, cposx + i, cposy + j + 3, cposz + k + width / 2, (Block)Blocks.FIRE);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHERRACK);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 2, cposz + k + width / 2, Blocks.NETHERRACK);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 3, cposz + k + width / 2, (Block)Blocks.FIRE);
                     continue;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + width / 2, Blocks.QUARTZ_BLOCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k + width / 2, Blocks.QUARTZ_BLOCK);
                 if (k != -2 && k != 2) continue;
-                this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
             }
         }
         i = -21;
         for (j = height; j >= 0; --j) {
             for (k = -2; k < 3; ++k) {
                 for (int t = 0; t < 6; ++t) {
-                    this.FastSetBlock(world, cposx + i, cposy + j + t + 1, cposz + k + width / 2, Blocks.AIR);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + t + 1, cposz + k + width / 2, Blocks.AIR);
                 }
                 if (j == 0) {
                     if (k != -2 && k != 2) {
-                        this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.AIR);
+                        this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.AIR);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHERRACK);
-                    this.FastSetBlock(world, cposx + i, cposy + j + 2, cposz + k + width / 2, Blocks.NETHERRACK);
-                    this.FastSetBlock(world, cposx + i, cposy + j + 3, cposz + k + width / 2, (Block)Blocks.FIRE);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHERRACK);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 2, cposz + k + width / 2, Blocks.NETHERRACK);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 3, cposz + k + width / 2, (Block)Blocks.FIRE);
                     continue;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + width / 2, Blocks.QUARTZ_BLOCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k + width / 2, Blocks.QUARTZ_BLOCK);
                 if (k != -2 && k != 2) continue;
-                this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
             }
             --i;
         }
@@ -442,46 +609,48 @@ public class GenericDungeon {
             int span = width * 3;
             for (int tries = 0; tries < 100; ++tries) {
                 j = -1;
-                i = world.rand.nextInt(span);
-                k = world.rand.nextInt(span);
+                i = rand.nextInt(span);
+                k = rand.nextInt(span);
                 if (i >= span / 4 && i <= span * 3 / 4 && k >= span / 4 && k <= span * 3 / 4) continue;
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + (i -= span / 2) + width / 2, cposy + j, cposz + (k -= span / 2) + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i + width / 2, cposy + j, cposz + k + width / 2);
+                worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + (i -= span / 2) + width / 2, cposy + j, cposz + (k -= span / 2) + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+                tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + i + width / 2, cposy + j, cposz + k + width / 2);
                 if (tileentitymobspawner == null) continue;
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "large_worm"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "large_worm"));
             }
         }
     }
 
-    public void buildLevel(World world, int cposx, int cposy, int cposz, int width, int height, int pw, String critter, int stepside, int stepoff, int holelen, int decor, int level) {
+    public void buildLevel(Object worldObj, int cposx, int cposy, int cposz, int width, int height, int pw, String critter, int stepside, int stepoff, int holelen, int decor, int level) {
+        net.minecraft.world.level.Level worldLevel = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = worldLevel.getRandom();
         int j;
         int i;
         int k;
         for (i = - pw; i < width + pw; ++i) {
             for (j = 1; j < height; ++j) {
                 for (k = - pw; k < width + pw; ++k) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.AIR);
                 }
             }
         }
         for (i = 0; i < width; ++i) {
             j = 0;
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
             }
         }
         for (i = 0; i < width; ++i) {
             j = height;
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
             }
         }
         for (i = 0; i < width; ++i) {
             for (j = 1; j < height; ++j) {
                 k = 0;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
                 k = width - 1;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
             }
         }
         for (k = 0; k < width; ++k) {
@@ -491,18 +660,18 @@ public class GenericDungeon {
                     blk = Blocks.GOLD_BLOCK;
                 }
                 i = 0;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, blk);
                 i = width - 1;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         for (i = - pw; i < width + pw; ++i) {
             for (k = - pw; k < width + pw; ++k) {
                 if (i < 0 || k < 0 || i >= width || k >= width) {
-                    this.FastSetBlock(world, cposx + i, cposy, cposz + k, Blocks.STONE);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy, cposz + k, Blocks.STONE);
                 }
                 if (i != - pw && k != - pw && i != width + (pw - 1) && k != width + (pw - 1)) continue;
-                this.FastSetBlock(world, cposx + i, cposy + 1, cposz + k, Blocks.NETHER_BRICK_FENCE);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + 1, cposz + k, Blocks.NETHER_BRICK_FENCE);
             }
         }
         i = - height / 2;
@@ -510,10 +679,10 @@ public class GenericDungeon {
         for (j = 1; j < height; ++j) {
             if (stepside != 0) {
                 k = -1;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.STONE);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.STONE);
             } else {
                 k = width;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.STONE);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.STONE);
             }
             ++i;
         }
@@ -528,95 +697,95 @@ public class GenericDungeon {
             i = width / 2;
             j = 0;
             for (int l = 0; l < holelen; ++l) {
-                this.FastSetBlock(world, cposx + i + l, cposy + j, cposz + k, Blocks.AIR);
+                this.FastSetBlock(worldLevel, cposx + i + l, cposy + j, cposz + k, Blocks.AIR);
             }
         }
-        TileEntityMobSpawner tileentitymobspawner = null;
+        SpawnerBlockEntity tileentitymobspawner = null;
         for (j = 0; j < 4; ++j) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - (pw - 1), cposy + j + 1, cposz - (pw - 1)), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - (pw - 1), cposy + j + 1, cposz - (pw - 1));
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx - (pw - 1), cposy + j + 1, cposz - (pw - 1)), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx - (pw - 1), cposy + j + 1, cposz - (pw - 1));
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - (pw - 1), cposy + j + 1, cposz + width + (pw - 2)), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - (pw - 1), cposy + j + 1, cposz + width + (pw - 2));
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx - (pw - 1), cposy + j + 1, cposz + width + (pw - 2)), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx - (pw - 1), cposy + j + 1, cposz + width + (pw - 2));
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width + (pw - 2), cposy + j + 1, cposz - (pw - 1)), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width + (pw - 2), cposy + j + 1, cposz - (pw - 1));
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width + (pw - 2), cposy + j + 1, cposz - (pw - 1)), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width + (pw - 2), cposy + j + 1, cposz - (pw - 1));
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width + (pw - 2), cposy + j + 1, cposz + width + (pw - 2)), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width + (pw - 2), cposy + j + 1, cposz + width + (pw - 2));
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width + (pw - 2), cposy + j + 1, cposz + width + (pw - 2)), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width + (pw - 2), cposy + j + 1, cposz + width + (pw - 2));
             if (tileentitymobspawner == null) continue;
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+            this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
         }
-        this.addLevelDecorations(world, cposx, cposy, cposz, width, height, decor, level);
+        this.addLevelDecorations(worldLevel, cposx, cposy, cposz, width, height, decor, level);
     }
 
-    public void addLevelDecorations(World world, int cposx, int cposy, int cposz, int width, int height, int decor, int difficulty) {
+    public void addLevelDecorations(Level worldLevel, int cposx, int cposy, int cposz, int width, int height, int decor, int difficulty) {
         int j;
-        TileEntityMobSpawner tileentitymobspawner = null;
+        SpawnerBlockEntity tileentitymobspawner = null;
         int reward = 1;
         String critter = "Alosaurus";
         if (decor == 6) {
-            this.FastSetBlock(world, cposx, cposy + height, cposz, Blocks.NETHERRACK);
-            this.FastSetBlock(world, cposx, cposy + height + 1, cposz, (Block)Blocks.FIRE);
-            this.FastSetBlock(world, cposx, cposy + height, cposz + width - 1, Blocks.NETHERRACK);
-            this.FastSetBlock(world, cposx, cposy + height + 1, cposz + width - 1, (Block)Blocks.FIRE);
-            this.FastSetBlock(world, cposx + width - 1, cposy + height, cposz, Blocks.NETHERRACK);
-            this.FastSetBlock(world, cposx + width - 1, cposy + height + 1, cposz, (Block)Blocks.FIRE);
-            this.FastSetBlock(world, cposx + width - 1, cposy + height, cposz + width - 1, Blocks.NETHERRACK);
-            this.FastSetBlock(world, cposx + width - 1, cposy + height + 1, cposz + width - 1, (Block)Blocks.FIRE);
-            this.FastSetBlock(world, cposx + width / 2, cposy + height, cposz + width / 2, Blocks.AIR);
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 - 1, cposy + height + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 - 1, cposy + height + 2, cposz + width / 2);
+            this.FastSetBlock(worldLevel, cposx, cposy + height, cposz, Blocks.NETHERRACK);
+            this.FastSetBlock(worldLevel, cposx, cposy + height + 1, cposz, (Block)Blocks.FIRE);
+            this.FastSetBlock(worldLevel, cposx, cposy + height, cposz + width - 1, Blocks.NETHERRACK);
+            this.FastSetBlock(worldLevel, cposx, cposy + height + 1, cposz + width - 1, (Block)Blocks.FIRE);
+            this.FastSetBlock(worldLevel, cposx + width - 1, cposy + height, cposz, Blocks.NETHERRACK);
+            this.FastSetBlock(worldLevel, cposx + width - 1, cposy + height + 1, cposz, (Block)Blocks.FIRE);
+            this.FastSetBlock(worldLevel, cposx + width - 1, cposy + height, cposz + width - 1, Blocks.NETHERRACK);
+            this.FastSetBlock(worldLevel, cposx + width - 1, cposy + height + 1, cposz + width - 1, (Block)Blocks.FIRE);
+            this.FastSetBlock(worldLevel, cposx + width / 2, cposy + height, cposz + width / 2, Blocks.AIR);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2 - 1, cposy + height + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2 - 1, cposy + height + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "nightmare"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + 1, cposy + height + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 + 1, cposy + height + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2 + 1, cposy + height + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2 + 1, cposy + height + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "nightmare"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + height + 2, cposz + width / 2 - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + height + 2, cposz + width / 2 - 1);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + height + 2, cposz + width / 2 - 1), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + height + 2, cposz + width / 2 - 1);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "nightmare"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + height + 2, cposz + width / 2 + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + height + 2, cposz + width / 2 + 1);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + height + 2, cposz + width / 2 + 1), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + height + 2, cposz + width / 2 + 1);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "nightmare"));
             }
             for (int i = 1; i < width - 1; ++i) {
                 for (j = 1; j < 5; ++j) {
                     for (int k = 1; k < width - 1; ++k) {
-                        this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.DIRT);
+                        this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.DIRT);
                     }
                 }
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "large_worm"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "large_worm"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "large_worm"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "large_worm"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 4, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 4, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 4, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 4, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "large_worm"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "large_worm"));
             }
             for (j = 0; j < 10; ++j) {
-                this.FastSetBlock(world, cposx + 1, cposy + j, cposz + 1, Blocks.AIR);
+                this.FastSetBlock(worldLevel, cposx + 1, cposy + j, cposz + 1, Blocks.AIR);
             }
-            this.fill_chests(world, cposx, cposy + 4, cposz, width, height, decor, reward);
+            this.fill_chests(worldLevel, cposx, cposy + 4, cposz, width, height, decor, reward);
         }
         if (decor == 5) {
             if (difficulty == 5) {
@@ -627,25 +796,25 @@ public class GenericDungeon {
                 critter = "T. Rex";
                 reward = 2;
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
             for (j = 1; j < 5; ++j) {
-                this.FastSetBlock(world, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
             }
-            this.FastSetBlock(world, cposx + width - 2, cposy, cposz + width - 2, Blocks.AIR);
-            this.FastSetBlock(world, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
-            this.fill_chests(world, cposx, cposy, cposz, width, height, decor, reward);
+            this.FastSetBlock(worldLevel, cposx + width - 2, cposy, cposz + width - 2, Blocks.AIR);
+            this.FastSetBlock(worldLevel, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
+            this.fill_chests(worldLevel, cposx, cposy, cposz, width, height, decor, reward);
         }
         if (decor == 4) {
             if (difficulty == 4) {
@@ -660,25 +829,25 @@ public class GenericDungeon {
                 critter = "Basilisk";
                 reward = 3;
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
             for (j = 1; j < 5; ++j) {
-                this.FastSetBlock(world, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
             }
-            this.FastSetBlock(world, cposx + 1, cposy, cposz + 1, Blocks.AIR);
-            this.FastSetBlock(world, cposx + width - 2, cposy + height, cposz + width - 2, Blocks.AIR);
-            this.fill_chests(world, cposx, cposy, cposz, width, height, decor, reward);
+            this.FastSetBlock(worldLevel, cposx + 1, cposy, cposz + 1, Blocks.AIR);
+            this.FastSetBlock(worldLevel, cposx + width - 2, cposy + height, cposz + width - 2, Blocks.AIR);
+            this.fill_chests(worldLevel, cposx, cposy, cposz, width, height, decor, reward);
         }
         if (decor == 3) {
             if (difficulty == 3) {
@@ -697,25 +866,25 @@ public class GenericDungeon {
                 critter = "Hercules Beetle";
                 reward = 4;
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
             for (j = 1; j < 5; ++j) {
-                this.FastSetBlock(world, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
             }
-            this.FastSetBlock(world, cposx + width - 2, cposy, cposz + width - 2, Blocks.AIR);
-            this.FastSetBlock(world, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
-            this.fill_chests(world, cposx, cposy, cposz, width, height, decor, reward);
+            this.FastSetBlock(worldLevel, cposx + width - 2, cposy, cposz + width - 2, Blocks.AIR);
+            this.FastSetBlock(worldLevel, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
+            this.fill_chests(worldLevel, cposx, cposy, cposz, width, height, decor, reward);
         }
         if (decor == 2) {
             if (difficulty == 2) {
@@ -738,25 +907,25 @@ public class GenericDungeon {
                 critter = "Jumpy Bug";
                 reward = 5;
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
             for (j = 1; j < 5; ++j) {
-                this.FastSetBlock(world, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
             }
-            this.FastSetBlock(world, cposx + 1, cposy, cposz + 1, Blocks.AIR);
-            this.FastSetBlock(world, cposx + width - 2, cposy + height, cposz + width - 2, Blocks.AIR);
-            this.fill_chests(world, cposx, cposy, cposz, width, height, decor, reward);
+            this.FastSetBlock(worldLevel, cposx + 1, cposy, cposz + 1, Blocks.AIR);
+            this.FastSetBlock(worldLevel, cposx + width - 2, cposy + height, cposz + width - 2, Blocks.AIR);
+            this.fill_chests(worldLevel, cposx, cposy, cposz, width, height, decor, reward);
         }
         if (decor == 1) {
             if (difficulty == 1) {
@@ -778,33 +947,35 @@ public class GenericDungeon {
                 critter = "Hammerhead";
             }
             reward = difficulty;
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
             for (j = 1; j < 5; ++j) {
-                this.FastSetBlock(world, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
             }
-            this.FastSetBlock(world, cposx + width / 2 - 1, cposy + 1, cposz + width / 2 - 1, ChaosPersists.MyRTPBlock);
-            this.FastSetBlock(world, cposx + width / 2 + 1, cposy + 1, cposz + width / 2 + 1, ChaosPersists.MyRTPBlock);
-            this.FastSetBlock(world, cposx + width / 2 + 1, cposy + 1, cposz + width / 2 - 1, ChaosPersists.MyRTPBlock);
-            this.FastSetBlock(world, cposx + width / 2 - 1, cposy + 1, cposz + width / 2 + 1, ChaosPersists.MyRTPBlock);
-            this.FastSetBlock(world, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
-            this.fill_chests(world, cposx, cposy, cposz, width, height, decor, reward);
+            this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + 1, cposz + width / 2 - 1, ChaosPersists.MyRTPBlock);
+            this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + 1, cposz + width / 2 + 1, ChaosPersists.MyRTPBlock);
+            this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + 1, cposz + width / 2 - 1, ChaosPersists.MyRTPBlock);
+            this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + 1, cposz + width / 2 + 1, ChaosPersists.MyRTPBlock);
+            this.FastSetBlock(worldLevel, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
+            this.fill_chests(worldLevel, cposx, cposy, cposz, width, height, decor, reward);
         }
     }
 
-    private void fill_chests(World world, int cposx, int cposy, int cposz, int width, int height, int decor, int reward) {
-        TileEntityChest chest = null;
+    private void fill_chests(Object worldObj, int cposx, int cposy, int cposz, int width, int height, int decor, int reward) {
+        net.minecraft.world.level.Level worldLevel = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = worldLevel.getRandom();
+        ChestBlockEntity chest = null;
         WeightedRandomChestContent[] chestContents = null;
         chestContents = this.level1ContentsList;
         if (reward == 2) {
@@ -819,288 +990,314 @@ public class GenericDungeon {
         if (reward == 5) {
             chestContents = this.level5ContentsList;
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 1, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + 1, cposy + 1, cposz + width / 2, 5, 3);
-        chest = this.getChestTileEntity(world, cposx + 1, cposy + 1, cposz + width / 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + 1, cposy + 1, cposz + width / 2), Blocks.CHEST.defaultBlockState(), 2);
+        this.setBlockMeta(worldLevel,cposx + 1, cposy + 1, cposz + width / 2, 5, 3);
+        chest = this.getChestTileEntity(worldLevel, cposx + 1, cposy + 1, cposz + width / 2);
         if (chest != null) {
             if (reward == 6) {
-                chest.setInventorySlotContents(1, new ItemStack(ChaosPersists.ThePrinceEgg, 1, 0));
+                chest.setItem(1, new ItemStack(ChaosPersists.ThePrinceEgg, 1));
             } else {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(7)));
+                WeightedRandomChestContent.generateChestContents(rand, (WeightedRandomChestContent[])chestContents, chest, (int)(5 + rand.nextInt(7)));
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 2, cposy + 1, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width - 2, cposy + 1, cposz + width / 2, 4, 3);
-        chest = this.getChestTileEntity(world, cposx + width - 2, cposy + 1, cposz + width / 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width - 2, cposy + 1, cposz + width / 2), Blocks.CHEST.defaultBlockState(), 2);
+        this.setBlockMeta(worldLevel,cposx + width - 2, cposy + 1, cposz + width / 2, 4, 3);
+        chest = this.getChestTileEntity(worldLevel, cposx + width - 2, cposy + 1, cposz + width / 2);
         if (chest != null) {
             if (reward == 6) {
-                chest.setInventorySlotContents(1, new ItemStack((Item)ChaosPersists.RoyalHelmet, 1, 0));
-                chest.setInventorySlotContents(2, new ItemStack((Item)ChaosPersists.RoyalBody, 1, 0));
+                chest.setItem(1, new ItemStack((Item)ChaosPersists.RoyalHelmet, 1));
+                chest.setItem(2, new ItemStack((Item)ChaosPersists.RoyalBody, 1));
             } else {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(7)));
+                WeightedRandomChestContent.generateChestContents(rand, (WeightedRandomChestContent[])chestContents, chest, (int)(5 + rand.nextInt(7)));
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 1, cposz + 1), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width / 2, cposy + 1, cposz + 1, 3, 3);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + 1, cposz + 1);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 1, cposz + 1), Blocks.CHEST.defaultBlockState(), 2);
+        this.setBlockMeta(worldLevel,cposx + width / 2, cposy + 1, cposz + 1, 3, 3);
+        chest = this.getChestTileEntity(worldLevel, cposx + width / 2, cposy + 1, cposz + 1);
         if (chest != null) {
             if (reward == 6) {
-                chest.setInventorySlotContents(1, new ItemStack((Item)ChaosPersists.RoyalLegs, 1, 0));
-                chest.setInventorySlotContents(2, new ItemStack((Item)ChaosPersists.RoyalBoots, 1, 0));
+                chest.setItem(1, new ItemStack((Item)ChaosPersists.RoyalLegs, 1));
+                chest.setItem(2, new ItemStack((Item)ChaosPersists.RoyalBoots, 1));
             } else {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(7)));
+                WeightedRandomChestContent.generateChestContents(rand, (WeightedRandomChestContent[])chestContents, chest, (int)(5 + rand.nextInt(7)));
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 1, cposz + width - 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width / 2, cposy + 1, cposz + width - 2, 2, 3);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + 1, cposz + width - 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 1, cposz + width - 2), Blocks.CHEST.defaultBlockState(), 2);
+        this.setBlockMeta(worldLevel,cposx + width / 2, cposy + 1, cposz + width - 2, 2, 3);
+        chest = this.getChestTileEntity(worldLevel, cposx + width / 2, cposy + 1, cposz + width - 2);
         if (chest != null) {
             if (reward == 6) {
-                chest.setInventorySlotContents(1, new ItemStack(ChaosPersists.MyRoyal, 1, 0));
+                chest.setItem(1, new ItemStack(ChaosPersists.MyRoyal, 1));
             } else {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(7)));
+                WeightedRandomChestContent.generateChestContents(rand, (WeightedRandomChestContent[])chestContents, chest, (int)(5 + rand.nextInt(7)));
             }
         }
     }
 
-    public void makeRotatorStation(World world, int cposx, int cposy, int cposz) {
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 4, cposz), ChaosPersists.CrystalStone.getDefaultState(), 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 5, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 5, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rotator"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 6, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 6, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rotator"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 7, cposz), ChaosPersists.CrystalStone.getDefaultState(), 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 8, cposz), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx, cposy + 8, cposz, 2, 3);
-        chest = this.getChestTileEntity(world, cposx, cposy + 8, cposz);
-        if (chest != null) {
-            chest.setInventorySlotContents(1, new ItemStack(ChaosPersists.RotatorEgg, 1 + world.rand.nextInt(5), 0));
-            chest.setInventorySlotContents(2, new ItemStack(ChaosPersists.CrystalCoal, 4 + world.rand.nextInt(16), 0));
-            chest.setInventorySlotContents(3, new ItemStack(ChaosPersists.CrystalCoal, 4 + world.rand.nextInt(16), 0));
+    public void makeRotatorStation(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        net.minecraft.world.level.block.Block crystalStone =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalStone;
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx, cposy + 4, cposz),
+                crystalStone.defaultBlockState(),
+                2);
+        this.placeLevelSpawner(level, cposx, cposy + 5, cposz, "chaospersists", "rotator");
+        this.placeLevelSpawner(level, cposx, cposy + 6, cposz, "chaospersists", "rotator");
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx, cposy + 7, cposz),
+                crystalStone.defaultBlockState(),
+                2);
+        net.minecraft.core.BlockPos chestPos = new net.minecraft.core.BlockPos(cposx, cposy + 8, cposz);
+        level.setBlock(
+                chestPos,
+                net.minecraft.world.level.block.Blocks.CHEST
+                        .defaultBlockState()
+                        .setValue(
+                                net.minecraft.world.level.block.ChestBlock.FACING,
+                                chestFacingFromLegacyMeta(2)),
+                2);
+        net.minecraft.world.level.block.entity.BlockEntity blockEntity = level.getBlockEntity(chestPos);
+        if (blockEntity instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
+            chest.setItem(
+                    1,
+                    new net.minecraft.world.item.ItemStack(ChaosPersists.RotatorEgg, 1 + rand.nextInt(5)));
+            chest.setItem(
+                    2,
+                    new net.minecraft.world.item.ItemStack(ChaosPersists.CrystalCoal, 4 + rand.nextInt(16)));
+            chest.setItem(
+                    3,
+                    new net.minecraft.world.item.ItemStack(ChaosPersists.CrystalCoal, 4 + rand.nextInt(16)));
         }
     }
 
-    public void makeBeeHive(World world, int cposx, int cposy, int cposz) {
+    public void makeBeeHive(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int i;
         int k;
         int j;
         int width = 10;
         int height = 30;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
         for (i = 0; i < width; ++i) {
             for (j = 0; j < 5; ++j) {
                 for (k = 0; k < width; ++k) {
-                    this.FastSetBlock(world, cposx + i, cposy - j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy - j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
         for (i = 0; i < width; ++i) {
             j = height;
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy - j, cposz + k, Blocks.COAL_ORE);
+                this.FastSetBlock(level, cposx + i, cposy - j, cposz + k, net.minecraft.world.level.block.Blocks.COAL_ORE);
             }
         }
-        Block blk = Blocks.COAL_ORE;
+        net.minecraft.world.level.block.Block blk = net.minecraft.world.level.block.Blocks.COAL_ORE;
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
                 for (j = 1; j < height; ++j) {
                     if (k == 0 || i == 0 || k == width - 1 || i == width - 1) {
-                        blk = Blocks.COAL_ORE;
+                        blk = net.minecraft.world.level.block.Blocks.COAL_ORE;
                         if ((j & 1) == 1) {
-                            blk = Blocks.GOLD_ORE;
+                            blk = net.minecraft.world.level.block.Blocks.GOLD_ORE;
                         }
-                        this.FastSetBlock(world, cposx + i, cposy - j, cposz + k, blk);
+                        this.FastSetBlock(level, cposx + i, cposy - j, cposz + k, blk);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy - j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy - j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
-        TileEntityMobSpawner tileentitymobspawner = null;
         for (j = 0; j < 4; ++j) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy - 2 - j * (height / 4), cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy - 2 - j * (height / 4), cposz + width / 2);
-            if (tileentitymobspawner == null) continue;
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "bee"));
+            this.placeLevelSpawner(
+                    level,
+                    cposx + width / 2,
+                    cposy - 2 - j * (height / 4),
+                    cposz + width / 2,
+                    "chaospersists",
+                    "bee");
         }
-        this.fill_beehive_chests(world, cposx, cposy, cposz, width, height);
+        this.fill_beehive_chests(level, level.getRandom(), cposx, cposy, cposz, width, height);
     }
 
-    private void fill_beehive_chests(World world, int cposx, int cposy, int cposz, int width, int height) {
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.beeContentsList;
+    private void fill_beehive_chests(
+            net.minecraft.world.level.Level level,
+            net.minecraft.util.RandomSource rand,
+            int cposx,
+            int cposy,
+            int cposz,
+            int width,
+            int height) {
         for (int j = 2; j < height - 1; j += 2) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy - j, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-            this.setBlockMeta(world,cposx + 1, cposy - j, cposz + width / 2, 5, 3);
-            chest = this.getChestTileEntity(world, cposx + 1, cposy - j, cposz + width / 2);
-            if (chest != null) {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(1 + world.rand.nextInt(5)));
-            }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 2, cposy - j, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-            this.setBlockMeta(world,cposx + width - 2, cposy - j, cposz + width / 2, 4, 3);
-            chest = this.getChestTileEntity(world, cposx + width - 2, cposy - j, cposz + width / 2);
-            if (chest != null) {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(1 + world.rand.nextInt(5)));
-            }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy - j, cposz + 1), Blocks.CHEST.getDefaultState(), 2);
-            this.setBlockMeta(world,cposx + width / 2, cposy - j, cposz + 1, 3, 3);
-            chest = this.getChestTileEntity(world, cposx + width / 2, cposy - j, cposz + 1);
-            if (chest != null) {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(1 + world.rand.nextInt(5)));
-            }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy - j, cposz + width - 2), Blocks.CHEST.getDefaultState(), 2);
-            this.setBlockMeta(world,cposx + width / 2, cposy - j, cposz + width - 2, 2, 3);
-            chest = this.getChestTileEntity(world, cposx + width / 2, cposy - j, cposz + width - 2);
-            if (chest == null) continue;
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(1 + world.rand.nextInt(5)));
+            this.fillLevelChestAt(
+                    level, rand, cposx + 1, cposy - j, cposz + width / 2, 5, this.beeContentsList, 1 + rand.nextInt(5));
+            this.fillLevelChestAt(
+                    level,
+                    rand,
+                    cposx + width - 2,
+                    cposy - j,
+                    cposz + width / 2,
+                    4,
+                    this.beeContentsList,
+                    1 + rand.nextInt(5));
+            this.fillLevelChestAt(
+                    level, rand, cposx + width / 2, cposy - j, cposz + 1, 3, this.beeContentsList, 1 + rand.nextInt(5));
+            this.fillLevelChestAt(
+                    level,
+                    rand,
+                    cposx + width / 2,
+                    cposy - j,
+                    cposz + width - 2,
+                    2,
+                    this.beeContentsList,
+                    1 + rand.nextInt(5));
         }
     }
 
-    public void makeHauntedHouse(World world, int cposx, int cposy, int cposz) {
+    public void makeHauntedHouse(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int k;
         int j;
         int i;
-        int deltax = 0;
+        int deltax = 1;
         int deltaz = 0;
-        boolean bid = false;
-        boolean dirx = false;
-        boolean dirz = false;
-        int stuffdir = 0;
-        TileEntityMobSpawner tileentitymobspawner = null;
+        int stuffdir = 2;
         int length = 3;
         int width = 3;
         int height = 3;
-        deltax = 1;
-        stuffdir = 2;
         int x = cposx;
         int z = cposz;
         int y = cposy;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
-        for (i = - width; i <= width; ++i) {
-            for (j = - length; j <= length; ++j) {
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        net.minecraft.core.Direction facing = chestFacingFromLegacyMeta(stuffdir);
+        for (i = -width; i <= width; ++i) {
+            for (j = -length; j <= length; ++j) {
                 for (k = 0; k <= height + 1; ++k) {
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x + i, y + k, z + j);
                     if (k == height + 1) {
-                        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.PLANKS.getDefaultState());
+                        level.setBlock(pos, net.minecraft.world.level.block.Blocks.OAK_PLANKS.defaultBlockState(), 3);
                         continue;
                     }
                     if (k == 0) {
-                        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.COBBLESTONE.getDefaultState());
+                        level.setBlock(pos, net.minecraft.world.level.block.Blocks.COBBLESTONE.defaultBlockState(), 3);
                         continue;
                     }
-                    if (i == width || j == length || i == - width || j == - length) {
+                    if (i == width || j == length || i == -width || j == -length) {
                         if (k == height) {
-                            world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.GLASS.getDefaultState());
+                            level.setBlock(pos, net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(), 3);
                             continue;
                         }
                         if ((k == 1 || k == 2) && i == deltax * width && j == deltaz * length) {
-                            world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.AIR.getDefaultState());
+                            level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
                             continue;
                         }
-                        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.PLANKS.getDefaultState());
+                        level.setBlock(pos, net.minecraft.world.level.block.Blocks.OAK_PLANKS.defaultBlockState(), 3);
                         continue;
                     }
-                    world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.AIR.getDefaultState());
+                    level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
                 }
             }
         }
         i = 2;
         k = 1;
         j = length - 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax), Blocks.FURNACE.getDefaultState());
-        this.setBlockMeta(world,x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax, stuffdir, 3);
+        net.minecraft.core.BlockPos furnacePos =
+                new net.minecraft.core.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax);
+        level.setBlock(
+                furnacePos,
+                net.minecraft.world.level.block.Blocks.FURNACE
+                        .defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.FurnaceBlock.FACING, facing),
+                3);
         i = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax), Blocks.CRAFTING_TABLE.getDefaultState());
+        level.setBlock(
+                new net.minecraft.core.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax),
+                net.minecraft.world.level.block.Blocks.CRAFTING_TABLE.defaultBlockState(),
+                3);
         i = 0;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax), Blocks.CHEST.getDefaultState());
-        this.setBlockMeta(world,x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax, stuffdir, 3);
-        TileEntityChest chest = this.getChestTileEntity(world, x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax);
-        if (chest != null) {
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(0, new ItemStack(Items.COMPASS));
+        net.minecraft.core.BlockPos chestPos =
+                new net.minecraft.core.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax);
+        level.setBlock(
+                chestPos,
+                net.minecraft.world.level.block.Blocks.CHEST
+                        .defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.ChestBlock.FACING, facing),
+                3);
+        net.minecraft.world.level.block.entity.BlockEntity blockEntity = level.getBlockEntity(chestPos);
+        if (blockEntity instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COMPASS));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(1, new ItemStack((Item)Items.MAP));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(1, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.MAP));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(2, new ItemStack(Items.COOKED_PORKCHOP, 8));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(2, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COOKED_PORKCHOP, 8));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(3, new ItemStack(Item.getItemFromBlock((Block)Blocks.TORCH), 32));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(3, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.TORCH, 32));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(4, new ItemStack(Items.COAL, 16));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(4, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COAL, 16));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(5, new ItemStack(Items.BED));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(5, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RED_BED));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(6, new ItemStack(Items.BED));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(6, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RED_BED));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(7, new ItemStack(Items.OAK_DOOR));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(7, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_DOOR));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(8, new ItemStack(Items.IRON_PICKAXE));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(8, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_PICKAXE));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(9, new ItemStack(Items.IRON_SWORD));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(9, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_SWORD));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(10, new ItemStack(Items.IRON_AXE));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(10, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_AXE));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(11, new ItemStack(Items.BUCKET));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(11, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BUCKET));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(12, new ItemStack(ChaosPersists.MyOreSaltBlock, 4));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(
+                        12,
+                        new net.minecraft.world.item.ItemStack(
+                                ChaosPersists.MyOreSaltBlock, 4));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(13, new ItemStack((Block)Blocks.CHEST));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(
+                        13,
+                        new net.minecraft.world.item.ItemStack(net.minecraft.world.level.block.Blocks.CHEST.asItem()));
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rat"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ghost"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 3, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 3, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ghost_pumpkin_skelly"));
-        }
+        this.placeLevelSpawner(level, cposx, cposy + 1, cposz, "chaospersists", "rat");
+        this.placeLevelSpawner(level, cposx, cposy + 2, cposz, "chaospersists", "ghost");
+        this.placeLevelSpawner(level, cposx, cposy + 3, cposz, "chaospersists", "ghost_pumpkin_skelly");
     }
 
-    public void makeMantisHive(World world, int cposx, int cposy, int cposz) {
+    public void makeMantisHive(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int i;
         int k;
         int j;
         int width = 13;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
+        net.minecraft.util.RandomSource rand = level.getRandom();
         for (i = 0; i < width; ++i) {
             for (j = 0; j < 20; ++j) {
                 for (k = 0; k < width; ++k) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
@@ -1111,18 +1308,18 @@ public class GenericDungeon {
             for (i = 0; i < width; ++i) {
                 for (k = 0; k < width; ++k) {
                     if (k == 0 || k == width - 1 || i == 0 || i == width - 1) {
-                        Block blk = Blocks.GOLD_ORE;
+                        net.minecraft.world.level.block.Block blk = net.minecraft.world.level.block.Blocks.GOLD_ORE;
                         if ((yoff & 1) != 0) {
-                            blk = Blocks.EMERALD_ORE;
+                            blk = net.minecraft.world.level.block.Blocks.EMERALD_ORE;
                         }
-                        this.FastSetBlock(world, cposx + i + xoff, cposy - yoff, cposz + k + zoff, blk);
+                        this.FastSetBlock(level, cposx + i + xoff, cposy - yoff, cposz + k + zoff, blk);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i + xoff, cposy - yoff, cposz + k + zoff, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i + xoff, cposy - yoff, cposz + k + zoff, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
             if (width <= 11 && width >= 7) {
-                this.fill_mantishive_chests(world, cposx + xoff, cposy - yoff, cposz + zoff, width, 0);
+                this.fill_mantishive_chests(level, rand, cposx + xoff, cposy - yoff, cposz + zoff, width, 0);
             }
             ++xoff;
             ++zoff;
@@ -1133,45 +1330,12 @@ public class GenericDungeon {
         --zoff;
         --yoff;
         for (j = 4; j < 7; ++j) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff, cposy + j - yoff, cposz + yoff), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + xoff, cposy + j - yoff, cposz + yoff);
-            if (tileentitymobspawner == null) continue;
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "mantis"));
+            this.placeLevelSpawner(level, cposx + xoff, cposy + j - yoff, cposz + yoff, "chaospersists", "mantis");
         }
     }
 
-    private void fill_mantishive_chests(World world, int cposx, int cposy, int cposz, int width, int height) {
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.mantisContentsList;
-        int j = height;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + j, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + 1, cposy + j, cposz + width / 2, 5, 3);
-        chest = this.getChestTileEntity(world, cposx + 1, cposy + j, cposz + width / 2);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(7)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 2, cposy + j, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width - 2, cposy + j, cposz + width / 2, 4, 3);
-        chest = this.getChestTileEntity(world, cposx + width - 2, cposy + j, cposz + width / 2);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(7)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + j, cposz + 1), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width / 2, cposy + j, cposz + 1, 3, 3);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + j, cposz + 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(7)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + j, cposz + width - 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width / 2, cposy + j, cposz + width - 2, 2, 3);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + j, cposz + width - 2);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(7)));
-        }
-    }
-
-    public void makeKyuubiDungeon(World world, int cposx, int cposy, int cposz) {
+    public void makeKyuubiDungeon(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int i;
         int k;
         int j;
@@ -1182,73 +1346,73 @@ public class GenericDungeon {
         int rwidth = 30;
         int rheight = 18;
         int rlength = 20;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
+        net.minecraft.world.level.block.Block blk;
         for (i = 0; i < width; ++i) {
             for (j = 0; j < 5; ++j) {
                 for (k = 0; k < width; ++k) {
-                    this.FastSetBlock(world, cposx + i, cposy - j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy - j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
         j = height;
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.SANDSTONE);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.SANDSTONE);
             }
         }
-        this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2, Blocks.AIR);
-        Block blk = Blocks.SANDSTONE;
+        this.FastSetBlock(level, cposx + width / 2, cposy + j, cposz + width / 2, net.minecraft.world.level.block.Blocks.AIR);
+        blk = net.minecraft.world.level.block.Blocks.SANDSTONE;
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
                 for (j = 0; j < height; ++j) {
                     if (k == 0 || k == width - 1 || i == 0 || i == width - 1) {
-                        this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                        this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
-        blk = Blocks.STONE;
+        blk = net.minecraft.world.level.block.Blocks.STONE;
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
-                for (j = -1; j > - depth; --j) {
+                for (j = -1; j > -depth; --j) {
                     if (k == 0 || k == width - 1 || i == 0 || i == width - 1) {
-                        this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                        this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
         for (i = 1; i < width - 1; ++i) {
             for (k = 1; k < width - 1; ++k) {
-                for (j = - depth; j > - depth + 2; --j) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.WATER);
+                for (j = -depth; j > -depth + 2; --j) {
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.WATER);
                 }
             }
         }
-        // Keep the shaft open; this layer was creating a random-looking stone plug in the drop.
         for (i = 1; i < width - 1; ++i) {
             for (k = 1; k < width - 1; ++k) {
-                j = - depth + 2;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                j = -depth + 2;
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
             }
         }
         int x = cposx + width + length - 2;
         int z = cposz - rwidth / 2;
         int y = cposy - depth;
-        blk = Blocks.NETHERRACK;
+        blk = net.minecraft.world.level.block.Blocks.NETHERRACK;
         for (i = 0; i < rlength; ++i) {
             for (k = 0; k < rwidth; ++k) {
                 for (j = 0; j < rheight; ++j) {
                     if (k == 0 || k == rwidth - 1 || j == 0 || j == rheight - 1 || i == 0 || i == rlength - 1) {
-                        this.FastSetBlock(world, x + i, y + j, z + k, blk);
+                        this.FastSetBlock(level, x + i, y + j, z + k, blk);
                         continue;
                     }
-                    this.FastSetBlock(world, x + i, y + j, z + k, Blocks.AIR);
+                    this.FastSetBlock(level, x + i, y + j, z + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
@@ -1259,85 +1423,74 @@ public class GenericDungeon {
             for (k = 0; k < width; ++k) {
                 for (j = 0; j < width; ++j) {
                     if (k == 0 || k == width - 1 || j == 0 || j == width - 1) {
-                        blk = Blocks.STONE;
+                        blk = net.minecraft.world.level.block.Blocks.STONE;
                         if (j > 0 && j < width - 1) {
-                            blk = Blocks.LAVA;
+                            blk = net.minecraft.world.level.block.Blocks.LAVA;
                         }
-                        this.FastSetBlock(world, x + i, y + j, z + k, blk);
+                        this.FastSetBlock(level, x + i, y + j, z + k, blk);
                         continue;
                     }
-                    this.FastSetBlock(world, x + i, y + j, z + k, Blocks.AIR);
+                    this.FastSetBlock(level, x + i, y + j, z + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
         x = cposx + width + length - 2;
         z = cposz - rwidth / 2;
         y = cposy - depth;
-        this.addlavasquare(world, x + 2, ++y, z + 2);
-        this.addlavasquare(world, x + 4, y, z + 6);
-        this.addlavasquare(world, x + 12, y, z + 10);
-        this.addlavasquare(world, x + 6, y, z + 15);
-        this.addlavasquare(world, x + 3, y, z + 22);
-        this.addkyuubi(world, x + rlength / 4, y, z + rwidth * 3 / 4 - 3);
-        this.addblaze(world, x + rlength * 2 / 3 - 3, y, z + rwidth / 4 - 2);
-        this.FastSetBlock(world, x + 7, y, z + 1, (Block)Blocks.FIRE);
-        this.FastSetBlock(world, x + 5, y, z + 9, (Block)Blocks.FIRE);
-        this.FastSetBlock(world, x + 2, y, z + 12, (Block)Blocks.FIRE);
-        this.FastSetBlock(world, x + 16, y, z + 18, (Block)Blocks.FIRE);
-        this.FastSetBlock(world, x + 2, y, z + 27, (Block)Blocks.FIRE);
-        this.FastSetBlock(world, x + 18, y, z + 28, (Block)Blocks.FIRE);
+        this.addlavasquare(level, x + 2, ++y, z + 2);
+        this.addlavasquare(level, x + 4, y, z + 6);
+        this.addlavasquare(level, x + 12, y, z + 10);
+        this.addlavasquare(level, x + 6, y, z + 15);
+        this.addlavasquare(level, x + 3, y, z + 22);
+        this.addkyuubi(level, x + rlength / 4, y, z + rwidth * 3 / 4 - 3);
+        this.addblaze(level, x + rlength * 2 / 3 - 3, y, z + rwidth / 4 - 2);
+        this.FastSetBlock(level, x + 7, y, z + 1, net.minecraft.world.level.block.Blocks.FIRE);
+        this.FastSetBlock(level, x + 5, y, z + 9, net.minecraft.world.level.block.Blocks.FIRE);
+        this.FastSetBlock(level, x + 2, y, z + 12, net.minecraft.world.level.block.Blocks.FIRE);
+        this.FastSetBlock(level, x + 16, y, z + 18, net.minecraft.world.level.block.Blocks.FIRE);
+        this.FastSetBlock(level, x + 2, y, z + 27, net.minecraft.world.level.block.Blocks.FIRE);
+        this.FastSetBlock(level, x + 18, y, z + 28, net.minecraft.world.level.block.Blocks.FIRE);
     }
 
-    private void addlavasquare(World world, int x, int y, int z) {
-        this.FastSetBlock(world, x - 1, y, z, Blocks.NETHERRACK);
-        this.FastSetBlock(world, x + 1, y, z, Blocks.NETHERRACK);
-        this.FastSetBlock(world, x, y, z + 1, Blocks.NETHERRACK);
-        this.FastSetBlock(world, x, y, z - 1, Blocks.NETHERRACK);
-        this.FastSetBlock(world, x, y, z, Blocks.LAVA);
+    private void addlavasquare(net.minecraft.world.level.Level level, int x, int y, int z) {
+        this.FastSetBlock(level, x - 1, y, z, net.minecraft.world.level.block.Blocks.NETHERRACK);
+        this.FastSetBlock(level, x + 1, y, z, net.minecraft.world.level.block.Blocks.NETHERRACK);
+        this.FastSetBlock(level, x, y, z + 1, net.minecraft.world.level.block.Blocks.NETHERRACK);
+        this.FastSetBlock(level, x, y, z - 1, net.minecraft.world.level.block.Blocks.NETHERRACK);
+        this.FastSetBlock(level, x, y, z, net.minecraft.world.level.block.Blocks.LAVA);
     }
 
-    private void addkyuubi(World world, int x, int y, int z) {
+    private void addkyuubi(net.minecraft.world.level.Level level, int x, int y, int z) {
         int i;
         int k;
         int width = 9;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        chestContents = this.kyuubiContentsList;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
                 if (k == 0 || k == width - 1 || i == 0 || i == width - 1) {
-                    this.FastSetBlock(world, x + i, y, z + k, Blocks.NETHER_BRICK);
+                    this.FastSetBlock(level, x + i, y, z + k, net.minecraft.world.level.block.Blocks.NETHER_BRICKS);
                     continue;
                 }
-                this.FastSetBlock(world, x + i, y, z + k, Blocks.LAVA);
+                this.FastSetBlock(level, x + i, y, z + k, net.minecraft.world.level.block.Blocks.LAVA);
             }
         }
         width = 7;
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
                 if (k == 0 || k == width - 1 || i == 0 || i == width - 1) {
-                    this.FastSetBlock(world, x + i + 1, y + 1, z + k + 1, Blocks.NETHER_BRICK);
+                    this.FastSetBlock(level, x + i + 1, y + 1, z + k + 1, net.minecraft.world.level.block.Blocks.NETHER_BRICKS);
                     continue;
                 }
-                this.FastSetBlock(world, x + i + 1, y + 1, z + k + 1, Blocks.LAVA);
+                this.FastSetBlock(level, x + i + 1, y + 1, z + k + 1, net.minecraft.world.level.block.Blocks.LAVA);
             }
         }
         for (int j = 0; j < 3; ++j) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(x + 4, y + j + 2, z + 4), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, x + 4, y + j + 2, z + 4);
-            if (tileentitymobspawner == null) continue;
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "kyuubi"));
+            this.placeLevelSpawner(level, x + 4, y + j + 2, z + 4, "chaospersists", "kyuubi");
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 4, y + 5, z + 4), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,x + 4, y + 5, z + 4, 2, 3);
-        chest = this.getChestTileEntity(world, x + 4, y + 5, z + 4);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(7 + world.rand.nextInt(7)));
-        }
+        this.fillLevelChestAt(level, rand, x + 4, y + 5, z + 4, 2, this.kyuubiContentsList, 7 + rand.nextInt(7));
     }
 
-    private void addblaze(World world, int x, int y, int z) {
+    private void addblaze(net.minecraft.world.level.Level level, int x, int y, int z) {
         int j;
         int k;
         int i;
@@ -1346,14 +1499,11 @@ public class GenericDungeon {
         int xx = x;
         int yy = y;
         int zz = z;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        chestContents = this.blazeContentsList;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
                 for (j = 0; j < height; ++j) {
-                    this.FastSetBlock(world, xx + i, yy + j, zz + k, Blocks.OBSIDIAN);
+                    this.FastSetBlock(level, xx + i, yy + j, zz + k, net.minecraft.world.level.block.Blocks.OBSIDIAN);
                 }
             }
         }
@@ -1365,7 +1515,7 @@ public class GenericDungeon {
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
                 for (j = 0; j < height; ++j) {
-                    this.FastSetBlock(world, xx + i, yy + j, zz + k, Blocks.OBSIDIAN);
+                    this.FastSetBlock(level, xx + i, yy + j, zz + k, net.minecraft.world.level.block.Blocks.OBSIDIAN);
                 }
             }
         }
@@ -1377,7 +1527,7 @@ public class GenericDungeon {
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
                 for (j = 0; j < height; ++j) {
-                    this.FastSetBlock(world, xx + i, yy + j, zz + k, Blocks.OBSIDIAN);
+                    this.FastSetBlock(level, xx + i, yy + j, zz + k, net.minecraft.world.level.block.Blocks.OBSIDIAN);
                 }
             }
         }
@@ -1389,82 +1539,46 @@ public class GenericDungeon {
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
                 for (j = 0; j < height; ++j) {
-                    this.FastSetBlock(world, xx + i, yy + j, zz + k, Blocks.OBSIDIAN);
+                    this.FastSetBlock(level, xx + i, yy + j, zz + k, net.minecraft.world.level.block.Blocks.OBSIDIAN);
                 }
             }
         }
         for (j = 0; j < 2; ++j) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(xx - 1, yy + height + j - 3, zz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, xx - 1, yy + height + j - 3, zz);
-            if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("minecraft", "blaze"));
-            }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(xx + 1, yy + height + j - 3, zz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, xx + 1, yy + height + j - 3, zz);
-            if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("minecraft", "blaze"));
-            }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(xx, yy + height + j - 3, zz - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, xx, yy + height + j - 3, zz - 1);
-            if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("minecraft", "blaze"));
-            }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(xx, yy + height + j - 3, zz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, xx, yy + height + j - 3, zz + 1);
-            if (tileentitymobspawner == null) continue;
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("minecraft", "blaze"));
+            this.placeLevelSpawner(level, xx - 1, yy + height + j - 3, zz, "minecraft", "blaze");
+            this.placeLevelSpawner(level, xx + 1, yy + height + j - 3, zz, "minecraft", "blaze");
+            this.placeLevelSpawner(level, xx, yy + height + j - 3, zz - 1, "minecraft", "blaze");
+            this.placeLevelSpawner(level, xx, yy + height + j - 3, zz + 1, "minecraft", "blaze");
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x, y + 4, z + 3), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,x, y + 4, z + 3, 4, 3);
-        chest = this.getChestTileEntity(world, x, y + 4, z + 3);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(4 + world.rand.nextInt(5)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 3, y + 4, z), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,x + 3, y + 4, z, 2, 3);
-        chest = this.getChestTileEntity(world, x + 3, y + 4, z);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(5)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 3, y + 4, z + 6), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,x + 3, y + 4, z + 6, 3, 3);
-        chest = this.getChestTileEntity(world, x + 3, y + 4, z + 6);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(5)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 6, y + 4, z + 3), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,x + 6, y + 4, z + 3, 5, 3);
-        chest = this.getChestTileEntity(world, x + 6, y + 4, z + 3);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(6 + world.rand.nextInt(5)));
-        }
+        this.fillLevelChestAt(level, rand, x, y + 4, z + 3, 4, this.blazeContentsList, 4 + rand.nextInt(5));
+        this.fillLevelChestAt(level, rand, x + 3, y + 4, z, 2, this.blazeContentsList, 3 + rand.nextInt(5));
+        this.fillLevelChestAt(level, rand, x + 3, y + 4, z + 6, 3, this.blazeContentsList, 5 + rand.nextInt(5));
+        this.fillLevelChestAt(level, rand, x + 6, y + 4, z + 3, 5, this.blazeContentsList, 6 + rand.nextInt(5));
     }
 
-    public void makeSmallBeeHive(World world, int cposx, int cposy, int cposz) {
+    public void makeSmallBeeHive(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int blk;
         int j;
         int k;
         int i;
         int width = 7;
         int height = 21;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        if (world.isRemote) {
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        if (level.isClientSide()) {
             return;
         }
         for (i = -3; i < width + 3; ++i) {
             for (j = height * 2 / 3; j < height; ++j) {
                 for (k = -3; k < width + 3; ++k) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
                 j = height * 2 / 3;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.SPONGE);
-                blk = world.rand.nextInt(height / 3);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.SPONGE);
+                blk = rand.nextInt(height / 3);
                 blk *= 2;
                 blk -= Math.abs(i - width / 2);
                 if ((blk -= Math.abs(k - width / 2)) < 1) {
@@ -1474,7 +1588,12 @@ public class GenericDungeon {
                     blk = height * 2 / 3;
                 }
                 for (j = 0; j < blk; ++j) {
-                    this.FastSetBlock(world, cposx + i, cposy + height * 2 / 3 - j, cposz + k, Blocks.MOSSY_COBBLESTONE);
+                    this.FastSetBlock(
+                            level,
+                            cposx + i,
+                            cposy + height * 2 / 3 - j,
+                            cposz + k,
+                            net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE);
                 }
             }
         }
@@ -1484,61 +1603,60 @@ public class GenericDungeon {
             for (i = 0; i < width; ++i) {
                 for (k = 0; k < width; ++k) {
                     if (k == 0 || i == 0 || k == width - 1 || i == width - 1) {
-                        this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.SPONGE);
+                        this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.SPONGE);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
             ++j;
             for (i = -1; i < width + 1; ++i) {
                 for (k = -1; k < width + 1; ++k) {
                     if (k == -1 || i == -1 || k == width || i == width) {
-                        this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.SPONGE);
+                        this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.SPONGE);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
         ++j;
         for (i = 0; i < width; ++i) {
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.SPONGE);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.SPONGE);
             }
         }
         j = height * 2 / 3 + 1;
         for (i = -1; i < 1; ++i) {
             for (k = 2; k < 4; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
-                this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k, Blocks.AIR);
-                this.FastSetBlock(world, cposx + i, cposy + j + 2, cposz + k, Blocks.AIR);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
+                this.FastSetBlock(level, cposx + i, cposy + j + 1, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
+                this.FastSetBlock(level, cposx + i, cposy + j + 2, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
             }
         }
         for (blk = 0; blk < 3; ++blk) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + blk + j, cposz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 1, cposy + blk + j, cposz + 1);
-            if (tileentitymobspawner == null) continue;
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "bee"));
+            this.placeLevelSpawner(level, cposx + 1, cposy + blk + j, cposz + 1, "chaospersists", "bee");
         }
-        chestContents = this.beeContentsList;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + j, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width / 2, cposy + j, cposz + width / 2, 5, 3);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + j, cposz + width / 2);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(7 + world.rand.nextInt(5)));
-        }
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx + width / 2,
+                cposy + j,
+                cposz + width / 2,
+                5,
+                this.beeContentsList,
+                7 + rand.nextInt(5));
     }
 
-    public void makeShadowDungeon(World world, int cposx, int cposy, int cposz) {
+    public void makeShadowDungeon(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int k;
-        Block blk;
+        net.minecraft.world.level.block.Block blk;
         int i;
         int width;
         int totalwidth = 19;
-        TileEntityMobSpawner tileentitymobspawner = null;
         String whichmob = null;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
         int yoff = 0;
@@ -1548,46 +1666,34 @@ public class GenericDungeon {
             for (i = 0; i < width; ++i) {
                 for (k = 0; k < width; ++k) {
                     if (k == 0 || k == width - 1 || i == 0 || i == width - 1) {
-                        blk = Blocks.OBSIDIAN;
+                        blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                         if ((yoff & 1) != 0) {
-                            blk = Blocks.BEDROCK;
+                            blk = net.minecraft.world.level.block.Blocks.BEDROCK;
                         }
                         if (k >= width / 2 - 1 && k <= width / 2 + 1 || i >= width / 2 - 1 && i <= width / 2 + 1) {
-                            blk = Blocks.SOUL_SAND;
+                            blk = net.minecraft.world.level.block.Blocks.SOUL_SAND;
                         }
-                        this.FastSetBlock(world, cposx + i + xoff, cposy - yoff, cposz + k + zoff, blk);
+                        this.FastSetBlock(level, cposx + i + xoff, cposy - yoff, cposz + k + zoff, blk);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i + xoff, cposy - yoff, cposz + k + zoff, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i + xoff, cposy - yoff, cposz + k + zoff, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
             if (width <= 15 && width >= 9) {
                 if ((yoff & 1) != 0) {
-                    this.fill_shadow_chests(world, cposx + xoff, cposy - yoff, cposz + zoff, width, 0);
+                    this.fill_shadow_chests(level, level.getRandom(), cposx + xoff, cposy - yoff, cposz + zoff, width, 0);
                     whichmob = "Ender Reaper";
                 } else {
                     whichmob = "Nightmare";
                 }
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff + 1, cposy - yoff, cposz + zoff + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + xoff + 1, cposy - yoff, cposz + zoff + 1);
-                if (tileentitymobspawner != null) {
-                    this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", whichmob.toLowerCase().replace(' ', '_')));
-                }
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff + width - 2, cposy - yoff, cposz + zoff + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + xoff + width - 2, cposy - yoff, cposz + zoff + 1);
-                if (tileentitymobspawner != null) {
-                    this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", whichmob.toLowerCase().replace(' ', '_')));
-                }
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff + 1, cposy - yoff, cposz + zoff + width - 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + xoff + 1, cposy - yoff, cposz + zoff + width - 2);
-                if (tileentitymobspawner != null) {
-                    this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", whichmob.toLowerCase().replace(' ', '_')));
-                }
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff + width - 2, cposy - yoff, cposz + zoff + width - 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + xoff + width - 2, cposy - yoff, cposz + zoff + width - 2);
-                if (tileentitymobspawner != null) {
-                    this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", whichmob.toLowerCase().replace(' ', '_')));
-                }
+                this.placeLevelSpawnerFromLegacyMobName(
+                        level, cposx + xoff + 1, cposy - yoff, cposz + zoff + 1, whichmob);
+                this.placeLevelSpawnerFromLegacyMobName(
+                        level, cposx + xoff + width - 2, cposy - yoff, cposz + zoff + 1, whichmob);
+                this.placeLevelSpawnerFromLegacyMobName(
+                        level, cposx + xoff + 1, cposy - yoff, cposz + zoff + width - 2, whichmob);
+                this.placeLevelSpawnerFromLegacyMobName(
+                        level, cposx + xoff + width - 2, cposy - yoff, cposz + zoff + width - 2, whichmob);
             }
             ++xoff;
             ++zoff;
@@ -1600,14 +1706,14 @@ public class GenericDungeon {
             for (i = 0; i < width; ++i) {
                 for (k = 0; k < width; ++k) {
                     if (k == 0 || k == width - 1 || i == 0 || i == width - 1) {
-                        blk = Blocks.OBSIDIAN;
+                        blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                         if ((yoff & 1) != 0) {
-                            blk = Blocks.BEDROCK;
+                            blk = net.minecraft.world.level.block.Blocks.BEDROCK;
                         }
-                        this.FastSetBlock(world, cposx + i + xoff, cposy + yoff, cposz + k + zoff, blk);
+                        this.FastSetBlock(level, cposx + i + xoff, cposy + yoff, cposz + k + zoff, blk);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i + xoff, cposy + yoff, cposz + k + zoff, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i + xoff, cposy + yoff, cposz + k + zoff, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
             ++xoff;
@@ -1616,40 +1722,10 @@ public class GenericDungeon {
         }
     }
 
-    private void fill_shadow_chests(World world, int cposx, int cposy, int cposz, int width, int height) {
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.shadowContentsList;
-        int j = height;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + j, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + 1, cposy + j, cposz + width / 2, 5, 3);
-        chest = this.getChestTileEntity(world, cposx + 1, cposy + j, cposz + width / 2);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(7)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 2, cposy + j, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width - 2, cposy + j, cposz + width / 2, 4, 3);
-        chest = this.getChestTileEntity(world, cposx + width - 2, cposy + j, cposz + width / 2);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(7)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + j, cposz + 1), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width / 2, cposy + j, cposz + 1, 3, 3);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + j, cposz + 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(7)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + j, cposz + width - 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width / 2, cposy + j, cposz + width - 2, 2, 3);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + j, cposz + width - 2);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(7)));
-        }
-    }
-
-    public void makeAlienWTFDungeon(World world, int cposx, int cposy, int cposz) {
+    public void makeAlienWTFDungeon(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int j;
-        Block blk;
+        net.minecraft.world.level.block.Block blk;
         int k;
         int i;
         int width = 5;
@@ -1662,10 +1738,10 @@ public class GenericDungeon {
             for (j = 0; j < height; ++j) {
                 for (k = 0; k < width; ++k) {
                     if (i == 0 || j == 0 || k == 0 || i == width - 1 || j == height - 1 || k == width - 1) {
-                        this.FastSetBlock(world, cposx + i - 2, cposy + j, cposz + k - 2, Blocks.LAPIS_ORE);
+                        this.FastSetBlock(level, cposx + i - 2, cposy + j, cposz + k - 2, net.minecraft.world.level.block.Blocks.LAPIS_ORE);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i - 2, cposy + j, cposz + k - 2, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i - 2, cposy + j, cposz + k - 2, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
@@ -1675,213 +1751,216 @@ public class GenericDungeon {
         for (j = 3; j < depth; ++j) {
             for (i = 0; i < 4; ++i) {
                 for (k = 0; k < 4; ++k) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || k == 0 || i == 3 || k == 3) {
-                        blk = Blocks.LAPIS_ORE;
+                        blk = net.minecraft.world.level.block.Blocks.LAPIS_ORE;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)blk, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, blk, 0, 2);
                 }
             }
             switch (s) {
                 case 0: {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + j), (int)(cposz + 1), (Block)Blocks.STONE, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + 1, cposy + j, cposz + 1, net.minecraft.world.level.block.Blocks.STONE, 0, 2);
                     break;
                 }
                 case 1: {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + 2), (int)(cposy + j), (int)(cposz + 1), (Block)Blocks.STONE, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + 2, cposy + j, cposz + 1, net.minecraft.world.level.block.Blocks.STONE, 0, 2);
                     break;
                 }
                 case 2: {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + 2), (int)(cposy + j), (int)(cposz + 2), (Block)Blocks.STONE, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + 2, cposy + j, cposz + 2, net.minecraft.world.level.block.Blocks.STONE, 0, 2);
                     break;
                 }
                 default: {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + j), (int)(cposz + 2), (Block)Blocks.STONE, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + 1, cposy + j, cposz + 2, net.minecraft.world.level.block.Blocks.STONE, 0, 2);
                 }
             }
             if (++s <= 3) continue;
             s = 0;
         }
-        this.makePart(world, ++cposx, cposy, ++cposz + 7, 9, 5, 1, 1, 1);
+        this.makePart(level, ++cposx, cposy, ++cposz + 7, 9, 5, 1, 1, 1);
         for (i = 0; i < xwidth; ++i) {
             for (k = 0; k < zwidth; ++k) {
                 for (j = 0; j < 4; ++j) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (j == 0 || j == 3) {
-                        blk = Blocks.LAPIS_ORE;
+                        blk = net.minecraft.world.level.block.Blocks.LAPIS_ORE;
                     }
                     if (i == 0 || i == xwidth - 1) {
-                        blk = Blocks.LAPIS_ORE;
+                        blk = net.minecraft.world.level.block.Blocks.LAPIS_ORE;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + 2, blk);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k + 2, blk);
                 }
             }
         }
-        this.makePart(world, cposx + 7, cposy, cposz, 11, 6, 1, -1, 2);
+        this.makePart(level, cposx + 7, cposy, cposz, 11, 6, 1, -1, 2);
         xwidth = 6;
         zwidth = 3;
         for (i = 0; i < xwidth; ++i) {
             for (k = 0; k < zwidth; ++k) {
                 for (j = 0; j < 4; ++j) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (j == 0 || j == 3) {
-                        blk = Blocks.LAPIS_ORE;
+                        blk = net.minecraft.world.level.block.Blocks.LAPIS_ORE;
                     }
                     if (k == 0 || k == zwidth - 1) {
-                        blk = Blocks.LAPIS_ORE;
+                        blk = net.minecraft.world.level.block.Blocks.LAPIS_ORE;
                     }
-                    this.FastSetBlock(world, cposx + i + 2, cposy + j, cposz - k, blk);
+                    this.FastSetBlock(level, cposx + i + 2, cposy + j, cposz - k, blk);
                 }
             }
         }
-        this.makePart(world, cposx - 7, cposy, cposz, 13, 7, -1, 1, 3);
+        this.makePart(level, cposx - 7, cposy, cposz, 13, 7, -1, 1, 3);
         xwidth = 6;
         zwidth = 3;
         for (i = 0; i < xwidth; ++i) {
             for (k = 0; k < zwidth; ++k) {
                 for (j = 0; j < 4; ++j) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (j == 0 || j == 3) {
-                        blk = Blocks.LAPIS_ORE;
+                        blk = net.minecraft.world.level.block.Blocks.LAPIS_ORE;
                     }
                     if (k == 0 || k == zwidth - 1) {
-                        blk = Blocks.LAPIS_ORE;
+                        blk = net.minecraft.world.level.block.Blocks.LAPIS_ORE;
                     }
-                    this.FastSetBlock(world, cposx - i - 2, cposy + j, cposz + k, blk);
+                    this.FastSetBlock(level, cposx - i - 2, cposy + j, cposz + k, blk);
                 }
             }
         }
-        this.makePart(world, cposx, cposy, cposz - 7, 15, 8, -1, -1, 4);
+        this.makePart(level, cposx, cposy, cposz - 7, 15, 8, -1, -1, 4);
         xwidth = 3;
         zwidth = 6;
         for (i = 0; i < xwidth; ++i) {
             for (k = 0; k < zwidth; ++k) {
                 for (j = 0; j < 4; ++j) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (j == 0 || j == 3) {
-                        blk = Blocks.LAPIS_ORE;
+                        blk = net.minecraft.world.level.block.Blocks.LAPIS_ORE;
                     }
                     if (i == 0 || i == xwidth - 1) {
-                        blk = Blocks.LAPIS_ORE;
+                        blk = net.minecraft.world.level.block.Blocks.LAPIS_ORE;
                     }
-                    this.FastSetBlock(world, cposx - i, cposy + j, cposz - k - 2, blk);
+                    this.FastSetBlock(level, cposx - i, cposy + j, cposz - k - 2, blk);
                 }
             }
         }
     }
 
-    private void makePart(World world, int cposx, int cposy, int cposz, int width, int height, int dx, int dz, int difficulty) {
+    private void placeAlienOrGammaSpawner(
+            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource rand, int x, int y, int z) {
+        String path = rand.nextInt(2) == 0 ? "alien" : "gamma_metroid";
+        this.placeLevelSpawner(level, x, y, z, "chaospersists", path);
+    }
+
+    private void makePart(
+            net.minecraft.world.level.Level level,
+            int cposx,
+            int cposy,
+            int cposz,
+            int width,
+            int height,
+            int dx,
+            int dz,
+            int difficulty) {
         int i;
         int j;
         int k;
-        Block blk;
-        TileEntityMobSpawner tileentitymobspawner = null;
+        net.minecraft.world.level.block.Block blk;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         for (i = 0; i < width; ++i) {
             for (j = 0; j < height; ++j) {
                 for (k = 0; k < width; ++k) {
-                    this.FastSetBlock(world, cposx + i * dx, cposy + j, cposz + k * dz, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i * dx, cposy + j, cposz + k * dz, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
         for (i = 0; i < width; ++i) {
             j = 0;
             for (k = 0; k < width; ++k) {
-                blk = Blocks.QUARTZ_BLOCK;
+                blk = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                 if (i == width / 2 || k == width / 2) {
-                    blk = Blocks.OBSIDIAN;
+                    blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                 }
-                this.FastSetBlock(world, cposx + i * dx, cposy + j, cposz + k * dz, blk);
+                this.FastSetBlock(level, cposx + i * dx, cposy + j, cposz + k * dz, blk);
             }
         }
         for (i = 0; i < width; ++i) {
             j = height;
             for (k = 0; k < width; ++k) {
-                blk = Blocks.OBSIDIAN;
-                this.FastSetBlock(world, cposx + i * dx, cposy + j, cposz + k * dz, blk);
+                blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
+                this.FastSetBlock(level, cposx + i * dx, cposy + j, cposz + k * dz, blk);
             }
         }
         for (i = 0; i < width; ++i) {
             for (j = 0; j < height; ++j) {
-                blk = Blocks.OBSIDIAN;
+                blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                 k = 0;
-                this.FastSetBlock(world, cposx + i * dx, cposy + j, cposz + k * dz, blk);
+                this.FastSetBlock(level, cposx + i * dx, cposy + j, cposz + k * dz, blk);
                 k = width - 1;
-                this.FastSetBlock(world, cposx + i * dx, cposy + j, cposz + k * dz, blk);
+                this.FastSetBlock(level, cposx + i * dx, cposy + j, cposz + k * dz, blk);
             }
         }
         for (k = 0; k < width; ++k) {
             for (j = 0; j < height; ++j) {
                 i = 0;
-                this.FastSetBlock(world, cposx + i * dx, cposy + j, cposz + k * dz, Blocks.OBSIDIAN);
+                this.FastSetBlock(level, cposx + i * dx, cposy + j, cposz + k * dz, net.minecraft.world.level.block.Blocks.OBSIDIAN);
                 i = width - 1;
-                this.FastSetBlock(world, cposx + i * dx, cposy + j, cposz + k * dz, Blocks.OBSIDIAN);
+                this.FastSetBlock(level, cposx + i * dx, cposy + j, cposz + k * dz, net.minecraft.world.level.block.Blocks.OBSIDIAN);
             }
         }
         for (j = 0; j < difficulty; ++j) {
-            int t;
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + dx * width / 2, cposy + j + 2, cposz + dz * width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + dx * width / 2, cposy + j + 2, cposz + dz * width / 2);
-            if (tileentitymobspawner != null) {
-                t = world.rand.nextInt(2);
-                if (t == 0) {
-                    tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "alien"));
-                }
-                if (t == 1) {
-                    tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "gamma_metroid"));
-                }
-            }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + dx * width / 2 + dx, cposy + j + 2, cposz + dz * width / 2 + dz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + dx * width / 2 + dx, cposy + j + 2, cposz + dz * width / 2 + dz);
-            if (tileentitymobspawner == null) continue;
-            t = world.rand.nextInt(2);
-            if (t == 0) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "alien"));
-            }
-            if (t != 1) continue;
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "gamma_metroid"));
+            this.placeAlienOrGammaSpawner(level, rand, cposx + dx * width / 2, cposy + j + 2, cposz + dz * width / 2);
+            this.placeAlienOrGammaSpawner(
+                    level, rand, cposx + dx * width / 2 + dx, cposy + j + 2, cposz + dz * width / 2 + dz);
         }
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.AlienWTFContentsList;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width * dx / 2, cposy + 1, cposz + dz), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + width * dx / 2, cposy + 1, cposz + dz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(5)));
-        }
+        this.fillLevelChestAt(
+                level, rand, cposx + width * dx / 2, cposy + 1, cposz + dz, 2, this.AlienWTFContentsList, 3 + rand.nextInt(5));
         if (difficulty > 1) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width * dx / 2, cposy + 1, cposz + (width - 2) * dz), Blocks.CHEST.getDefaultState(), 2);
-            chest = this.getChestTileEntity(world, cposx + width * dx / 2, cposy + 1, cposz + (width - 2) * dz);
-            if (chest != null) {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(5)));
-            }
+            this.fillLevelChestAt(
+                    level,
+                    rand,
+                    cposx + width * dx / 2,
+                    cposy + 1,
+                    cposz + (width - 2) * dz,
+                    2,
+                    this.AlienWTFContentsList,
+                    3 + rand.nextInt(5));
         }
         if (difficulty > 2) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + dx, cposy + 1, cposz + width / 2 * dz), Blocks.CHEST.getDefaultState(), 2);
-            chest = this.getChestTileEntity(world, cposx + dx, cposy + 1, cposz + width / 2 * dz);
-            if (chest != null) {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(5)));
-            }
+            this.fillLevelChestAt(
+                    level,
+                    rand,
+                    cposx + dx,
+                    cposy + 1,
+                    cposz + width / 2 * dz,
+                    2,
+                    this.AlienWTFContentsList,
+                    3 + rand.nextInt(5));
         }
         if (difficulty > 3) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + (width - 2) * dx, cposy + 1, cposz + width / 2 * dz), Blocks.CHEST.getDefaultState(), 2);
-            chest = this.getChestTileEntity(world, cposx + (width - 2) * dx, cposy + 1, cposz + width / 2 * dz);
-            if (chest != null) {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(5)));
-            }
+            this.fillLevelChestAt(
+                    level,
+                    rand,
+                    cposx + (width - 2) * dx,
+                    cposy + 1,
+                    cposz + width / 2 * dz,
+                    2,
+                    this.AlienWTFContentsList,
+                    3 + rand.nextInt(5));
         }
     }
 
-    public void makeEnderKnightDungeon(World world, int cposx, int cposy, int cposz) {
-        Block blk;
+    public void makeEnderKnightDungeon(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.world.level.block.Block blk;
         int k;
         int j;
         int height = 6;
         int zwidth = 5;
-        TileEntityMobSpawner tileentitymobspawner = null;
         for (int i = 0; i < 4; ++i) {
             for (k = 0; k < 5; ++k) {
                 for (j = 0; j < 5; ++j) {
-                    this.FastSetBlock(world, cposx, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
             ++cposx;
@@ -1889,11 +1968,11 @@ public class GenericDungeon {
         zwidth = 5;
         for (k = 0; k < zwidth; ++k) {
             for (j = 0; j < height; ++j) {
-                blk = Blocks.OBSIDIAN;
+                blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                 if (k == 2 && j >= 1 && j <= 3) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                 }
-                this.FastSetBlock(world, cposx, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx, cposy + j, cposz + k, blk);
             }
         }
         ++cposx;
@@ -1901,20 +1980,20 @@ public class GenericDungeon {
         zwidth = 7;
         for (k = 0; k < zwidth; ++k) {
             for (j = 0; j < height; ++j) {
-                blk = Blocks.AIR;
+                blk = net.minecraft.world.level.block.Blocks.AIR;
                 if (j == 0 || j == height - 1) {
-                    blk = Blocks.OBSIDIAN;
+                    blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                 }
                 if (j == 0 && k > 0 && k < zwidth - 1) {
-                    blk = Blocks.END_STONE;
+                    blk = net.minecraft.world.level.block.Blocks.END_STONE;
                 }
                 if (k == 0 || k == zwidth - 1) {
-                    blk = Blocks.OBSIDIAN;
+                    blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                 }
-                this.FastSetBlock(world, cposx, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx, cposy + j, cposz + k, blk);
             }
             if (k != 1 && k != 2 && k != zwidth - 3 && k != zwidth - 2) continue;
-            this.makeShelves(world, cposx, cposy + 1, cposz + k);
+            this.makeShelves(level, cposx, cposy + 1, cposz + k);
         }
         --cposz;
         for (int m = 0; m < 5; ++m) {
@@ -1922,31 +2001,24 @@ public class GenericDungeon {
             zwidth = 9;
             for (k = 0; k < zwidth; ++k) {
                 for (j = 0; j < height; ++j) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (j == 0 || j == height - 1) {
-                        blk = Blocks.OBSIDIAN;
+                        blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                     }
                     if (j == 0 && k > 0 && k < zwidth - 1) {
-                        blk = Blocks.END_STONE;
+                        blk = net.minecraft.world.level.block.Blocks.END_STONE;
                     }
                     if (k == 0 || k == zwidth - 1) {
-                        blk = Blocks.OBSIDIAN;
+                        blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                     }
-                    this.FastSetBlock(world, cposx, cposy + j, cposz + k, blk);
+                    this.FastSetBlock(level, cposx, cposy + j, cposz + k, blk);
                 }
                 if (k == 1 || k == 2 || k == zwidth - 3 || k == zwidth - 2) {
-                    this.makeShelves(world, cposx, cposy + 1, cposz + k);
+                    this.makeShelves(level, cposx, cposy + 1, cposz + k);
                 }
                 if (m != 2 || k != 4) continue;
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 2, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 2, cposz + k);
-                if (tileentitymobspawner != null) {
-                    tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_knight"));
-                }
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 3, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 3, cposz + k);
-                if (tileentitymobspawner == null) continue;
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_knight"));
+                this.placeLevelSpawner(level, cposx, cposy + 2, cposz + k, "chaospersists", "ender_knight");
+                this.placeLevelSpawner(level, cposx, cposy + 3, cposz + k, "chaospersists", "ender_knight");
             }
         }
         ++cposz;
@@ -1954,260 +2026,287 @@ public class GenericDungeon {
         zwidth = 7;
         for (k = 0; k < zwidth; ++k) {
             for (j = 0; j < height; ++j) {
-                blk = Blocks.AIR;
+                blk = net.minecraft.world.level.block.Blocks.AIR;
                 if (j == 0 || j == height - 1) {
-                    blk = Blocks.OBSIDIAN;
+                    blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                 }
                 if (j == 0 && k > 0 && k < zwidth - 1) {
-                    blk = Blocks.END_STONE;
+                    blk = net.minecraft.world.level.block.Blocks.END_STONE;
                 }
                 if (k == 0 || k == zwidth - 1) {
-                    blk = Blocks.OBSIDIAN;
+                    blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                 }
-                this.FastSetBlock(world, cposx, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx, cposy + j, cposz + k, blk);
             }
             if (k != 1 && k != 2 && k != zwidth - 3 && k != zwidth - 2) continue;
-            this.makeShelves(world, cposx, cposy + 1, cposz + k);
+            this.makeShelves(level, cposx, cposy + 1, cposz + k);
         }
         ++cposz;
         ++cposx;
         zwidth = 5;
         for (k = 0; k < zwidth; ++k) {
             for (j = 0; j < height; ++j) {
-                blk = Blocks.OBSIDIAN;
-                this.FastSetBlock(world, cposx, cposy + j, cposz + k, blk);
+                blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
+                this.FastSetBlock(level, cposx, cposy + j, cposz + k, blk);
             }
         }
     }
 
-    private void makeShelves(World world, int cposx, int cposy, int cposz) {
+    private void makeShelves(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         int j;
         int k;
-        int i = world.rand.nextInt(4);
-        Block blk = Blocks.AIR;
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        int i = rand.nextInt(4);
+        net.minecraft.world.level.block.Block blk = net.minecraft.world.level.block.Blocks.AIR;
         if (i == 0) {
-            TileEntityChest chest = null;
-            WeightedRandomChestContent[] chestContents = null;
-            chestContents = this.KnightContentsList;
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy, cposz), Blocks.CHEST.getDefaultState(), 2);
-            chest = this.getChestTileEntity(world, cposx, cposy, cposz);
-            if (chest != null) {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(5)));
-            }
+            this.fillLevelChestAt(level, rand, cposx, cposy, cposz, 2, this.KnightContentsList, 3 + rand.nextInt(5));
         }
         if (i == 1) {
-            blk = Blocks.BOOKSHELF;
-            k = 1 + world.rand.nextInt(4);
+            blk = net.minecraft.world.level.block.Blocks.BOOKSHELF;
+            k = 1 + rand.nextInt(4);
             for (j = 0; j < k; ++j) {
-                this.FastSetBlock(world, cposx, cposy + j, cposz, blk);
+                this.FastSetBlock(level, cposx, cposy + j, cposz, blk);
             }
         }
         if (i == 2) {
-            blk = Blocks.WEB;
-            k = 1 + world.rand.nextInt(4);
+            blk = net.minecraft.world.level.block.Blocks.COBWEB;
+            k = 1 + rand.nextInt(4);
             for (j = 0; j < k; ++j) {
-                this.FastSetBlock(world, cposx, cposy + j, cposz, blk);
+                this.FastSetBlock(level, cposx, cposy + j, cposz, blk);
             }
         }
     }
 
-    public void makePlayPool(World world, int cposx, int cposy, int cposz) {
+    public void makePlayPool(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int i;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.SquidContentsList;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         for (i = 0; i < 4; ++i) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + 16, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + 16, cposz);
-            if (tileentitymobspawner == null) continue;
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "attack_squid"));
+            this.placeLevelSpawner(level, cposx + i, cposy + 16, cposz, "chaospersists", "attack_squid");
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 17, cposz), Blocks.CHEST.getDefaultState(), 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 2, cposy + 17, cposz), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + 1, cposy + 17, cposz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(5)));
-        }
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + 1, cposy + 17, cposz),
+                net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState(),
+                2);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + 2, cposy + 17, cposz),
+                net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState(),
+                2);
+        this.fillLevelChestAt(level, rand, cposx + 1, cposy + 17, cposz, 2, this.SquidContentsList, 3 + rand.nextInt(5));
         for (i = 0; i < 4; ++i) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + 18, cposz), Blocks.WATER.getDefaultState(), 3);
+            level.setBlock(
+                    new net.minecraft.core.BlockPos(cposx + i, cposy + 18, cposz),
+                    net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                    3);
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 18, cposz), Blocks.FLOWING_WATER.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 4, cposy + 18, cposz), Blocks.FLOWING_WATER.getDefaultState(), 3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx - 1, cposy + 18, cposz),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + 4, cposy + 18, cposz),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
     }
 
-    public void makeWaterDragonLair(World world, int cposx, int cposy, int cposz) {
+    public void makeWaterDragonLair(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         float curx;
         float curdeg;
         int i;
         int j;
         float curz;
-        Block blk;
+        net.minecraft.world.level.block.Block blk;
         float currad;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.WaterDragonContentsList;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         float radius = 10.0f;
         for (currad = 0.0f; currad < radius; currad += 0.33f) {
             for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
-                curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
-                curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-                blk = Blocks.BEDROCK;
+                curx = (float) ((double) currad * Math.cos(Math.toRadians(curdeg)));
+                curz = (float) ((double) currad * Math.sin(Math.toRadians(curdeg)));
+                blk = net.minecraft.world.level.block.Blocks.BEDROCK;
                 if (currad > 5.0f && currad < 6.0f) {
-                    blk = Blocks.IRON_BLOCK;
+                    blk = net.minecraft.world.level.block.Blocks.IRON_BLOCK;
                 }
-                this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 7, (int)((float)cposz + curz + 0.5f), blk);
+                this.FastSetBlock(level, (int) ((float) cposx + curx + 0.5f), cposy + 7, (int) ((float) cposz + curz + 0.5f), blk);
             }
         }
         for (i = 1; i < 10; ++i) {
-            this.FastSetBlock(world, (int)((float)(cposx + i) + 0.5f), cposy + 7, (int)((float)cposz + 0.5f), Blocks.IRON_BLOCK);
-            this.FastSetBlock(world, (int)((float)(cposx - i) + 0.5f), cposy + 7, (int)((float)cposz + 0.5f), Blocks.IRON_BLOCK);
-            this.FastSetBlock(world, (int)((float)cposx + 0.5f), cposy + 7, (int)((float)(cposz + i) + 0.5f), Blocks.IRON_BLOCK);
-            this.FastSetBlock(world, (int)((float)cposx + 0.5f), cposy + 7, (int)((float)(cposz - i) + 0.5f), Blocks.IRON_BLOCK);
+            this.FastSetBlock(
+                    level,
+                    (int) ((float) (cposx + i) + 0.5f),
+                    cposy + 7,
+                    (int) ((float) cposz + 0.5f),
+                    net.minecraft.world.level.block.Blocks.IRON_BLOCK);
+            this.FastSetBlock(
+                    level,
+                    (int) ((float) (cposx - i) + 0.5f),
+                    cposy + 7,
+                    (int) ((float) cposz + 0.5f),
+                    net.minecraft.world.level.block.Blocks.IRON_BLOCK);
+            this.FastSetBlock(
+                    level,
+                    (int) ((float) cposx + 0.5f),
+                    cposy + 7,
+                    (int) ((float) (cposz + i) + 0.5f),
+                    net.minecraft.world.level.block.Blocks.IRON_BLOCK);
+            this.FastSetBlock(
+                    level,
+                    (int) ((float) cposx + 0.5f),
+                    cposy + 7,
+                    (int) ((float) (cposz - i) + 0.5f),
+                    net.minecraft.world.level.block.Blocks.IRON_BLOCK);
         }
-        this.FastSetBlock(world, (int)((float)cposx + 0.5f), cposy + 7, (int)((float)cposz + 0.5f), Blocks.AIR);
-        this.FastSetBlock(world, (int)((float)(cposx + 1) + 0.5f), cposy + 7, (int)((float)cposz + 0.5f), Blocks.GLOWSTONE);
-        this.FastSetBlock(world, (int)((float)(cposx - 1) + 0.5f), cposy + 7, (int)((float)cposz + 0.5f), Blocks.GLOWSTONE);
-        this.FastSetBlock(world, (int)((float)cposx + 0.5f), cposy + 7, (int)((float)(cposz + 1) + 0.5f), Blocks.GLOWSTONE);
-        this.FastSetBlock(world, (int)((float)cposx + 0.5f), cposy + 7, (int)((float)(cposz - 1) + 0.5f), Blocks.GLOWSTONE);
+        this.FastSetBlock(
+                level,
+                (int) ((float) cposx + 0.5f),
+                cposy + 7,
+                (int) ((float) cposz + 0.5f),
+                net.minecraft.world.level.block.Blocks.AIR);
+        this.FastSetBlock(
+                level,
+                (int) ((float) (cposx + 1) + 0.5f),
+                cposy + 7,
+                (int) ((float) cposz + 0.5f),
+                net.minecraft.world.level.block.Blocks.GLOWSTONE);
+        this.FastSetBlock(
+                level,
+                (int) ((float) (cposx - 1) + 0.5f),
+                cposy + 7,
+                (int) ((float) cposz + 0.5f),
+                net.minecraft.world.level.block.Blocks.GLOWSTONE);
+        this.FastSetBlock(
+                level,
+                (int) ((float) cposx + 0.5f),
+                cposy + 7,
+                (int) ((float) (cposz + 1) + 0.5f),
+                net.minecraft.world.level.block.Blocks.GLOWSTONE);
+        this.FastSetBlock(
+                level,
+                (int) ((float) cposx + 0.5f),
+                cposy + 7,
+                (int) ((float) (cposz - 1) + 0.5f),
+                net.minecraft.world.level.block.Blocks.GLOWSTONE);
         currad = 10.0f;
+        net.minecraft.world.level.block.Block waterDragonSpawn =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyWaterDragonSpawnBlock;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
-            curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
-            curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 1, (int)((float)cposz + curz + 0.5f), Blocks.GLOWSTONE);
-            blk = Blocks.LAPIS_BLOCK;
-            if (world.rand.nextInt(2) == 0) {
-                blk = ChaosPersists.MyWaterDragonSpawnBlock;
+            curx = (float) ((double) currad * Math.cos(Math.toRadians(curdeg)));
+            curz = (float) ((double) currad * Math.sin(Math.toRadians(curdeg)));
+            this.FastSetBlock(
+                    level,
+                    (int) ((float) cposx + curx + 0.5f),
+                    cposy + 1,
+                    (int) ((float) cposz + curz + 0.5f),
+                    net.minecraft.world.level.block.Blocks.GLOWSTONE);
+            blk = net.minecraft.world.level.block.Blocks.LAPIS_BLOCK;
+            if (rand.nextInt(2) == 0) {
+                blk = waterDragonSpawn;
             }
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 2, (int)((float)cposz + curz + 0.5f), blk);
-            blk = Blocks.LAPIS_BLOCK;
-            if (world.rand.nextInt(2) == 0) {
-                blk = ChaosPersists.MyWaterDragonSpawnBlock;
+            this.FastSetBlock(level, (int) ((float) cposx + curx + 0.5f), cposy + 2, (int) ((float) cposz + curz + 0.5f), blk);
+            blk = net.minecraft.world.level.block.Blocks.LAPIS_BLOCK;
+            if (rand.nextInt(2) == 0) {
+                blk = waterDragonSpawn;
             }
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 3, (int)((float)cposz + curz + 0.5f), blk);
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 4, (int)((float)cposz + curz + 0.5f), Blocks.GLOWSTONE);
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), Blocks.BEDROCK);
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 6, (int)((float)cposz + curz + 0.5f), Blocks.BEDROCK);
+            this.FastSetBlock(level, (int) ((float) cposx + curx + 0.5f), cposy + 3, (int) ((float) cposz + curz + 0.5f), blk);
+            this.FastSetBlock(
+                    level,
+                    (int) ((float) cposx + curx + 0.5f),
+                    cposy + 4,
+                    (int) ((float) cposz + curz + 0.5f),
+                    net.minecraft.world.level.block.Blocks.GLOWSTONE);
+            this.FastSetBlock(
+                    level,
+                    (int) ((float) cposx + curx + 0.5f),
+                    cposy + 5,
+                    (int) ((float) cposz + curz + 0.5f),
+                    net.minecraft.world.level.block.Blocks.BEDROCK);
+            this.FastSetBlock(
+                    level,
+                    (int) ((float) cposx + curx + 0.5f),
+                    cposy + 6,
+                    (int) ((float) cposz + curz + 0.5f),
+                    net.minecraft.world.level.block.Blocks.BEDROCK);
         }
         for (i = -3; i <= 3; ++i) {
             for (j = -3; j <= 3; ++j) {
-                this.FastSetBlock(world, cposx + i, cposy, cposz + j, (Block)Blocks.SAND);
-                this.FastSetBlock(world, cposx + i, cposy - 1, cposz + j, Blocks.STONE);
+                this.FastSetBlock(level, cposx + i, cposy, cposz + j, net.minecraft.world.level.block.Blocks.SAND);
+                this.FastSetBlock(level, cposx + i, cposy - 1, cposz + j, net.minecraft.world.level.block.Blocks.STONE);
             }
         }
         for (i = -2; i <= 2; ++i) {
             for (j = -2; j <= 2; ++j) {
-                this.FastSetBlock(world, cposx + i, cposy + 3, cposz + j, (Block)Blocks.LEAVES);
+                this.FastSetBlock(level, cposx + i, cposy + 3, cposz + j, net.minecraft.world.level.block.Blocks.OAK_LEAVES);
             }
         }
-        this.FastSetBlock(world, cposx, cposy + 4, cposz, (Block)Blocks.LEAVES);
-        this.FastSetBlock(world, cposx, cposy + 3, cposz, Blocks.LOG);
-        this.FastSetBlock(world, cposx, cposy + 2, cposz, Blocks.LOG);
-        this.FastSetBlock(world, cposx, cposy + 1, cposz, Blocks.LOG);
-        this.FastSetBlock(world, cposx + 1, cposy + 3, cposz + 1, Blocks.LOG);
-        this.FastSetBlock(world, cposx - 1, cposy + 3, cposz - 1, Blocks.LOG);
-        this.FastSetBlock(world, cposx + 1, cposy + 3, cposz - 1, Blocks.LOG);
-        this.FastSetBlock(world, cposx - 1, cposy + 3, cposz + 1, Blocks.LOG);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 3, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 1, cposy + 3, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "water_dragon"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 3, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 1, cposy + 3, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "water_dragon"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 3, cposz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 3, cposz + 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "water_dragon"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 3, cposz - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 3, cposz - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "water_dragon"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz - 1), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + 1, cposz - 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(4 + world.rand.nextInt(5)));
-        }
+        this.FastSetBlock(level, cposx, cposy + 4, cposz, net.minecraft.world.level.block.Blocks.OAK_LEAVES);
+        this.FastSetBlock(level, cposx, cposy + 3, cposz, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx, cposy + 2, cposz, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx + 1, cposy + 3, cposz + 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx - 1, cposy + 3, cposz - 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx + 1, cposy + 3, cposz - 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx - 1, cposy + 3, cposz + 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.placeLevelSpawner(level, cposx + 1, cposy + 3, cposz, "chaospersists", "water_dragon");
+        this.placeLevelSpawner(level, cposx - 1, cposy + 3, cposz, "chaospersists", "water_dragon");
+        this.placeLevelSpawner(level, cposx, cposy + 3, cposz + 1, "chaospersists", "water_dragon");
+        this.placeLevelSpawner(level, cposx, cposy + 3, cposz - 1, "chaospersists", "water_dragon");
+        this.fillLevelChestAt(
+                level, rand, cposx, cposy + 1, cposz - 1, 2, this.WaterDragonContentsList, 4 + rand.nextInt(5));
     }
 
-    public void makeCloudSharkDungeon(World world, int cposx, int cposy, int cposz) {
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.CloudSharkContentsList;
-        this.FastSetBlock(world, cposx, cposy, cposz, Blocks.GLOWSTONE);
-        this.FastSetBlock(world, cposx, cposy - 1, cposz, Blocks.GLOWSTONE);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 1, cposy, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cloud_shark"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 1, cposy, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cloud_shark"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy, cposz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy, cposz + 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cloud_shark"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy, cposz - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy, cposz - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cloud_shark"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + 1, cposz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(4 + world.rand.nextInt(5)));
-        }
+    public void makeCloudSharkDungeon(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        this.FastSetBlock(level, cposx, cposy, cposz, net.minecraft.world.level.block.Blocks.GLOWSTONE);
+        this.FastSetBlock(level, cposx, cposy - 1, cposz, net.minecraft.world.level.block.Blocks.GLOWSTONE);
+        this.placeLevelSpawner(level, cposx + 1, cposy, cposz, "chaospersists", "cloud_shark");
+        this.placeLevelSpawner(level, cposx - 1, cposy, cposz, "chaospersists", "cloud_shark");
+        this.placeLevelSpawner(level, cposx, cposy, cposz + 1, "chaospersists", "cloud_shark");
+        this.placeLevelSpawner(level, cposx, cposy, cposz - 1, "chaospersists", "cloud_shark");
+        this.fillLevelChestAt(
+                level, rand, cposx, cposy + 1, cposz, 0, this.CloudSharkContentsList, 4 + rand.nextInt(5));
     }
 
-    public void makeLeafMonsterDungeon(World world, int cposx, int cposy, int cposz) {
+    public void makeLeafMonsterDungeon(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int j;
         int i;
         int k;
-        Block blk;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.LeafMonsterContentsList;
+        net.minecraft.world.level.block.Block blk;
         for (i = -2; i < 6; ++i) {
             for (k = -3; k < 2; ++k) {
                 for (j = 0; j < 4; ++j) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
         for (i = 0; i < 4; ++i) {
             for (k = 0; k < 4; ++k) {
                 for (j = -1; j > -5; --j) {
-                    blk = Blocks.LOG;
-                    Block bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k)).getBlock();
-                    if (bid != Blocks.AIR && bid != Blocks.TALLGRASS) continue;
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                    blk = net.minecraft.world.level.block.Blocks.OAK_LOG;
+                    net.minecraft.world.level.block.state.BlockState bid =
+                            level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j, cposz + k));
+                    if (!bid.isAir() && !bid.is(net.minecraft.world.level.block.Blocks.TALL_GRASS)) {
+                        continue;
+                    }
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
                 }
             }
         }
         for (i = 0; i < 4; ++i) {
             for (k = 0; k < 4; ++k) {
                 for (j = 0; j < 10; ++j) {
-                    blk = Blocks.LOG;
+                    blk = net.minecraft.world.level.block.Blocks.OAK_LOG;
                     if (!(j >= 2 || k != 0 && k != 1 || i != 1 && i != 2)) {
-                        blk = Blocks.AIR;
+                        blk = net.minecraft.world.level.block.Blocks.AIR;
                     }
                     if (k == 1 && (i == 1 || i == 2)) {
-                        blk = Blocks.AIR;
+                        blk = net.minecraft.world.level.block.Blocks.AIR;
                     }
                     if (k == 2 && (i == 1 || i == 2)) continue;
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
                 }
             }
         }
@@ -2215,463 +2314,365 @@ public class GenericDungeon {
             for (k = 0; k < 4; ++k) {
                 for (j = 0; j < 10; ++j) {
                     if (k != 2 || i != 1 && i != 2) continue;
-                    blk = Blocks.LADDER;
-                    world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), blk.getStateFromMeta(2), 3);
+                    ChaosPersists.setBlockFast(
+                            level,
+                            cposx + i,
+                            cposy + j,
+                            cposz + k,
+                            net.minecraft.world.level.block.Blocks.LADDER,
+                            2,
+                            2);
                 }
             }
         }
-        this.FastSetBlock(world, cposx + 1, cposy + 2, cposz - 1, (Block)Blocks.LEAVES);
-        this.FastSetBlock(world, cposx + 2, cposy + 2, cposz - 1, (Block)Blocks.LEAVES);
+        this.FastSetBlock(level, cposx + 1, cposy + 2, cposz - 1, net.minecraft.world.level.block.Blocks.OAK_LEAVES);
+        this.FastSetBlock(level, cposx + 2, cposy + 2, cposz - 1, net.minecraft.world.level.block.Blocks.OAK_LEAVES);
         for (i = -3; i < 7; ++i) {
             for (k = -3; k < 7; ++k) {
                 j = 9;
                 if (i >= 0 && i <= 3 && k >= 0 && k <= 3) continue;
-                blk = Blocks.LOG;
+                blk = net.minecraft.world.level.block.Blocks.OAK_LOG;
                 if (i == -3 || i == 6 || k == -3 || k == 6) {
-                    blk = Blocks.LEAVES;
+                    blk = net.minecraft.world.level.block.Blocks.OAK_LEAVES;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         for (i = -3; i < 7; ++i) {
             for (k = -3; k < 7; ++k) {
                 for (j = 10; j < 13; ++j) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == -3 || i == 6 || k == -3 || k == 6) {
-                        blk = Blocks.LEAVES;
+                        blk = net.minecraft.world.level.block.Blocks.OAK_LEAVES;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
                 }
             }
         }
         for (i = -2; i < 6; ++i) {
             for (k = -2; k < 6; ++k) {
                 j = 13;
-                blk = Blocks.AIR;
+                blk = net.minecraft.world.level.block.Blocks.AIR;
                 if (i == -2 || i == 5 || k == -2 || k == 5) {
-                    blk = Blocks.LOG;
+                    blk = net.minecraft.world.level.block.Blocks.OAK_LOG;
                 }
                 if (i == -1 || i == 4 || k == -1 || k == 4) {
-                    blk = Blocks.LEAVES;
+                    blk = net.minecraft.world.level.block.Blocks.OAK_LEAVES;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         for (i = -1; i < 5; ++i) {
             for (k = -1; k < 5; ++k) {
                 j = 14;
-                blk = Blocks.LEAVES;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                blk = net.minecraft.world.level.block.Blocks.OAK_LEAVES;
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         for (i = 0; i < 4; ++i) {
             for (k = 0; k < 4; ++k) {
                 j = 15;
-                blk = Blocks.LOG;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                blk = net.minecraft.world.level.block.Blocks.OAK_LOG;
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         for (i = 1; i < 3; ++i) {
             for (k = 1; k < 3; ++k) {
                 j = 16;
-                blk = Blocks.LEAVES;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                blk = net.minecraft.world.level.block.Blocks.OAK_LEAVES;
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 2, cposy + 10, cposz - 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 2, cposy + 10, cposz - 2);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "leaf_monster"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 5, cposy + 10, cposz + 5), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 5, cposy + 10, cposz + 5);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "leaf_monster"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 2, cposy + 10, cposz + 5), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 2, cposy + 10, cposz + 5);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "leaf_monster"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 5, cposy + 10, cposz - 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 5, cposy + 10, cposz - 2);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "leaf_monster"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 10, cposz + 5), Blocks.CHEST.getDefaultState(), 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 2, cposy + 10, cposz + 5), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + 1, cposy + 10, cposz + 5);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(12 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx - 2, cposy + 10, cposz - 2, "chaospersists", "leaf_monster");
+        this.placeLevelSpawner(level, cposx + 5, cposy + 10, cposz + 5, "chaospersists", "leaf_monster");
+        this.placeLevelSpawner(level, cposx - 2, cposy + 10, cposz + 5, "chaospersists", "leaf_monster");
+        this.placeLevelSpawner(level, cposx + 5, cposy + 10, cposz - 2, "chaospersists", "leaf_monster");
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + 2, cposy + 10, cposz + 5),
+                net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState(),
+                2);
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx + 1,
+                cposy + 10,
+                cposz + 5,
+                0,
+                this.LeafMonsterContentsList,
+                12 + rand.nextInt(5));
     }
 
-    public void makeMiniDungeon(World world, int cposx, int cposy, int cposz) {
+    public void makeMiniDungeon(Object worldObj, int cposx, int cposy, int cposz) {
         int j;
         int i;
         int k;
-        Block blk;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.MiniContentsList;
+        net.minecraft.world.level.block.Block blk;
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         for (i = 0; i < 10; ++i) {
             for (k = 0; k < 10; ++k) {
                 for (j = 0; j < 7; ++j) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || k == 0 || i == 9 || k == 9) {
-                        blk = Blocks.IRON_BARS;
+                        blk = net.minecraft.world.level.block.Blocks.IRON_BARS;
                     }
                     if (i == 0 && k == 0) {
-                        blk = Blocks.COBBLESTONE;
+                        blk = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                     }
                     if (i == 9 && k == 9) {
-                        blk = Blocks.COBBLESTONE;
+                        blk = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                     }
                     if (i == 0 && k == 9) {
-                        blk = Blocks.COBBLESTONE;
+                        blk = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                     }
                     if (i == 9 && k == 0) {
-                        blk = Blocks.COBBLESTONE;
+                        blk = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                     }
                     if (j == 0) {
-                        blk = Blocks.COBBLESTONE;
+                        blk = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                     }
                     if (j == 6 && (i == 0 || k == 0 || i == 9 || k == 9)) {
-                        blk = Blocks.COBBLESTONE;
+                        blk = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
                 }
             }
         }
         for (i = 1; i < 9; ++i) {
             for (k = 1; k < 9; ++k) {
                 j = 7;
-                blk = Blocks.AIR;
+                blk = net.minecraft.world.level.block.Blocks.AIR;
                 if (i == 1 || i == 8 || k == 1 || k == 8) {
-                    blk = Blocks.GRASS;
+                    blk = net.minecraft.world.level.block.Blocks.GRASS_BLOCK;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         for (i = 2; i < 8; ++i) {
             for (k = 2; k < 8; ++k) {
                 j = 8;
-                blk = Blocks.AIR;
+                blk = net.minecraft.world.level.block.Blocks.AIR;
                 if (i == 2 || i == 7 || k == 2 || k == 7) {
-                    blk = Blocks.GRASS;
+                    blk = net.minecraft.world.level.block.Blocks.GRASS_BLOCK;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         i = -6;
         j = 1;
         k = 3;
         for (int m = 0; m < 6; ++m) {
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.PLANKS);
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + 1, Blocks.PLANKS);
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + 2, Blocks.PLANKS);
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + 3, Blocks.PLANKS);
-            this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k, Blocks.OAK_FENCE);
-            this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + 3, Blocks.OAK_FENCE);
-            this.FastSetBlock(world, cposx + i, cposy + j + 2, cposz + k, Blocks.TORCH);
-            this.FastSetBlock(world, cposx + i, cposy + j + 2, cposz + k + 3, Blocks.TORCH);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.OAK_PLANKS);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k + 1, net.minecraft.world.level.block.Blocks.OAK_PLANKS);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k + 2, net.minecraft.world.level.block.Blocks.OAK_PLANKS);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k + 3, net.minecraft.world.level.block.Blocks.OAK_PLANKS);
+            this.FastSetBlock(level, cposx + i, cposy + j + 1, cposz + k, net.minecraft.world.level.block.Blocks.OAK_FENCE);
+            this.FastSetBlock(level, cposx + i, cposy + j + 1, cposz + k + 3, net.minecraft.world.level.block.Blocks.OAK_FENCE);
+            this.FastSetBlock(level, cposx + i, cposy + j + 2, cposz + k, net.minecraft.world.level.block.Blocks.TORCH);
+            this.FastSetBlock(level, cposx + i, cposy + j + 2, cposz + k + 3, net.minecraft.world.level.block.Blocks.TORCH);
             ++i;
             ++j;
         }
         for (i = 3; i < 7; ++i) {
             for (k = 3; k < 7; ++k) {
                 j = 9;
-                blk = Blocks.AIR;
-                if (i != 3 && i != 6 && k != 3 && k != 6) continue;
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-                if (tileentitymobspawner == null) continue;
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "butterfly"));
+                if (i != 3 && i != 6 && k != 3 && k != 6) {
+                    continue;
+                }
+                this.placeLevelSpawner(level, cposx + i, cposy + j, cposz + k, "chaospersists", "butterfly");
             }
         }
         k = 0;
         i = 0;
         for (j = 7; j < 11; ++j) {
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.COBBLESTONE);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.COBBLESTONE);
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "terrible_terror"));
-        }
+        this.placeLevelSpawner(level, cposx + i, cposy + j, cposz + k, "chaospersists", "terrible_terror");
         k = 9;
         i = 9;
         for (j = 7; j < 11; ++j) {
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.COBBLESTONE);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.COBBLESTONE);
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "butterfly"));
-        }
+        this.placeLevelSpawner(level, cposx + i, cposy + j, cposz + k, "chaospersists", "butterfly");
         i = 0;
         k = 9;
         for (j = 7; j < 11; ++j) {
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.COBBLESTONE);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.COBBLESTONE);
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "terrible_terror"));
-        }
+        this.placeLevelSpawner(level, cposx + i, cposy + j, cposz + k, "chaospersists", "terrible_terror");
         i = 9;
         k = 0;
         for (j = 7; j < 11; ++j) {
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.COBBLESTONE);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.COBBLESTONE);
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "butterfly"));
-        }
-        k = 1;
-        i = 1;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "terrible_terror"));
-        }
-        k = 8;
-        i = 8;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "terrible_terror"));
-        }
-        i = 8;
-        k = 1;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "butterfly"));
-        }
-        i = 1;
-        k = 8;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "butterfly"));
-        }
-        i = 4;
-        k = 4;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "lurking_terror"));
-        }
-        i = 5;
-        k = 5;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "lurking_terror"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 3, cposy + 1, cposz + 3), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + 3, cposy + 1, cposz + 3);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(4 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx + i, cposy + j, cposz + k, "chaospersists", "butterfly");
+        this.placeLevelSpawner(level, cposx + 1, cposy + 1, cposz + 1, "chaospersists", "terrible_terror");
+        this.placeLevelSpawner(level, cposx + 8, cposy + 1, cposz + 8, "chaospersists", "terrible_terror");
+        this.placeLevelSpawner(level, cposx + 8, cposy + 1, cposz + 1, "chaospersists", "butterfly");
+        this.placeLevelSpawner(level, cposx + 1, cposy + 1, cposz + 8, "chaospersists", "butterfly");
+        this.placeLevelSpawner(level, cposx + 4, cposy + 1, cposz + 4, "chaospersists", "lurking_terror");
+        this.placeLevelSpawner(level, cposx + 5, cposy + 1, cposz + 5, "chaospersists", "lurking_terror");
+        this.fillLevelChestAt(level, rand, cposx + 3, cposy + 1, cposz + 3, 0, this.MiniContentsList, 4 + rand.nextInt(5));
     }
 
-    public void makeGoldFishBowl(World world, int cposx, int cposy, int cposz) {
+    public void makeGoldFishBowl(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int i;
         int k;
-        TileEntityMobSpawner tileentitymobspawner = null;
         int j = 1;
-        Block blk = Blocks.GLASS;
+        net.minecraft.world.level.block.Block blk = net.minecraft.world.level.block.Blocks.GLASS;
         for (i = 0; i < 5; ++i) {
             for (k = 0; k < 5; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         j = 2;
         for (i = -1; i < 6; ++i) {
             for (k = -1; k < 6; ++k) {
-                blk = Blocks.SAND;
+                blk = net.minecraft.world.level.block.Blocks.SAND;
                 if (i == -1 || k == -1 || i == 5 || k == 5) {
-                    blk = Blocks.GLASS;
+                    blk = net.minecraft.world.level.block.Blocks.GLASS;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         j = 3;
         for (i = -1; i < 6; ++i) {
             for (k = -1; k < 6; ++k) {
-                blk = Blocks.WATER;
+                blk = net.minecraft.world.level.block.Blocks.WATER;
                 if (i == -1 || k == -1 || i == 5 || k == 5) {
-                    blk = Blocks.GLASS;
+                    blk = net.minecraft.world.level.block.Blocks.GLASS;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         k = 0;
         i = 0;
-        blk = Blocks.GLOWSTONE;
-        this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+        blk = net.minecraft.world.level.block.Blocks.GLOWSTONE;
+        this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
         k = 4;
         i = 4;
-        this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+        this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
         k = 4;
         i = 0;
-        this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+        this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
         k = 0;
         i = 4;
-        this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+        this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
         j = 4;
         for (i = -1; i < 6; ++i) {
             for (k = -1; k < 6; ++k) {
-                blk = Blocks.WATER;
+                blk = net.minecraft.world.level.block.Blocks.WATER;
                 if (i == -1 || k == -1 || i == 5 || k == 5) {
-                    blk = Blocks.GLASS;
+                    blk = net.minecraft.world.level.block.Blocks.GLASS;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         for (j = 5; j < 8; ++j) {
             for (i = -1; i < 6; ++i) {
                 for (k = -1; k < 6; ++k) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == -1 || k == -1 || i == 5 || k == 5) {
-                        blk = Blocks.GLASS;
+                        blk = net.minecraft.world.level.block.Blocks.GLASS;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
                 }
             }
         }
         j = 8;
-        blk = Blocks.GLASS;
+        blk = net.minecraft.world.level.block.Blocks.GLASS;
         for (i = 0; i < 5; ++i) {
             for (k = 0; k < 5; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         i = 2;
         k = 2;
         j = 6;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "gold_fish"));
-        }
+        this.placeLevelSpawner(level, cposx + i, cposy + j, cposz + k, "chaospersists", "gold_fish");
     }
 
-    public void makeEnderReaperGraveyard(World world, int cposx, int cposy, int cposz) {
+    public void makeEnderReaperGraveyard(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int i;
         int j;
         int k;
         int width = 11;
         int length = 13;
-        TileEntityMobSpawner tileentitymobspawner = null;
         for (j = 1; j < 5; ++j) {
             for (i = 0; i < width; ++i) {
                 for (k = 0; k < length; ++k) {
-                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy - j, cposz + k)).getBlock() != Blocks.AIR) continue;
-                    this.FastSetBlock(world, cposx + i, cposy - j, cposz + k, Blocks.END_STONE);
+                    if (!level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy - j, cposz + k)).isAir()) {
+                        continue;
+                    }
+                    this.FastSetBlock(level, cposx + i, cposy - j, cposz + k, net.minecraft.world.level.block.Blocks.END_STONE);
                 }
             }
         }
         j = 0;
-        Block blk = Blocks.END_STONE;
+        net.minecraft.world.level.block.Block blk = net.minecraft.world.level.block.Blocks.END_STONE;
         for (i = 0; i < width; ++i) {
             for (k = 0; k < length; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         for (j = 1; j < 5; ++j) {
             for (i = 0; i < width; ++i) {
                 for (k = 0; k < length; ++k) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || k == 0 || i == width - 1 || k == length - 1) {
-                        blk = Blocks.IRON_BARS;
+                        blk = net.minecraft.world.level.block.Blocks.IRON_BARS;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
                 }
             }
         }
-        i = 1;
-        k = 1;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
-        }
-        i = width - 2;
-        k = length - 2;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
-        }
-        i = 1;
-        k = length - 2;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
-        }
-        i = width - 2;
-        k = 1;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
-        }
-        this.makeAGrave(world, cposx, cposy, cposz, 1, 6);
-        this.makeAGrave(world, cposx, cposy, cposz, 3, 4);
-        this.makeAGrave(world, cposx, cposy, cposz, 5, 4);
-        this.makeAGrave(world, cposx, cposy, cposz, 7, 4);
-        this.makeAGrave(world, cposx, cposy, cposz, 3, 8);
-        this.makeAGrave(world, cposx, cposy, cposz, 5, 8);
-        this.makeAGrave(world, cposx, cposy, cposz, 7, 8);
-        this.makeAGrave(world, cposx, cposy, cposz, 9, 6);
+        this.placeLevelSpawner(level, cposx + 1, cposy + 1, cposz + 1, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + width - 2, cposy + 1, cposz + length - 2, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + 1, cposy + 1, cposz + length - 2, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + width - 2, cposy + 1, cposz + 1, "chaospersists", "ender_reaper");
+        this.makeAGrave(level, cposx, cposy, cposz, 1, 6);
+        this.makeAGrave(level, cposx, cposy, cposz, 3, 4);
+        this.makeAGrave(level, cposx, cposy, cposz, 5, 4);
+        this.makeAGrave(level, cposx, cposy, cposz, 7, 4);
+        this.makeAGrave(level, cposx, cposy, cposz, 3, 8);
+        this.makeAGrave(level, cposx, cposy, cposz, 5, 8);
+        this.makeAGrave(level, cposx, cposy, cposz, 7, 8);
+        this.makeAGrave(level, cposx, cposy, cposz, 9, 6);
     }
 
-    public void makeAGrave(World world, int cposx, int cposy, int cposz, int xoff, int zoff) {
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.GraveContentsList;
-        this.FastSetBlock(world, cposx + xoff, cposy + 1, cposz + zoff - 1, Blocks.OBSIDIAN);
-        this.FastSetBlock(world, cposx + xoff, cposy, cposz + zoff + 1, Blocks.OBSIDIAN);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff, cposy, cposz + zoff), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + xoff, cposy, cposz + zoff);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(3)));
-        }
+    public void makeAGrave(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz, int xoff, int zoff) {
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        this.FastSetBlock(level, cposx + xoff, cposy + 1, cposz + zoff - 1, net.minecraft.world.level.block.Blocks.OBSIDIAN);
+        this.FastSetBlock(level, cposx + xoff, cposy, cposz + zoff + 1, net.minecraft.world.level.block.Blocks.OBSIDIAN);
+        this.fillLevelChestAt(
+                level, rand, cposx + xoff, cposy, cposz + zoff, 0, this.GraveContentsList, 3 + rand.nextInt(3));
     }
 
-    public void makeUrchinSpawner(World world, int cposx, int cposy, int cposz) {
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
+    public void makeUrchinSpawner(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        net.minecraft.world.level.block.Block crystalStone =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalStone;
+        net.minecraft.world.level.block.Block crystalCrystal =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalCrystal;
+        net.minecraft.world.level.block.Block tigersEye =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.TigersEye;
         int patchy = 3;
         for (int i = 0; i < patchy; ++i) {
-            Block bid = ChaosPersists.CrystalStone;
+            net.minecraft.world.level.block.Block bid = crystalStone;
             if (i == 1) {
-                bid = ChaosPersists.CrystalCrystal;
+                bid = crystalCrystal;
             }
             if (i == 2) {
-                bid = ChaosPersists.TigersEye;
+                bid = tigersEye;
             }
-            float dx = world.rand.nextFloat() - world.rand.nextFloat();
-            float dz = world.rand.nextFloat() - world.rand.nextFloat();
-            float dy = 0.5f + world.rand.nextFloat() / 2.0f;
-            int width = world.rand.nextInt(2);
-            int length = 10 + width * 3 + world.rand.nextInt(5);
+            float dx = rand.nextFloat() - rand.nextFloat();
+            float dz = rand.nextFloat() - rand.nextFloat();
+            float dy = 0.5f + rand.nextFloat() / 2.0f;
+            int width = rand.nextInt(2);
+            int length = 10 + width * 3 + rand.nextInt(5);
             if (i != 0) {
                 length /= 2;
             }
@@ -2681,7 +2682,7 @@ public class GenericDungeon {
             for (int iy = 0; iy <= length; ++iy) {
                 for (int ix = 0; ix <= width; ++ix) {
                     for (int iz = 0; iz <= width; ++iz) {
-                        ChaosPersists.setBlockFast((World)world, (int)((int)(rx + (float)ix)), (int)((int)ry), (int)((int)(rz + (float)iz)), (Block)bid, (int)0, (int)2);
+                        ChaosPersists.setBlockFast(level, (int) (rx + (float) ix), (int) ry, (int) (rz + (float) iz), bid, 0, 2);
                     }
                 }
                 ry += dy;
@@ -2689,891 +2690,740 @@ public class GenericDungeon {
                 rz += dz;
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "crystal_urchin"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "crystal_urchin"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 3, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 3, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "crystal_urchin"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy, cposz), Blocks.AIR.getDefaultState(), 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy - 1, cposz), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx, cposy - 1, cposz, 2, 3);
-        chest = this.getChestTileEntity(world, cposx, cposy - 1, cposz);
-        if (chest != null) {
-            chest.setInventorySlotContents(1, new ItemStack(ChaosPersists.UrchinEgg, 1 + world.rand.nextInt(5), 0));
-            chest.setInventorySlotContents(2, new ItemStack(ChaosPersists.CrystalCoal, 4 + world.rand.nextInt(16), 0));
-            chest.setInventorySlotContents(3, new ItemStack(ChaosPersists.CrystalCoal, 4 + world.rand.nextInt(16), 0));
+        this.placeLevelSpawner(level, cposx, cposy + 1, cposz, "chaospersists", "crystal_urchin");
+        this.placeLevelSpawner(level, cposx, cposy + 2, cposz, "chaospersists", "crystal_urchin");
+        this.placeLevelSpawner(level, cposx, cposy + 3, cposz, "chaospersists", "crystal_urchin");
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx, cposy, cposz),
+                net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
+                2);
+        net.minecraft.core.BlockPos chestPos = new net.minecraft.core.BlockPos(cposx, cposy - 1, cposz);
+        level.setBlock(
+                chestPos,
+                net.minecraft.world.level.block.Blocks.CHEST
+                        .defaultBlockState()
+                        .setValue(
+                                net.minecraft.world.level.block.ChestBlock.FACING,
+                                chestFacingFromLegacyMeta(2)),
+                2);
+        net.minecraft.world.level.block.entity.BlockEntity blockEntity = level.getBlockEntity(chestPos);
+        if (blockEntity instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
+            chest.setItem(
+                    1,
+                    new net.minecraft.world.item.ItemStack(ChaosPersists.UrchinEgg, 1 + rand.nextInt(5)));
+            chest.setItem(
+                    2,
+                    new net.minecraft.world.item.ItemStack(ChaosPersists.CrystalCoal, 4 + rand.nextInt(16)));
+            chest.setItem(
+                    3,
+                    new net.minecraft.world.item.ItemStack(ChaosPersists.CrystalCoal, 4 + rand.nextInt(16)));
         }
     }
 
-    public void makeSpitBugLair(World world, int cposx, int cposy, int cposz) {
+    public void makeSpitBugLair(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int i;
         int green = 5;
         int dark_green = 13;
         int width = 9;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.SpitBugContentsList;
         for (i = 0; i < width; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + width - i + 2), (int)cposz, (Block)Blocks.STAINED_HARDENED_CLAY, (int)dark_green, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + width - i + 1), (int)cposz, (Block)Blocks.STAINED_HARDENED_CLAY, (int)dark_green, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + width - i), (int)cposz, (Block)Blocks.MOSSY_COBBLESTONE, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - i), (int)(cposy + width - i + 2), (int)cposz, (Block)Blocks.STAINED_HARDENED_CLAY, (int)dark_green, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - i), (int)(cposy + width - i + 1), (int)cposz, (Block)Blocks.STAINED_HARDENED_CLAY, (int)dark_green, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - i), (int)(cposy + width - i), (int)cposz, (Block)Blocks.MOSSY_COBBLESTONE, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + width - i + 2, cposz, net.minecraft.world.level.block.Blocks.TERRACOTTA, dark_green, 2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + width - i + 1, cposz, net.minecraft.world.level.block.Blocks.TERRACOTTA, dark_green, 2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + width - i, cposz, net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE, 0, 2);
+            ChaosPersists.setBlockFast(level, cposx - i, cposy + width - i + 2, cposz, net.minecraft.world.level.block.Blocks.TERRACOTTA, dark_green, 2);
+            ChaosPersists.setBlockFast(level, cposx - i, cposy + width - i + 1, cposz, net.minecraft.world.level.block.Blocks.TERRACOTTA, dark_green, 2);
+            ChaosPersists.setBlockFast(level, cposx - i, cposy + width - i, cposz, net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE, 0, 2);
         }
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + width + 3), (int)cposz, (Block)Blocks.EMERALD_ORE, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + width + 2), (int)cposz, (Block)Blocks.EMERALD_ORE, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + width + 1), (int)cposz, (Block)Blocks.EMERALD_ORE, (int)0, (int)2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + width + 0, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + width + 0, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "spit_bug"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + width - 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + width - 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "spit_bug"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + width - 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + width - 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "spit_bug"));
-        }
-        boolean k = false;
+        ChaosPersists.setBlockFast(level, cposx, cposy + width + 3, cposz, net.minecraft.world.level.block.Blocks.EMERALD_ORE, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy + width + 2, cposz, net.minecraft.world.level.block.Blocks.EMERALD_ORE, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy + width + 1, cposz, net.minecraft.world.level.block.Blocks.EMERALD_ORE, 0, 2);
+        this.placeLevelSpawner(level, cposx, cposy + width, cposz, "chaospersists", "spit_bug");
+        this.placeLevelSpawner(level, cposx, cposy + width - 1, cposz, "chaospersists", "spit_bug");
+        this.placeLevelSpawner(level, cposx, cposy + width - 2, cposz, "chaospersists", "spit_bug");
         for (i = 0; i < width; ++i) {
             for (int j = - i; j <= i; ++j) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx - width + i + 1), (int)cposy, (int)(cposz + j), (Block)Blocks.STAINED_HARDENED_CLAY, (int)green, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width - i - 1), (int)cposy, (int)(cposz + j), (Block)Blocks.STAINED_HARDENED_CLAY, (int)green, (int)2);
+                ChaosPersists.setBlockFast(level, cposx - width + i + 1, cposy, cposz + j, net.minecraft.world.level.block.Blocks.TERRACOTTA, green, 2);
+                ChaosPersists.setBlockFast(level, cposx + width - i - 1, cposy, cposz + j, net.minecraft.world.level.block.Blocks.TERRACOTTA, green, 2);
                 if (j == - i || j == i) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx - width + i + 1), (int)(cposy + 1), (int)(cposz + j), (Block)Blocks.STAINED_HARDENED_CLAY, (int)dark_green, (int)2);
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + width - i - 1), (int)(cposy + 1), (int)(cposz + j), (Block)Blocks.STAINED_HARDENED_CLAY, (int)dark_green, (int)2);
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx - width + i + 1), (int)(cposy + 2), (int)(cposz + j), (Block)Blocks.STONEBRICK, (int)3, (int)2);
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + width - i - 1), (int)(cposy + 2), (int)(cposz + j), (Block)Blocks.STONEBRICK, (int)3, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx - width + i + 1, cposy + 1, cposz + j, net.minecraft.world.level.block.Blocks.TERRACOTTA, dark_green, 2);
+                    ChaosPersists.setBlockFast(level, cposx + width - i - 1, cposy + 1, cposz + j, net.minecraft.world.level.block.Blocks.TERRACOTTA, dark_green, 2);
+                    ChaosPersists.setBlockFast(level, cposx - width + i + 1, cposy + 2, cposz + j, net.minecraft.world.level.block.Blocks.STONE_BRICKS, 3, 2);
+                    ChaosPersists.setBlockFast(level, cposx + width - i - 1, cposy + 2, cposz + j, net.minecraft.world.level.block.Blocks.STONE_BRICKS, 3, 2);
                     continue;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx - width + i + 1), (int)(cposy + 1), (int)(cposz + j), (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width - i - 1), (int)(cposy + 1), (int)(cposz + j), (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx - width + i + 1), (int)(cposy + 2), (int)(cposz + j), (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width - i - 1), (int)(cposy + 2), (int)(cposz + j), (Block)Blocks.AIR, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx - width + i + 1, cposy + 1, cposz + j, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + width - i - 1, cposy + 1, cposz + j, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx - width + i + 1, cposy + 2, cposz + j, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + width - i - 1, cposy + 2, cposz + j, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + 1, cposz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(4 + world.rand.nextInt(4)));
-        }
+        this.fillLevelChestAt(level, rand, cposx, cposy + 1, cposz, 0, this.SpitBugContentsList, 4 + rand.nextInt(4));
     }
 
-    public void makeIgloo(World world, int cposx, int cposy, int cposz) {
+    public void makeIgloo(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         float curdeg;
         float curx;
         float curz;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
         float currad = 6.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
             curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
             curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 1, (int)((float)cposz + curz + 0.5f), Blocks.SNOW);
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 2, (int)((float)cposz + curz + 0.5f), Blocks.ICE);
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 3, (int)((float)cposz + curz + 0.5f), Blocks.SNOW);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 1, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.SNOW);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 2, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.ICE);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 3, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.SNOW);
         }
         currad = 5.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
             curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
             curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 4, (int)((float)cposz + curz + 0.5f), Blocks.ICE);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 4, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.ICE);
         }
         currad = 4.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
             curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
             curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), Blocks.SNOW);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.SNOW);
         }
         currad = 3.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 10.0f) {
             curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
             curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), Blocks.ICE);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.ICE);
         }
         currad = 2.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 15.0f) {
             curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
             curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), Blocks.SNOW);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.SNOW);
         }
         currad = 1.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 15.0f) {
             curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
             curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), Blocks.ICE);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.ICE);
         }
-        this.FastSetBlock(world, (int)((float)cposx - 6.0f + 0.5f), cposy, (int)((float)cposz + 0.5f), Blocks.PLANKS);
-        this.FastSetBlock(world, (int)((float)cposx - 6.0f + 0.5f), cposy + 1, (int)((float)cposz + 0.5f), Blocks.AIR);
-        this.FastSetBlock(world, (int)((float)cposx - 6.0f + 0.5f), cposy + 2, (int)((float)cposz + 0.5f), Blocks.AIR);
-        this.placeDoor(world, new BlockPos((int)((float)cposx - 6.0f + 0.5f), cposy + 1, (int)((float)cposz + 0.5f)), EnumFacing.NORTH, (BlockDoor)Blocks.OAK_DOOR);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 2, cposy + 1, cposz - 4), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 2, cposy + 1, cposz - 4);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rat"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 1, cposz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 1, cposy + 1, cposz + 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ghost"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 3, cposy + 1, cposz + 4), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 3, cposy + 1, cposz + 4);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ghost_pumpkin_skelly"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 3, cposy + 1, cposz - 3), Blocks.CHEST.getStateFromMeta(2), 2);
-        chest = this.getChestTileEntity(world, cposx - 3, cposy + 1, cposz - 3);
-        if (chest != null) {
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(0, new ItemStack(Items.COMPASS));
+        this.FastSetBlock(level, (int)((float)cposx - 6.0f + 0.5f), cposy, (int)((float)cposz + 0.5f), net.minecraft.world.level.block.Blocks.OAK_PLANKS);
+        this.FastSetBlock(level, (int)((float)cposx - 6.0f + 0.5f), cposy + 1, (int)((float)cposz + 0.5f), net.minecraft.world.level.block.Blocks.AIR);
+        this.FastSetBlock(level, (int)((float)cposx - 6.0f + 0.5f), cposy + 2, (int)((float)cposz + 0.5f), net.minecraft.world.level.block.Blocks.AIR);
+        int doorX = (int)((float)cposx - 6.0f + 0.5f);
+        int doorZ = (int)((float)cposz + 0.5f);
+        this.placeLevelDoor(level, doorX, cposy + 1, doorZ, net.minecraft.core.Direction.NORTH, net.minecraft.world.level.block.Blocks.OAK_DOOR);
+        this.placeLevelSpawner(level, cposx + 2, cposy + 1, cposz - 4, "chaospersists", "rat");
+        this.placeLevelSpawner(level, cposx - 1, cposy + 1, cposz + 1, "chaospersists", "ghost");
+        this.placeLevelSpawner(level, cposx + 3, cposy + 1, cposz + 4, "chaospersists", "ghost_pumpkin_skelly");
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx - 3, cposy + 1, cposz - 3),
+                net.minecraft.world.level.block.Blocks.CHEST
+                        .defaultBlockState()
+                        .setValue(
+                                net.minecraft.world.level.block.ChestBlock.FACING,
+                                chestFacingFromLegacyMeta(2)),
+                2);
+        net.minecraft.world.level.block.entity.BlockEntity iglooChestBe =
+                level.getBlockEntity(new net.minecraft.core.BlockPos(cposx - 3, cposy + 1, cposz - 3));
+        if (iglooChestBe instanceof net.minecraft.world.level.block.entity.ChestBlockEntity iglooChest) {
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COMPASS));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(1, new ItemStack((Item)Items.MAP));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(1, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.MAP));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(2, new ItemStack(Items.COOKED_PORKCHOP, 8));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(2, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COOKED_PORKCHOP, 8));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(3, new ItemStack(Blocks.TORCH, 32));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(3, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.TORCH, 32));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(4, new ItemStack(Items.COAL, 16));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(4, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COAL, 16));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(5, new ItemStack(Items.BED));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(5, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RED_BED));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(6, new ItemStack(Items.BED));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(6, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RED_BED));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(7, new ItemStack(Items.OAK_DOOR));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(7, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_DOOR));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(8, new ItemStack(Items.IRON_PICKAXE));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(8, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_PICKAXE));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(9, new ItemStack(Items.IRON_SWORD));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(9, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_SWORD));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(10, new ItemStack(Items.IRON_AXE));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(10, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_AXE));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(11, new ItemStack(Items.BUCKET));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(11, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BUCKET));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(13, new ItemStack((Block)Blocks.CHEST));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(13, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.CHEST));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(14, new ItemStack(Items.GOLD_NUGGET, 6));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(14, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.GOLD_NUGGET, 6));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(15, new ItemStack(Items.GOLD_NUGGET, 8));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(15, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.GOLD_NUGGET, 8));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(16, new ItemStack(Items.GOLD_NUGGET, 10));
+            if (rand.nextInt(2) == 0) {
+                iglooChest.setItem(16, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.GOLD_NUGGET, 10));
             }
         }
     }
 
-    public void makeEnderDragonHospital(World world, int cposx, int cposy, int cposz) {
+    public void makeEnderDragonHospital(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        net.minecraft.world.level.block.Block eyeBlock =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyEyeOfEnderBlock;
         int j;
         int i;
         int k;
-        Block blk;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.HospitalContentsList;
+        net.minecraft.world.level.block.Block blk;
         for (i = 0; i < 10; ++i) {
             for (k = 0; k < 10; ++k) {
                 for (j = 0; j < 7; ++j) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || k == 0 || i == 9 || k == 9) {
-                        blk = Blocks.IRON_BARS;
+                        blk = net.minecraft.world.level.block.Blocks.IRON_BARS;
                     }
                     if (i == 0 && k == 0) {
-                        blk = Blocks.OBSIDIAN;
+                        blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                     }
                     if (i == 9 && k == 9) {
-                        blk = Blocks.OBSIDIAN;
+                        blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                     }
                     if (i == 0 && k == 9) {
-                        blk = Blocks.OBSIDIAN;
+                        blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                     }
                     if (i == 9 && k == 0) {
-                        blk = Blocks.OBSIDIAN;
+                        blk = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                     }
                     if (j == 0) {
-                        blk = Blocks.END_STONE;
+                        blk = net.minecraft.world.level.block.Blocks.END_STONE;
                     }
                     if (j == 6 && (i == 0 || k == 0 || i == 9 || k == 9)) {
-                        blk = Blocks.END_STONE;
+                        blk = net.minecraft.world.level.block.Blocks.END_STONE;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
                 }
             }
         }
         for (i = 1; i < 9; ++i) {
             for (k = 1; k < 9; ++k) {
                 j = 7;
-                blk = Blocks.AIR;
+                blk = net.minecraft.world.level.block.Blocks.AIR;
                 if (i == 1 || i == 8 || k == 1 || k == 8) {
-                    blk = ChaosPersists.MyEyeOfEnderBlock;
+                    blk = eyeBlock;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         for (i = 2; i < 8; ++i) {
             for (k = 2; k < 8; ++k) {
                 j = 8;
-                blk = Blocks.AIR;
+                blk = net.minecraft.world.level.block.Blocks.AIR;
                 if (i == 2 || i == 7 || k == 2 || k == 7) {
-                    blk = ChaosPersists.MyEyeOfEnderBlock;
+                    blk = eyeBlock;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         for (i = 3; i < 7; ++i) {
             for (k = 3; k < 7; ++k) {
                 j = 9;
-                blk = Blocks.AIR;
+                blk = net.minecraft.world.level.block.Blocks.AIR;
                 if (i == 3 || i == 6 || k == 3 || k == 6) {
-                    blk = ChaosPersists.MyEyeOfEnderBlock;
+                    blk = eyeBlock;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         i = -6;
         j = 1;
         k = 3;
         for (int m = 0; m < 6; ++m) {
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.END_STONE);
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + 1, Blocks.END_STONE);
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + 2, Blocks.END_STONE);
-            this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + 3, Blocks.END_STONE);
-            this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k, Blocks.IRON_BARS);
-            this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + 3, Blocks.IRON_BARS);
-            this.FastSetBlock(world, cposx + i, cposy + j + 2, cposz + k, Blocks.GLOWSTONE);
-            this.FastSetBlock(world, cposx + i, cposy + j + 2, cposz + k + 3, Blocks.GLOWSTONE);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.END_STONE);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k + 1, net.minecraft.world.level.block.Blocks.END_STONE);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k + 2, net.minecraft.world.level.block.Blocks.END_STONE);
+            this.FastSetBlock(level, cposx + i, cposy + j, cposz + k + 3, net.minecraft.world.level.block.Blocks.END_STONE);
+            this.FastSetBlock(level, cposx + i, cposy + j + 1, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS);
+            this.FastSetBlock(level, cposx + i, cposy + j + 1, cposz + k + 3, net.minecraft.world.level.block.Blocks.IRON_BARS);
+            this.FastSetBlock(level, cposx + i, cposy + j + 2, cposz + k, net.minecraft.world.level.block.Blocks.GLOWSTONE);
+            this.FastSetBlock(level, cposx + i, cposy + j + 2, cposz + k + 3, net.minecraft.world.level.block.Blocks.GLOWSTONE);
             ++i;
             ++j;
         }
-        this.FastSetBlock(world, cposx + 0, cposy + 7, cposz + 0, Blocks.OBSIDIAN);
-        this.FastSetBlock(world, cposx + 0, cposy + 7, cposz + 9, Blocks.OBSIDIAN);
-        this.FastSetBlock(world, cposx + 9, cposy + 7, cposz + 0, Blocks.OBSIDIAN);
-        this.FastSetBlock(world, cposx + 9, cposy + 7, cposz + 9, Blocks.OBSIDIAN);
-        this.FastSetBlock(world, cposx + 0, cposy + 8, cposz + 0, Blocks.OBSIDIAN);
-        this.FastSetBlock(world, cposx + 0, cposy + 8, cposz + 9, Blocks.OBSIDIAN);
-        this.FastSetBlock(world, cposx + 9, cposy + 8, cposz + 0, Blocks.OBSIDIAN);
-        this.FastSetBlock(world, cposx + 9, cposy + 8, cposz + 9, Blocks.OBSIDIAN);
-        EntityEnderCrystal entityendercrystal = new EntityEnderCrystal(world);
-        entityendercrystal.setLocationAndAngles((double)((float)cposx + 0.5f), (double)(cposy + 9), (double)((float)cposz + 0.5f), world.rand.nextFloat() * 360.0f, 0.0f);
-        world.spawnEntity((Entity)entityendercrystal);
-        this.FastSetBlock(world, cposx, cposy + 9, cposz, Blocks.BEDROCK);
-        entityendercrystal = new EntityEnderCrystal(world);
-        entityendercrystal.setLocationAndAngles((double)((float)cposx + 0.5f), (double)(cposy + 9), (double)((float)cposz + 9.5f), world.rand.nextFloat() * 360.0f, 0.0f);
-        world.spawnEntity((Entity)entityendercrystal);
-        this.FastSetBlock(world, cposx, cposy + 9, cposz + 9, Blocks.BEDROCK);
-        entityendercrystal = new EntityEnderCrystal(world);
-        entityendercrystal.setLocationAndAngles((double)((float)cposx + 9.5f), (double)(cposy + 9), (double)((float)cposz + 0.5f), world.rand.nextFloat() * 360.0f, 0.0f);
-        world.spawnEntity((Entity)entityendercrystal);
-        this.FastSetBlock(world, cposx + 9, cposy + 9, cposz, Blocks.BEDROCK);
-        entityendercrystal = new EntityEnderCrystal(world);
-        entityendercrystal.setLocationAndAngles((double)((float)cposx + 9.5f), (double)(cposy + 9), (double)((float)cposz + 9.5f), world.rand.nextFloat() * 360.0f, 0.0f);
-        world.spawnEntity((Entity)entityendercrystal);
-        this.FastSetBlock(world, cposx + 9, cposy + 9, cposz + 9, Blocks.BEDROCK);
-        i = 3;
-        k = 3;
-        j = 9;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
+        this.FastSetBlock(level, cposx, cposy + 7, cposz, net.minecraft.world.level.block.Blocks.OBSIDIAN);
+        this.FastSetBlock(level, cposx, cposy + 7, cposz + 9, net.minecraft.world.level.block.Blocks.OBSIDIAN);
+        this.FastSetBlock(level, cposx + 9, cposy + 7, cposz, net.minecraft.world.level.block.Blocks.OBSIDIAN);
+        this.FastSetBlock(level, cposx + 9, cposy + 7, cposz + 9, net.minecraft.world.level.block.Blocks.OBSIDIAN);
+        this.FastSetBlock(level, cposx, cposy + 8, cposz, net.minecraft.world.level.block.Blocks.OBSIDIAN);
+        this.FastSetBlock(level, cposx, cposy + 8, cposz + 9, net.minecraft.world.level.block.Blocks.OBSIDIAN);
+        this.FastSetBlock(level, cposx + 9, cposy + 8, cposz, net.minecraft.world.level.block.Blocks.OBSIDIAN);
+        this.FastSetBlock(level, cposx + 9, cposy + 8, cposz + 9, net.minecraft.world.level.block.Blocks.OBSIDIAN);
+        net.minecraft.world.entity.boss.enderdragon.EndCrystal hospitalCrystal =
+                net.minecraft.world.entity.EntityType.END_CRYSTAL.create(level);
+        if (hospitalCrystal != null) {
+            hospitalCrystal.moveTo(cposx + 0.5, cposy + 9, cposz + 0.5, rand.nextFloat() * 360.0F, 0.0F);
+            level.addFreshEntity(hospitalCrystal);
         }
-        i = 3;
-        k = 6;
-        j = 9;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
+        this.FastSetBlock(level, cposx, cposy + 9, cposz, net.minecraft.world.level.block.Blocks.BEDROCK);
+        hospitalCrystal = net.minecraft.world.entity.EntityType.END_CRYSTAL.create(level);
+        if (hospitalCrystal != null) {
+            hospitalCrystal.moveTo(cposx + 0.5, cposy + 9, cposz + 9.5, rand.nextFloat() * 360.0F, 0.0F);
+            level.addFreshEntity(hospitalCrystal);
         }
-        i = 6;
-        k = 3;
-        j = 9;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
+        this.FastSetBlock(level, cposx, cposy + 9, cposz + 9, net.minecraft.world.level.block.Blocks.BEDROCK);
+        hospitalCrystal = net.minecraft.world.entity.EntityType.END_CRYSTAL.create(level);
+        if (hospitalCrystal != null) {
+            hospitalCrystal.moveTo(cposx + 9.5, cposy + 9, cposz + 0.5, rand.nextFloat() * 360.0F, 0.0F);
+            level.addFreshEntity(hospitalCrystal);
         }
-        i = 6;
-        k = 6;
-        j = 9;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
+        this.FastSetBlock(level, cposx + 9, cposy + 9, cposz, net.minecraft.world.level.block.Blocks.BEDROCK);
+        hospitalCrystal = net.minecraft.world.entity.EntityType.END_CRYSTAL.create(level);
+        if (hospitalCrystal != null) {
+            hospitalCrystal.moveTo(cposx + 9.5, cposy + 9, cposz + 9.5, rand.nextFloat() * 360.0F, 0.0F);
+            level.addFreshEntity(hospitalCrystal);
         }
-        i = 1;
-        k = 1;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
-        }
-        i = 1;
-        k = 8;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
-        }
-        i = 8;
-        k = 1;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
-        }
-        i = 8;
-        k = 8;
-        j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 4, cposy + 1, cposz + 4), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + 4, cposy + 1, cposz + 4);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(6 + world.rand.nextInt(5)));
-        }
+        this.FastSetBlock(level, cposx + 9, cposy + 9, cposz + 9, net.minecraft.world.level.block.Blocks.BEDROCK);
+        this.placeLevelSpawner(level, cposx + 3, cposy + 9, cposz + 3, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + 3, cposy + 9, cposz + 6, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + 6, cposy + 9, cposz + 3, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + 6, cposy + 9, cposz + 6, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + 1, cposy + 1, cposz + 1, "chaospersists", "nightmare");
+        this.placeLevelSpawner(level, cposx + 1, cposy + 1, cposz + 8, "chaospersists", "nightmare");
+        this.placeLevelSpawner(level, cposx + 8, cposy + 1, cposz + 1, "chaospersists", "nightmare");
+        this.placeLevelSpawner(level, cposx + 8, cposy + 1, cposz + 8, "chaospersists", "nightmare");
+        this.fillLevelChestAt(level, rand, cposx + 4, cposy + 1, cposz + 4, 0, this.HospitalContentsList, 6 + rand.nextInt(5));
     }
 
-    public void makeCrystalHauntedHouse(World world, int cposx, int cposy, int cposz) {
+    public void makeCrystalHauntedHouse(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int k;
         int j;
         int i;
-        int deltax = 0;
+        int deltax = 1;
         int deltaz = 0;
-        boolean bid = false;
-        boolean dirx = false;
-        boolean dirz = false;
-        int stuffdir = 0;
-        TileEntityMobSpawner tileentitymobspawner = null;
+        int stuffdir = 2;
         int length = 3;
         int width = 3;
         int height = 3;
-        deltax = 1;
-        stuffdir = 2;
         int x = cposx;
         int z = cposz;
         int y = cposy;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        net.minecraft.core.Direction facing = chestFacingFromLegacyMeta(stuffdir);
+        net.minecraft.world.level.block.Block crystalPlanks =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalPlanksBlock;
+        net.minecraft.world.level.block.Block crystalStone =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalStone;
+        net.minecraft.world.level.block.Block crystalWorkbench =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalWorkbenchBlock;
         for (i = - width; i <= width; ++i) {
             for (j = - length; j <= length; ++j) {
                 for (k = 0; k <= height + 1; ++k) {
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x + i, y + k, z + j);
                     if (k == height + 1) {
-                        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), ChaosPersists.CrystalPlanksBlock.getDefaultState());
+                        level.setBlock(pos, crystalPlanks.defaultBlockState(), 3);
                         continue;
                     }
                     if (k == 0) {
-                        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), ChaosPersists.CrystalStone.getDefaultState());
+                        level.setBlock(pos, crystalStone.defaultBlockState(), 3);
                         continue;
                     }
                     if (i == width || j == length || i == - width || j == - length) {
                         if (k == height) {
-                            world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.GLASS.getDefaultState());
+                            level.setBlock(pos, net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(), 3);
                             continue;
                         }
                         if ((k == 1 || k == 2) && i == deltax * width && j == deltaz * length) {
-                            world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.AIR.getDefaultState());
+                            level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
                             continue;
                         }
-                        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), ChaosPersists.CrystalPlanksBlock.getDefaultState());
+                        level.setBlock(pos, crystalPlanks.defaultBlockState(), 3);
                         continue;
                     }
-                    world.setBlockState(new net.minecraft.util.math.BlockPos(x + i, y + k, z + j), Blocks.AIR.getDefaultState());
+                    level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
                 }
             }
         }
         i = 2;
         k = 1;
         j = length - 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax), ChaosPersists.CrystalFurnaceBlock.getDefaultState());
-        this.setBlockMeta(world,x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax, stuffdir, 3);
+        net.minecraft.core.BlockPos furnacePos =
+                new net.minecraft.core.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax);
+        level.setBlock(
+                furnacePos,
+                ChaosPersists.CrystalFurnaceBlock
+                        .defaultBlockState()
+                        .setValue(com.astryxion.chaospersists.block.CrystalFurnace.FACING, facing),
+                3);
         i = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax), ChaosPersists.CrystalWorkbenchBlock.getDefaultState());
+        level.setBlock(
+                new net.minecraft.core.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax),
+                crystalWorkbench.defaultBlockState(),
+                3);
         i = 0;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax), Blocks.CHEST.getDefaultState());
-        this.setBlockMeta(world,x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax, stuffdir, 3);
-        TileEntityChest chest = this.getChestTileEntity(world, x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax);
-        if (chest != null) {
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(0, new ItemStack(Items.COMPASS));
+        net.minecraft.core.BlockPos chestPos =
+                new net.minecraft.core.BlockPos(x + i * deltax + j * deltaz, y + k, z + i * deltaz + j * deltax);
+        level.setBlock(
+                chestPos,
+                net.minecraft.world.level.block.Blocks.CHEST
+                        .defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.ChestBlock.FACING, facing),
+                3);
+        net.minecraft.world.level.block.entity.BlockEntity blockEntity = level.getBlockEntity(chestPos);
+        if (blockEntity instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COMPASS));
             }
-            if (world.rand.nextInt(3) != 0) {
-                chest.setInventorySlotContents(2, new ItemStack(ChaosPersists.MyPeacock, 8));
+            if (rand.nextInt(3) != 0) {
+                chest.setItem(
+                        2,
+                        new net.minecraft.world.item.ItemStack(ChaosPersists.MyPeacock, 8));
             }
-            if (world.rand.nextInt(3) != 0) {
-                chest.setInventorySlotContents(3, new ItemStack(ChaosPersists.CrystalTorch, 32));
+            if (rand.nextInt(3) != 0) {
+                chest.setItem(
+                        3,
+                        new net.minecraft.world.item.ItemStack(ChaosPersists.CrystalTorch, 32));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(4, new ItemStack(ChaosPersists.CrystalCoal, 16));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(
+                        4,
+                        new net.minecraft.world.item.ItemStack(ChaosPersists.CrystalCoal, 16));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(5, new ItemStack(Items.BED));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(5, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RED_BED));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(6, new ItemStack(Items.BED));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(6, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RED_BED));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(7, new ItemStack(Items.OAK_DOOR));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(7, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_DOOR));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(8, new ItemStack(ChaosPersists.MyCrystalPinkPickaxe));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(
+                        8,
+                        new net.minecraft.world.item.ItemStack(ChaosPersists.MyCrystalPinkPickaxe));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(9, new ItemStack(ChaosPersists.MyCrystalPinkSword));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(
+                        9,
+                        new net.minecraft.world.item.ItemStack(ChaosPersists.MyCrystalPinkSword));
             }
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(10, new ItemStack(ChaosPersists.MyCrystalPinkAxe));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(
+                        10,
+                        new net.minecraft.world.item.ItemStack(ChaosPersists.MyCrystalPinkAxe));
             }
-            chest.setInventorySlotContents(11, new ItemStack(ChaosPersists.KrakenRepellent));
-            if (world.rand.nextInt(2) == 0) {
-                chest.setInventorySlotContents(13, new ItemStack((Block)Blocks.CHEST));
+            chest.setItem(
+                    11,
+                    new net.minecraft.world.item.ItemStack(ChaosPersists.KrakenRepellent));
+            if (rand.nextInt(2) == 0) {
+                chest.setItem(
+                        13,
+                        new net.minecraft.world.item.ItemStack(net.minecraft.world.level.block.Blocks.CHEST.asItem()));
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rat"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ghost"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 3, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 3, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ghost_pumpkin_skelly"));
-        }
+        this.placeLevelSpawner(level, cposx, cposy + 1, cposz, "chaospersists", "rat");
+        this.placeLevelSpawner(level, cposx, cposy + 2, cposz, "chaospersists", "ghost");
+        this.placeLevelSpawner(level, cposx, cposy + 3, cposz, "chaospersists", "ghost_pumpkin_skelly");
     }
 
-    public void makeBouncyCastle(World world, int cposx, int cposy, int cposz) {
-        boolean deltax = false;
-        boolean deltaz = false;
-        Block bid = Blocks.AIR;
+    public void makeBouncyCastle(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.block.Block lavafoamBlock =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyLavafoamBlock;
         int meta = 0;
-        boolean dirx = false;
-        boolean dirz = false;
-        int stuffdir = 0;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.BouncyContentsList;
         int length = 4;
         int width = 4;
         int height = 5;
-        deltax = true;
-        stuffdir = 2;
-        int x = cposx;
-        int z = cposz;
-        int y = cposy;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
         for (int i = - width; i <= width; ++i) {
             for (int j = - length; j <= length; ++j) {
                 for (int k = 0; k < height; ++k) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     meta = 0;
                     if (k == height - 1 || k == 0) {
-                        bid = ChaosPersists.MyLavafoamBlock;
+                        bid = lavafoamBlock;
                     }
                     if (i == - width || i == width) {
-                        bid = ChaosPersists.MyLavafoamBlock;
+                        bid = lavafoamBlock;
                     }
                     if (j == - length || j == length) {
-                        bid = ChaosPersists.MyLavafoamBlock;
+                        bid = lavafoamBlock;
                     }
                     if (!(i != - width && i != width || j != - length && j != length)) {
-                        bid = Blocks.STAINED_HARDENED_CLAY;
+                        bid = net.minecraft.world.level.block.Blocks.TERRACOTTA;
                         meta = 14;
                     }
-                    if ((k == 1 || k == 2) && i == 0 && j == - length) {
+                    if ((k == 1 || k == 2) && i == 0 && j == -length) {
                         meta = 0;
-                        bid = Blocks.AIR;
+                        bid = net.minecraft.world.level.block.Blocks.AIR;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + k), (int)(cposz + j), (Block)bid, (int)meta, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + k, cposz + j, bid, meta, 2);
                 }
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 3, cposz + length - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 1, cposy + 3, cposz + length - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("minecraft", "silverfish"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 3, cposz + length - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 3, cposz + length - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rat"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 3, cposz + length - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 1, cposy + 3, cposz + length - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "scorpion"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 1, cposy + 3, cposz - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width - 1, cposy + 3, cposz - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("minecraft", "silverfish"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 1, cposy + 3, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width - 1, cposy + 3, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rat"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 1, cposy + 3, cposz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width - 1, cposy + 3, cposz + 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "scorpion"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - width + 1, cposy + 3, cposz - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - width + 1, cposy + 3, cposz - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("minecraft", "silverfish"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - width + 1, cposy + 3, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - width + 1, cposy + 3, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rat"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - width + 1, cposy + 3, cposz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - width + 1, cposy + 3, cposz + 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "scorpion"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 1, cposy + 3, cposz + length - 1), Blocks.CHEST.getStateFromMeta(2), 2);
-        chest = this.getChestTileEntity(world, cposx + width - 1, cposy + 3, cposz + length - 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(6 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx - 1, cposy + 3, cposz + length - 1, "minecraft", "silverfish");
+        this.placeLevelSpawner(level, cposx, cposy + 3, cposz + length - 1, "chaospersists", "rat");
+        this.placeLevelSpawner(level, cposx + 1, cposy + 3, cposz + length - 1, "chaospersists", "scorpion");
+        this.placeLevelSpawner(level, cposx + width - 1, cposy + 3, cposz - 1, "minecraft", "silverfish");
+        this.placeLevelSpawner(level, cposx + width - 1, cposy + 3, cposz, "chaospersists", "rat");
+        this.placeLevelSpawner(level, cposx + width - 1, cposy + 3, cposz + 1, "chaospersists", "scorpion");
+        this.placeLevelSpawner(level, cposx - width + 1, cposy + 3, cposz - 1, "minecraft", "silverfish");
+        this.placeLevelSpawner(level, cposx - width + 1, cposy + 3, cposz, "chaospersists", "rat");
+        this.placeLevelSpawner(level, cposx - width + 1, cposy + 3, cposz + 1, "chaospersists", "scorpion");
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx + width - 1,
+                cposy + 3,
+                cposz + length - 1,
+                2,
+                this.BouncyContentsList,
+                6 + rand.nextInt(5));
     }
 
-    public void makeEnderCastle(World world, int cposx, int cposy, int cposz) {
+    public void makeEnderCastle(Object worldObj, int cposx, int cposy, int cposz) {
         int j;
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        net.minecraft.world.level.block.Block enderKnightSpawn = (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyEnderKnightSpawnBlock;
+        net.minecraft.world.level.block.Block enderReaperSpawn = (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyEnderReaperSpawnBlock;
+        net.minecraft.world.level.block.Block endermanSpawn = (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyEndermanSpawnBlock;
+        net.minecraft.world.level.block.Block enderDragonSpawn = (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyEnderDragonSpawnBlock;
+        net.minecraft.world.level.block.Block eyeOfEnderBlock = (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyEyeOfEnderBlock;
+        net.minecraft.world.level.block.Block enderPearlBlock = (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyEnderPearlBlock;
         int k;
         int m;
         int i;
         int width = 22;
         int height = 12;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        chestContents = this.EnderCastleContentsList;
-        Block bid = Blocks.OBSIDIAN;
+        WeightedRandomChestContent[] chestContents = this.EnderCastleContentsList;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = -3; i <= width + 3; ++i) {
             for (k = -3; k <= width + 3; ++k) {
                 for (j = 0; j <= 1; ++j) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     if (j == 0) {
-                        bid = Blocks.OBSIDIAN;
+                        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                     }
                     if (j == 1 && (i == -3 || i == width + 3 || k == width + 3 | k == -3)) {
-                        bid = Blocks.IRON_BARS;
+                        bid = net.minecraft.world.level.block.Blocks.IRON_BARS;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
         for (i = 0; i <= width; ++i) {
             for (k = 0; k <= width; ++k) {
                 for (j = 1; j <= height; ++j) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || i == width || k == width | k == 0) {
-                        bid = Blocks.BEDROCK;
+                        bid = net.minecraft.world.level.block.Blocks.BEDROCK;
                     }
-                    if (j == height && bid == Blocks.BEDROCK && (i + k & 1) == 0) {
-                        bid = Blocks.AIR;
+                    if (j == height && bid == net.minecraft.world.level.block.Blocks.BEDROCK && (i + k & 1) == 0) {
+                        bid = net.minecraft.world.level.block.Blocks.AIR;
                     }
-                    if (j == height - 2 && bid == Blocks.BEDROCK && (i + k & 1) == 0) {
-                        int which = world.rand.nextInt(4);
+                    if (j == height - 2 && bid == net.minecraft.world.level.block.Blocks.BEDROCK && (i + k & 1) == 0) {
+                        int which = rand.nextInt(4);
                         if (which == 0) {
-                            bid = ChaosPersists.MyEnderKnightSpawnBlock;
+                            bid = enderKnightSpawn;
                         }
                         if (which == 1) {
-                            bid = ChaosPersists.MyEnderReaperSpawnBlock;
+                            bid = enderReaperSpawn;
                         }
                         if (which == 2) {
-                            bid = ChaosPersists.MyEndermanSpawnBlock;
+                            bid = endermanSpawn;
                         }
                         if (which == 3) {
-                            bid = ChaosPersists.MyEnderDragonSpawnBlock;
+                            bid = enderDragonSpawn;
                         }
                     }
-                    if (j == 7 && bid == Blocks.BEDROCK && (i + k & 1) != 0) {
-                        bid = ChaosPersists.MyEyeOfEnderBlock;
+                    if (j == 7 && bid == net.minecraft.world.level.block.Blocks.BEDROCK && (i + k & 1) != 0) {
+                        bid = eyeOfEnderBlock;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
         for (i = -1; i <= width + 1; ++i) {
             for (k = -1; k <= width + 1; ++k) {
                 for (j = 1; j <= height - 1; ++j) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     if (j == 6 || j > 8) {
                         if (i == -1 || i == width + 1 || k == width + 1 | k == -1) {
-                            bid = Blocks.BEDROCK;
+                            bid = net.minecraft.world.level.block.Blocks.BEDROCK;
                         }
-                        if (j == 6 && bid != Blocks.AIR && world.rand.nextInt(2) == 1) {
-                            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j - 1), (int)(cposz + k), (Block)ChaosPersists.MyEnderPearlBlock, (int)0, (int)2);
-                            if (world.rand.nextInt(3) == 1) {
-                                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j - 2), (int)(cposz + k), (Block)ChaosPersists.MyEnderPearlBlock, (int)0, (int)2);
+                        if (j == 6 && bid != net.minecraft.world.level.block.Blocks.AIR && rand.nextInt(2) == 1) {
+                            ChaosPersists.setBlockFast(level, cposx + i, cposy + j - 1, cposz + k, enderPearlBlock, 0, 2);
+                            if (rand.nextInt(3) == 1) {
+                                ChaosPersists.setBlockFast(level, cposx + i, cposy + j - 2, cposz + k, enderPearlBlock, 0, 2);
                             }
                         }
                     }
                     if (j == 7) {
                         if (i == -1 || i == width + 1 || k == width + 1 | k == -1) {
-                            bid = Blocks.BEDROCK;
+                            bid = net.minecraft.world.level.block.Blocks.BEDROCK;
                         }
-                        if (bid == Blocks.BEDROCK && (i + k & 1) == 0) {
-                            bid = Blocks.AIR;
+                        if (bid == net.minecraft.world.level.block.Blocks.BEDROCK && (i + k & 1) == 0) {
+                            bid = net.minecraft.world.level.block.Blocks.AIR;
                         }
                     }
                     if (bid == Blocks.AIR) continue;
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
-        this.makeAColumn(world, cposx - 2, cposy, cposz - 2, height + 1, 0);
-        this.makeAColumn(world, cposx + width - 2, cposy, cposz - 2, height + 1, 1);
-        this.makeAColumn(world, cposx - 2, cposy, cposz + width - 2, height + 1, 2);
-        this.makeAColumn(world, cposx + width - 2, cposy, cposz + width - 2, height + 1, 3);
+        this.makeAColumn(level, cposx - 2, cposy, cposz - 2, height + 1, 0);
+        this.makeAColumn(level, cposx + width - 2, cposy, cposz - 2, height + 1, 1);
+        this.makeAColumn(level, cposx - 2, cposy, cposz + width - 2, height + 1, 2);
+        this.makeAColumn(level, cposx + width - 2, cposy, cposz + width - 2, height + 1, 3);
         j = 8;
         for (i = 1; i <= width - 1; ++i) {
             for (k = 1; k <= width - 1; ++k) {
-                bid = Blocks.OBSIDIAN;
+                bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                 if (i == width / 2 || k == width / 2 || i == k || i == width - k) {
-                    bid = Blocks.BEDROCK;
+                    bid = net.minecraft.world.level.block.Blocks.BEDROCK;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         j = 9;
         for (i = -2; i <= 2; ++i) {
             for (k = -2; k <= 2; ++k) {
-                bid = Blocks.LAVA;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i + width / 2), (int)(cposy + j), (int)(cposz + k + width / 2), (Block)bid, (int)0, (int)2);
+                bid = net.minecraft.world.level.block.Blocks.LAVA;
+                ChaosPersists.setBlockFast(level, cposx + i + width / 2, cposy + j, cposz + k + width / 2, bid, 0, 2);
             }
         }
         for (m = -1; m <= 1; ++m) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + m), (int)(cposy + j), (int)(cposz + width / 2 + 3), (Block)Blocks.BEDROCK, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + m), (int)(cposy + j), (int)(cposz + width / 2 - 3), (Block)Blocks.BEDROCK, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + 3), (int)(cposy + j), (int)(cposz + width / 2 + m), (Block)Blocks.BEDROCK, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 3), (int)(cposy + j), (int)(cposz + width / 2 + m), (Block)Blocks.BEDROCK, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx + width / 2 + m, cposy + j, cposz + width / 2 + 3, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+            ChaosPersists.setBlockFast(level, cposx + width / 2 + m, cposy + j, cposz + width / 2 - 3, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+            ChaosPersists.setBlockFast(level, cposx + width / 2 + 3, cposy + j, cposz + width / 2 + m, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+            ChaosPersists.setBlockFast(level, cposx + width / 2 - 3, cposy + j, cposz + width / 2 + m, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
         }
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 2), (int)(cposy + j), (int)(cposz + width / 2 - 2), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + 2), (int)(cposy + j), (int)(cposz + width / 2 + 2), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 2), (int)(cposy + j), (int)(cposz + width / 2 + 2), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + 2), (int)(cposy + j), (int)(cposz + width / 2 - 2), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + j), (int)(cposz + width / 2), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + j + 1, cposz + width / 2), Blocks.ENDER_CHEST.getStateFromMeta(2), 2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + j + 2), (int)(cposz + width / 2), (Block)Blocks.OBSIDIAN, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + j + 3), (int)(cposz + width / 2), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 1), (int)(cposy + j + 3), (int)(cposz + width / 2), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + 1), (int)(cposy + j + 3), (int)(cposz + width / 2), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + j + 3), (int)(cposz + width / 2 - 1), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + j + 3), (int)(cposz + width / 2 + 1), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 1), (int)(cposy + j + 4), (int)(cposz + width / 2), (Block)Blocks.TORCH, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + 1), (int)(cposy + j + 4), (int)(cposz + width / 2), (Block)Blocks.TORCH, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + j + 4), (int)(cposz + width / 2 - 1), (Block)Blocks.TORCH, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + j + 4), (int)(cposz + width / 2 + 1), (Block)Blocks.TORCH, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + j + 4), (int)(cposz + width / 2), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + j + 5), (int)(cposz + width / 2), (Block)Blocks.BEDROCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + j + 6), (int)(cposz + width / 2), (Block)Blocks.DRAGON_EGG, (int)0, (int)2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + 5, cposy + j, cposz + width / 2 + 5), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 + 5, cposy + j, cposz + width / 2 + 5);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + 5, cposy + j + 1, cposz + width / 2 + 5), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 + 5, cposy + j + 1, cposz + width / 2 + 5);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_knight"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 - 5, cposy + j, cposz + width / 2 + 5), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 - 5, cposy + j, cposz + width / 2 + 5);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 - 5, cposy + j + 1, cposz + width / 2 + 5), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 - 5, cposy + j + 1, cposz + width / 2 + 5);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_knight"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + 5, cposy + j, cposz + width / 2 - 5), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 + 5, cposy + j, cposz + width / 2 - 5);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + 5, cposy + j + 1, cposz + width / 2 - 5), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 + 5, cposy + j + 1, cposz + width / 2 - 5);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_knight"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 - 5, cposy + j, cposz + width / 2 - 5), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 - 5, cposy + j, cposz + width / 2 - 5);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 - 5, cposy + j + 1, cposz + width / 2 - 5), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 - 5, cposy + j + 1, cposz + width / 2 - 5);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_knight"));
-        }
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 2, cposy + j, cposz + width / 2 - 2, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 + 2, cposy + j, cposz + width / 2 + 2, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 2, cposy + j, cposz + width / 2 + 2, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 + 2, cposy + j, cposz + width / 2 - 2, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + j, cposz + width / 2, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + width / 2, cposy + j + 1, cposz + width / 2),
+                net.minecraft.world.level.block.Blocks.ENDER_CHEST
+                        .defaultBlockState()
+                        .setValue(
+                                net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING,
+                                chestFacingFromLegacyMeta(2)),
+                2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + j + 2, cposz + width / 2, net.minecraft.world.level.block.Blocks.OBSIDIAN, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + j + 3, cposz + width / 2, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 1, cposy + j + 3, cposz + width / 2, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 + 1, cposy + j + 3, cposz + width / 2, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + j + 3, cposz + width / 2 - 1, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + j + 3, cposz + width / 2 + 1, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 1, cposy + j + 4, cposz + width / 2, net.minecraft.world.level.block.Blocks.TORCH, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 + 1, cposy + j + 4, cposz + width / 2, net.minecraft.world.level.block.Blocks.TORCH, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + j + 4, cposz + width / 2 - 1, net.minecraft.world.level.block.Blocks.TORCH, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + j + 4, cposz + width / 2 + 1, net.minecraft.world.level.block.Blocks.TORCH, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + j + 4, cposz + width / 2, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + j + 5, cposz + width / 2, net.minecraft.world.level.block.Blocks.BEDROCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + j + 6, cposz + width / 2, net.minecraft.world.level.block.Blocks.DRAGON_EGG, 0, 2);
+        this.placeLevelSpawner(level, cposx + width / 2 + 5, cposy + j, cposz + width / 2 + 5, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + width / 2 + 5, cposy + j + 1, cposz + width / 2 + 5, "chaospersists", "ender_knight");
+        this.placeLevelSpawner(level, cposx + width / 2 - 5, cposy + j, cposz + width / 2 + 5, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + width / 2 - 5, cposy + j + 1, cposz + width / 2 + 5, "chaospersists", "ender_knight");
+        this.placeLevelSpawner(level, cposx + width / 2 + 5, cposy + j, cposz + width / 2 - 5, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + width / 2 + 5, cposy + j + 1, cposz + width / 2 - 5, "chaospersists", "ender_knight");
+        this.placeLevelSpawner(level, cposx + width / 2 - 5, cposy + j, cposz + width / 2 - 5, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + width / 2 - 5, cposy + j + 1, cposz + width / 2 - 5, "chaospersists", "ender_knight");
         j = 4;
         for (i = 1; i <= width - 1; ++i) {
             for (k = 1; k <= width - 1; ++k) {
-                bid = Blocks.AIR;
+                bid = net.minecraft.world.level.block.Blocks.AIR;
                 if (i <= 5 || k <= 5 || i >= width - 5 || k >= width - 5) {
-                    bid = Blocks.BEDROCK;
+                    bid = net.minecraft.world.level.block.Blocks.BEDROCK;
                 }
-                if (bid != Blocks.AIR) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                if (bid != net.minecraft.world.level.block.Blocks.AIR) {
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
                 if (i == 5 && k >= 5 && k <= width - 5) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 2), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 3), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 2, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 3, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
                 }
                 if (i == width - 5 && k >= 5 && k <= width - 5) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 2), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 3), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 2, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 3, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
                 }
                 if (k == 5 && i >= 5 && i <= width - 5) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 2), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 3), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 2, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 3, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
                 }
                 if (k != width - 5 || i < 5 || i > width - 5) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 2), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 3), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 2, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 3, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
             }
         }
-        bid = Blocks.BEDROCK;
+        bid = net.minecraft.world.level.block.Blocks.BEDROCK;
         j = 3;
         k = width / 2;
         i = width - 6;
         for (m = -1; m <= 1; ++m) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k + m), (Block)bid, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k + m, bid, 0, 2);
         }
         j = 2;
         k = width / 2;
         i = width - 7;
         for (m = -1; m <= 1; ++m) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k + m), (Block)bid, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k + m, bid, 0, 2);
         }
         j = 1;
         k = width / 2;
         i = width - 8;
         for (m = -1; m <= 1; ++m) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k + m), (Block)bid, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k + m, bid, 0, 2);
         }
         j = 4;
         i = width - 5;
         for (m = -1; m <= 1; ++m) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k + m), (Block)Blocks.AIR, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 2), (int)(cposz + k + m), (Block)Blocks.AIR, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 3), (int)(cposz + k + m), (Block)Blocks.AIR, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k + m, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 2, cposz + k + m, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 3, cposz + k + m, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
         }
         j = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + j, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + j, cposz + width / 2);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_reaper"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + j + 1, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + j + 1, cposz + width / 2);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ender_knight"));
-        }
+        this.placeLevelSpawner(level, cposx + width / 2, cposy + j, cposz + width / 2, "chaospersists", "ender_reaper");
+        this.placeLevelSpawner(level, cposx + width / 2, cposy + j + 1, cposz + width / 2, "chaospersists", "ender_knight");
         j = 5;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + j, cposz + width / 2 - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 1, cposy + j, cposz + width / 2 - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cavefisher"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + j, cposz + width / 2 + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 1, cposy + j, cposz + width / 2 + 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cavefisher"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + j, cposz + width / 2), Blocks.CHEST.getStateFromMeta(2), 2);
-        chest = this.getChestTileEntity(world, cposx + 1, cposy + j, cposz + width / 2);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(6 + world.rand.nextInt(5)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 - 1, cposy + j, cposz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 - 1, cposy + j, cposz + 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cavefisher"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + 1, cposy + j, cposz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 + 1, cposy + j, cposz + 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cavefisher"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + j, cposz + 1), Blocks.CHEST.getStateFromMeta(3), 2);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + j, cposz + 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(6 + world.rand.nextInt(5)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 - 1, cposy + j, cposz + width - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 - 1, cposy + j, cposz + width - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cavefisher"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + 1, cposy + j, cposz + width - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 + 1, cposy + j, cposz + width - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cavefisher"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + j, cposz + width - 1), Blocks.CHEST.getStateFromMeta(4), 2);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + j, cposz + width - 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(6 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx + 1, cposy + j, cposz + width / 2 - 1, "chaospersists", "cavefisher");
+        this.placeLevelSpawner(level, cposx + 1, cposy + j, cposz + width / 2 + 1, "chaospersists", "cavefisher");
+        this.fillLevelChestAt(level, rand, cposx + 1, cposy + j, cposz + width / 2, 2, chestContents, 6 + rand.nextInt(5));
+        this.placeLevelSpawner(level, cposx + width / 2 - 1, cposy + j, cposz + 1, "chaospersists", "cavefisher");
+        this.placeLevelSpawner(level, cposx + width / 2 + 1, cposy + j, cposz + 1, "chaospersists", "cavefisher");
+        this.fillLevelChestAt(level, rand, cposx + width / 2, cposy + j, cposz + 1, 3, chestContents, 6 + rand.nextInt(5));
+        this.placeLevelSpawner(level, cposx + width / 2 - 1, cposy + j, cposz + width - 1, "chaospersists", "cavefisher");
+        this.placeLevelSpawner(level, cposx + width / 2 + 1, cposy + j, cposz + width - 1, "chaospersists", "cavefisher");
+        this.fillLevelChestAt(level, rand, cposx + width / 2, cposy + j, cposz + width - 1, 4, chestContents, 6 + rand.nextInt(5));
     }
 
-    private void makeAColumn(World world, int cposx, int cposy, int cposz, int height, int dir) {
-        Block bid;
+    private void makeAColumn(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz, int height, int dir) {
+        net.minecraft.world.level.block.Block bid;
         int k;
         int i;
         int j;
@@ -3583,58 +3433,58 @@ public class GenericDungeon {
         for (i = -2; i <= width + 2; ++i) {
             for (k = -2; k <= width + 2; ++k) {
                 j = height + 2;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.OBSIDIAN, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.OBSIDIAN, 0, 2);
             }
         }
         for (i = -2; i <= width + 2; ++i) {
             for (k = -2; k <= width + 2; ++k) {
-                bid = Blocks.AIR;
+                bid = net.minecraft.world.level.block.Blocks.AIR;
                 if (i == -2 || i == width + 2 || k == width + 2 | k == -2) {
-                    bid = Blocks.OBSIDIAN;
+                    bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                 }
                 j = height + 3;
-                if (bid != Blocks.AIR && (i + k & 1) == 0) {
-                    bid = Blocks.AIR;
+                if (bid != net.minecraft.world.level.block.Blocks.AIR && (i + k & 1) == 0) {
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         for (i = 0; i <= width; ++i) {
             for (k = 0; k <= width; ++k) {
                 for (j = 1; j <= height + 2; ++j) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || i == width || k == width | k == 0) {
-                        bid = Blocks.OBSIDIAN;
+                        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                     }
-                    if (!(j % 3 != 0 && j % 3 != 1 || j == height + 2 || bid != Blocks.OBSIDIAN || i != halfwidth && k != halfwidth)) {
-                        bid = Blocks.IRON_BARS;
+                    if (!(j % 3 != 0 && j % 3 != 1 || j == height + 2 || bid != net.minecraft.world.level.block.Blocks.OBSIDIAN || i != halfwidth && k != halfwidth)) {
+                        bid = net.minecraft.world.level.block.Blocks.IRON_BARS;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
         if (dir == 0) {
             for (j = 1; j <= 2; ++j) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width), (int)(cposy + j), (int)(cposz + width), (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width - 1), (int)(cposy + j), (int)(cposz + width), (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width), (int)(cposy + j), (int)(cposz + width - 1), (Block)Blocks.AIR, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + width, cposy + j, cposz + width, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + width - 1, cposy + j, cposz + width, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + width, cposy + j, cposz + width - 1, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
             }
             for (j = 9; j <= 10; ++j) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width), (int)(cposy + j), (int)(cposz + width), (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width - 1), (int)(cposy + j), (int)(cposz + width), (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width), (int)(cposy + j), (int)(cposz + width - 1), (Block)Blocks.AIR, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + width, cposy + j, cposz + width, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + width - 1, cposy + j, cposz + width, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + width, cposy + j, cposz + width - 1, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
             }
         }
         if (dir == 1) {
             for (j = 1; j <= 2; ++j) {
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + j), (int)(cposz + width), (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + j), (int)(cposz + width), (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + j), (int)(cposz + width - 1), (Block)Blocks.AIR, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx, cposy + j, cposz + width, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + 1, cposy + j, cposz + width, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx, cposy + j, cposz + width - 1, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
             }
             for (j = 9; j <= 10; ++j) {
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + j), (int)(cposz + width), (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + j), (int)(cposz + width), (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + j), (int)(cposz + width - 1), (Block)Blocks.AIR, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx, cposy + j, cposz + width, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + 1, cposy + j, cposz + width, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx, cposy + j, cposz + width - 1, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
             }
             if (++step > 3) {
                 step = 0;
@@ -3642,14 +3492,14 @@ public class GenericDungeon {
         }
         if (dir == 2) {
             for (j = 1; j <= 2; ++j) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width), (int)(cposy + j), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width - 1), (int)(cposy + j), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width), (int)(cposy + j), (int)(cposz + 1), (Block)Blocks.AIR, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + width, cposy + j, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + width - 1, cposy + j, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + width, cposy + j, cposz + 1, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
             }
             for (j = 9; j <= 10; ++j) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width), (int)(cposy + j), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width - 1), (int)(cposy + j), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width), (int)(cposy + j), (int)(cposz + 1), (Block)Blocks.AIR, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + width, cposy + j, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + width - 1, cposy + j, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + width, cposy + j, cposz + 1, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
             }
             if (++step > 3) {
                 step = 0;
@@ -3660,14 +3510,14 @@ public class GenericDungeon {
         }
         if (dir == 3) {
             for (j = 1; j <= 2; ++j) {
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + j), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + j), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + j), (int)(cposz + 1), (Block)Blocks.AIR, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx, cposy + j, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + 1, cposy + j, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx, cposy + j, cposz + 1, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
             }
             for (j = 9; j <= 10; ++j) {
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + j), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + j), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + j), (int)(cposz + 1), (Block)Blocks.AIR, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx, cposy + j, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx + 1, cposy + j, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+                ChaosPersists.setBlockFast(level, cposx, cposy + j, cposz + 1, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
             }
             if (++step > 3) {
                 step = 0;
@@ -3676,7 +3526,7 @@ public class GenericDungeon {
                 step = 0;
             }
         }
-        bid = Blocks.NETHER_BRICK;
+        bid = net.minecraft.world.level.block.Blocks.NETHER_BRICKS;
         k = 0;
         for (j = 1; j <= height + 2; ++j) {
             if (step == 0) {
@@ -3698,50 +3548,46 @@ public class GenericDungeon {
             if (++step > 3) {
                 step = 0;
             }
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
         }
     }
 
-    public void makeDamselInDistress(World world, int cposx, int cposy, int cposz) {
+    public void makeDamselInDistress(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int i;
         int j;
         int k;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         int meta = 0;
-        int stuffdir = 0;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.DamselContentsList;
         int length = 4;
         int width = 4;
         int height = 5;
-        stuffdir = 2;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
         for (i = - width; i <= width; ++i) {
             for (j = - length; j <= length; ++j) {
                 for (k = 0; k < height; ++k) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     meta = 0;
                     if (k == 0) {
-                        bid = Blocks.COBBLESTONE;
+                        bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                     }
                     if (i == - width || i == width) {
-                        bid = Blocks.COBBLESTONE;
+                        bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                     }
                     if (j == - length || j == length) {
-                        bid = Blocks.COBBLESTONE;
+                        bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                     }
-                    if (bid == Blocks.COBBLESTONE && world.rand.nextInt(8) == 1) {
-                        bid = Blocks.MOSSY_COBBLESTONE;
+                    if (bid == net.minecraft.world.level.block.Blocks.COBBLESTONE && rand.nextInt(8) == 1) {
+                        bid = net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE;
                     }
                     if (!(k != 1 && k != 2 && k != 3 || i != 0 && i != -1 && i != 1 || j != - length)) {
                         meta = 0;
-                        bid = Blocks.AIR;
+                        bid = net.minecraft.world.level.block.Blocks.AIR;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + k), (int)(cposz + j), (Block)bid, (int)meta, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + k, cposz + j, bid, meta, 2);
                 }
             }
         }
@@ -3749,114 +3595,103 @@ public class GenericDungeon {
         for (i = - width + 1; i <= width - 1; ++i) {
             for (j = - length; j <= length - 1; ++j) {
                 k = height;
-                bid = Blocks.COBBLESTONE;
-                if (world.rand.nextInt(8) == 1) {
-                    bid = Blocks.MOSSY_COBBLESTONE;
+                bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
+                if (rand.nextInt(8) == 1) {
+                    bid = net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + k), (int)(cposz + j), (Block)bid, (int)meta, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + k, cposz + j, bid, meta, 2);
             }
         }
         for (i = - width + 2; i <= width - 2; ++i) {
             for (j = - length; j <= length - 2; ++j) {
                 k = height + 1;
-                bid = Blocks.COBBLESTONE;
-                if (world.rand.nextInt(8) == 1) {
-                    bid = Blocks.MOSSY_COBBLESTONE;
+                bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
+                if (rand.nextInt(8) == 1) {
+                    bid = net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + k), (int)(cposz + j), (Block)bid, (int)meta, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + k, cposz + j, bid, meta, 2);
             }
         }
         k = height;
         j = - length;
         for (int m = width; m >= 0; --m) {
             for (i = m; i >= 0; --i) {
-                bid = Blocks.COBBLESTONE;
-                if (world.rand.nextInt(8) == 1) {
-                    bid = Blocks.MOSSY_COBBLESTONE;
+                bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
+                if (rand.nextInt(8) == 1) {
+                    bid = net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + k), (int)(cposz + j), (Block)bid, (int)meta, (int)2);
-                bid = Blocks.COBBLESTONE;
-                if (world.rand.nextInt(8) == 1) {
-                    bid = Blocks.MOSSY_COBBLESTONE;
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + k, cposz + j, bid, meta, 2);
+                bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
+                if (rand.nextInt(8) == 1) {
+                    bid = net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx - i), (int)(cposy + k), (int)(cposz + j), (Block)bid, (int)meta, (int)2);
+                ChaosPersists.setBlockFast(level, cposx - i, cposy + k, cposz + j, bid, meta, 2);
             }
             ++k;
         }
         for (i = - width + 1; i < width; ++i) {
             for (j = 1; j < height; ++j) {
                 k = length - 3;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx - i), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.IRON_BARS, (int)0, (int)2);
+                ChaosPersists.setBlockFast(
+                        level, cposx - i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.IRON_BARS, 0, 2);
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - width + 1, cposy + 1, cposz - length + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - width + 1, cposy + 1, cposz - length + 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "scorpion"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 1, cposy + 1, cposz - length + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width - 1, cposy + 1, cposz - length + 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "scorpion"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 1, cposy + 1, cposz + length - 1), Blocks.CHEST.getStateFromMeta(2), 2);
-        chest = this.getChestTileEntity(world, cposx + width - 1, cposy + 1, cposz + length - 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(10 + world.rand.nextInt(5)));
-        }
-        Entity var8 = null;
-        var8 = EntityList.createEntityByIDFromName(new net.minecraft.util.ResourceLocation("chaospersists", "girlfriend"), world);
-        if (var8 != null) {
-            var8.setLocationAndAngles((double)(cposx - width + 2), (double)(cposy + 1), (double)(cposz + length - 1), world.rand.nextFloat() * 360.0f, 0.0f);
-            world.spawnEntity(var8);
-        }
+        this.placeLevelSpawner(level, cposx - width + 1, cposy + 1, cposz - length + 1, "chaospersists", "scorpion");
+        this.placeLevelSpawner(level, cposx + width - 1, cposy + 1, cposz - length + 1, "chaospersists", "scorpion");
+        this.fillLevelChestAt(
+                level, rand, cposx + width - 1, cposy + 1, cposz + length - 1, 2, this.DamselContentsList, 10 + rand.nextInt(5));
+        com.astryxion.chaospersists.entity.Dragon.spawnCreature(
+                level, "girlfriend", cposx - width + 2, cposy + 1, cposz + length - 1);
     }
 
-    public void makeIncaPyramid(World world, int cposx, int cposy, int cposz) {
+    public void makeIncaPyramid(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int i;
         int m;
         int k;
         int j;
         int p;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.block.Block air = net.minecraft.world.level.block.Blocks.AIR;
         int meta = 0;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        Object chest = null;
-        Object chestContents = null;
         int width = 21;
         int depth = 11;
         int height = 9;
         int basewidth = 41;
         int basedepth = 31;
         int baseheight = 10;
-        if (world.isRemote) {
+        net.minecraft.world.level.block.Block creeperRepellent =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CreeperRepellent;
+        if (level.isClientSide()) {
             return;
         }
         for (j = 0; j < baseheight; ++j) {
             for (i = 0; i < basewidth - j * 2; ++i) {
                 for (k = 0; k < basedepth - j * 2; ++k) {
                     meta = 0;
-                    bid = Blocks.AIR;
+                    bid = air;
                     if (i == 0 || k == 0 || i == basewidth - j * 2 - 1 || k == basedepth - j * 2 - 1) {
-                        bid = Blocks.STONE;
-                        if (world.rand.nextInt(2) == 0) {
-                            bid = Blocks.COBBLESTONE;
+                        bid = net.minecraft.world.level.block.Blocks.STONE;
+                        if (rand.nextInt(2) == 0) {
+                            bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                         }
-                        if (world.rand.nextInt(4) == 0) {
-                            bid = Blocks.MOSSY_COBBLESTONE;
+                        if (rand.nextInt(4) == 0) {
+                            bid = net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE;
                         }
                     }
                     if (j == 0) {
-                        bid = Blocks.STONEBRICK;
+                        bid = net.minecraft.world.level.block.Blocks.STONE_BRICKS;
                     }
                     if (k == 1 && j % 3 == 2 && i != 0 && i != basewidth - j * 2 - 1) {
-                        bid = Blocks.TORCH;
+                        bid = net.minecraft.world.level.block.Blocks.TORCH;
                         meta = 3;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i + j), (int)(cposy + j), (int)(cposz + k + j), (Block)bid, (int)meta, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i + j, cposy + j, cposz + k + j, bid, meta, 2);
                     if (k != basedepth - j * 2 - 1 || j % 3 != 2 || i == 0 || i == basewidth - j * 2 - 1) continue;
                     meta = 4;
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i + j), (int)(cposy + j), (int)(cposz + k + j - 1), (Block)Blocks.TORCH, (int)meta, (int)2);
+                    ChaosPersists.setBlockFast(
+                            level, cposx + i + j, cposy + j, cposz + k + j - 1, net.minecraft.world.level.block.Blocks.TORCH, meta, 2);
                 }
             }
         }
@@ -3868,18 +3703,34 @@ public class GenericDungeon {
                 k += p;
                 j = m / 2;
                 if (p < -1 || p > 1) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock();
-                    if (bid == Blocks.AIR) {
-                        ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.STONEBRICK, (int)meta, (int)2);
+                    bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock();
+                    if (bid == air) {
+                        ChaosPersists.setBlockFast(
+                                level, cposx + i, cposy + j + 1, cposz + k, net.minecraft.world.level.block.Blocks.STONE_BRICKS, meta, 2);
                         if (m == 0 || m == baseheight * 2 - 2) {
-                            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 2), (int)(cposz + k), (Block)Blocks.TORCH, (int)meta, (int)2);
+                            ChaosPersists.setBlockFast(
+                                    level, cposx + i, cposy + j + 2, cposz + k, net.minecraft.world.level.block.Blocks.TORCH, meta, 2);
                         }
                     }
-                } else if (m % 2 == 1 && (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock()) == Blocks.AIR) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.STONE_SLAB, (int)meta, (int)2);
+                } else if (m % 2 == 1
+                        && (bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j + 1, cposz + k))
+                                        .getBlock())
+                                == air) {
+                    ChaosPersists.setBlockFast(
+                            level,
+                            cposx + i,
+                            cposy + j + 1,
+                            cposz + k,
+                            net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB,
+                            meta,
+                            2);
                 }
-                while (j >= 0 && (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k)).getBlock()) == Blocks.AIR) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.STONE, (int)meta, (int)2);
+                while (j >= 0
+                        && (bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j, cposz + k))
+                                        .getBlock())
+                                == air) {
+                    ChaosPersists.setBlockFast(
+                            level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.STONE, meta, 2);
                     --j;
                 }
             }
@@ -3892,18 +3743,34 @@ public class GenericDungeon {
                 k += p;
                 j = m / 2;
                 if (p < -1 || p > 1) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock();
-                    if (bid == Blocks.AIR) {
-                        ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.STONEBRICK, (int)meta, (int)2);
+                    bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock();
+                    if (bid == air) {
+                        ChaosPersists.setBlockFast(
+                                level, cposx + i, cposy + j + 1, cposz + k, net.minecraft.world.level.block.Blocks.STONE_BRICKS, meta, 2);
                         if (m == 0 || m == baseheight * 2 - 2) {
-                            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 2), (int)(cposz + k), (Block)Blocks.TORCH, (int)meta, (int)2);
+                            ChaosPersists.setBlockFast(
+                                    level, cposx + i, cposy + j + 2, cposz + k, net.minecraft.world.level.block.Blocks.TORCH, meta, 2);
                         }
                     }
-                } else if (m % 2 == 1 && (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock()) == Blocks.AIR) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.STONE_SLAB, (int)meta, (int)2);
+                } else if (m % 2 == 1
+                        && (bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j + 1, cposz + k))
+                                        .getBlock())
+                                == air) {
+                    ChaosPersists.setBlockFast(
+                            level,
+                            cposx + i,
+                            cposy + j + 1,
+                            cposz + k,
+                            net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB,
+                            meta,
+                            2);
                 }
-                while (j >= 0 && (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k)).getBlock()) == Blocks.AIR) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.STONE, (int)meta, (int)2);
+                while (j >= 0
+                        && (bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j, cposz + k))
+                                        .getBlock())
+                                == air) {
+                    ChaosPersists.setBlockFast(
+                            level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.STONE, meta, 2);
                     --j;
                 }
             }
@@ -3916,18 +3783,34 @@ public class GenericDungeon {
                 i += p;
                 j = m / 2;
                 if (p < -1 || p > 1) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock();
-                    if (bid == Blocks.AIR) {
-                        ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.STONEBRICK, (int)meta, (int)2);
+                    bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock();
+                    if (bid == air) {
+                        ChaosPersists.setBlockFast(
+                                level, cposx + i, cposy + j + 1, cposz + k, net.minecraft.world.level.block.Blocks.STONE_BRICKS, meta, 2);
                         if (m == 0 || m == baseheight * 2 - 2) {
-                            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 2), (int)(cposz + k), (Block)Blocks.TORCH, (int)meta, (int)2);
+                            ChaosPersists.setBlockFast(
+                                    level, cposx + i, cposy + j + 2, cposz + k, net.minecraft.world.level.block.Blocks.TORCH, meta, 2);
                         }
                     }
-                } else if (m % 2 == 1 && (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock()) == Blocks.AIR) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.STONE_SLAB, (int)meta, (int)2);
+                } else if (m % 2 == 1
+                        && (bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j + 1, cposz + k))
+                                        .getBlock())
+                                == air) {
+                    ChaosPersists.setBlockFast(
+                            level,
+                            cposx + i,
+                            cposy + j + 1,
+                            cposz + k,
+                            net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB,
+                            meta,
+                            2);
                 }
-                while (j >= 0 && (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k)).getBlock()) == Blocks.AIR) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.STONE, (int)meta, (int)2);
+                while (j >= 0
+                        && (bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j, cposz + k))
+                                        .getBlock())
+                                == air) {
+                    ChaosPersists.setBlockFast(
+                            level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.STONE, meta, 2);
                     --j;
                 }
             }
@@ -3940,18 +3823,34 @@ public class GenericDungeon {
                 i += p;
                 j = m / 2;
                 if (p < -1 || p > 1) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock();
-                    if (bid == Blocks.AIR) {
-                        ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.STONEBRICK, (int)meta, (int)2);
+                    bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock();
+                    if (bid == air) {
+                        ChaosPersists.setBlockFast(
+                                level, cposx + i, cposy + j + 1, cposz + k, net.minecraft.world.level.block.Blocks.STONE_BRICKS, meta, 2);
                         if (m == 0 || m == baseheight * 2 - 2) {
-                            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 2), (int)(cposz + k), (Block)Blocks.TORCH, (int)meta, (int)2);
+                            ChaosPersists.setBlockFast(
+                                    level, cposx + i, cposy + j + 2, cposz + k, net.minecraft.world.level.block.Blocks.TORCH, meta, 2);
                         }
                     }
-                } else if (m % 2 == 1 && (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 1, cposz + k)).getBlock()) == Blocks.AIR) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)Blocks.STONE_SLAB, (int)meta, (int)2);
+                } else if (m % 2 == 1
+                        && (bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j + 1, cposz + k))
+                                        .getBlock())
+                                == air) {
+                    ChaosPersists.setBlockFast(
+                            level,
+                            cposx + i,
+                            cposy + j + 1,
+                            cposz + k,
+                            net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB,
+                            meta,
+                            2);
                 }
-                while (j >= 0 && (bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k)).getBlock()) == Blocks.AIR) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.STONE, (int)meta, (int)2);
+                while (j >= 0
+                        && (bid = level.getBlockState(new net.minecraft.core.BlockPos(cposx + i, cposy + j, cposz + k))
+                                        .getBlock())
+                                == air) {
+                    ChaosPersists.setBlockFast(
+                            level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.STONE, meta, 2);
                     --j;
                 }
             }
@@ -3962,250 +3861,273 @@ public class GenericDungeon {
         for (j = 0; j < height; ++j) {
             for (i = 0; i < width; ++i) {
                 for (k = 0; k < depth; ++k) {
-                    bid = Blocks.AIR;
+                    bid = air;
                     meta = 0;
                     if (i == 0 || k == 0 || i == width - 1 || k == depth - 1) {
-                        bid = Blocks.STONE;
-                        if (world.rand.nextInt(2) == 0) {
-                            bid = Blocks.COBBLESTONE;
+                        bid = net.minecraft.world.level.block.Blocks.STONE;
+                        if (rand.nextInt(2) == 0) {
+                            bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                         }
-                        if (world.rand.nextInt(4) == 0) {
-                            bid = Blocks.MOSSY_COBBLESTONE;
+                        if (rand.nextInt(4) == 0) {
+                            bid = net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE;
                         }
                     }
                     if (j == 0 || j == height - 1) {
-                        bid = Blocks.STONEBRICK;
+                        bid = net.minecraft.world.level.block.Blocks.STONE_BRICKS;
                     }
                     if (j == 1 || j == 2 || j == 3) {
                         if ((k == 0 || k == depth - 1) && i >= width / 2 - 1 && i <= width / 2 + 1) {
-                            bid = j == 3 ? Blocks.OAK_FENCE : Blocks.AIR;
+                            bid = j == 3 ? net.minecraft.world.level.block.Blocks.OAK_FENCE : air;
                         }
                         if ((i == 0 || i == width - 1) && k >= depth / 2 - 1 && k <= depth / 2 + 1) {
-                            bid = j == 3 ? Blocks.OAK_FENCE : Blocks.AIR;
+                            bid = j == 3 ? net.minecraft.world.level.block.Blocks.OAK_FENCE : air;
                         }
                     }
                     if ((j == height - 3 || j == height - 2) && (i + k) % 2 == 1) {
                         if (j == height - 3) {
-                            if (bid != Blocks.AIR) {
-                                bid = Blocks.LIT_REDSTONE_LAMP;
+                            if (bid != air) {
+                                bid = net.minecraft.world.level.block.Blocks.REDSTONE_LAMP;
                             }
                         } else {
-                            bid = Blocks.AIR;
+                            bid = air;
                         }
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)meta, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, meta, 2);
                 }
             }
         }
-        bid = Blocks.STONE_SLAB;
+        bid = net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB;
         meta = 0;
         j = height;
         for (i = -1; i <= width; ++i) {
             for (k = -1; k <= depth; ++k) {
                 if (i != -1 && k != -1 && i != width && k != depth || (i + k & 1) != 1) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)meta, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, meta, 2);
             }
         }
-        this.makepoolalter(world, cposx + 1, cposy, cposz + 1);
-        this.makepoolalter(world, cposx + width - 2, cposy, cposz + depth - 2);
-        this.makepoolalter(world, cposx + 1, cposy, cposz + depth - 2);
-        this.makepoolalter(world, cposx + width - 2, cposy, cposz + 1);
-        this.makepoolalter(world, cposx + width / 2, cposy, cposz + depth / 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 - 1, cposy + 2, cposz + depth / 2 - 1), ChaosPersists.CreeperRepellent.getDefaultState(), 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + 1, cposy + 2, cposz + depth / 2 + 1), ChaosPersists.CreeperRepellent.getDefaultState(), 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 - 1, cposy + 2, cposz + depth / 2 + 1), ChaosPersists.CreeperRepellent.getDefaultState(), 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + 1, cposy + 2, cposz + depth / 2 - 1), ChaosPersists.CreeperRepellent.getDefaultState(), 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 - 2, cposy + 1, cposz + depth / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 - 2, cposy + 1, cposz + depth / 2);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "molenoid"));
-        }
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + 2), (int)(cposy + 1), (int)(cposz + depth / 2), (Block)Blocks.TRAPDOOR, (int)3, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + 2), (int)cposy, (int)(cposz + depth / 2), (Block)Blocks.AIR, (int)0, (int)2);
+        this.makepoolalter(level, cposx + 1, cposy, cposz + 1);
+        this.makepoolalter(level, cposx + width - 2, cposy, cposz + depth - 2);
+        this.makepoolalter(level, cposx + 1, cposy, cposz + depth - 2);
+        this.makepoolalter(level, cposx + width - 2, cposy, cposz + 1);
+        this.makepoolalter(level, cposx + width / 2, cposy, cposz + depth / 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 1, cposy + 2, cposz + depth / 2 - 1, creeperRepellent, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 + 1, cposy + 2, cposz + depth / 2 + 1, creeperRepellent, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 1, cposy + 2, cposz + depth / 2 + 1, creeperRepellent, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 + 1, cposy + 2, cposz + depth / 2 - 1, creeperRepellent, 0, 2);
+        this.placeLevelSpawner(level, cposx + width / 2 - 2, cposy + 1, cposz + depth / 2, "chaospersists", "molenoid");
+        ChaosPersists.setBlockFast(
+                level,
+                cposx + width / 2 + 2,
+                cposy + 1,
+                cposz + depth / 2,
+                net.minecraft.world.level.block.Blocks.OAK_TRAPDOOR,
+                3,
+                2);
+        ChaosPersists.setBlockFast(
+                level, cposx + width / 2 + 2, cposy, cposz + depth / 2, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
         i = cposx + width / 2 + 2;
         k = cposz + depth / 2;
         for (j = 1; j < baseheight; ++j) {
-            ChaosPersists.setBlockFast((World)world, (int)i, (int)(cposy - j), (int)(k + 1), (Block)Blocks.COBBLESTONE, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)i, (int)(cposy - j), (int)k, (Block)Blocks.LADDER, (int)2, (int)2);
+            ChaosPersists.setBlockFast(
+                    level, i, cposy - j, k + 1, net.minecraft.world.level.block.Blocks.COBBLESTONE, 0, 2);
+            ChaosPersists.setBlockFast(level, i, cposy - j, k, net.minecraft.world.level.block.Blocks.LADDER, 2, 2);
         }
-        this.makeincagraves(world, cposx - baseheight, cposy - baseheight, cposz - baseheight, basewidth, basedepth);
+        this.makeincagraves(level, cposx - baseheight, cposy - baseheight, cposz - baseheight, basewidth, basedepth);
     }
 
-    private void makepoolalter(World world, int cposx, int cposy, int cposz) {
+    private void makepoolalter(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         for (int i = -1; i <= 1; ++i) {
             for (int k = -1; k <= 1; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + 1), (int)(cposz + k), (Block)Blocks.COBBLESTONE, (int)0, (int)2);
+                ChaosPersists.setBlockFast(
+                        level, cposx + i, cposy + 1, cposz + k, net.minecraft.world.level.block.Blocks.COBBLESTONE, 0, 2);
             }
         }
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + 1), (int)cposz, (Block)Blocks.WATER, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.WATER, 0, 2);
     }
 
-    private void makeincagraves(World world, int cposx, int cposy, int cposz, int width, int depth) {
+    private void makeincagraves(
+            net.minecraft.world.level.Level level, int cposx, int cposy, int cposz, int width, int depth) {
         int i;
         for (i = 5; i < width - 5; i += 6) {
-            this.makeincagrave(world, cposx + i, cposy, cposz + 5, 1);
+            this.makeincagrave(level, cposx + i, cposy, cposz + 5, 1);
         }
         for (i = 5; i < width - 5; i += 6) {
-            this.makeincagrave(world, cposx + i, cposy, cposz + 10, 1);
+            this.makeincagrave(level, cposx + i, cposy, cposz + 10, 1);
         }
         for (i = 5; i < width - 5; i += 6) {
-            this.makeincagrave(world, cposx + i, cposy, cposz + 20, 3);
+            this.makeincagrave(level, cposx + i, cposy, cposz + 20, 3);
         }
         for (i = 5; i < width - 5; i += 6) {
-            this.makeincagrave(world, cposx + i, cposy, cposz + 25, 3);
+            this.makeincagrave(level, cposx + i, cposy, cposz + 25, 3);
         }
     }
 
-    private void makeincagrave(World world, int cposx, int cposy, int cposz, int dir) {
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.IncaPyramidContentsList;
+    private void makeincagrave(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz, int dir) {
+        net.minecraft.util.RandomSource rand = level.getRandom();
         if (dir == 1) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)cposy, (int)cposz, (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)(cposy + 1), (int)cposz, (Block)Blocks.RED_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)cposy, (int)(cposz + 1), (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)(cposy + 1), (int)(cposz + 1), (Block)Blocks.YELLOW_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)cposy, (int)(cposz + 2), (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)(cposy + 1), (int)(cposz + 2), (Block)Blocks.RED_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)cposy, (int)cposz, (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + 1), (int)cposz, (Block)Blocks.RED_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)cposy, (int)(cposz + 1), (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + 1), (int)(cposz + 1), (Block)Blocks.YELLOW_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)cposy, (int)(cposz + 2), (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + 1), (int)(cposz + 2), (Block)Blocks.RED_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + 1), (int)cposz, (Block)Blocks.STONE, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + 1), (int)(cposz + 1), (Block)Blocks.STONE_SLAB, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + 1), (int)(cposz + 2), (Block)Blocks.STONE_SLAB, (int)0, (int)2);
-            if (world.rand.nextInt(3) == 1) {
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 2, cposz);
-                if (tileentitymobspawner != null) {
-                    tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ghost"));
-                }
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy, cposz, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.POPPY, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy, cposz + 1, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy + 1, cposz + 1, net.minecraft.world.level.block.Blocks.DANDELION, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy, cposz + 2, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy + 1, cposz + 2, net.minecraft.world.level.block.Blocks.POPPY, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy, cposz, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.POPPY, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy, cposz + 1, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy + 1, cposz + 1, net.minecraft.world.level.block.Blocks.DANDELION, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy, cposz + 2, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy + 1, cposz + 2, net.minecraft.world.level.block.Blocks.POPPY, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.STONE, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx, cposy + 1, cposz + 1, net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx, cposy + 1, cposz + 2, net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB, 0, 2);
+            if (rand.nextInt(3) == 1) {
+                this.placeLevelSpawner(level, cposx, cposy + 2, cposz, "chaospersists", "ghost");
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz - 1), Blocks.CHEST.getStateFromMeta(2), 2);
-            chest = this.getChestTileEntity(world, cposx, cposy + 1, cposz - 1);
-            if (chest != null) {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(10 + world.rand.nextInt(5)));
-            }
+            this.fillLevelChestAt(level, rand, cposx, cposy + 1, cposz - 1, 2, this.IncaPyramidContentsList, 10 + rand.nextInt(5));
         }
         if (dir == 3) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)cposy, (int)cposz, (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)(cposy + 1), (int)cposz, (Block)Blocks.RED_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)cposy, (int)(cposz - 1), (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)(cposy + 1), (int)(cposz - 1), (Block)Blocks.YELLOW_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)cposy, (int)(cposz - 2), (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx - 1), (int)(cposy + 1), (int)(cposz - 2), (Block)Blocks.RED_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)cposy, (int)cposz, (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + 1), (int)cposz, (Block)Blocks.RED_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)cposy, (int)(cposz - 1), (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + 1), (int)(cposz - 1), (Block)Blocks.YELLOW_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)cposy, (int)(cposz - 2), (Block)Blocks.GRASS, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + 1), (int)(cposz - 2), (Block)Blocks.RED_FLOWER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + 1), (int)cposz, (Block)Blocks.STONE, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + 1), (int)(cposz - 1), (Block)Blocks.STONE_SLAB, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + 1), (int)(cposz - 2), (Block)Blocks.STONE_SLAB, (int)0, (int)2);
-            if (world.rand.nextInt(3) == 1) {
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 2, cposz);
-                if (tileentitymobspawner != null) {
-                    tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ghost"));
-                }
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy, cposz, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.POPPY, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy, cposz - 1, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy + 1, cposz - 1, net.minecraft.world.level.block.Blocks.DANDELION, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy, cposz - 2, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx - 1, cposy + 1, cposz - 2, net.minecraft.world.level.block.Blocks.POPPY, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy, cposz, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.POPPY, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy, cposz - 1, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy + 1, cposz - 1, net.minecraft.world.level.block.Blocks.DANDELION, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy, cposz - 2, net.minecraft.world.level.block.Blocks.GRASS_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + 1, cposy + 1, cposz - 2, net.minecraft.world.level.block.Blocks.POPPY, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.STONE, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx, cposy + 1, cposz - 1, net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB, 0, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx, cposy + 1, cposz - 2, net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB, 0, 2);
+            if (rand.nextInt(3) == 1) {
+                this.placeLevelSpawner(level, cposx, cposy + 2, cposz, "chaospersists", "ghost");
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz + 1), Blocks.CHEST.getStateFromMeta(2), 2);
-            chest = this.getChestTileEntity(world, cposx, cposy + 1, cposz + 1);
-            if (chest != null) {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(10 + world.rand.nextInt(5)));
-            }
+            this.fillLevelChestAt(level, rand, cposx, cposy + 1, cposz + 1, 2, this.IncaPyramidContentsList, 10 + rand.nextInt(5));
         }
     }
 
-    public void makeRobotLab(World world, int cposx, int cposy, int cposz) {
-        Block bid = Blocks.AIR;
-        boolean meta = false;
+    public void makeRobotLab(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         int width = 10;
         int length = 20;
         int height = 5;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
         for (int j = 0; j <= height; ++j) {
             for (int i = 0; i < width; ++i) {
                 for (int k = 0; k < length; ++k) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || k == 0 || i == width - 1 || k == length - 1) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     }
                     if (j == 0) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                         if (i == width / 2 || i == width / 2 - 1) {
-                            bid = Blocks.IRON_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.IRON_BLOCK;
                         }
                     }
                     if (j == height) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                         if (i == 0 || k == 0 || i == width - 1 || k == length - 1) {
-                            bid = Blocks.AIR;
+                            bid = net.minecraft.world.level.block.Blocks.AIR;
                         }
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + 1), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + 2), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 1), (int)(cposy + 1), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 1), (int)(cposy + 2), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-        this.placeDoor(world, new BlockPos(cposx + width / 2, cposy + 1, cposz), EnumFacing.SOUTH, (BlockDoor)Blocks.IRON_DOOR);
-        this.placeDoor(world, new BlockPos(cposx + width / 2 - 1, cposy + 1, cposz), EnumFacing.SOUTH, (BlockDoor)Blocks.IRON_DOOR);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 2), (int)(cposy + 2), (int)(cposz - 1), (Block)Blocks.STONE_BUTTON, (int)4, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + 1), (int)(cposy + 2), (int)(cposz - 1), (Block)Blocks.STONE_BUTTON, (int)4, (int)2);
-        this.makerobomain(world, cposx, cposy, cposz + length - 1);
-        this.makerobopillar(world, cposx, cposy, cposz + length / 3, 0);
-        this.makerobopillar(world, cposx, cposy, cposz + length * 2 / 3, 0);
-        this.makerobopillar(world, cposx, cposy, cposz + (length - 1), 0);
-        this.makerobopillar(world, cposx + width - 1, cposy, cposz + length / 3, 1);
-        this.makerobopillar(world, cposx + width - 1, cposy, cposz + length * 2 / 3, 1);
-        this.makerobopillar(world, cposx + width - 1, cposy, cposz + (length - 1), 1);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + 2, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 1, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 1, cposy + 2, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+        this.placeLevelDoor(
+                level,
+                cposx + width / 2,
+                cposy + 1,
+                cposz,
+                net.minecraft.core.Direction.SOUTH,
+                net.minecraft.world.level.block.Blocks.IRON_DOOR);
+        this.placeLevelDoor(
+                level,
+                cposx + width / 2 - 1,
+                cposy + 1,
+                cposz,
+                net.minecraft.core.Direction.SOUTH,
+                net.minecraft.world.level.block.Blocks.IRON_DOOR);
+        ChaosPersists.setBlockFast(
+                level, cposx + width / 2 - 2, cposy + 2, cposz - 1, net.minecraft.world.level.block.Blocks.STONE_BUTTON, 4, 2);
+        ChaosPersists.setBlockFast(
+                level, cposx + width / 2 + 1, cposy + 2, cposz - 1, net.minecraft.world.level.block.Blocks.STONE_BUTTON, 4, 2);
+        this.makerobomain(level, cposx, cposy, cposz + length - 1);
+        this.makerobopillar(level, cposx, cposy, cposz + length / 3, 0);
+        this.makerobopillar(level, cposx, cposy, cposz + length * 2 / 3, 0);
+        this.makerobopillar(level, cposx, cposy, cposz + (length - 1), 0);
+        this.makerobopillar(level, cposx + width - 1, cposy, cposz + length / 3, 1);
+        this.makerobopillar(level, cposx + width - 1, cposy, cposz + length * 2 / 3, 1);
+        this.makerobopillar(level, cposx + width - 1, cposy, cposz + (length - 1), 1);
     }
 
-    private void makerobopillar(World world, int cposx, int cposy, int cposz, int dir) {
-        TileEntityMobSpawner tileentitymobspawner = null;
+    private void makerobopillar(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz, int dir) {
         for (int j = 0; j < 5; ++j) {
             for (int i = -1; i < 2; ++i) {
                 for (int k = -1; k < 2; ++k) {
-                    Block bid = Blocks.QUARTZ_BLOCK;
+                    net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     if (j == 2 || j == 3) {
                         if (k == 0 && (i == -1 || i == 1)) {
-                            bid = Blocks.REDSTONE_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK;
                         }
                         if (i == 0 && (k == -1 || k == 1)) {
-                            bid = Blocks.REDSTONE_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK;
                         }
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
         if (dir == 0) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 1, cposy + 1, cposz);
-            if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "robo-sniper"));
-            }
+            this.placeLevelSpawner(level, cposx + 1, cposy + 1, cposz, "chaospersists", "robo-sniper");
         }
         if (dir == 1) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 1, cposy + 1, cposz);
-            if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "robo-sniper"));
-            }
+            this.placeLevelSpawner(level, cposx - 1, cposy + 1, cposz, "chaospersists", "robo-sniper");
         }
     }
 
-    public void makerobomain(World world, int cposx, int cposy, int cposz) {
-        Block bid = Blocks.AIR;
+    public void makerobomain(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         int width = 30;
         int length = 30;
         int height = 9;
@@ -4213,294 +4135,283 @@ public class GenericDungeon {
         for (int j = 0; j <= height; ++j) {
             for (int i = 0; i < width; ++i) {
                 for (int k = 0; k < length; ++k) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || k == 0 || i == width - 1 || k == length - 1) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     }
                     if (j == 0) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                         if (i == width / 2 || i == width / 2 - 1) {
-                            bid = Blocks.IRON_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.IRON_BLOCK;
                         }
                     }
                     if (j == height) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                         if (i == 0 || k == 0 || i == width - 1 || k == length - 1) {
-                            bid = Blocks.AIR;
+                            bid = net.minecraft.world.level.block.Blocks.AIR;
                         }
                     }
                     if ((j == 1 || j == 2 || j == 3) && k == 0 && i >= width / 3 && i < width * 2 / 3) {
-                        bid = Blocks.AIR;
+                        bid = net.minecraft.world.level.block.Blocks.AIR;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
-        this.makeroboaltar(world, cposx + width / 2 - 4, cposy, cposz + 6);
-        this.makeroborailway(world, cposx + 3, cposy, cposz + 10);
-        this.makeroboassemblyline(world, cposx + width - 4, cposy, cposz + 4);
-        this.makerobotreasureroom(world, cposx + 9, cposy, cposz + 18);
-        this.makerobotower(world, cposx + width / 2 - 6, cposy + height, cposz + length / 2 - 6);
+        this.makeroboaltar(level, cposx + width / 2 - 4, cposy, cposz + 6);
+        this.makeroborailway(level, cposx + 3, cposy, cposz + 10);
+        this.makeroboassemblyline(level, cposx + width - 4, cposy, cposz + 4);
+        this.makerobotreasureroom(level, cposx + 9, cposy, cposz + 18);
+        this.makerobotower(level, cposx + width / 2 - 6, cposy + height, cposz + length / 2 - 6);
     }
 
-    public void makerobotower(World world, int cposx, int cposy, int cposz) {
+    public void makerobotower(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         int i;
         int j;
         int k;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         for (j = 0; j < 2; ++j) {
             for (i = 0; i < 12; ++i) {
                 for (k = 0; k < 12; ++k) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     if (j == 1) {
                         if (i == 0 || k == 0 || i == 11 || k == 11) {
-                            bid = Blocks.IRON_BARS;
+                            bid = net.minecraft.world.level.block.Blocks.IRON_BARS;
                         }
                         if (i == 0 && (k == 0 || k == 11)) {
-                            bid = Blocks.REDSTONE_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK;
                         }
                         if (i == 11 && (k == 0 || k == 11)) {
-                            bid = Blocks.REDSTONE_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK;
                         }
                     }
                     if (j == 0) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
-        this.makerobopillar(world, cposx + 4, cposy + 1, cposz + 4, 1);
-        this.makerobopillar(world, cposx + 7, cposy + 1, cposz + 7, 0);
-        this.makerobopillar(world, cposx + 4, cposy + 1, cposz + 7, 1);
-        this.makerobopillar(world, cposx + 7, cposy + 1, cposz + 4, 0);
+        this.makerobopillar(level, cposx + 4, cposy + 1, cposz + 4, 1);
+        this.makerobopillar(level, cposx + 7, cposy + 1, cposz + 7, 0);
+        this.makerobopillar(level, cposx + 4, cposy + 1, cposz + 7, 1);
+        this.makerobopillar(level, cposx + 7, cposy + 1, cposz + 4, 0);
         for (j = 5; j < 35; ++j) {
             for (i = 0; i < 2; ++i) {
                 for (k = 0; k < 3; ++k) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     if (j < 15) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     } else if (j < 25) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                         if (k == 2) {
-                            bid = Blocks.IRON_BARS;
+                            bid = net.minecraft.world.level.block.Blocks.IRON_BARS;
                         }
                     } else {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                         if (k == 1) {
-                            bid = Blocks.IRON_BARS;
+                            bid = net.minecraft.world.level.block.Blocks.IRON_BARS;
                         }
                         if (k == 2) {
-                            bid = Blocks.AIR;
+                            bid = net.minecraft.world.level.block.Blocks.AIR;
                         }
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 5), (int)(cposy + j), (int)(cposz + k + 5), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i + 5, cposy + j, cposz + k + 5, bid, 0, 2);
                 }
             }
         }
     }
 
-    public void makeroboaltar(World world, int cposx, int cposy, int cposz) {
+    public void makeroboaltar(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         int i;
         int k;
-        Block bid = Blocks.AIR;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        bid = Blocks.IRON_BLOCK;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.IRON_BLOCK;
         for (i = 0; i < 8; ++i) {
             for (k = 0; k < 8; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)cposy, (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy, cposz + k, bid, 0, 2);
             }
         }
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = 0; i < 6; ++i) {
             for (k = 0; k < 6; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 1), (int)(cposy + 1), (int)(cposz + k + 1), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i + 1, cposy + 1, cposz + k + 1, bid, 0, 2);
             }
         }
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 2), (int)(cposy + 1), (int)(cposz + 2), (Block)Blocks.REDSTONE_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 2), (int)(cposy + 2), (int)(cposz + 2), (Block)Blocks.TORCH, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 5), (int)(cposy + 1), (int)(cposz + 5), (Block)Blocks.REDSTONE_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 5), (int)(cposy + 2), (int)(cposz + 5), (Block)Blocks.TORCH, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 5), (int)(cposy + 1), (int)(cposz + 2), (Block)Blocks.REDSTONE_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 5), (int)(cposy + 2), (int)(cposz + 2), (Block)Blocks.TORCH, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 2), (int)(cposy + 1), (int)(cposz + 5), (Block)Blocks.REDSTONE_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 2), (int)(cposy + 2), (int)(cposz + 5), (Block)Blocks.TORCH, (int)0, (int)2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 3, cposy + 2, cposz + 3), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 3, cposy + 2, cposz + 3);
-        if (tileentitymobspawner != null) {
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "robo-pounder"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 4, cposy + 2, cposz + 4), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 4, cposy + 2, cposz + 4);
-        if (tileentitymobspawner != null) {
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "robo-pounder"));
-        }
+        ChaosPersists.setBlockFast(
+                level, cposx + 2, cposy + 1, cposz + 2, net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 2, cposy + 2, cposz + 2, net.minecraft.world.level.block.Blocks.TORCH, 0, 2);
+        ChaosPersists.setBlockFast(
+                level, cposx + 5, cposy + 1, cposz + 5, net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 5, cposy + 2, cposz + 5, net.minecraft.world.level.block.Blocks.TORCH, 0, 2);
+        ChaosPersists.setBlockFast(
+                level, cposx + 5, cposy + 1, cposz + 2, net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 5, cposy + 2, cposz + 2, net.minecraft.world.level.block.Blocks.TORCH, 0, 2);
+        ChaosPersists.setBlockFast(
+                level, cposx + 2, cposy + 1, cposz + 5, net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 2, cposy + 2, cposz + 5, net.minecraft.world.level.block.Blocks.TORCH, 0, 2);
+        this.placeLevelSpawner(level, cposx + 3, cposy + 2, cposz + 3, "chaospersists", "robo-pounder");
+        this.placeLevelSpawner(level, cposx + 4, cposy + 2, cposz + 4, "chaospersists", "robo-pounder");
     }
 
-    public void makeroborailway(World world, int cposx, int cposy, int cposz) {
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 0), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 0), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 1), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 1), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 2), (Block)Blocks.GOLDEN_RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + 1), (int)(cposz + 2), (Block)Blocks.LEVER, (int)5, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 2), (int)(cposy + 1), (int)(cposz + 2), (Block)Blocks.LEVER, (int)5, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 2), (Block)Blocks.GOLDEN_RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 3), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 3), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 4), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 4), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 5), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 5), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 6), (Block)Blocks.GOLDEN_RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + 1), (int)(cposz + 6), (Block)Blocks.LEVER, (int)5, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 2), (int)(cposy + 1), (int)(cposz + 6), (Block)Blocks.LEVER, (int)5, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 6), (Block)Blocks.GOLDEN_RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 7), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 7), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 8), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 8), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 9), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 9), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 10), (Block)Blocks.GOLDEN_RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + 1), (int)(cposz + 10), (Block)Blocks.LEVER, (int)5, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 2), (int)(cposy + 1), (int)(cposz + 10), (Block)Blocks.LEVER, (int)5, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 10), (Block)Blocks.GOLDEN_RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 11), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 11), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 0), (int)(cposy + 1), (int)(cposz + 12), (Block)Blocks.RAIL, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 3), (int)(cposy + 1), (int)(cposz + 12), (Block)Blocks.RAIL, (int)0, (int)2);
+    public void makeroborailway(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 0, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 0, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 1, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 1, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 2, net.minecraft.world.level.block.Blocks.POWERED_RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 1, cposy + 1, cposz + 2, net.minecraft.world.level.block.Blocks.LEVER, 5, 2);
+        ChaosPersists.setBlockFast(level, cposx + 2, cposy + 1, cposz + 2, net.minecraft.world.level.block.Blocks.LEVER, 5, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 2, net.minecraft.world.level.block.Blocks.POWERED_RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 3, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 3, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 4, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 4, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 5, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 5, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 6, net.minecraft.world.level.block.Blocks.POWERED_RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 1, cposy + 1, cposz + 6, net.minecraft.world.level.block.Blocks.LEVER, 5, 2);
+        ChaosPersists.setBlockFast(level, cposx + 2, cposy + 1, cposz + 6, net.minecraft.world.level.block.Blocks.LEVER, 5, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 6, net.minecraft.world.level.block.Blocks.POWERED_RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 7, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 7, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 8, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 8, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 9, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 9, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 10, net.minecraft.world.level.block.Blocks.POWERED_RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 1, cposy + 1, cposz + 10, net.minecraft.world.level.block.Blocks.LEVER, 5, 2);
+        ChaosPersists.setBlockFast(level, cposx + 2, cposy + 1, cposz + 10, net.minecraft.world.level.block.Blocks.LEVER, 5, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 10, net.minecraft.world.level.block.Blocks.POWERED_RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 11, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 11, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 0, cposy + 1, cposz + 12, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 3, cposy + 1, cposz + 12, net.minecraft.world.level.block.Blocks.RAIL, 0, 2);
     }
 
-    public void makeroboassemblyline(World world, int cposx, int cposy, int cposz) {
+    public void makeroboassemblyline(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         for (int k = 0; k < 24; ++k) {
             if (k % 3 == 1) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx - 2), (int)(cposy + 1), (int)(cposz + k), (Block)Blocks.QUARTZ_STAIRS, (int)1, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + 2), (int)(cposz + k), (Block)Blocks.STICKY_PISTON, (int)3, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + 3), (int)(cposz + k), (Block)Blocks.CARPET, (int)0, (int)2);
+                ChaosPersists.setBlockFast(
+                        level, cposx - 2, cposy + 1, cposz + k, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 1, 2);
+                ChaosPersists.setBlockFast(
+                        level, cposx, cposy + 2, cposz + k, net.minecraft.world.level.block.Blocks.STICKY_PISTON, 3, 2);
+                ChaosPersists.setBlockFast(
+                        level, cposx, cposy + 3, cposz + k, net.minecraft.world.level.block.Blocks.WHITE_CARPET, 0, 2);
             }
             if (k % 3 == 0) {
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + 2), (int)(cposz + k), (Block)Blocks.LEVER, (int)13, (int)2);
+                ChaosPersists.setBlockFast(level, cposx, cposy + 2, cposz + k, net.minecraft.world.level.block.Blocks.LEVER, 13, 2);
             }
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + 1), (int)(cposz + k), (Block)Blocks.QUARTZ_BLOCK, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + 1), (int)(cposy + 1), (int)(cposz + k), (Block)Blocks.QUARTZ_BLOCK, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx, cposy + 1, cposz + k, net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK, 0, 2);
+            ChaosPersists.setBlockFast(level, cposx + 1, cposy + 1, cposz + k, net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK, 0, 2);
         }
     }
 
-    public void makerobotreasureroom(World world, int cposx, int cposy, int cposz) {
-        Block bid = Blocks.AIR;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        chestContents = this.RobotContentsList;
+    public void makerobotreasureroom(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.block.Block air = net.minecraft.world.level.block.Blocks.AIR;
         for (int j = 1; j < 7; ++j) {
             for (int i = 0; i < 12; ++i) {
                 for (int k = 0; k < 8; ++k) {
-                    bid = Blocks.AIR;
+                    bid = air;
                     if (i == 0 || k == 0 || i == 11 || k == 7) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     }
                     if (j == 2 && i == 11) {
-                        bid = Blocks.IRON_BARS;
+                        bid = net.minecraft.world.level.block.Blocks.IRON_BARS;
                     }
-                    if (j == 3 && bid != Blocks.AIR) {
-                        bid = Blocks.IRON_BARS;
+                    if (j == 3 && bid != air) {
+                        bid = net.minecraft.world.level.block.Blocks.IRON_BARS;
                     }
                     if (!(j != 1 && j != 2 && j != 3 || k != 0 || i != 1 && i != 2)) {
-                        bid = Blocks.AIR;
+                        bid = air;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 10, cposy + 1, cposz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 10, cposy + 1, cposz + 1);
-        if (tileentitymobspawner != null) {
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "robo-warrior"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 8, cposy + 1, cposz + 1), Blocks.CHEST.getStateFromMeta(2), 2);
-        chest = this.getChestTileEntity(world, cposx + 8, cposy + 1, cposz + 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(10 + world.rand.nextInt(5)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 6, cposy + 1, cposz + 1), Blocks.CHEST.getStateFromMeta(2), 2);
-        chest = this.getChestTileEntity(world, cposx + 6, cposy + 1, cposz + 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(10 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx + 10, cposy + 1, cposz + 1, "chaospersists", "robo-warrior");
+        this.fillLevelChestAt(level, rand, cposx + 8, cposy + 1, cposz + 1, 2, this.RobotContentsList, 10 + rand.nextInt(5));
+        this.fillLevelChestAt(level, rand, cposx + 6, cposy + 1, cposz + 1, 2, this.RobotContentsList, 10 + rand.nextInt(5));
     }
 
-    public void makeKingAltar(World world, int cposx, int cposy, int cposz) {
+    public void makeKingAltar(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int k;
         int i;
         int j;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         int width = 51;
         int length = 51;
         int height = 48;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
         for (j = 0; j <= height + 10; ++j) {
             for (i = -5; i < width + 5; ++i) {
                 for (k = -5; k < length + 5; ++k) {
-                    bid = Blocks.AIR;
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
         j = 0;
         for (i = 0; i < width; ++i) {
             for (k = 0; k < length; ++k) {
-                bid = Blocks.GRASS;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                bid = net.minecraft.world.level.block.Blocks.GRASS_BLOCK;
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 for (int v = 1; v < 10; ++v) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j - v, cposz + k)).getBlock();
-                    if (bid != Blocks.AIR && bid != Blocks.TALLGRASS && bid != Blocks.WATER) continue;
-                    bid = Blocks.DIRT;
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j - v), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    net.minecraft.core.BlockPos checkPos = new net.minecraft.core.BlockPos(cposx + i, cposy + j - v, cposz + k);
+                    net.minecraft.world.level.block.state.BlockState checkState = level.getBlockState(checkPos);
+                    if (!checkState.isAir()
+                            && !checkState.is(net.minecraft.world.level.block.Blocks.TALL_GRASS)
+                            && !checkState.is(net.minecraft.world.level.block.Blocks.WATER)) {
+                        continue;
+                    }
+                    bid = net.minecraft.world.level.block.Blocks.DIRT;
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j - v, cposz + k, bid, 0, 2);
                 }
             }
         }
-        this.makekingcolumn(world, cposx + 1, cposy + 1, cposz + 1);
-        this.makekingcolumn(world, cposx + width - 8, cposy + 1, cposz + length - 8);
-        this.makekingcolumn(world, cposx + 1, cposy + 1, cposz + length - 8);
-        this.makekingcolumn(world, cposx + width - 8, cposy + 1, cposz + 1);
+        this.makekingcolumn(level, cposx + 1, cposy + 1, cposz + 1);
+        this.makekingcolumn(level, cposx + width - 8, cposy + 1, cposz + length - 8);
+        this.makekingcolumn(level, cposx + 1, cposy + 1, cposz + length - 8);
+        this.makekingcolumn(level, cposx + width - 8, cposy + 1, cposz + 1);
         j = height - 1;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = 0; i < width; ++i) {
             for (k = 0; k < length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         j = height;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = -1; i <= width; ++i) {
             for (k = -1; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
-        this.makekingbackground(world, cposx + 4, cposy + 10, cposz + 9);
-        this.makekingcenteraltar(world, cposx + width / 2, cposy, cposz + length / 2);
+        this.makekingbackground(level, cposx + 4, cposy + 10, cposz + 9);
+        this.makekingcenteraltar(level, cposx + width / 2, cposy, cposz + length / 2);
     }
 
-    private void makekingcolumn(World world, int cposx, int cposy, int cposz) {
+    private void makekingcolumn(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         int k;
         int i;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         int meta = 0;
         int width = 5;
         int length = 5;
         int height = 44;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
         int j = 0;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = 0; i < width + 2; ++i) {
             for (k = 0; k < length + 2; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)meta, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + height + 1), (int)(cposz + k), (Block)bid, (int)meta, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, meta, 2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j + height + 1, cposz + k, bid, meta, 2);
             }
         }
         ++cposx;
@@ -4509,65 +4420,67 @@ public class GenericDungeon {
         for (j = 0; j < height; ++j) {
             for (i = 0; i < width; ++i) {
                 for (k = 0; k < length; ++k) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || k == 0 || i == width - 1 || k == length - 1) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     }
-                    if (j % 4 == 0 && bid != Blocks.AIR && (i == 2 || k == 2)) {
-                        bid = Blocks.GOLD_BLOCK;
+                    if (j % 4 == 0
+                            && bid != net.minecraft.world.level.block.Blocks.AIR
+                            && (i == 2 || k == 2)) {
+                        bid = net.minecraft.world.level.block.Blocks.GOLD_BLOCK;
                     }
-                    if (j % 4 == 1 && bid != Blocks.AIR) {
+                    if (j % 4 == 1 && bid != net.minecraft.world.level.block.Blocks.AIR) {
                         if (i == 1 || k == 1) {
-                            bid = Blocks.GOLD_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.GOLD_BLOCK;
                         }
                         if (i == 3 || k == 3) {
-                            bid = Blocks.GOLD_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.GOLD_BLOCK;
                         }
                     }
-                    if (j % 4 == 2 && bid != Blocks.AIR) {
+                    if (j % 4 == 2 && bid != net.minecraft.world.level.block.Blocks.AIR) {
                         if (i == 1 || k == 1) {
-                            bid = Blocks.GOLD_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.GOLD_BLOCK;
                         }
                         if (i == 3 || k == 3) {
-                            bid = Blocks.GOLD_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.GOLD_BLOCK;
                         }
                         if (i == 2 || k == 2) {
-                            bid = Blocks.EMERALD_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.EMERALD_BLOCK;
                         }
                     }
-                    if (j % 4 == 3 && bid != Blocks.AIR) {
+                    if (j % 4 == 3 && bid != net.minecraft.world.level.block.Blocks.AIR) {
                         if (i == 1 || k == 1) {
-                            bid = Blocks.GOLD_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.GOLD_BLOCK;
                         }
                         if (i == 3 || k == 3) {
-                            bid = Blocks.GOLD_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.GOLD_BLOCK;
                         }
                     }
                     meta = 0;
-                    if (bid == Blocks.QUARTZ_BLOCK) {
+                    if (bid == net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK) {
                         meta = 2;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)meta, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, meta, 2);
                 }
             }
         }
     }
 
-    private void makekingbackground(World world, int cposx, int cposy, int cposz) {
+    private void makekingbackground(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         int i;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         boolean meta = false;
         int curz = 0;
         int cury = 0;
         int height = 33;
         int width = 33;
-        bid = Blocks.STONE;
+        bid = net.minecraft.world.level.block.Blocks.STONE;
         for (int m = 0; m < this.king.length; ++m) {
             int v = this.king[m];
             if (v < 0) {
-                bid = Blocks.STONE;
+                bid = net.minecraft.world.level.block.Blocks.STONE;
                 while (curz < width) {
-                    ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + cury), (int)(cposz + curz), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx, cposy + cury, cposz + curz, bid, 0, 2);
                     ++curz;
                 }
                 ++cury;
@@ -4575,63 +4488,65 @@ public class GenericDungeon {
                 continue;
             }
             for (int n = 0; n < v; ++n) {
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + cury), (int)(cposz + curz), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx, cposy + cury, cposz + curz, bid, 0, 2);
                 ++curz;
             }
-            bid = bid == Blocks.STONE ? Blocks.QUARTZ_BLOCK : Blocks.STONE;
+            bid = bid == net.minecraft.world.level.block.Blocks.STONE
+                    ? net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK
+                    : net.minecraft.world.level.block.Blocks.STONE;
         }
         for (i = 0; i < width; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy - 1), (int)(cposz + i), (Block)Blocks.GOLD_BLOCK, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx, cposy - 1, cposz + i, net.minecraft.world.level.block.Blocks.GOLD_BLOCK, 0, 2);
         }
         for (i = 0; i < width; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + height), (int)(cposz + i), (Block)Blocks.GOLD_BLOCK, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx, cposy + height, cposz + i, net.minecraft.world.level.block.Blocks.GOLD_BLOCK, 0, 2);
         }
         for (i = -1; i <= height; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + i), (int)(cposz - 1), (Block)Blocks.GOLD_BLOCK, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx, cposy + i, cposz - 1, net.minecraft.world.level.block.Blocks.GOLD_BLOCK, 0, 2);
         }
         for (i = -1; i <= height; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + i), (int)(cposz + width), (Block)Blocks.GOLD_BLOCK, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx, cposy + i, cposz + width, net.minecraft.world.level.block.Blocks.GOLD_BLOCK, 0, 2);
         }
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy - 2), (int)(cposz - 2), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + height + 1), (int)(cposz + width + 1), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy - 2), (int)(cposz + width + 1), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + height + 1), (int)(cposz - 2), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy - 1), (int)(cposz - 2), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + height + 2), (int)(cposz + width + 1), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy - 1), (int)(cposz + width + 1), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + height + 2), (int)(cposz - 2), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx, cposy - 2, cposz - 2, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy + height + 1, cposz + width + 1, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy - 2, cposz + width + 1, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy + height + 1, cposz - 2, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy - 1, cposz - 2, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy + height + 2, cposz + width + 1, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy - 1, cposz + width + 1, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy + height + 2, cposz - 2, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
     }
 
-    private void makekingcenteraltar(World world, int cposx, int cposy, int cposz) {
+    private void makekingcenteraltar(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         int k;
         int i;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         boolean meta = false;
         int width = 10;
         int length = 10;
         int j = 0;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 6;
         length = 20;
         j = 0;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 20;
         length = 6;
         j = 0;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 8;
@@ -4639,8 +4554,8 @@ public class GenericDungeon {
         j = 1;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.QUARTZ_BLOCK;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 4;
@@ -4648,14 +4563,14 @@ public class GenericDungeon {
         j = 1;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.QUARTZ_BLOCK;
+                bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                 if (i == width && (k == - length || k == length)) {
-                    bid = Blocks.LAPIS_BLOCK;
+                    bid = net.minecraft.world.level.block.Blocks.LAPIS_BLOCK;
                 }
                 if (i == - width && (k == - length || k == length)) {
-                    bid = Blocks.LAPIS_BLOCK;
+                    bid = net.minecraft.world.level.block.Blocks.LAPIS_BLOCK;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 18;
@@ -4663,179 +4578,175 @@ public class GenericDungeon {
         j = 1;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.QUARTZ_BLOCK;
+                bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                 if (i == width && (k == - length || k == length)) {
-                    bid = Blocks.LAPIS_BLOCK;
+                    bid = net.minecraft.world.level.block.Blocks.LAPIS_BLOCK;
                 }
                 if (i == - width && (k == - length || k == length)) {
-                    bid = Blocks.LAPIS_BLOCK;
+                    bid = net.minecraft.world.level.block.Blocks.LAPIS_BLOCK;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 7;
         length = 7;
         j = 2;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 if (i == width && (k == - length || k == length)) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
                 }
                 if (i != - width || k != - length && k != length) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
             }
         }
         width = 3;
         length = 17;
         j = 2;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 17;
         length = 3;
         j = 2;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 6;
         length = 6;
         j = 3;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 2;
         length = 16;
         j = 3;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 16;
         length = 2;
         j = 3;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 2;
         length = 2;
         j = 4;
-        bid = Blocks.QUARTZ_BLOCK;
+        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 if (i == width && (k == - length || k == length)) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
                 }
                 if (i != - width || k != - length && k != length) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j, cposz), Blocks.CHEST.getDefaultState());
-        this.setBlockMeta(world,cposx, cposy + j, cposz, 2, 3);
-        TileEntityChest chest = this.getChestTileEntity(world, cposx, cposy + j, cposz);
-        if (chest != null) {
-            chest.setInventorySlotContents(13, new ItemStack(ChaosPersists.TheKingEgg));
+        level.setBlock(new net.minecraft.core.BlockPos(cposx, cposy + j, cposz), net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState().setValue(net.minecraft.world.level.block.ChestBlock.FACING, chestFacingFromLegacyMeta(2)), 3);
+        net.minecraft.world.level.block.entity.BlockEntity kingChestBe = level.getBlockEntity(new net.minecraft.core.BlockPos(cposx, cposy + j, cposz));
+        if (kingChestBe instanceof net.minecraft.world.level.block.entity.ChestBlockEntity kingChest) {
+            kingChest.setItem(13, new net.minecraft.world.item.ItemStack((net.minecraft.world.item.Item)(Object)ChaosPersists.TheKingEgg));
         }
     }
 
-    public void makeLeonNest(World world, int cposx, int cposy, int cposz) {
+    public void makeLeonNest(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int j;
         int k;
         int i;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         int rad = 10;
         int dist = 0;
-        TileEntityMobSpawner tileentitymobspawner = null;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         for (j = 0; j <= rad; ++j) {
-            for (i = - rad; i <= rad; ++i) {
-                for (k = - rad; k <= rad; ++k) {
-                    bid = Blocks.AIR;
+            for (i = -rad; i <= rad; ++i) {
+                for (k = -rad; k <= rad; ++k) {
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     dist = j * j + i * i + k * k;
-                    if ((dist = (int)Math.sqrt(dist)) > rad) continue;
+                    if ((dist = (int) Math.sqrt(dist)) > rad) continue;
                     if (dist >= rad - 2) {
-                        int which = world.rand.nextInt(6);
+                        int which = rand.nextInt(6);
                         if (which == 0) {
-                            bid = Blocks.LEAVES;
+                            bid = net.minecraft.world.level.block.Blocks.OAK_LEAVES;
                         }
                         if (which == 1) {
-                            bid = Blocks.LOG;
+                            bid = net.minecraft.world.level.block.Blocks.OAK_LOG;
                         }
                         if (which == 2) {
-                            bid = Blocks.PLANKS;
+                            bid = net.minecraft.world.level.block.Blocks.OAK_PLANKS;
                         }
                         if (which == 3) {
-                            bid = Blocks.DIRT;
+                            bid = net.minecraft.world.level.block.Blocks.DIRT;
                         }
                         if (which == 4) {
-                            bid = Blocks.COBBLESTONE;
+                            bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                         }
                         if (which == 5) {
-                            bid = Blocks.MOSSY_COBBLESTONE;
+                            bid = net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE;
                         }
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy - j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy - j, cposz + k, bid, 0, 2);
                 }
             }
         }
         for (j = 1; j <= 5; ++j) {
-            for (i = - rad; i <= rad; ++i) {
-                for (k = - rad; k <= rad; ++k) {
-                    bid = Blocks.AIR;
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+            for (i = -rad; i <= rad; ++i) {
+                for (k = -rad; k <= rad; ++k) {
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy - (rad - 4), cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy - (rad - 4), cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "leonopteryx"));
-        }
+        this.placeLevelSpawner(level, cposx, cposy - (rad - 4), cposz, "chaospersists", "leonopteryx");
     }
 
-    public void makeCephadromeAltar(World world, int cposx, int cposy, int cposz) {
+    public void makeCephadromeAltar(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int k;
         int i;
-        Block bid = Blocks.AIR;
-        boolean meta = false;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         int width = 4;
         int length = 4;
         int j = 0;
-        bid = Blocks.COBBLESTONE;
+        bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 3;
         length = 3;
         j = 1;
-        bid = Blocks.COBBLESTONE;
+        bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.COBBLESTONE;
+                bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                 if (k == 0 || i == 0) {
-                    bid = Blocks.STONEBRICK;
+                    bid = net.minecraft.world.level.block.Blocks.STONE_BRICKS;
                 }
                 if (!(k != - length && k != length || i != - width && i != width)) {
-                    bid = Blocks.STONEBRICK;
+                    bid = net.minecraft.world.level.block.Blocks.STONE_BRICKS;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 3;
@@ -4843,11 +4754,11 @@ public class GenericDungeon {
         j = 2;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.AIR;
+                bid = net.minecraft.world.level.block.Blocks.AIR;
                 if (!(k != - length && k != length || i != - width && i != width)) {
-                    bid = Blocks.STONEBRICK;
+                    bid = net.minecraft.world.level.block.Blocks.STONE_BRICKS;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 3;
@@ -4855,78 +4766,89 @@ public class GenericDungeon {
         j = 3;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.AIR;
+                bid = net.minecraft.world.level.block.Blocks.AIR;
                 if (!(k != - length && k != length || i != - width && i != width)) {
-                    bid = Blocks.END_STONE;
+                    bid = net.minecraft.world.level.block.Blocks.END_STONE;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 3;
         length = 3;
         j = 4;
+        net.minecraft.world.level.block.Block extremeTorch =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.ExtremeTorch;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.AIR;
+                bid = net.minecraft.world.level.block.Blocks.AIR;
                 if (!(k != - length && k != length || i != - width && i != width)) {
-                    bid = ChaosPersists.ExtremeTorch;
+                    bid = extremeTorch;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 2;
         length = 2;
         j = 2;
-        bid = Blocks.COBBLESTONE;
+        bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.COBBLESTONE;
+                bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                 if (k == 0 || i == 0) {
-                    bid = Blocks.STONEBRICK;
+                    bid = net.minecraft.world.level.block.Blocks.STONE_BRICKS;
                 }
                 if (!(k != - length && k != length || i != - width && i != width)) {
-                    bid = Blocks.STONEBRICK;
+                    bid = net.minecraft.world.level.block.Blocks.STONE_BRICKS;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 1;
         length = 1;
         j = 3;
-        bid = Blocks.COBBLESTONE;
+        net.minecraft.world.level.block.Block eyeOfEnderBlock =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyEyeOfEnderBlock;
+        bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.COBBLESTONE;
+                bid = net.minecraft.world.level.block.Blocks.COBBLESTONE;
                 if (k == 0 && i == 0) {
-                    bid = ChaosPersists.MyEyeOfEnderBlock;
+                    bid = eyeOfEnderBlock;
                 }
                 if (!(k != - length && k != length || i != - width && i != width)) {
-                    bid = Blocks.END_STONE;
+                    bid = net.minecraft.world.level.block.Blocks.END_STONE;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
     }
 
-    public void makeCrystalBattleTower(World world, int cposx, int cposy, int cposz) {
+    public void makeCrystalBattleTower(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int j;
         float curx;
         float curdeg;
         float currad;
         float curz;
-        Block blk;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
+        net.minecraft.world.level.block.Block blk =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalStone;
+        net.minecraft.world.level.block.Block crystalCrystal =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalCrystal;
         float radius = 10.0f;
         for (j = 0; j <= 20; ++j) {
-            blk = ChaosPersists.CrystalStone;
+            blk = (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalStone;
             if (j % 5 == 0) {
                 for (currad = 0.0f; currad < radius; currad += 0.33f) {
                     for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
                         curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
                         curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-                        this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + j, (int)((float)cposz + curz + 0.5f), blk);
+                        this.FastSetBlock(
+                                level,
+                                (int)((float)cposx + curx + 0.5f),
+                                cposy + j,
+                                (int)((float)cposz + curz + 0.5f),
+                                blk);
                     }
                 }
                 continue;
@@ -4935,117 +4857,93 @@ public class GenericDungeon {
             for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
                 curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
                 curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-                blk = ChaosPersists.CrystalStone;
+                blk = (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalStone;
                 if (j % 5 >= 1 && j % 5 <= 3 && (curdeg < 10.0f || curdeg > 350.0f)) {
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                 }
-                this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + j, (int)((float)cposz + curz + 0.5f), blk);
+                this.FastSetBlock(
+                        level,
+                        (int)((float)cposx + curx + 0.5f),
+                        cposy + j,
+                        (int)((float)cposz + curz + 0.5f),
+                        blk);
             }
         }
         radius = 10.0f;
         for (j = 21; j <= 22; ++j) {
-            blk = ChaosPersists.CrystalCrystal;
+            blk = crystalCrystal;
             currad = 10.0f;
             for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
                 curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
                 curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-                this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), cposy + j, (int)((float)cposz + curz + 0.5f), blk);
+                this.FastSetBlock(
+                        level,
+                        (int)((float)cposx + curx + 0.5f),
+                        cposy + j,
+                        (int)((float)cposz + curz + 0.5f),
+                        blk);
             }
         }
         j = 1;
-        chestContents = this.CrystalBattleTowerRatContentsList;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + j + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rat"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + j + 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rat"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j, cposz), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + j, cposz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx, cposy + j + 1, cposz, "chaospersists", "rat");
+        this.placeLevelSpawner(level, cposx, cposy + j + 2, cposz, "chaospersists", "rat");
+        this.fillLevelChestAt(
+                level, rand, cposx, cposy + j, cposz, 0, this.CrystalBattleTowerRatContentsList, 5 + rand.nextInt(5));
         j = 6;
-        chestContents = this.CrystalBattleTowerDungeonBeastContentsList;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + j + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "dungeon_beast"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + j + 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "dungeon_beast"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j, cposz), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + j, cposz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx, cposy + j + 1, cposz, "chaospersists", "dungeon_beast");
+        this.placeLevelSpawner(level, cposx, cposy + j + 2, cposz, "chaospersists", "dungeon_beast");
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx,
+                cposy + j,
+                cposz,
+                0,
+                this.CrystalBattleTowerDungeonBeastContentsList,
+                5 + rand.nextInt(5));
         j = 11;
-        chestContents = this.CrystalBattleTowerUrchinContentsList;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + j + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "crystal_urchin"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + j + 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "crystal_urchin"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j, cposz), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + j, cposz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx, cposy + j + 1, cposz, "chaospersists", "crystal_urchin");
+        this.placeLevelSpawner(level, cposx, cposy + j + 2, cposz, "chaospersists", "crystal_urchin");
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx,
+                cposy + j,
+                cposz,
+                0,
+                this.CrystalBattleTowerUrchinContentsList,
+                5 + rand.nextInt(5));
         j = 16;
-        chestContents = this.CrystalBattleTowerRotatorContentsList;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + j + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rotator"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + j + 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rotator"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j, cposz), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + j, cposz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx, cposy + j + 1, cposz, "chaospersists", "rotator");
+        this.placeLevelSpawner(level, cposx, cposy + j + 2, cposz, "chaospersists", "rotator");
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx,
+                cposy + j,
+                cposz,
+                0,
+                this.CrystalBattleTowerRotatorContentsList,
+                5 + rand.nextInt(5));
         j = 21;
-        chestContents = this.CrystalBattleTowerVortexContentsList;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + j + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "vortex"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + j + 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "vortex"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j, cposz), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + j, cposz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(6 + world.rand.nextInt(6)));
-        }
+        this.placeLevelSpawner(level, cposx, cposy + j + 1, cposz, "chaospersists", "vortex");
+        this.placeLevelSpawner(level, cposx, cposy + j + 2, cposz, "chaospersists", "vortex");
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx,
+                cposy + j,
+                cposz,
+                0,
+                this.CrystalBattleTowerVortexContentsList,
+                6 + rand.nextInt(6));
     }
 
-    public void makeGirlfriendIsland(World world, int cposx, int cposy, int cposz) {
+    public void makeGirlfriendIsland(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int j;
         int i;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.DamselContentsList;
         for (i = -5; i <= 5; ++i) {
             int k = 3;
             if (i == -5 || i == 5) {
@@ -5058,56 +4956,34 @@ public class GenericDungeon {
                 k = 2;
             }
             for (j = - k; j <= k; ++j) {
-                this.FastSetBlock(world, cposx + i, cposy, cposz + j, (Block)Blocks.SAND);
-                this.FastSetBlock(world, cposx + i, cposy - 1, cposz + j, Blocks.STONE);
+                this.FastSetBlock(level, cposx + i, cposy, cposz + j, net.minecraft.world.level.block.Blocks.SAND);
+                this.FastSetBlock(level, cposx + i, cposy - 1, cposz + j, net.minecraft.world.level.block.Blocks.STONE);
             }
         }
         for (i = -2; i <= 2; ++i) {
             for (j = -2; j <= 2; ++j) {
-                this.FastSetBlock(world, cposx + i, cposy + 3, cposz + j, (Block)Blocks.LEAVES);
+                this.FastSetBlock(level, cposx + i, cposy + 3, cposz + j, net.minecraft.world.level.block.Blocks.OAK_LEAVES);
             }
         }
-        this.FastSetBlock(world, cposx, cposy + 4, cposz, (Block)Blocks.LEAVES);
-        this.FastSetBlock(world, cposx, cposy + 3, cposz, Blocks.LOG);
-        this.FastSetBlock(world, cposx, cposy + 2, cposz, Blocks.LOG);
-        this.FastSetBlock(world, cposx, cposy + 1, cposz, Blocks.LOG);
-        this.FastSetBlock(world, cposx + 1, cposy + 3, cposz + 1, Blocks.LOG);
-        this.FastSetBlock(world, cposx - 1, cposy + 3, cposz - 1, Blocks.LOG);
-        this.FastSetBlock(world, cposx + 1, cposy + 3, cposz - 1, Blocks.LOG);
-        this.FastSetBlock(world, cposx - 1, cposy + 3, cposz + 1, Blocks.LOG);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 3, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 1, cposy + 3, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "girlfriend"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 3, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 1, cposy + 3, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "boyfriend"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 3, cposz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 3, cposz + 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "gold_fish"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 3, cposz - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 3, cposz - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "gold_fish"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz - 1), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + 1, cposz - 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(4 + world.rand.nextInt(5)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz + 1), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + 1, cposz + 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(4 + world.rand.nextInt(5)));
-        }
+        this.FastSetBlock(level, cposx, cposy + 4, cposz, net.minecraft.world.level.block.Blocks.OAK_LEAVES);
+        this.FastSetBlock(level, cposx, cposy + 3, cposz, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx, cposy + 2, cposz, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx + 1, cposy + 3, cposz + 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx - 1, cposy + 3, cposz - 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx + 1, cposy + 3, cposz - 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx - 1, cposy + 3, cposz + 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.placeLevelSpawner(level, cposx + 1, cposy + 3, cposz, "chaospersists", "girlfriend");
+        this.placeLevelSpawner(level, cposx - 1, cposy + 3, cposz, "chaospersists", "boyfriend");
+        this.placeLevelSpawner(level, cposx, cposy + 3, cposz + 1, "chaospersists", "gold_fish");
+        this.placeLevelSpawner(level, cposx, cposy + 3, cposz - 1, "chaospersists", "gold_fish");
+        this.fillLevelChestAt(
+                level, rand, cposx, cposy + 1, cposz - 1, 0, this.DamselContentsList, 4 + rand.nextInt(5));
+        this.fillLevelChestAt(
+                level, rand, cposx, cposy + 1, cposz + 1, 0, this.DamselContentsList, 4 + rand.nextInt(5));
     }
 
-    public void makeGreenhouseDungeon(World world, int cposx, int cposy, int cposz) {
+    public void makeGreenhouseDungeon(Object worldObj, int cposx, int cposy, int cposz) {
         int k;
         int i;
         int j;
@@ -5115,147 +4991,141 @@ public class GenericDungeon {
         int width = 15;
         int length = 23;
         int t = 0;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.GreenhouseContentsList;
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         for (i = 0; i < length; ++i) {
             for (k = 0; k < width; ++k) {
                 for (j = 0; j < height; ++j) {
-                    Block blk = Blocks.AIR;
+                    net.minecraft.world.level.block.Block blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || k == 0 || i == length - 1 || k == width - 1) {
-                        blk = Blocks.GLASS;
+                        blk = net.minecraft.world.level.block.Blocks.GLASS;
                     }
                     if (j == height - 1) {
-                        blk = Blocks.IRON_BLOCK;
+                        blk = net.minecraft.world.level.block.Blocks.IRON_BLOCK;
                         if (i % 4 == 3 && k % 4 == 3) {
-                            blk = Blocks.GLOWSTONE;
+                            blk = net.minecraft.world.level.block.Blocks.GLOWSTONE;
                         }
                         if (k % 4 == 1) {
-                            blk = Blocks.GLASS;
+                            blk = net.minecraft.world.level.block.Blocks.GLASS;
                         }
                     }
                     if (j == 0) {
-                        blk = Blocks.GRASS;
+                        blk = net.minecraft.world.level.block.Blocks.GRASS_BLOCK;
                         if (i != 0 && k != 0 && i != length - 1 && k != width - 1 && i % 3 == 2) {
-                            blk = Blocks.WATER;
+                            blk = net.minecraft.world.level.block.Blocks.WATER;
                         }
                     }
-                    if (j == 1 && i != 0 && k != 0 && i != length - 1 && k != width - 1 && i % 3 != 2 && world.rand.nextInt(3) != 1) {
-                        blk = Blocks.FARMLAND;
-                        this.FastSetBlock(world, cposx + i, cposy + j - 1, cposz + k, blk);
-                        t = world.rand.nextInt(20);
-                        blk = Blocks.AIR;
+                    if (j == 1 && i != 0 && k != 0 && i != length - 1 && k != width - 1 && i % 3 != 2 && rand.nextInt(3) != 1) {
+                        blk = net.minecraft.world.level.block.Blocks.FARMLAND;
+                        this.FastSetBlock(level, cposx + i, cposy + j - 1, cposz + k, blk);
+                        t = rand.nextInt(20);
+                        blk = net.minecraft.world.level.block.Blocks.AIR;
                         if (t == 0) {
-                            blk = Blocks.YELLOW_FLOWER;
+                            blk = net.minecraft.world.level.block.Blocks.DANDELION;
                         }
                         if (t == 1) {
-                            blk = Blocks.RED_FLOWER;
+                            blk = net.minecraft.world.level.block.Blocks.POPPY;
                         }
                         if (t == 2) {
-                            blk = Blocks.BROWN_MUSHROOM;
+                            blk = net.minecraft.world.level.block.Blocks.BROWN_MUSHROOM;
                         }
                         if (t == 3) {
-                            blk = Blocks.RED_MUSHROOM;
+                            blk = net.minecraft.world.level.block.Blocks.RED_MUSHROOM;
                         }
                         if (t == 4) {
-                            blk = Blocks.WHEAT;
+                            blk = net.minecraft.world.level.block.Blocks.WHEAT;
                         }
                         if (t == 5) {
-                            blk = Blocks.CARROTS;
+                            blk = net.minecraft.world.level.block.Blocks.CARROTS;
                         }
                         if (t == 6) {
-                            blk = Blocks.POTATOES;
+                            blk = net.minecraft.world.level.block.Blocks.POTATOES;
                         }
                         if (t == 7) {
-                            blk = Blocks.REEDS;
+                            blk = net.minecraft.world.level.block.Blocks.SUGAR_CANE;
                         }
                         if (t == 9) {
-                            blk = ChaosPersists.MyCornPlant1;
+                            blk = (net.minecraft.world.level.block.Block)(Object)ChaosPersists.MyCornPlant1;
                         }
                         if (t == 10) {
-                            blk = ChaosPersists.MyTomatoPlant1;
+                            blk = (net.minecraft.world.level.block.Block)(Object)ChaosPersists.MyTomatoPlant1;
                         }
                         if (t == 11) {
-                            blk = ChaosPersists.MyStrawberryPlant;
+                            blk = (net.minecraft.world.level.block.Block)(Object)ChaosPersists.MyStrawberryPlant;
                         }
                         if (t == 12) {
-                            blk = ChaosPersists.MyButterflyPlant;
+                            blk = (net.minecraft.world.level.block.Block)(Object)ChaosPersists.MyButterflyPlant;
                         }
                         if (t == 13) {
-                            blk = ChaosPersists.MyMothPlant;
+                            blk = (net.minecraft.world.level.block.Block)(Object)ChaosPersists.MyMothPlant;
                         }
                         if (t == 14) {
-                            blk = ChaosPersists.MyRadishPlant;
+                            blk = (net.minecraft.world.level.block.Block)(Object)ChaosPersists.MyRadishPlant;
                         }
                         if (t == 15) {
-                            blk = ChaosPersists.MyLettucePlant1;
+                            blk = (net.minecraft.world.level.block.Block)(Object)ChaosPersists.MyLettucePlant1;
                         }
                         if (t == 16) {
-                            blk = ChaosPersists.MyFlowerPinkBlock;
+                            blk = (net.minecraft.world.level.block.Block)(Object)ChaosPersists.MyFlowerPinkBlock;
                         }
                         if (t == 17) {
-                            blk = ChaosPersists.MyFlowerBlueBlock;
+                            blk = (net.minecraft.world.level.block.Block)(Object)ChaosPersists.MyFlowerBlueBlock;
                         }
                         if (t == 18) {
-                            blk = ChaosPersists.MyQuinoaPlant1;
+                            blk = (net.minecraft.world.level.block.Block)(Object)ChaosPersists.MyQuinoaPlant1;
                         }
                         if (t == 19) {
-                            blk = ChaosPersists.MyRicePlant;
+                            blk = (net.minecraft.world.level.block.Block)(Object)ChaosPersists.MyRicePlant;
                         }
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, blk);
                 }
             }
         }
         for (i = 0; i < length; ++i) {
             for (k = 0; k < width; ++k) {
                 for (j = height; j <= height + 6; ++j) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.AIR);
                 }
             }
         }
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + 1), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2), (int)(cposy + 2), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 1), (int)(cposy + 1), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 1), (int)(cposy + 2), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-        this.placeDoor(world, new BlockPos(cposx + width / 2, cposy + 1, cposz), EnumFacing.SOUTH, (BlockDoor)Blocks.IRON_DOOR);
-        this.placeDoor(world, new BlockPos(cposx + width / 2 - 1, cposy + 1, cposz), EnumFacing.SOUTH, (BlockDoor)Blocks.IRON_DOOR);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 2), (int)(cposy + 2), (int)cposz, (Block)Blocks.STONE, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + 1), (int)(cposy + 2), (int)cposz, (Block)Blocks.STONE, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - 2), (int)(cposy + 2), (int)(cposz - 1), (Block)Blocks.STONE_BUTTON, (int)4, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + 1), (int)(cposy + 2), (int)(cposz - 1), (Block)Blocks.STONE_BUTTON, (int)4, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2, cposy + 2, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 1, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 1, cposy + 2, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+        this.placeLevelDoor(
+                level,
+                cposx + width / 2,
+                cposy + 1,
+                cposz,
+                net.minecraft.core.Direction.SOUTH,
+                net.minecraft.world.level.block.Blocks.IRON_DOOR);
+        this.placeLevelDoor(
+                level,
+                cposx + width / 2 - 1,
+                cposy + 1,
+                cposz,
+                net.minecraft.core.Direction.SOUTH,
+                net.minecraft.world.level.block.Blocks.IRON_DOOR);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 2, cposy + 2, cposz, net.minecraft.world.level.block.Blocks.STONE, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 + 1, cposy + 2, cposz, net.minecraft.world.level.block.Blocks.STONE, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 - 2, cposy + 2, cposz - 1, net.minecraft.world.level.block.Blocks.STONE_BUTTON, 4, 2);
+        ChaosPersists.setBlockFast(level, cposx + width / 2 + 1, cposy + 2, cposz - 1, net.minecraft.world.level.block.Blocks.STONE_BUTTON, 4, 2);
         i = length / 2;
         k = width / 2;
         j = height + 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "triffid"));
-        }
-        j = height + 2;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "triffid"));
-        }
-        j = height;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + i, cposy + j, cposz + k);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx + i, cposy + j, cposz + k, "chaospersists", "triffid");
+        this.placeLevelSpawner(level, cposx + i, cposy + height + 2, cposz + k, "chaospersists", "triffid");
+        this.fillLevelChestAt(level, rand, cposx + i, cposy + height, cposz + k, 0, this.GreenhouseContentsList, 5 + rand.nextInt(5));
     }
 
-    public void makeMonsterIsland(World world, int cposx, int cposy, int cposz) {
+    public void makeMonsterIsland(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int j;
         int i;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
         String monster = "Sea Viper";
-        chestContents = this.MonsterIslandContentsList;
-        if (world.rand.nextInt(2) == 0) {
+        if (rand.nextInt(2) == 0) {
             monster = "Sea Monster";
         }
         for (i = -5; i <= 5; ++i) {
@@ -5270,135 +5140,118 @@ public class GenericDungeon {
                 k = 2;
             }
             for (j = - k; j <= k; ++j) {
-                this.FastSetBlock(world, cposx + i, cposy, cposz + j, (Block)Blocks.SAND);
-                this.FastSetBlock(world, cposx + i, cposy - 1, cposz + j, Blocks.STONE);
+                this.FastSetBlock(level, cposx + i, cposy, cposz + j, net.minecraft.world.level.block.Blocks.SAND);
+                this.FastSetBlock(level, cposx + i, cposy - 1, cposz + j, net.minecraft.world.level.block.Blocks.STONE);
             }
         }
         for (i = -2; i <= 2; ++i) {
             for (j = -2; j <= 2; ++j) {
-                this.FastSetBlock(world, cposx + i, cposy + 3, cposz + j, (Block)Blocks.LEAVES);
+                this.FastSetBlock(level, cposx + i, cposy + 3, cposz + j, net.minecraft.world.level.block.Blocks.OAK_LEAVES);
             }
         }
-        this.FastSetBlock(world, cposx, cposy + 4, cposz, (Block)Blocks.LEAVES);
-        this.FastSetBlock(world, cposx, cposy + 3, cposz, Blocks.LOG);
-        this.FastSetBlock(world, cposx, cposy + 2, cposz, Blocks.LOG);
-        this.FastSetBlock(world, cposx, cposy + 1, cposz, Blocks.LOG);
-        this.FastSetBlock(world, cposx + 1, cposy + 3, cposz + 1, Blocks.LOG);
-        this.FastSetBlock(world, cposx - 1, cposy + 3, cposz - 1, Blocks.LOG);
-        this.FastSetBlock(world, cposx + 1, cposy + 3, cposz - 1, Blocks.LOG);
-        this.FastSetBlock(world, cposx - 1, cposy + 3, cposz + 1, Blocks.LOG);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 3, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 1, cposy + 3, cposz);
-        if (tileentitymobspawner != null) {
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", monster.toLowerCase().replace(' ', '_')));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 3, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 1, cposy + 3, cposz);
-        if (tileentitymobspawner != null) {
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", monster.toLowerCase().replace(' ', '_')));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 3, cposz + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 3, cposz + 1);
-        if (tileentitymobspawner != null) {
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", monster.toLowerCase().replace(' ', '_')));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 3, cposz - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 3, cposz - 1);
-        if (tileentitymobspawner != null) {
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", monster.toLowerCase().replace(' ', '_')));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz - 1), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + 1, cposz - 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(4 + world.rand.nextInt(5)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz + 1), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx, cposy + 1, cposz + 1);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(4 + world.rand.nextInt(5)));
-        }
+        this.FastSetBlock(level, cposx, cposy + 4, cposz, net.minecraft.world.level.block.Blocks.OAK_LEAVES);
+        this.FastSetBlock(level, cposx, cposy + 3, cposz, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx, cposy + 2, cposz, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx + 1, cposy + 3, cposz + 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx - 1, cposy + 3, cposz - 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx + 1, cposy + 3, cposz - 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.FastSetBlock(level, cposx - 1, cposy + 3, cposz + 1, net.minecraft.world.level.block.Blocks.OAK_LOG);
+        this.placeLevelSpawnerFromLegacyMobName(level, cposx + 1, cposy + 3, cposz, monster);
+        this.placeLevelSpawnerFromLegacyMobName(level, cposx - 1, cposy + 3, cposz, monster);
+        this.placeLevelSpawnerFromLegacyMobName(level, cposx, cposy + 3, cposz + 1, monster);
+        this.placeLevelSpawnerFromLegacyMobName(level, cposx, cposy + 3, cposz - 1, monster);
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx,
+                cposy + 1,
+                cposz - 1,
+                0,
+                this.MonsterIslandContentsList,
+                4 + rand.nextInt(5));
+        this.fillLevelChestAt(
+                level,
+                rand,
+                cposx,
+                cposy + 1,
+                cposz + 1,
+                0,
+                this.MonsterIslandContentsList,
+                4 + rand.nextInt(5));
     }
 
-    public void makeNightmareRookery(World world, int cposx, int cposy, int cposz) {
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        String monster = "Nightmare";
-        chestContents = this.NightmareRookeryContentsList;
+    public void makeNightmareRookery(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int h = 0;
         int k = 0;
         int j = 0;
         int i = 0;
         block0 : for (i = -5; i <= 20; ++i) {
-            k += world.rand.nextInt(3) - 1;
-            h = world.rand.nextInt(20) + 1;
+            k += rand.nextInt(3) - 1;
+            h = rand.nextInt(20) + 1;
             for (j = 0; j < h; ++j) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.STONE);
-                if (world.rand.nextInt(j + 5) == 1) {
-                    this.FastSetBlock(world, cposx + i + 1, cposy + j, cposz + k, Blocks.STONE);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.STONE);
+                if (rand.nextInt(j + 5) == 1) {
+                    this.FastSetBlock(level, cposx + i + 1, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.STONE);
                 }
-                if (world.rand.nextInt(j + 5) == 1) {
-                    this.FastSetBlock(world, cposx + i - 1, cposy + j, cposz + k, Blocks.STONE);
+                if (rand.nextInt(j + 5) == 1) {
+                    this.FastSetBlock(level, cposx + i - 1, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.STONE);
                 }
-                if (world.rand.nextInt(j + 5) == 1) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + 1, Blocks.STONE);
+                if (rand.nextInt(j + 5) == 1) {
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k + 1, net.minecraft.world.level.block.Blocks.STONE);
                 }
-                if (world.rand.nextInt(j + 5) == 1) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k - 1, Blocks.STONE);
+                if (rand.nextInt(j + 5) == 1) {
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k - 1, net.minecraft.world.level.block.Blocks.STONE);
                 }
                 if (j < 18) continue;
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 2, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j + 2, cposz + k);
-                if (tileentitymobspawner != null) {
-                    this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", monster.toLowerCase().replace(' ', '_')));
+                this.placeLevelSpawner(level, cposx + i, cposy + j + 2, cposz + k, "chaospersists", "nightmare");
+                this.fillLevelChestAt(
+                        level, rand, cposx + i, cposy + j + 1, cposz + k, 0, this.NightmareRookeryContentsList, 4 + rand.nextInt(5));
+                if (!(level.getBlockEntity(new net.minecraft.core.BlockPos(cposx + i, cposy + j + 1, cposz + k))
+                        instanceof net.minecraft.world.level.block.entity.ChestBlockEntity)) {
+                    continue block0;
                 }
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 1, cposz + k), Blocks.CHEST.getDefaultState(), 2);
-                chest = this.getChestTileEntity(world, cposx + i, cposy + j + 1, cposz + k);
-                if (chest == null) continue block0;
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(4 + world.rand.nextInt(5)));
                 continue block0;
             }
         }
         block2 : for (i = -5; i <= 20; ++i) {
-            k += world.rand.nextInt(3) - 1;
-            h = world.rand.nextInt(20) + 1;
+            k += rand.nextInt(3) - 1;
+            h = rand.nextInt(20) + 1;
             for (j = 0; j < h; ++j) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.STONE);
-                if (world.rand.nextInt(j + 5) == 1) {
-                    this.FastSetBlock(world, cposx + i + 1, cposy + j, cposz + k, Blocks.STONE);
+                this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.STONE);
+                if (rand.nextInt(j + 5) == 1) {
+                    this.FastSetBlock(level, cposx + i + 1, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.STONE);
                 }
-                if (world.rand.nextInt(j + 5) == 1) {
-                    this.FastSetBlock(world, cposx + i - 1, cposy + j, cposz + k, Blocks.STONE);
+                if (rand.nextInt(j + 5) == 1) {
+                    this.FastSetBlock(level, cposx + i - 1, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.STONE);
                 }
-                if (world.rand.nextInt(j + 5) == 1) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + 1, Blocks.STONE);
+                if (rand.nextInt(j + 5) == 1) {
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k + 1, net.minecraft.world.level.block.Blocks.STONE);
                 }
-                if (world.rand.nextInt(j + 5) == 1) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k - 1, Blocks.STONE);
+                if (rand.nextInt(j + 5) == 1) {
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k - 1, net.minecraft.world.level.block.Blocks.STONE);
                 }
                 if (j < 18) continue;
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 2, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j + 2, cposz + k);
-                if (tileentitymobspawner != null) {
-                    this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", monster.toLowerCase().replace(' ', '_')));
+                this.placeLevelSpawner(level, cposx + i, cposy + j + 2, cposz + k, "chaospersists", "nightmare");
+                this.fillLevelChestAt(
+                        level, rand, cposx + i, cposy + j + 1, cposz + k, 0, this.NightmareRookeryContentsList, 4 + rand.nextInt(5));
+                if (!(level.getBlockEntity(new net.minecraft.core.BlockPos(cposx + i, cposy + j + 1, cposz + k))
+                        instanceof net.minecraft.world.level.block.entity.ChestBlockEntity)) {
+                    continue block2;
                 }
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j + 1, cposz + k), Blocks.CHEST.getDefaultState(), 2);
-                chest = this.getChestTileEntity(world, cposx + i, cposy + j + 1, cposz + k);
-                if (chest == null) continue block2;
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(4 + world.rand.nextInt(5)));
                 continue block2;
             }
         }
     }
 
-    public void makeStinkyHouse(World world, int cposx, int cposy, int cposz) {
+    public void makeStinkyHouse(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int k;
         int i;
-        Block bid;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.StinkyHouseContentsList;
+        net.minecraft.world.level.block.Block bid;
         int height = 2;
         int width = 9;
         int length = 12;
@@ -5406,445 +5259,467 @@ public class GenericDungeon {
         int yardlength = 24;
         for (i = 0; i <= yardlength; ++i) {
             for (k = 0; k <= yardwidth; ++k) {
-                bid = Blocks.AIR;
+                bid = net.minecraft.world.level.block.Blocks.AIR;
                 if (i == 0 || i == yardlength || k == 0 || k == yardwidth) {
-                    bid = Blocks.OAK_FENCE;
+                    bid = net.minecraft.world.level.block.Blocks.OAK_FENCE;
                 }
-                if (bid == Blocks.OAK_FENCE && world.rand.nextInt(3) == 1) {
-                    bid = Blocks.AIR;
+                if (bid == net.minecraft.world.level.block.Blocks.OAK_FENCE && rand.nextInt(3) == 1) {
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                 }
-                if (bid == Blocks.AIR && world.rand.nextInt(10) == 1) {
-                    bid = Blocks.DEADBUSH;
+                if (bid == net.minecraft.world.level.block.Blocks.AIR && rand.nextInt(10) == 1) {
+                    bid = net.minecraft.world.level.block.Blocks.DEAD_BUSH;
                 }
-                if (bid == Blocks.AIR) continue;
-                this.FastSetBlock(world, cposx + i - 5, cposy + 1, cposz + k - 4, bid);
+                if (bid == net.minecraft.world.level.block.Blocks.AIR) {
+                    continue;
+                }
+                this.FastSetBlock(level, cposx + i - 5, cposy + 1, cposz + k - 4, bid);
             }
         }
         for (i = 0; i <= length; ++i) {
             for (k = 0; k <= width; ++k) {
                 for (int j = 0; j <= height; ++j) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || i == length || k == 0 || k == width) {
-                        bid = Blocks.PLANKS;
+                        bid = net.minecraft.world.level.block.Blocks.OAK_PLANKS;
                     }
-                    if (bid == Blocks.PLANKS && j == 1 && (i == 1 || i == length - 1 || k == 1 || k == width - 1)) {
-                        bid = Blocks.GLASS_PANE;
+                    if (bid == net.minecraft.world.level.block.Blocks.OAK_PLANKS
+                            && j == 1
+                            && (i == 1 || i == length - 1 || k == 1 || k == width - 1)) {
+                        bid = net.minecraft.world.level.block.Blocks.GLASS_PANE;
                     }
                     if (j == height) {
-                        bid = Blocks.PLANKS;
+                        bid = net.minecraft.world.level.block.Blocks.OAK_PLANKS;
                     }
-                    if (world.rand.nextInt(10) == 1) {
-                        bid = Blocks.AIR;
+                    if (rand.nextInt(10) == 1) {
+                        bid = net.minecraft.world.level.block.Blocks.AIR;
                     }
                     if (!(j != 0 && j != 1 || i != 0 || k != width / 2 && k != width / 2 + 1)) {
-                        bid = Blocks.AIR;
+                        bid = net.minecraft.world.level.block.Blocks.AIR;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k, bid);
+                    this.FastSetBlock(level, cposx + i, cposy + j + 1, cposz + k, bid);
                 }
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 2, cposy + 1, cposz + 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 2, cposy + 1, cposz + 2);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "stink_bug"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + length - 2, cposy + 1, cposz + width - 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + length - 2, cposy + 1, cposz + width - 2);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "stinky"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + length / 2, cposy + 1, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + length / 2, cposy + 1, cposz + width / 2);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(8 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx + 2, cposy + 1, cposz + 2, "chaospersists", "stink_bug");
+        this.placeLevelSpawner(level, cposx + length - 2, cposy + 1, cposz + width - 2, "chaospersists", "stinky");
+        this.fillLevelChestAt(
+                level, rand, cposx + length / 2, cposy + 1, cposz + width / 2, 0, this.StinkyHouseContentsList, 8 + rand.nextInt(5));
     }
 
-    public void makeRubberDuckyPond(World world, int cposx, int cposy, int cposz) {
+    public void makeRubberDuckyPond(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int i;
-        Block bid = Blocks.AIR;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.RubberDuckyContentsList;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         for (i = 0; i < 2; ++i) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + 6, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + 6, cposz);
-            if (tileentitymobspawner == null) continue;
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rubber_ducky"));
+            this.placeLevelSpawner(level, cposx + i, cposy + 6, cposz, "chaospersists", "rubber_ducky");
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 5, cposz), Blocks.CHEST.getDefaultState(), 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 5, cposz), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + 1, cposy + 5, cposz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(8 + world.rand.nextInt(5)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 4, cposz), Blocks.GLASS.getDefaultState(), 2);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 4, cposz), Blocks.GLASS.getDefaultState(), 2);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx, cposy + 5, cposz),
+                net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState(),
+                2);
+        this.fillLevelChestAt(
+                level, rand, cposx + 1, cposy + 5, cposz, 0, this.RubberDuckyContentsList, 8 + rand.nextInt(5));
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx, cposy + 4, cposz),
+                net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(),
+                2);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + 1, cposy + 4, cposz),
+                net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(),
+                2);
         for (i = 0; i < 2; ++i) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + 3, cposz), Blocks.WATER.getDefaultState(), 3);
+            level.setBlock(
+                    new net.minecraft.core.BlockPos(cposx + i, cposy + 3, cposz),
+                    net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                    3);
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 3, cposz), Blocks.FLOWING_WATER.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 2, cposy + 3, cposz), Blocks.FLOWING_WATER.getDefaultState(), 3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx - 1, cposy + 3, cposz),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + 2, cposy + 3, cposz),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
         for (i = 0; i < 12; ++i) {
             for (int k = 0; k < 11; ++k) {
-                bid = Blocks.WATER;
+                bid = net.minecraft.world.level.block.Blocks.WATER;
                 if (i == 0 || k == 0 || i == 11 || k == 10) {
-                    bid = Blocks.SAND;
+                    bid = net.minecraft.world.level.block.Blocks.SAND;
                 }
-                this.FastSetBlock(world, cposx + i - 5, cposy, cposz + k - 5, bid);
-                bid = Blocks.AIR;
-                this.FastSetBlock(world, cposx + i - 5, cposy + 1, cposz + k - 5, bid);
-                this.FastSetBlock(world, cposx + i - 5, cposy + 2, cposz + k - 5, bid);
+                this.FastSetBlock(level, cposx + i - 5, cposy, cposz + k - 5, bid);
+                bid = net.minecraft.world.level.block.Blocks.AIR;
+                this.FastSetBlock(level, cposx + i - 5, cposy + 1, cposz + k - 5, bid);
+                this.FastSetBlock(level, cposx + i - 5, cposy + 2, cposz + k - 5, bid);
             }
         }
     }
 
-    public void makeWhiteHouse(World world, int cposx, int cposy, int cposz) {
-        Object tileentitymobspawner = null;
-        Object chest = null;
-        Object chestContents = null;
-        this.makefountain(world, cposx - 5, cposy, cposz - 15);
-        this.makefountain(world, cposx + 15, cposy, cposz - 15);
-        this.makewalkway(world, cposx + 7, cposy, cposz - 15);
-        this.makewhbase(world, cposx - 4, cposy, cposz - 6);
-        this.makewhwalls(world, cposx - 3, cposy + 2, cposz - 5);
-        this.makewhroof(world, cposx - 4, cposy, cposz - 6);
-        this.makewhinterior(world, cposx - 1, cposy + 2, cposz - 3);
+    public void makeWhiteHouse(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        this.makefountain(level, cposx - 5, cposy, cposz - 15);
+        this.makefountain(level, cposx + 15, cposy, cposz - 15);
+        this.makewalkway(level, cposx + 7, cposy, cposz - 15);
+        this.makewhbase(level, cposx - 4, cposy, cposz - 6);
+        this.makewhwalls(level, cposx - 3, cposy + 2, cposz - 5);
+        this.makewhroof(level, cposx - 4, cposy, cposz - 6);
+        this.makewhinterior(level, cposx - 1, cposy + 2, cposz - 3);
     }
 
-    private void makefountain(World world, int cposx, int cposy, int cposz) {
-        Block bid = Blocks.AIR;
+    private void makefountain(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.block.Block air = net.minecraft.world.level.block.Blocks.AIR;
         for (int i = 0; i < 7; ++i) {
             for (int k = 0; k < 5; ++k) {
                 for (int j = 0; j < 15; ++j) {
-                    bid = Blocks.WATER;
+                    bid = net.minecraft.world.level.block.Blocks.WATER;
                     if (i == 0 || k == 0 || i == 6 || k == 4) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     }
                     if (j == 0) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     }
                     if (j == 1 && i == 3 && k == 2) {
-                        bid = Blocks.GLOWSTONE;
+                        bid = net.minecraft.world.level.block.Blocks.GLOWSTONE;
                     }
                     if (j > 1) {
-                        bid = Blocks.AIR;
+                        bid = air;
                         if (j <= 4 && i == 3 && k == 2) {
-                            bid = Blocks.QUARTZ_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                         }
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, bid);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, bid);
                 }
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 3, cposy + 5, cposz + 2), Blocks.WATER.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 2, cposy + 5, cposz + 2), Blocks.FLOWING_WATER.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 4, cposy + 5, cposz + 2), Blocks.FLOWING_WATER.getDefaultState(), 3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + 3, cposy + 5, cposz + 2),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + 2, cposy + 5, cposz + 2),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + 4, cposy + 5, cposz + 2),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
     }
 
-    private void makewalkway(World world, int cposx, int cposy, int cposz) {
-        Block bid = Blocks.AIR;
+    private void makewalkway(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.block.Block air = net.minecraft.world.level.block.Blocks.AIR;
         for (int i = 0; i < 3; ++i) {
             for (int k = 0; k < 10; ++k) {
                 for (int j = 0; j < 15; ++j) {
-                    bid = Blocks.QUARTZ_BLOCK;
+                    bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     if (j == 1) {
-                        bid = Blocks.AIR;
+                        bid = air;
                         if (k > 6) {
-                            bid = Blocks.QUARTZ_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                         }
                     }
                     if (j > 1) {
-                        bid = Blocks.AIR;
+                        bid = air;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, bid);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, bid);
                 }
             }
         }
     }
 
-    private void makewhbase(World world, int cposx, int cposy, int cposz) {
+    private void makewhbase(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         int i;
         int k;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.block.Block crystalTorch =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalTorch;
         for (i = 0; i < 25; ++i) {
             for (k = 0; k < 25; ++k) {
-                bid = Blocks.QUARTZ_BLOCK;
-                this.FastSetBlock(world, cposx + i, cposy + 1, cposz + k, bid);
+                bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
+                this.FastSetBlock(level, cposx + i, cposy + 1, cposz + k, bid);
                 if (i != 0 && i != 24 || k != 0 && k != 24) continue;
-                this.FastSetBlock(world, cposx + i, cposy + 2, cposz + k, ChaosPersists.CrystalTorch);
+                this.FastSetBlock(level, cposx + i, cposy + 2, cposz + k, crystalTorch);
             }
         }
         for (i = 1; i < 24; ++i) {
             for (k = 1; k < 24; ++k) {
-                bid = Blocks.QUARTZ_BLOCK;
-                this.FastSetBlock(world, cposx + i, cposy + 2, cposz + k, bid);
+                bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
+                this.FastSetBlock(level, cposx + i, cposy + 2, cposz + k, bid);
             }
         }
     }
 
-    private void makewhwalls(World world, int cposx, int cposy, int cposz) {
-        Block bid = Blocks.AIR;
+    private void makewhwalls(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.block.Block air = net.minecraft.world.level.block.Blocks.AIR;
         for (int i = 0; i < 23; ++i) {
             for (int k = 0; k < 23; ++k) {
                 for (int j = 0; j < 6; ++j) {
-                    bid = Blocks.AIR;
+                    bid = air;
                     if (i == 0 || k == 0 || i == 22 || k == 22) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     }
-                    if (j != 0 && bid != Blocks.AIR) {
+                    if (j != 0 && bid != air) {
                         if (k == 22) {
                             if ((j & 1) == 1) {
                                 if ((i & 1) == 0 || (k & 1) == 0) {
-                                    bid = Blocks.GLASS_PANE;
+                                    bid = net.minecraft.world.level.block.Blocks.GLASS_PANE;
                                 }
                             } else if ((i & 1) == 1 || (k & 1) == 1) {
-                                bid = Blocks.GLASS_PANE;
+                                bid = net.minecraft.world.level.block.Blocks.GLASS_PANE;
                             }
                         } else if (k != 0) {
                             if ((j & 1) == 1) {
                                 if (i == 2 || k == 2 || i == 20 || k == 20) {
-                                    bid = Blocks.GLASS_PANE;
+                                    bid = net.minecraft.world.level.block.Blocks.GLASS_PANE;
                                 }
                             } else if (i == 1 || k == 1 || i == 21 || k == 21) {
-                                bid = Blocks.GLASS_PANE;
+                                bid = net.minecraft.world.level.block.Blocks.GLASS_PANE;
                             }
                             if (j > 0 && j < 5 && k > 7 && k < 15) {
-                                bid = Blocks.GLASS_PANE;
+                                bid = net.minecraft.world.level.block.Blocks.GLASS_PANE;
                             }
                         } else if ((j & 1) == 1) {
                             if (i == 2 || k == 2 || i == 20 || k == 20) {
-                                bid = Blocks.GLASS_PANE;
+                                bid = net.minecraft.world.level.block.Blocks.GLASS_PANE;
                             }
                         } else if (i == 1 || k == 1 || i == 21 || k == 21) {
-                            bid = Blocks.GLASS_PANE;
+                            bid = net.minecraft.world.level.block.Blocks.GLASS_PANE;
                         }
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, bid);
+                    this.FastSetBlock(level, cposx + i, cposy + j, cposz + k, bid);
                 }
             }
         }
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 11), (int)cposy, (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 11), (int)(cposy + 1), (int)cposz, (Block)Blocks.AIR, (int)0, (int)2);
-        this.placeDoor(world, new BlockPos(cposx + 11, cposy, cposz), EnumFacing.SOUTH, (BlockDoor)Blocks.IRON_DOOR);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + 12), (int)(cposy + 1), (int)(cposz - 1), (Block)Blocks.STONE_BUTTON, (int)4, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + 11, cposy, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + 11, cposy + 1, cposz, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+        this.placeLevelDoor(
+                level,
+                cposx + 11,
+                cposy,
+                cposz,
+                net.minecraft.core.Direction.SOUTH,
+                net.minecraft.world.level.block.Blocks.IRON_DOOR);
+        ChaosPersists.setBlockFast(
+                level, cposx + 12, cposy + 1, cposz - 1, net.minecraft.world.level.block.Blocks.STONE_BUTTON, 4, 2);
     }
 
-    private void makewhroof(World world, int cposx, int cposy, int cposz) {
-        Block bid = Blocks.AIR;
+    private void makewhroof(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.block.Block air = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.block.Block crystalTorch =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalTorch;
         for (int j = 0; j < 13; ++j) {
             for (int i = 0; i < 25 - 2 * j; ++i) {
                 for (int k = 0; k < 25 - 2 * j; ++k) {
-                    bid = Blocks.AIR;
+                    bid = air;
                     if (i == 0 || k == 0 || i == 24 - 2 * j || k == 24 - 2 * j) {
-                        bid = Blocks.QUARTZ_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.QUARTZ_BLOCK;
                     }
-                    if (j == 0 && bid != Blocks.AIR && (i + k & 1) == 1) {
-                        bid = Blocks.EMERALD_BLOCK;
+                    if (j == 0 && bid != air && (i + k & 1) == 1) {
+                        bid = net.minecraft.world.level.block.Blocks.EMERALD_BLOCK;
                     }
                     if (j == 12) {
-                        bid = Blocks.EMERALD_BLOCK;
+                        bid = net.minecraft.world.level.block.Blocks.EMERALD_BLOCK;
                     }
-                    this.FastSetBlock(world, cposx + i + j, cposy + 8 + j, cposz + k + j, bid);
+                    this.FastSetBlock(level, cposx + i + j, cposy + 8 + j, cposz + k + j, bid);
                     if (i != 0 && i != 24 - 2 * j || k != 0 && k != 24 - 2 * j) continue;
-                    this.FastSetBlock(world, cposx + i + j, cposy + 8 + j + 1, cposz + k + j, ChaosPersists.CrystalTorch);
+                    this.FastSetBlock(level, cposx + i + j, cposy + 8 + j + 1, cposz + k + j, crystalTorch);
                 }
             }
         }
-        bid = Blocks.OAK_FENCE;
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 11, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 10, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 9, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 8, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 7, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 6, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 5, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 4, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 3, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 2, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 1, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 0, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 11, cposy + 8 + 0, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 13, cposy + 8 + 0, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 0, cposz + 11, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 0, cposz + 13, bid);
-        bid = ChaosPersists.CrystalTorch;
-        this.FastSetBlock(world, cposx + 11, cposy + 8 + 1, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 13, cposy + 8 + 1, cposz + 12, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 1, cposz + 11, bid);
-        this.FastSetBlock(world, cposx + 12, cposy + 8 + 1, cposz + 13, bid);
+        bid = net.minecraft.world.level.block.Blocks.OAK_FENCE;
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 11, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 10, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 9, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 8, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 7, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 6, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 5, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 4, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 3, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 2, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 1, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 0, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 11, cposy + 8 + 0, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 13, cposy + 8 + 0, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 0, cposz + 11, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 0, cposz + 13, bid);
+        bid = crystalTorch;
+        this.FastSetBlock(level, cposx + 11, cposy + 8 + 1, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 13, cposy + 8 + 1, cposz + 12, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 1, cposz + 11, bid);
+        this.FastSetBlock(level, cposx + 12, cposy + 8 + 1, cposz + 13, bid);
     }
 
-    private void makewhinterior(World world, int cposx, int cposy, int cposz) {
+    private void makewhinterior(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int i;
         int zoff = 1;
         int xoff = 0;
         for (i = 0; i < 8; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff), (Block)Blocks.QUARTZ_STAIRS, (int)3, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 1), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 2), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 3), (Block)Blocks.QUARTZ_STAIRS, (int)2, (int)2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 3, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 1, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 2, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 3, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 2, 2);
         }
         xoff = 11;
         for (i = 0; i < 8; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff), (Block)Blocks.QUARTZ_STAIRS, (int)3, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 1), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 2), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 3), (Block)Blocks.QUARTZ_STAIRS, (int)2, (int)2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 3, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 1, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 2, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 3, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 2, 2);
         }
         zoff = 7;
         xoff = 0;
         for (i = 0; i < 8; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff), (Block)Blocks.QUARTZ_STAIRS, (int)3, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 1), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 2), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 3), (Block)Blocks.QUARTZ_STAIRS, (int)2, (int)2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 3, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 1, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 2, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 3, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 2, 2);
         }
         xoff = 11;
         for (i = 0; i < 8; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff), (Block)Blocks.QUARTZ_STAIRS, (int)3, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 1), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 2), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 3), (Block)Blocks.QUARTZ_STAIRS, (int)2, (int)2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 3, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 1, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 2, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 3, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 2, 2);
         }
         zoff = 13;
         xoff = 0;
         for (i = 0; i < 8; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff), (Block)Blocks.QUARTZ_STAIRS, (int)3, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 1), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 2), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 3), (Block)Blocks.QUARTZ_STAIRS, (int)2, (int)2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 3, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 1, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 2, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 3, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 2, 2);
         }
         xoff = 11;
         for (i = 0; i < 8; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff), (Block)Blocks.QUARTZ_STAIRS, (int)3, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 1), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 2), (Block)Blocks.PISTON_EXTENSION, (int)1, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + xoff + i), (int)cposy, (int)(cposz + zoff + 3), (Block)Blocks.QUARTZ_STAIRS, (int)2, (int)2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 3, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 1, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 2, net.minecraft.world.level.block.Blocks.PISTON_HEAD, 1, 2);
+            ChaosPersists.setBlockFast(
+                    level, cposx + xoff + i, cposy, cposz + zoff + 3, net.minecraft.world.level.block.Blocks.QUARTZ_STAIRS, 2, 2);
         }
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
-        chestContents = this.WhiteHouseContentsList;
         zoff = 18;
         xoff = 2;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff, cposy + 1, cposz + zoff), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + xoff, cposy + 1, cposz + zoff);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "criminal"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff, cposy, cposz + zoff), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + xoff, cposy, cposz + zoff);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx + xoff, cposy + 1, cposz + zoff, "chaospersists", "criminal");
+        this.fillLevelChestAt(level, rand, cposx + xoff, cposy, cposz + zoff, 0, this.WhiteHouseContentsList, 3 + rand.nextInt(5));
         xoff = 6;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff, cposy + 1, cposz + zoff), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + xoff, cposy + 1, cposz + zoff);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "criminal"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff, cposy, cposz + zoff), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + xoff, cposy, cposz + zoff);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx + xoff, cposy + 1, cposz + zoff, "chaospersists", "criminal");
+        this.fillLevelChestAt(level, rand, cposx + xoff, cposy, cposz + zoff, 0, this.WhiteHouseContentsList, 3 + rand.nextInt(5));
         xoff = 12;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff, cposy + 1, cposz + zoff), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + xoff, cposy + 1, cposz + zoff);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "criminal"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff, cposy, cposz + zoff), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + xoff, cposy, cposz + zoff);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx + xoff, cposy + 1, cposz + zoff, "chaospersists", "criminal");
+        this.fillLevelChestAt(level, rand, cposx + xoff, cposy, cposz + zoff, 0, this.WhiteHouseContentsList, 3 + rand.nextInt(5));
         xoff = 16;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff, cposy + 1, cposz + zoff), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + xoff, cposy + 1, cposz + zoff);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "criminal"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + xoff, cposy, cposz + zoff), Blocks.CHEST.getDefaultState(), 2);
-        chest = this.getChestTileEntity(world, cposx + xoff, cposy, cposz + zoff);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(3 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx + xoff, cposy + 1, cposz + zoff, "chaospersists", "criminal");
+        this.fillLevelChestAt(level, rand, cposx + xoff, cposy, cposz + zoff, 0, this.WhiteHouseContentsList, 3 + rand.nextInt(5));
     }
 
-    public void makeQueenAltar(World world, int cposx, int cposy, int cposz) {
+    public void makeQueenAltar(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         int k;
         int i;
         int j;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         int width = 51;
         int length = 51;
         int height = 48;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
         for (j = 0; j <= height + 10; ++j) {
             for (i = -5; i < width + 5; ++i) {
                 for (k = -5; k < length + 5; ++k) {
-                    bid = Blocks.AIR;
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 }
             }
         }
         j = 0;
         for (i = 0; i < width; ++i) {
             for (k = 0; k < length; ++k) {
-                bid = Blocks.GRASS;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                bid = net.minecraft.world.level.block.Blocks.GRASS_BLOCK;
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 for (int v = 1; v < 10; ++v) {
-                    bid = world.getBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j - v, cposz + k)).getBlock();
-                    if (bid != Blocks.AIR && bid != Blocks.TALLGRASS && bid != Blocks.WATER) continue;
-                    bid = Blocks.DIRT;
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j - v), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                    net.minecraft.core.BlockPos checkPos = new net.minecraft.core.BlockPos(cposx + i, cposy + j - v, cposz + k);
+                    net.minecraft.world.level.block.state.BlockState checkState = level.getBlockState(checkPos);
+                    if (!checkState.isAir()
+                            && !checkState.is(net.minecraft.world.level.block.Blocks.TALL_GRASS)
+                            && !checkState.is(net.minecraft.world.level.block.Blocks.WATER)) {
+                        continue;
+                    }
+                    bid = net.minecraft.world.level.block.Blocks.DIRT;
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j - v, cposz + k, bid, 0, 2);
                 }
             }
         }
-        this.makequeencolumn(world, cposx + 1, cposy + 1, cposz + 1);
-        this.makequeencolumn(world, cposx + width - 8, cposy + 1, cposz + length - 8);
-        this.makequeencolumn(world, cposx + 1, cposy + 1, cposz + length - 8);
-        this.makequeencolumn(world, cposx + width - 8, cposy + 1, cposz + 1);
+        this.makequeencolumn(level, cposx + 1, cposy + 1, cposz + 1);
+        this.makequeencolumn(level, cposx + width - 8, cposy + 1, cposz + length - 8);
+        this.makequeencolumn(level, cposx + 1, cposy + 1, cposz + length - 8);
+        this.makequeencolumn(level, cposx + width - 8, cposy + 1, cposz + 1);
         j = height - 1;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = 0; i < width; ++i) {
             for (k = 0; k < length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         j = height;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = -1; i <= width; ++i) {
             for (k = -1; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
-        this.makequeenbackground(world, cposx + 4, cposy + 10, cposz + 9);
-        this.makequeencenteraltar(world, cposx + width / 2, cposy, cposz + length / 2);
+        this.makequeenbackground(level, cposx + 4, cposy + 10, cposz + 9);
+        this.makequeencenteraltar(level, cposx + width / 2, cposy, cposz + length / 2);
     }
 
-    private void makequeencolumn(World world, int cposx, int cposy, int cposz) {
+    private void makequeencolumn(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         int k;
         int i;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.block.Block amethystBlock =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyBlockAmethystBlock;
         int meta = 0;
         int width = 5;
         int length = 5;
         int height = 44;
-        if (world.isRemote) {
+        if (level.isClientSide()) {
             return;
         }
         int j = 0;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = 0; i < width + 2; ++i) {
             for (k = 0; k < length + 2; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)meta, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + height + 1), (int)(cposz + k), (Block)bid, (int)meta, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, meta, 2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j + height + 1, cposz + k, bid, meta, 2);
             }
         }
         ++cposx;
@@ -5853,62 +5728,66 @@ public class GenericDungeon {
         for (j = 0; j < height; ++j) {
             for (i = 0; i < width; ++i) {
                 for (k = 0; k < length; ++k) {
-                    bid = Blocks.AIR;
+                    bid = net.minecraft.world.level.block.Blocks.AIR;
                     if (i == 0 || k == 0 || i == width - 1 || k == length - 1) {
-                        bid = Blocks.OBSIDIAN;
+                        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                     }
-                    if (j % 4 == 0 && bid != Blocks.AIR && (i == 2 || k == 2)) {
-                        bid = Blocks.REDSTONE_BLOCK;
+                    if (j % 4 == 0
+                            && bid != net.minecraft.world.level.block.Blocks.AIR
+                            && (i == 2 || k == 2)) {
+                        bid = net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK;
                     }
-                    if (j % 4 == 1 && bid != Blocks.AIR) {
+                    if (j % 4 == 1 && bid != net.minecraft.world.level.block.Blocks.AIR) {
                         if (i == 1 || k == 1) {
-                            bid = Blocks.REDSTONE_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK;
                         }
                         if (i == 3 || k == 3) {
-                            bid = Blocks.REDSTONE_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK;
                         }
                     }
-                    if (j % 4 == 2 && bid != Blocks.AIR) {
+                    if (j % 4 == 2 && bid != net.minecraft.world.level.block.Blocks.AIR) {
                         if (i == 1 || k == 1) {
-                            bid = Blocks.REDSTONE_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK;
                         }
                         if (i == 3 || k == 3) {
-                            bid = Blocks.REDSTONE_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK;
                         }
                         if (i == 2 || k == 2) {
-                            bid = ChaosPersists.MyBlockAmethystBlock;
+                            bid = amethystBlock;
                         }
                     }
-                    if (j % 4 == 3 && bid != Blocks.AIR) {
+                    if (j % 4 == 3 && bid != net.minecraft.world.level.block.Blocks.AIR) {
                         if (i == 1 || k == 1) {
-                            bid = Blocks.REDSTONE_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK;
                         }
                         if (i == 3 || k == 3) {
-                            bid = Blocks.REDSTONE_BLOCK;
+                            bid = net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK;
                         }
                     }
                     meta = 0;
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)meta, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, meta, 2);
                 }
             }
         }
     }
 
-    private void makequeenbackground(World world, int cposx, int cposy, int cposz) {
+    private void makequeenbackground(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         int i;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
         boolean meta = false;
         int curz = 0;
         int cury = 0;
         int height = 33;
         int width = 33;
-        bid = Blocks.STONE;
+        net.minecraft.world.level.block.Block rubyBlock =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyBlockRubyBlock;
+        bid = net.minecraft.world.level.block.Blocks.STONE;
         for (int m = 0; m < this.queen.length; ++m) {
             int v = this.queen[m];
             if (v < 0) {
-                bid = Blocks.STONE;
+                bid = net.minecraft.world.level.block.Blocks.STONE;
                 while (curz < width) {
-                    ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + cury), (int)(cposz + curz), (Block)bid, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx, cposy + cury, cposz + curz, bid, 0, 2);
                     ++curz;
                 }
                 ++cury;
@@ -5916,63 +5795,65 @@ public class GenericDungeon {
                 continue;
             }
             for (int n = 0; n < v; ++n) {
-                ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + cury), (int)(cposz + curz), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx, cposy + cury, cposz + curz, bid, 0, 2);
                 ++curz;
             }
-            bid = bid == Blocks.STONE ? ChaosPersists.MyBlockRubyBlock : Blocks.STONE;
+            bid = bid == net.minecraft.world.level.block.Blocks.STONE ? rubyBlock : net.minecraft.world.level.block.Blocks.STONE;
         }
         for (i = 0; i < width; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy - 1), (int)(cposz + i), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx, cposy - 1, cposz + i, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
         }
         for (i = 0; i < width; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + height), (int)(cposz + i), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx, cposy + height, cposz + i, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
         }
         for (i = -1; i <= height; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + i), (int)(cposz - 1), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx, cposy + i, cposz - 1, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
         }
         for (i = -1; i <= height; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + i), (int)(cposz + width), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx, cposy + i, cposz + width, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
         }
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy - 2), (int)(cposz - 2), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + height + 1), (int)(cposz + width + 1), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy - 2), (int)(cposz + width + 1), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + height + 1), (int)(cposz - 2), (Block)Blocks.DIAMOND_BLOCK, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy - 1), (int)(cposz - 2), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + height + 2), (int)(cposz + width + 1), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy - 1), (int)(cposz + width + 1), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)cposx, (int)(cposy + height + 2), (int)(cposz - 2), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx, cposy - 2, cposz - 2, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy + height + 1, cposz + width + 1, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy - 2, cposz + width + 1, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy + height + 1, cposz - 2, net.minecraft.world.level.block.Blocks.DIAMOND_BLOCK, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy - 1, cposz - 2, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy + height + 2, cposz + width + 1, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy - 1, cposz + width + 1, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx, cposy + height + 2, cposz - 2, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
     }
 
-    private void makequeencenteraltar(World world, int cposx, int cposy, int cposz) {
+    private void makequeencenteraltar(net.minecraft.world.level.Level level, int cposx, int cposy, int cposz) {
         int k;
         int i;
-        Block bid = Blocks.AIR;
+        net.minecraft.world.level.block.Block bid = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.block.Block amethystBlock =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyBlockAmethystBlock;
         boolean meta = false;
         int width = 10;
         int length = 10;
         int j = 0;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 6;
         length = 20;
         j = 0;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 20;
         length = 6;
         j = 0;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 8;
@@ -5980,8 +5861,8 @@ public class GenericDungeon {
         j = 1;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.OBSIDIAN;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 4;
@@ -5989,14 +5870,14 @@ public class GenericDungeon {
         j = 1;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.OBSIDIAN;
+                bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                 if (i == width && (k == - length || k == length)) {
-                    bid = ChaosPersists.MyBlockAmethystBlock;
+                    bid = amethystBlock;
                 }
                 if (i == - width && (k == - length || k == length)) {
-                    bid = ChaosPersists.MyBlockAmethystBlock;
+                    bid = amethystBlock;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 18;
@@ -6004,121 +5885,146 @@ public class GenericDungeon {
         j = 1;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                bid = Blocks.OBSIDIAN;
+                bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
                 if (i == width && (k == - length || k == length)) {
-                    bid = ChaosPersists.MyBlockAmethystBlock;
+                    bid = amethystBlock;
                 }
                 if (i == - width && (k == - length || k == length)) {
-                    bid = ChaosPersists.MyBlockAmethystBlock;
+                    bid = amethystBlock;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 7;
         length = 7;
         j = 2;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 if (i == width && (k == - length || k == length)) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
                 }
                 if (i != - width || k != - length && k != length) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
             }
         }
         width = 3;
         length = 17;
         j = 2;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 17;
         length = 3;
         j = 2;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 6;
         length = 6;
         j = 3;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 2;
         length = 16;
         j = 3;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 16;
         length = 2;
         j = 3;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
             }
         }
         width = 2;
         length = 2;
         j = 4;
-        bid = Blocks.OBSIDIAN;
+        bid = net.minecraft.world.level.block.Blocks.OBSIDIAN;
         for (i = - width; i <= width; ++i) {
             for (k = - length; k <= length; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)bid, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, bid, 0, 2);
                 if (i == width && (k == - length || k == length)) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
                 }
                 if (i != - width || k != - length && k != length) continue;
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + 1), (int)(cposz + k), (Block)ChaosPersists.CrystalTorch, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j + 1, cposz + k, (net.minecraft.world.level.block.Block)(Object)ChaosPersists.CrystalTorch, 0, 2);
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j, cposz), Blocks.CHEST.getDefaultState());
-        this.setBlockMeta(world,cposx, cposy + j, cposz, 2, 3);
-        TileEntityChest chest = this.getChestTileEntity(world, cposx, cposy + j, cposz);
-        if (chest != null) {
-            chest.setInventorySlotContents(13, new ItemStack(ChaosPersists.TheQueenEgg));
+        level.setBlock(new net.minecraft.core.BlockPos(cposx, cposy + j, cposz), net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState().setValue(net.minecraft.world.level.block.ChestBlock.FACING, chestFacingFromLegacyMeta(2)), 3);
+        net.minecraft.world.level.block.entity.BlockEntity queenChestBe = level.getBlockEntity(new net.minecraft.core.BlockPos(cposx, cposy + j, cposz));
+        if (queenChestBe instanceof net.minecraft.world.level.block.entity.ChestBlockEntity queenChest) {
+            queenChest.setItem(13, new net.minecraft.world.item.ItemStack((net.minecraft.world.item.Item)(Object)ChaosPersists.TheQueenEgg));
         }
     }
 
-    public void makeFrogPond(World world, int cposx, int cposy, int cposz) {
-        TileEntityMobSpawner tileentitymobspawner = null;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "frog"));
-        }
+    public void makeFrogPond(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        this.placeLevelSpawner(level, cposx, cposy + 2, cposz, "chaospersists", "frog");
         for (int i = -3; i <= 3; ++i) {
             for (int j = -3; j <= 3; ++j) {
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy, cposz + j), Blocks.WATER.getDefaultState(), 3);
+                level.setBlock(
+                        new net.minecraft.core.BlockPos(cposx + i, cposy, cposz + j),
+                        net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                        3);
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz), Blocks.WATER.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 1, cposz), Blocks.FLOWING_WATER.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 1, cposz), Blocks.FLOWING_WATER.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz - 1), Blocks.FLOWING_WATER.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 1, cposz + 1), Blocks.FLOWING_WATER.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 2, cposz), Blocks.WATERLILY.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 2, cposz), Blocks.WATERLILY.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 2, cposz - 1), Blocks.WATERLILY.getDefaultState(), 3);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 2, cposz + 1), Blocks.WATERLILY.getDefaultState(), 3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx, cposy + 1, cposz),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx - 1, cposy + 1, cposz),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + 1, cposy + 1, cposz),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx, cposy + 1, cposz - 1),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx, cposy + 1, cposz + 1),
+                net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx - 1, cposy + 2, cposz),
+                net.minecraft.world.level.block.Blocks.LILY_PAD.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx + 1, cposy + 2, cposz),
+                net.minecraft.world.level.block.Blocks.LILY_PAD.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx, cposy + 2, cposz - 1),
+                net.minecraft.world.level.block.Blocks.LILY_PAD.defaultBlockState(),
+                3);
+        level.setBlock(
+                new net.minecraft.core.BlockPos(cposx, cposy + 2, cposz + 1),
+                net.minecraft.world.level.block.Blocks.LILY_PAD.defaultBlockState(),
+                3);
     }
 
-    public void makePumpkin(World world, int cposx, int cposy, int cposz) {
+    public void makePumpkin(Object worldObj, int cposx, int cposy, int cposz) {
         int k;
         int j;
         int i;
@@ -6128,252 +6034,214 @@ public class GenericDungeon {
         int dark_green = 13;
         int orange = 1;
         int which_color = 0;
-        Block blk = Blocks.AIR;
-        TileEntityMobSpawner tileentitymobspawner = null;
+        net.minecraft.world.level.block.Block blk = net.minecraft.world.level.block.Blocks.AIR;
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
         for (i = 0; i < width; ++i) {
             for (j = 0; j < height; ++j) {
                 for (k = 0; k < depth; ++k) {
                     which_color = 0;
-                    blk = Blocks.AIR;
+                    blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (j == 0 || j == height - 1) {
-                        blk = Blocks.STAINED_HARDENED_CLAY;
+                        blk = net.minecraft.world.level.block.Blocks.TERRACOTTA;
                         which_color = orange;
                     }
                     if (i == 0 || i == width - 1) {
-                        blk = Blocks.STAINED_HARDENED_CLAY;
+                        blk = net.minecraft.world.level.block.Blocks.TERRACOTTA;
                         which_color = orange;
                     }
                     if (k == 0 || k == depth - 1) {
-                        blk = Blocks.STAINED_HARDENED_CLAY;
+                        blk = net.minecraft.world.level.block.Blocks.TERRACOTTA;
                         which_color = orange;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)blk, (int)which_color, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, blk, which_color, 2);
                 }
             }
         }
         i = width / 2 - 1;
         k = 0;
         j = 11;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 5), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i + 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 5, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 10;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 5), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i + 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 5, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 9;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 5), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i + 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 5, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 8;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 2), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i + 2, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 7;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 2), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i + 2, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 4;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 1), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i + 1, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 3;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 1), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 2), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i + 1, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 2, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 2;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 1), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 2), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i + 1, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 2, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i + 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 1;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i + 2), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i + 2, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         i = width / 2;
         k = 0;
         j = 11;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 5), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i - 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 5, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 10;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 5), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i - 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 5, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 9;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 5), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i - 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 5, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 8;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 2), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i - 2, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 7;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 2), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i - 2, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 4;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 1), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i - 1, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 3;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 1), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 2), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i - 1, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 2, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 2;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 1), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 2), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 3), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 4), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i - 1, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 2, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 3, cposy + j, cposz + k, Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(level, cposx + i - 4, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         j = 1;
-        ChaosPersists.setBlockFast((World)world, (int)(cposx + i - 2), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.AIR, (int)0, (int)2);
+        ChaosPersists.setBlockFast(level, cposx + i - 2, cposy + j, cposz + k, Blocks.AIR, 0, 2);
         k = depth / 2 - 1;
         for (j = 0; j < 4; ++j) {
             for (i = 0; i < 3; ++i) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 - i - j), (int)(cposy + height + j), (int)(cposz + k), (Block)Blocks.STAINED_HARDENED_CLAY, (int)dark_green, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + width / 2 - i - j, cposy + height + j, cposz + k, net.minecraft.world.level.block.Blocks.TERRACOTTA, dark_green, 2);
             }
         }
         for (j = 0; j < 5; ++j) {
             for (i = 0; i < 2; ++i) {
                 for (k = 0; k < 2; ++k) {
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + i - 1), (int)(cposy + j + 1), (int)(cposz + depth / 2 + k - 1), (Block)Blocks.PLANKS, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + width / 2 + i - 1, cposy + j + 1, cposz + depth / 2 + k - 1, net.minecraft.world.level.block.Blocks.OAK_PLANKS, 0, 2);
                 }
             }
         }
         j = 5;
         for (i = 0; i < 2; ++i) {
             for (k = 0; k < 2; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + i - 1), (int)(cposy + j + 1), (int)(cposz + depth / 2 + k - 1), (Block)Blocks.NETHERRACK, (int)0, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + width / 2 + i - 1, cposy + j + 1, cposz + depth / 2 + k - 1, Blocks.NETHERRACK, 0, 2);
             }
         }
         j = 6;
         k = 0;
         for (i = 0; i < 2; ++i) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + width / 2 + i - 1), (int)(cposy + j + 1), (int)(cposz + depth / 2 + k - 1), (Block)Blocks.FIRE, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx + width / 2 + i - 1, cposy + j + 1, cposz + depth / 2 + k - 1, Blocks.FIRE, 0, 2);
         }
         j = 6;
         k = 1;
-        i = 0;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + i - 1, cposy + j + 1, cposz + depth / 2 + k - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 + i - 1, cposy + j + 1, cposz + depth / 2 + k - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ghost_pumpkin_skelly"));
-        }
-        i = 1;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + i - 1, cposy + j + 1, cposz + depth / 2 + k - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 + i - 1, cposy + j + 1, cposz + depth / 2 + k - 1);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "ghost_pumpkin_skelly"));
-        }
+        this.placeLevelSpawner(level, cposx + width / 2 - 1, cposy + j + 1, cposz + depth / 2 + k - 1, "chaospersists", "ghost_pumpkin_skelly");
+        this.placeLevelSpawner(level, cposx + width / 2, cposy + j + 1, cposz + depth / 2 + k - 1, "chaospersists", "ghost_pumpkin_skelly");
     }
 
-    public void makeRoundRotator(World world, int cposx, int cposy, int cposz) {
+    public void makeRoundRotator(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         float cury;
         float curx;
         float curdeg;
-        Block blk;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
+        net.minecraft.world.level.block.Block crystalPinkBlock =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyCrystalPinkBlock;
+        net.minecraft.world.level.block.Block crystalCoalBlock =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.CrystalCoal;
         float radius = 6.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
             curx = (float)((double)radius * Math.cos(Math.toRadians(curdeg)));
             cury = (float)((double)radius * Math.sin(Math.toRadians(curdeg)));
-            blk = Blocks.BEDROCK;
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), (int)((float)(cposy + 6) + cury + 0.5f), cposz, blk);
+            this.FastSetBlock(
+                    level,
+                    (int)((float)cposx + curx + 0.5f),
+                    (int)((float)(cposy + 6) + cury + 0.5f),
+                    cposz,
+                    net.minecraft.world.level.block.Blocks.BEDROCK);
         }
         radius = 2.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
             curx = (float)((double)radius * Math.cos(Math.toRadians(curdeg)));
             cury = (float)((double)radius * Math.sin(Math.toRadians(curdeg)));
-            blk = ChaosPersists.MyCrystalPinkBlock;
-            this.FastSetBlock(world, (int)((float)cposx + curx + 0.5f), (int)((float)(cposy + 6) + cury + 0.5f), cposz, blk);
+            this.FastSetBlock(
+                    level,
+                    (int)((float)cposx + curx + 0.5f),
+                    (int)((float)(cposy + 6) + cury + 0.5f),
+                    cposz,
+                    crystalPinkBlock);
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 6 + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 1, cposy + 6 + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rotator"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 6 - 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 1, cposy + 6 - 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rotator"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 6 - 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 1, cposy + 6 - 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rotator"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + 6 + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 1, cposy + 6 + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "rotator"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 5, cposy + 6, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 5, cposy + 6, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "dungeon_beast"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 5, cposy + 6, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 5, cposy + 6, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "dungeon_beast"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 6 - 5, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 6 - 5, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "dungeon_beast"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 6 + 5, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx, cposy + 6 + 5, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "dungeon_beast"));
-        }
-        blk = ChaosPersists.CrystalCoal;
-        this.FastSetBlock(world, cposx + 1, cposy + 6, cposz, blk);
-        this.FastSetBlock(world, cposx - 1, cposy + 6, cposz, blk);
-        this.FastSetBlock(world, cposx, cposy + 6 + 1, cposz, blk);
-        this.FastSetBlock(world, cposx, cposy + 6 - 1, cposz, blk);
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + 6, cposz), Blocks.CHEST.getDefaultState());
-        this.setBlockMeta(world,cposx, cposy + 6, cposz, 2, 3);
-        chest = this.getChestTileEntity(world, cposx, cposy + 6, cposz);
-        if (chest != null) {
-            chestContents = this.CrystalBattleTowerVortexContentsList;
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(6 + world.rand.nextInt(6)));
-        }
+        this.placeLevelSpawner(level, cposx + 1, cposy + 6 + 1, cposz, "chaospersists", "rotator");
+        this.placeLevelSpawner(level, cposx - 1, cposy + 6 - 1, cposz, "chaospersists", "rotator");
+        this.placeLevelSpawner(level, cposx + 1, cposy + 6 - 1, cposz, "chaospersists", "rotator");
+        this.placeLevelSpawner(level, cposx - 1, cposy + 6 + 1, cposz, "chaospersists", "rotator");
+        this.placeLevelSpawner(level, cposx + 5, cposy + 6, cposz, "chaospersists", "dungeon_beast");
+        this.placeLevelSpawner(level, cposx - 5, cposy + 6, cposz, "chaospersists", "dungeon_beast");
+        this.placeLevelSpawner(level, cposx, cposy + 6 - 5, cposz, "chaospersists", "dungeon_beast");
+        this.placeLevelSpawner(level, cposx, cposy + 6 + 5, cposz, "chaospersists", "dungeon_beast");
+        this.FastSetBlock(level, cposx + 1, cposy + 6, cposz, crystalCoalBlock);
+        this.FastSetBlock(level, cposx - 1, cposy + 6, cposz, crystalCoalBlock);
+        this.FastSetBlock(level, cposx, cposy + 6 + 1, cposz, crystalCoalBlock);
+        this.FastSetBlock(level, cposx, cposy + 6 - 1, cposz, crystalCoalBlock);
+        this.fillLevelChestAt(
+                level, rand, cposx, cposy + 6, cposz, 2, this.CrystalBattleTowerVortexContentsList, 6 + rand.nextInt(6));
     }
 
-    public void makeRainbow(World world, int cposx, int cposy, int cposz) {
+    public void makeRainbow(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int k;
         int i;
-        Block blk;
+        net.minecraft.world.level.block.Block blk;
+        net.minecraft.world.level.block.Block terracotta = net.minecraft.world.level.block.Blocks.TERRACOTTA;
         int width = 12;
         int depth = 1;
         int blk_color = 0;
-        TileEntityMobSpawner tileentitymobspawner = null;
-        TileEntityChest chest = null;
-        WeightedRandomChestContent[] chestContents = null;
         blk_color = 0;
         int j = 35;
         width = 12;
         depth = 1;
         for (i = - width; i < width; ++i) {
             for (k = - depth; k <= depth; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.STAINED_HARDENED_CLAY, (int)blk_color, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, terracotta, blk_color, 2);
             }
         }
         k = 0;
         for (i = - width + 1; i < width; i += 3) {
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.WATER, (int)0, (int)2);
-            ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j - 1), (int)(cposz + k), (Block)Blocks.FLOWING_WATER, (int)0, (int)2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, net.minecraft.world.level.block.Blocks.WATER, 0, 2);
+            ChaosPersists.setBlockFast(level, cposx + i, cposy + j - 1, cposz + k, net.minecraft.world.level.block.Blocks.WATER, 0, 2);
         }
         width = 13;
         depth = 2;
         j = 26;
         for (i = - width; i < width; ++i) {
             for (k = - depth; k <= depth; ++k) {
-                blk = Blocks.AIR;
+                blk = net.minecraft.world.level.block.Blocks.AIR;
                 if (i == - width || i == width - 1) {
-                    blk = Blocks.STAINED_HARDENED_CLAY;
+                    blk = terracotta;
                 }
                 if (k == - depth || k == depth) {
-                    blk = Blocks.STAINED_HARDENED_CLAY;
+                    blk = terracotta;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)blk, (int)blk_color, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, blk, blk_color, 2);
             }
         }
         width = 14;
@@ -6381,14 +6249,14 @@ public class GenericDungeon {
         j = 27;
         for (i = - width; i < width; ++i) {
             for (k = - depth; k <= depth; ++k) {
-                blk = Blocks.AIR;
+                blk = net.minecraft.world.level.block.Blocks.AIR;
                 if (i == - width || i == width - 1) {
-                    blk = Blocks.STAINED_HARDENED_CLAY;
+                    blk = terracotta;
                 }
                 if (k == - depth || k == depth) {
-                    blk = Blocks.STAINED_HARDENED_CLAY;
+                    blk = terracotta;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)blk, (int)blk_color, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, blk, blk_color, 2);
             }
         }
         width = 13;
@@ -6396,14 +6264,14 @@ public class GenericDungeon {
         j = 28;
         for (i = - width; i < width; ++i) {
             for (k = - depth; k <= depth; ++k) {
-                blk = Blocks.AIR;
+                blk = net.minecraft.world.level.block.Blocks.AIR;
                 if (i == - width || i == width - 1) {
-                    blk = Blocks.STAINED_HARDENED_CLAY;
+                    blk = terracotta;
                 }
                 if (k == - depth || k == depth) {
-                    blk = Blocks.STAINED_HARDENED_CLAY;
+                    blk = terracotta;
                 }
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)blk, (int)blk_color, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, blk, blk_color, 2);
             }
         }
         j = 29;
@@ -6411,66 +6279,35 @@ public class GenericDungeon {
         depth = 1;
         for (i = - width; i < width; ++i) {
             for (k = - depth; k <= depth; ++k) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)Blocks.STAINED_HARDENED_CLAY, (int)blk_color, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, terracotta, blk_color, 2);
             }
         }
         j = 30;
         for (int m = 3; m < 11; ++m) {
             blk_color = this.blkcolors[m - 3];
             for (i = 0; i < m; ++i) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + m), (int)(cposy + j + i), (int)cposz, (Block)Blocks.STAINED_HARDENED_CLAY, (int)blk_color, (int)2);
-                ChaosPersists.setBlockFast((World)world, (int)(cposx - (m + 1)), (int)(cposy + j + i), (int)cposz, (Block)Blocks.STAINED_HARDENED_CLAY, (int)blk_color, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + m, cposy + j + i, cposz, terracotta, blk_color, 2);
+                ChaosPersists.setBlockFast(level, cposx - (m + 1), cposy + j + i, cposz, terracotta, blk_color, 2);
             }
             for (i = - m + 1; i <= m; ++i) {
-                ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j + m), (int)cposz, (Block)Blocks.STAINED_HARDENED_CLAY, (int)blk_color, (int)2);
+                ChaosPersists.setBlockFast(level, cposx + i, cposy + j + m, cposz, terracotta, blk_color, 2);
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 2, cposy + j, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 2, cposy + j, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cloud_shark"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 3, cposy + j, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 3, cposy + j, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cloud_shark"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 2, cposy + j + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 2, cposy + j + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cloud_shark"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 3, cposy + j + 1, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 3, cposy + j + 1, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cloud_shark"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 2, cposy + j + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + 2, cposy + j + 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cloud_shark"));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 3, cposy + j + 2, cposz), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 3, cposy + j + 2, cposz);
-        if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "cloud_shark"));
-        }
-        chestContents = this.RainbowContentsList;
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx, cposy + j, cposz), Blocks.CHEST.getDefaultState());
-        this.setBlockMeta(world,cposx, cposy + j, cposz, 2, 3);
-        chest = this.getChestTileEntity(world, cposx, cposy + j, cposz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(10 + world.rand.nextInt(5)));
-        }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 1, cposy + j, cposz), Blocks.CHEST.getDefaultState());
-        this.setBlockMeta(world,cposx - 1, cposy + j, cposz, 2, 3);
-        chest = this.getChestTileEntity(world, cposx - 1, cposy + j, cposz);
-        if (chest != null) {
-            WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(10 + world.rand.nextInt(5)));
-        }
+        this.placeLevelSpawner(level, cposx + 2, cposy + j, cposz, "chaospersists", "cloud_shark");
+        this.placeLevelSpawner(level, cposx - 3, cposy + j, cposz, "chaospersists", "cloud_shark");
+        this.placeLevelSpawner(level, cposx + 2, cposy + j + 1, cposz, "chaospersists", "cloud_shark");
+        this.placeLevelSpawner(level, cposx - 3, cposy + j + 1, cposz, "chaospersists", "cloud_shark");
+        this.placeLevelSpawner(level, cposx + 2, cposy + j + 2, cposz, "chaospersists", "cloud_shark");
+        this.placeLevelSpawner(level, cposx - 3, cposy + j + 2, cposz, "chaospersists", "cloud_shark");
+        this.fillLevelChestAt(level, rand, cposx, cposy + j, cposz, 2, this.RainbowContentsList, 10 + rand.nextInt(5));
+        this.fillLevelChestAt(level, rand, cposx - 1, cposy + j, cposz, 2, this.RainbowContentsList, 10 + rand.nextInt(5));
     }
 
-    public void makeEnormousCastleQ(World world, int cposx, int cposy, int cposz) {
+    public void makeEnormousCastleQ(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level worldLevel = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = worldLevel.getRandom();
+        net.minecraft.world.level.block.Block extremeTorch =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.ExtremeTorch;
         int j;
         int k;
         int i;
@@ -6478,127 +6315,127 @@ public class GenericDungeon {
         int height = 16;
         int platformwidth = 11;
         int level = 0;
-        if (world.isRemote) {
+        if (worldLevel.isClientSide()) {
             return;
         }
-        level = 1 + world.rand.nextInt(6);
-        if (level <= 3 && world.rand.nextInt(3) != 1) {
+        level = 1 + rand.nextInt(6);
+        if (level <= 3 && rand.nextInt(3) != 1) {
             level += 3;
         }
         for (i = -20; i < width + 4; ++i) {
             for (j = 1; j < height + 10; ++j) {
                 for (k = -4; k < width + 4; ++k) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.AIR);
                 }
             }
         }
         for (i = 0; i < width; ++i) {
             j = 0;
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.OBSIDIAN);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.OBSIDIAN);
             }
         }
         for (i = 0; i < width; ++i) {
             j = height;
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
             }
         }
         for (i = 0; i < width; ++i) {
             for (j = 1; j < height; ++j) {
                 k = 0;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
                 k = width - 1;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
             }
         }
         for (k = 0; k < width; ++k) {
             for (j = 1; j < height; ++j) {
                 i = 0;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
                 i = width - 1;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.IRON_BARS);
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 1, cposz + 1), ChaosPersists.ExtremeTorch.getDefaultState());
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 1, cposz + width - 2), ChaosPersists.ExtremeTorch.getDefaultState());
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 2, cposy + 1, cposz + 1), ChaosPersists.ExtremeTorch.getDefaultState());
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 2, cposy + 1, cposz + width - 2), ChaosPersists.ExtremeTorch.getDefaultState());
+        ChaosPersists.setBlockFast(worldLevel, cposx + 1, cposy + 1, cposz + 1, extremeTorch, 0, 2);
+        ChaosPersists.setBlockFast(worldLevel, cposx + 1, cposy + 1, cposz + width - 2, extremeTorch, 0, 2);
+        ChaosPersists.setBlockFast(worldLevel, cposx + width - 2, cposy + 1, cposz + 1, extremeTorch, 0, 2);
+        ChaosPersists.setBlockFast(worldLevel, cposx + width - 2, cposy + 1, cposz + width - 2, extremeTorch, 0, 2);
         for (i = -4; i < width + 4; ++i) {
             for (k = -4; k < width + 4; ++k) {
                 if (i < 0 || k < 0 || i >= width || k >= width) {
-                    this.FastSetBlock(world, cposx + i, cposy, cposz + k, Blocks.OBSIDIAN);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy, cposz + k, Blocks.OBSIDIAN);
                 }
                 if (i != -4 && k != -4 && i != width + 3 && k != width + 3) continue;
-                this.FastSetBlock(world, cposx + i, cposy + 1, cposz + k, Blocks.NETHER_BRICK_FENCE);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + 1, cposz + k, Blocks.NETHER_BRICK_FENCE);
             }
         }
-        TileEntityMobSpawner tileentitymobspawner = null;
+        SpawnerBlockEntity tileentitymobspawner = null;
         for (j = 0; j < 4; ++j) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 3, cposy + 1 + j, cposz - 3), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 3, cposy + 1 + j, cposz - 3);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx - 3, cposy + 1 + j, cposz - 3), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx - 3, cposy + 1 + j, cposz - 3);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "lurking_terror"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "lurking_terror"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - 3, cposy + 1 + j, cposz + width + 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - 3, cposy + 1 + j, cposz + width + 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx - 3, cposy + 1 + j, cposz + width + 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx - 3, cposy + 1 + j, cposz + width + 2);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "lurking_terror"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "lurking_terror"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width + 2, cposy + 1 + j, cposz - 3), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width + 2, cposy + 1 + j, cposz - 3);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width + 2, cposy + 1 + j, cposz - 3), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width + 2, cposy + 1 + j, cposz - 3);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "lurking_terror"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "lurking_terror"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width + 2, cposy + 1 + j, cposz + width + 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width + 2, cposy + 1 + j, cposz + width + 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width + 2, cposy + 1 + j, cposz + width + 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width + 2, cposy + 1 + j, cposz + width + 2);
             if (tileentitymobspawner == null) continue;
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "lurking_terror"));
+            this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "lurking_terror"));
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+        tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
         if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "emperor_scorpion"));
+            this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "emperor_scorpion"));
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+        tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
         if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "emperor_scorpion"));
+            this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "emperor_scorpion"));
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 4, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-        tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 4, cposz + width / 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 4, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+        tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 4, cposz + width / 2);
         if (tileentitymobspawner != null) {
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "emperor_scorpion"));
+            this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "emperor_scorpion"));
         }
         j = height;
-        this.buildLevelQ(world, cposx + 1, cposy + j, cposz + 1, width - 2, 10, 4, "Rotator", 1, -1, 5, 1, level);
+        this.buildLevelQ(worldLevel, cposx + 1, cposy + j, cposz + 1, width - 2, 10, 4, "Rotator", 1, -1, 5, 1, level);
         j += 10;
         if (level >= 2) {
-            this.buildLevelQ(world, cposx + 1, cposy + j, cposz + 1, width - 2, 10, 4, "Bee", 0, 0, 4, 2, level);
+            this.buildLevelQ(worldLevel, cposx + 1, cposy + j, cposz + 1, width - 2, 10, 4, "Bee", 0, 0, 4, 2, level);
         }
         j += 10;
         if (level >= 3) {
-            this.buildLevelQ(world, cposx + 2, cposy + j, cposz + 2, width - 4, 9, 4, "Mantis", 1, 1, 4, 3, level);
+            this.buildLevelQ(worldLevel, cposx + 2, cposy + j, cposz + 2, width - 4, 9, 4, "Mantis", 1, 1, 4, 3, level);
         }
         j += 9;
         if (level >= 4) {
-            this.buildLevelQ(world, cposx + 2, cposy + j, cposz + 2, width - 4, 9, 3, "Mothra", 0, 0, 4, 4, level);
+            this.buildLevelQ(worldLevel, cposx + 2, cposy + j, cposz + 2, width - 4, 9, 3, "Mothra", 0, 0, 4, 4, level);
         }
         j += 9;
         if (level >= 5) {
-            this.buildLevelQ(world, cposx + 3, cposy + j, cposz + 3, width - 6, 8, 3, "Brutalfly", 1, 1, 4, 5, level);
+            this.buildLevelQ(worldLevel, cposx + 3, cposy + j, cposz + 3, width - 6, 8, 3, "Brutalfly", 1, 1, 4, 5, level);
         }
         j += 8;
         if (level >= 6) {
-            this.buildLevelQ(world, cposx + 3, cposy + j, cposz + 3, width - 6, 16, 3, "Vortex", 0, 0, 3, 6, level);
+            this.buildLevelQ(worldLevel, cposx + 3, cposy + j, cposz + 3, width - 6, 16, 3, "Vortex", 0, 0, 3, 6, level);
         }
         j += 16;
         for (i = 0; i < platformwidth; ++i) {
             j = height;
             for (k = - platformwidth / 2; k <= platformwidth / 2; ++k) {
-                this.FastSetBlock(world, cposx + i - 20, cposy + j, cposz + k + width / 2, ChaosPersists.MyBlockAmethystBlock);
+                this.FastSetBlock(worldLevel, cposx + i - 20, cposy + j, cposz + k + width / 2, ChaosPersists.MyBlockAmethystBlock);
                 if (i != 0 && i != platformwidth - 1 && k != - platformwidth / 2 && k != platformwidth / 2 || i == 0 && k >= -1 && k <= 1) continue;
-                this.FastSetBlock(world, cposx + i - 20, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
+                this.FastSetBlock(worldLevel, cposx + i - 20, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
             }
         }
         for (i = -10; i <= -3; ++i) {
@@ -6606,38 +6443,38 @@ public class GenericDungeon {
             for (k = -2; k < 3; ++k) {
                 if (i == -3 || i == -10) {
                     if (k != -2 && k != 2) {
-                        this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.AIR);
+                        this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.AIR);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHERRACK);
-                    this.FastSetBlock(world, cposx + i, cposy + j + 2, cposz + k + width / 2, Blocks.NETHERRACK);
-                    this.FastSetBlock(world, cposx + i, cposy + j + 3, cposz + k + width / 2, (Block)Blocks.FIRE);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHERRACK);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 2, cposz + k + width / 2, Blocks.NETHERRACK);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 3, cposz + k + width / 2, (Block)Blocks.FIRE);
                     continue;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + width / 2, ChaosPersists.MyBlockAmethystBlock);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k + width / 2, ChaosPersists.MyBlockAmethystBlock);
                 if (k != -2 && k != 2) continue;
-                this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
             }
         }
         i = -21;
         for (j = height; j >= 0; --j) {
             for (k = -2; k < 3; ++k) {
                 for (int t = 0; t < 6; ++t) {
-                    this.FastSetBlock(world, cposx + i, cposy + j + t + 1, cposz + k + width / 2, Blocks.AIR);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + t + 1, cposz + k + width / 2, Blocks.AIR);
                 }
                 if (j == 0) {
                     if (k != -2 && k != 2) {
-                        this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.AIR);
+                        this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.AIR);
                         continue;
                     }
-                    this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHERRACK);
-                    this.FastSetBlock(world, cposx + i, cposy + j + 2, cposz + k + width / 2, Blocks.NETHERRACK);
-                    this.FastSetBlock(world, cposx + i, cposy + j + 3, cposz + k + width / 2, (Block)Blocks.FIRE);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHERRACK);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 2, cposz + k + width / 2, Blocks.NETHERRACK);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j + 3, cposz + k + width / 2, (Block)Blocks.FIRE);
                     continue;
                 }
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k + width / 2, ChaosPersists.MyBlockAmethystBlock);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k + width / 2, ChaosPersists.MyBlockAmethystBlock);
                 if (k != -2 && k != 2) continue;
-                this.FastSetBlock(world, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j + 1, cposz + k + width / 2, Blocks.NETHER_BRICK_FENCE);
             }
             --i;
         }
@@ -6645,46 +6482,48 @@ public class GenericDungeon {
             int span = width * 3;
             for (int tries = 0; tries < 100; ++tries) {
                 j = -1;
-                i = world.rand.nextInt(span);
-                k = world.rand.nextInt(span);
+                i = rand.nextInt(span);
+                k = rand.nextInt(span);
                 if (i >= span / 4 && i <= span * 3 / 4 && k >= span / 4 && k <= span * 3 / 4) continue;
-                world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + (i -= span / 2) + width / 2, cposy + j, cposz + (k -= span / 2) + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-                tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i + width / 2, cposy + j, cposz + k + width / 2);
+                worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + (i -= span / 2) + width / 2, cposy + j, cposz + (k -= span / 2) + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+                tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + i + width / 2, cposy + j, cposz + k + width / 2);
                 if (tileentitymobspawner == null) continue;
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "large_worm"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "large_worm"));
             }
         }
     }
 
-    public void buildLevelQ(World world, int cposx, int cposy, int cposz, int width, int height, int pw, String critter, int stepside, int stepoff, int holelen, int decor, int level) {
+    public void buildLevelQ(Object worldObj, int cposx, int cposy, int cposz, int width, int height, int pw, String critter, int stepside, int stepoff, int holelen, int decor, int level) {
+        net.minecraft.world.level.Level worldLevel = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = worldLevel.getRandom();
         int j;
         int i;
         int k;
         for (i = - pw; i < width + pw; ++i) {
             for (j = 1; j < height; ++j) {
                 for (k = - pw; k < width + pw; ++k) {
-                    this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.AIR);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.AIR);
                 }
             }
         }
         for (i = 0; i < width; ++i) {
             j = 0;
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
             }
         }
         for (i = 0; i < width; ++i) {
             j = height;
             for (k = 0; k < width; ++k) {
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
             }
         }
         for (i = 0; i < width; ++i) {
             for (j = 1; j < height; ++j) {
                 k = 0;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
                 k = width - 1;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.BEDROCK);
             }
         }
         for (k = 0; k < width; ++k) {
@@ -6694,18 +6533,18 @@ public class GenericDungeon {
                     blk = ChaosPersists.MyBlockRubyBlock;
                 }
                 i = 0;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, blk);
                 i = width - 1;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, blk);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, blk);
             }
         }
         for (i = - pw; i < width + pw; ++i) {
             for (k = - pw; k < width + pw; ++k) {
                 if (i < 0 || k < 0 || i >= width || k >= width) {
-                    this.FastSetBlock(world, cposx + i, cposy, cposz + k, Blocks.OBSIDIAN);
+                    this.FastSetBlock(worldLevel, cposx + i, cposy, cposz + k, Blocks.OBSIDIAN);
                 }
                 if (i != - pw && k != - pw && i != width + (pw - 1) && k != width + (pw - 1)) continue;
-                this.FastSetBlock(world, cposx + i, cposy + 1, cposz + k, Blocks.NETHER_BRICK_FENCE);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + 1, cposz + k, Blocks.NETHER_BRICK_FENCE);
             }
         }
         i = - height / 2;
@@ -6713,10 +6552,10 @@ public class GenericDungeon {
         for (j = 1; j < height; ++j) {
             if (stepside != 0) {
                 k = -1;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.OBSIDIAN);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.OBSIDIAN);
             } else {
                 k = width;
-                this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.OBSIDIAN);
+                this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.OBSIDIAN);
             }
             ++i;
         }
@@ -6731,95 +6570,95 @@ public class GenericDungeon {
             i = width / 2;
             j = 0;
             for (int l = 0; l < holelen; ++l) {
-                this.FastSetBlock(world, cposx + i + l, cposy + j, cposz + k, Blocks.AIR);
+                this.FastSetBlock(worldLevel, cposx + i + l, cposy + j, cposz + k, Blocks.AIR);
             }
         }
-        TileEntityMobSpawner tileentitymobspawner = null;
+        SpawnerBlockEntity tileentitymobspawner = null;
         for (j = 0; j < 4; ++j) {
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - (pw - 1), cposy + j + 1, cposz - (pw - 1)), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - (pw - 1), cposy + j + 1, cposz - (pw - 1));
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx - (pw - 1), cposy + j + 1, cposz - (pw - 1)), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx - (pw - 1), cposy + j + 1, cposz - (pw - 1));
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx - (pw - 1), cposy + j + 1, cposz + width + (pw - 2)), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx - (pw - 1), cposy + j + 1, cposz + width + (pw - 2));
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx - (pw - 1), cposy + j + 1, cposz + width + (pw - 2)), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx - (pw - 1), cposy + j + 1, cposz + width + (pw - 2));
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width + (pw - 2), cposy + j + 1, cposz - (pw - 1)), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width + (pw - 2), cposy + j + 1, cposz - (pw - 1));
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width + (pw - 2), cposy + j + 1, cposz - (pw - 1)), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width + (pw - 2), cposy + j + 1, cposz - (pw - 1));
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width + (pw - 2), cposy + j + 1, cposz + width + (pw - 2)), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width + (pw - 2), cposy + j + 1, cposz + width + (pw - 2));
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width + (pw - 2), cposy + j + 1, cposz + width + (pw - 2)), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width + (pw - 2), cposy + j + 1, cposz + width + (pw - 2));
             if (tileentitymobspawner == null) continue;
-            this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+            this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
         }
-        this.addLevelDecorationsQ(world, cposx, cposy, cposz, width, height, decor, level);
+        this.addLevelDecorationsQ(worldLevel, cposx, cposy, cposz, width, height, decor, level);
     }
 
-    public void addLevelDecorationsQ(World world, int cposx, int cposy, int cposz, int width, int height, int decor, int difficulty) {
+    public void addLevelDecorationsQ(Level worldLevel, int cposx, int cposy, int cposz, int width, int height, int decor, int difficulty) {
         int j;
-        TileEntityMobSpawner tileentitymobspawner = null;
+        SpawnerBlockEntity tileentitymobspawner = null;
         int reward = 1;
         String critter = "T. Rex";
         if (decor == 6) {
-            this.FastSetBlock(world, cposx, cposy + height, cposz, Blocks.NETHERRACK);
-            this.FastSetBlock(world, cposx, cposy + height + 1, cposz, (Block)Blocks.FIRE);
-            this.FastSetBlock(world, cposx, cposy + height, cposz + width - 1, Blocks.NETHERRACK);
-            this.FastSetBlock(world, cposx, cposy + height + 1, cposz + width - 1, (Block)Blocks.FIRE);
-            this.FastSetBlock(world, cposx + width - 1, cposy + height, cposz, Blocks.NETHERRACK);
-            this.FastSetBlock(world, cposx + width - 1, cposy + height + 1, cposz, (Block)Blocks.FIRE);
-            this.FastSetBlock(world, cposx + width - 1, cposy + height, cposz + width - 1, Blocks.NETHERRACK);
-            this.FastSetBlock(world, cposx + width - 1, cposy + height + 1, cposz + width - 1, (Block)Blocks.FIRE);
-            this.FastSetBlock(world, cposx + width / 2, cposy + height, cposz + width / 2, Blocks.AIR);
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 - 1, cposy + height + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 - 1, cposy + height + 2, cposz + width / 2);
+            this.FastSetBlock(worldLevel, cposx, cposy + height, cposz, Blocks.NETHERRACK);
+            this.FastSetBlock(worldLevel, cposx, cposy + height + 1, cposz, (Block)Blocks.FIRE);
+            this.FastSetBlock(worldLevel, cposx, cposy + height, cposz + width - 1, Blocks.NETHERRACK);
+            this.FastSetBlock(worldLevel, cposx, cposy + height + 1, cposz + width - 1, (Block)Blocks.FIRE);
+            this.FastSetBlock(worldLevel, cposx + width - 1, cposy + height, cposz, Blocks.NETHERRACK);
+            this.FastSetBlock(worldLevel, cposx + width - 1, cposy + height + 1, cposz, (Block)Blocks.FIRE);
+            this.FastSetBlock(worldLevel, cposx + width - 1, cposy + height, cposz + width - 1, Blocks.NETHERRACK);
+            this.FastSetBlock(worldLevel, cposx + width - 1, cposy + height + 1, cposz + width - 1, (Block)Blocks.FIRE);
+            this.FastSetBlock(worldLevel, cposx + width / 2, cposy + height, cposz + width / 2, Blocks.AIR);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2 - 1, cposy + height + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2 - 1, cposy + height + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "nightmare"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2 + 1, cposy + height + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2 + 1, cposy + height + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2 + 1, cposy + height + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2 + 1, cposy + height + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "nightmare"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + height + 2, cposz + width / 2 - 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + height + 2, cposz + width / 2 - 1);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + height + 2, cposz + width / 2 - 1), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + height + 2, cposz + width / 2 - 1);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "nightmare"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + height + 2, cposz + width / 2 + 1), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + height + 2, cposz + width / 2 + 1);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + height + 2, cposz + width / 2 + 1), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + height + 2, cposz + width / 2 + 1);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", "nightmare"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "nightmare"));
             }
             for (int i = 1; i < width - 1; ++i) {
                 for (j = 1; j < 5; ++j) {
                     for (int k = 1; k < width - 1; ++k) {
-                        this.FastSetBlock(world, cposx + i, cposy + j, cposz + k, Blocks.DIRT);
+                        this.FastSetBlock(worldLevel, cposx + i, cposy + j, cposz + k, Blocks.DIRT);
                     }
                 }
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "large_worm"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "large_worm"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "large_worm"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "large_worm"));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 4, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 4, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 4, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 4, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "large_worm"));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", "large_worm"));
             }
             for (j = 0; j < 10; ++j) {
-                this.FastSetBlock(world, cposx + 1, cposy + j, cposz + 1, Blocks.AIR);
+                this.FastSetBlock(worldLevel, cposx + 1, cposy + j, cposz + 1, Blocks.AIR);
             }
-            this.fill_chests(world, cposx, cposy + 4, cposz, width, height, decor, reward);
+            this.fill_chests(worldLevel, cposx, cposy + 4, cposz, width, height, decor, reward);
         }
         if (decor == 5) {
             if (difficulty == 5) {
@@ -6830,25 +6669,25 @@ public class GenericDungeon {
                 critter = "Nastysaurus";
                 reward = 2;
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
             for (j = 1; j < 5; ++j) {
-                this.FastSetBlock(world, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
             }
-            this.FastSetBlock(world, cposx + width - 2, cposy, cposz + width - 2, Blocks.AIR);
-            this.FastSetBlock(world, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
-            this.fill_chests(world, cposx, cposy, cposz, width, height, decor, reward);
+            this.FastSetBlock(worldLevel, cposx + width - 2, cposy, cposz + width - 2, Blocks.AIR);
+            this.FastSetBlock(worldLevel, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
+            this.fill_chests(worldLevel, cposx, cposy, cposz, width, height, decor, reward);
         }
         if (decor == 4) {
             if (difficulty == 4) {
@@ -6863,25 +6702,25 @@ public class GenericDungeon {
                 critter = "Basilisk";
                 reward = 3;
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
             for (j = 1; j < 5; ++j) {
-                this.FastSetBlock(world, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
             }
-            this.FastSetBlock(world, cposx + 1, cposy, cposz + 1, Blocks.AIR);
-            this.FastSetBlock(world, cposx + width - 2, cposy + height, cposz + width - 2, Blocks.AIR);
-            this.fill_chests(world, cposx, cposy, cposz, width, height, decor, reward);
+            this.FastSetBlock(worldLevel, cposx + 1, cposy, cposz + 1, Blocks.AIR);
+            this.FastSetBlock(worldLevel, cposx + width - 2, cposy + height, cposz + width - 2, Blocks.AIR);
+            this.fill_chests(worldLevel, cposx, cposy, cposz, width, height, decor, reward);
         }
         if (decor == 3) {
             if (difficulty == 3) {
@@ -6900,25 +6739,25 @@ public class GenericDungeon {
                 critter = "Hercules Beetle";
                 reward = 4;
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
             for (j = 1; j < 5; ++j) {
-                this.FastSetBlock(world, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
             }
-            this.FastSetBlock(world, cposx + width - 2, cposy, cposz + width - 2, Blocks.AIR);
-            this.FastSetBlock(world, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
-            this.fill_chests(world, cposx, cposy, cposz, width, height, decor, reward);
+            this.FastSetBlock(worldLevel, cposx + width - 2, cposy, cposz + width - 2, Blocks.AIR);
+            this.FastSetBlock(worldLevel, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
+            this.fill_chests(worldLevel, cposx, cposy, cposz, width, height, decor, reward);
         }
         if (decor == 2) {
             if (difficulty == 2) {
@@ -6941,25 +6780,25 @@ public class GenericDungeon {
                 critter = "Jumpy Bug";
                 reward = 5;
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
             for (j = 1; j < 5; ++j) {
-                this.FastSetBlock(world, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
             }
-            this.FastSetBlock(world, cposx + 1, cposy, cposz + 1, Blocks.AIR);
-            this.FastSetBlock(world, cposx + width - 2, cposy + height, cposz + width - 2, Blocks.AIR);
-            this.fill_chests(world, cposx, cposy, cposz, width, height, decor, reward);
+            this.FastSetBlock(worldLevel, cposx + 1, cposy, cposz + 1, Blocks.AIR);
+            this.FastSetBlock(worldLevel, cposx + width - 2, cposy + height, cposz + width - 2, Blocks.AIR);
+            this.fill_chests(worldLevel, cposx, cposy, cposz, width, height, decor, reward);
         }
         if (decor == 1) {
             if (difficulty == 1) {
@@ -6981,33 +6820,35 @@ public class GenericDungeon {
                 critter = "CaterKiller";
             }
             reward = difficulty;
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 2, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 2, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 2, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + width / 2, cposy + 3, cposz + width / 2);
+            worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 3, cposz + width / 2), Blocks.SPAWNER.defaultBlockState(), 2);
+            tileentitymobspawner = this.getSpawnerTileEntity(worldLevel, cposx + width / 2, cposy + 3, cposz + width / 2);
             if (tileentitymobspawner != null) {
-                this.setSpawnerEntityId(tileentitymobspawner, new net.minecraft.util.ResourceLocation("chaospersists", critter.toLowerCase().replace(' ', '_')));
+                this.setSpawnerEntityId(tileentitymobspawner, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("chaospersists", critter.toLowerCase().replace(' ', '_')));
             }
             for (j = 1; j < 5; ++j) {
-                this.FastSetBlock(world, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
-                this.FastSetBlock(world, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + j, cposz + width / 2, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 - 1, Blocks.BEDROCK);
+                this.FastSetBlock(worldLevel, cposx + width / 2, cposy + j, cposz + width / 2 + 1, Blocks.BEDROCK);
             }
-            this.FastSetBlock(world, cposx + width / 2 - 1, cposy + 1, cposz + width / 2 - 1, ChaosPersists.MyRTPBlock);
-            this.FastSetBlock(world, cposx + width / 2 + 1, cposy + 1, cposz + width / 2 + 1, ChaosPersists.MyRTPBlock);
-            this.FastSetBlock(world, cposx + width / 2 + 1, cposy + 1, cposz + width / 2 - 1, ChaosPersists.MyRTPBlock);
-            this.FastSetBlock(world, cposx + width / 2 - 1, cposy + 1, cposz + width / 2 + 1, ChaosPersists.MyRTPBlock);
-            this.FastSetBlock(world, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
-            this.fill_chestsQ(world, cposx, cposy, cposz, width, height, decor, reward);
+            this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + 1, cposz + width / 2 - 1, ChaosPersists.MyRTPBlock);
+            this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + 1, cposz + width / 2 + 1, ChaosPersists.MyRTPBlock);
+            this.FastSetBlock(worldLevel, cposx + width / 2 + 1, cposy + 1, cposz + width / 2 - 1, ChaosPersists.MyRTPBlock);
+            this.FastSetBlock(worldLevel, cposx + width / 2 - 1, cposy + 1, cposz + width / 2 + 1, ChaosPersists.MyRTPBlock);
+            this.FastSetBlock(worldLevel, cposx + 1, cposy + height, cposz + 1, Blocks.AIR);
+            this.fill_chestsQ(worldLevel, cposx, cposy, cposz, width, height, decor, reward);
         }
     }
 
-    private void fill_chestsQ(World world, int cposx, int cposy, int cposz, int width, int height, int decor, int reward) {
-        TileEntityChest chest = null;
+    private void fill_chestsQ(Object worldObj, int cposx, int cposy, int cposz, int width, int height, int decor, int reward) {
+        net.minecraft.world.level.Level worldLevel = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = worldLevel.getRandom();
+        ChestBlockEntity chest = null;
         WeightedRandomChestContent[] chestContents = null;
         chestContents = this.level1ContentsList;
         if (reward == 2) {
@@ -7022,130 +6863,102 @@ public class GenericDungeon {
         if (reward == 5) {
             chestContents = this.level5ContentsList;
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + 1, cposy + 1, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + 1, cposy + 1, cposz + width / 2, 5, 3);
-        chest = this.getChestTileEntity(world, cposx + 1, cposy + 1, cposz + width / 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + 1, cposy + 1, cposz + width / 2), Blocks.CHEST.defaultBlockState(), 2);
+        this.setBlockMeta(worldLevel,cposx + 1, cposy + 1, cposz + width / 2, 5, 3);
+        chest = this.getChestTileEntity(worldLevel, cposx + 1, cposy + 1, cposz + width / 2);
         if (chest != null) {
             if (reward == 6) {
-                chest.setInventorySlotContents(1, new ItemStack(ChaosPersists.ThePrincessEgg, 1, 0));
+                chest.setItem(1, new ItemStack(ChaosPersists.ThePrincessEgg, 1));
             } else {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(7)));
+                WeightedRandomChestContent.generateChestContents(rand, (WeightedRandomChestContent[])chestContents, chest, (int)(5 + rand.nextInt(7)));
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width - 2, cposy + 1, cposz + width / 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width - 2, cposy + 1, cposz + width / 2, 4, 3);
-        chest = this.getChestTileEntity(world, cposx + width - 2, cposy + 1, cposz + width / 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width - 2, cposy + 1, cposz + width / 2), Blocks.CHEST.defaultBlockState(), 2);
+        this.setBlockMeta(worldLevel,cposx + width - 2, cposy + 1, cposz + width / 2, 4, 3);
+        chest = this.getChestTileEntity(worldLevel, cposx + width - 2, cposy + 1, cposz + width / 2);
         if (chest != null) {
             if (reward == 6) {
-                chest.setInventorySlotContents(1, new ItemStack((Item)ChaosPersists.QueenHelmet, 1, 0));
-                chest.setInventorySlotContents(2, new ItemStack((Item)ChaosPersists.QueenBody, 1, 0));
+                chest.setItem(1, new ItemStack((Item)ChaosPersists.QueenHelmet, 1));
+                chest.setItem(2, new ItemStack((Item)ChaosPersists.QueenBody, 1));
             } else {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(7)));
+                WeightedRandomChestContent.generateChestContents(rand, (WeightedRandomChestContent[])chestContents, chest, (int)(5 + rand.nextInt(7)));
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 1, cposz + 1), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width / 2, cposy + 1, cposz + 1, 3, 3);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + 1, cposz + 1);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 1, cposz + 1), Blocks.CHEST.defaultBlockState(), 2);
+        this.setBlockMeta(worldLevel,cposx + width / 2, cposy + 1, cposz + 1, 3, 3);
+        chest = this.getChestTileEntity(worldLevel, cposx + width / 2, cposy + 1, cposz + 1);
         if (chest != null) {
             if (reward == 6) {
-                chest.setInventorySlotContents(1, new ItemStack((Item)ChaosPersists.QueenLegs, 1, 0));
-                chest.setInventorySlotContents(2, new ItemStack((Item)ChaosPersists.QueenBoots, 1, 0));
+                chest.setItem(1, new ItemStack((Item)ChaosPersists.QueenLegs, 1));
+                chest.setItem(2, new ItemStack((Item)ChaosPersists.QueenBoots, 1));
             } else {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(7)));
+                WeightedRandomChestContent.generateChestContents(rand, (WeightedRandomChestContent[])chestContents, chest, (int)(5 + rand.nextInt(7)));
             }
         }
-        world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + width / 2, cposy + 1, cposz + width - 2), Blocks.CHEST.getDefaultState(), 2);
-        this.setBlockMeta(world,cposx + width / 2, cposy + 1, cposz + width - 2, 2, 3);
-        chest = this.getChestTileEntity(world, cposx + width / 2, cposy + 1, cposz + width - 2);
+        worldLevel.setBlock(new net.minecraft.core.BlockPos(cposx + width / 2, cposy + 1, cposz + width - 2), Blocks.CHEST.defaultBlockState(), 2);
+        this.setBlockMeta(worldLevel,cposx + width / 2, cposy + 1, cposz + width - 2, 2, 3);
+        chest = this.getChestTileEntity(worldLevel, cposx + width / 2, cposy + 1, cposz + width - 2);
         if (chest != null) {
             if (reward == 6) {
-                chest.setInventorySlotContents(1, new ItemStack(ChaosPersists.MyRoyal, 1, 0));
+                chest.setItem(1, new ItemStack(ChaosPersists.MyRoyal, 1));
             } else {
-                WeightedRandomChestContent.generateChestContents((Random)world.rand, (WeightedRandomChestContent[])chestContents, (IInventory)chest, (int)(5 + world.rand.nextInt(7)));
+                WeightedRandomChestContent.generateChestContents(rand, (WeightedRandomChestContent[])chestContents, chest, (int)(5 + rand.nextInt(7)));
             }
         }
     }
 
-    public void makeSpiderHangout(World world, int cposx, int cposy, int cposz) {
+    public void makeSpiderHangout(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
         int i;
         int k;
         int j;
-        Entity var8 = null;
-        TileEntityMobSpawner tileentitymobspawner = null;
         for (i = 0; i < 20; ++i) {
             for (j = -1; j < 20; ++j) {
                 for (k = 0; k < 20; ++k) {
-                    Block blk = Blocks.AIR;
+                    net.minecraft.world.level.block.Block blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (j == -1) {
-                        blk = Blocks.STONE;
+                        blk = net.minecraft.world.level.block.Blocks.STONE;
                     }
                     if (j == 0) {
-                        blk = Blocks.GRAVEL;
+                        blk = net.minecraft.world.level.block.Blocks.GRAVEL;
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)blk, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, blk, 0, 2);
                 }
             }
         }
         for (j = 1; j < 4; ++j) {
-            k = 0;
-            i = 0;
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-            if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "spider_driver"));
-            }
-            k = 19;
-            i = 19;
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-            if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "spider_driver"));
-            }
-            k = 0;
-            i = 19;
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-            if (tileentitymobspawner != null) {
-                tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "spider_driver"));
-            }
-            k = 19;
-            i = 0;
-            world.setBlockState(new net.minecraft.util.math.BlockPos(cposx + i, cposy + j, cposz + k), Blocks.MOB_SPAWNER.getDefaultState(), 2);
-            tileentitymobspawner = this.getSpawnerTileEntity(world, cposx + i, cposy + j, cposz + k);
-            if (tileentitymobspawner == null) continue;
-            tileentitymobspawner.getSpawnerBaseLogic().setEntityId(new net.minecraft.util.ResourceLocation("chaospersists", "spider_driver"));
+            this.placeLevelSpawner(level, cposx, cposy + j, cposz, "chaospersists", "spider_driver");
+            this.placeLevelSpawner(level, cposx + 19, cposy + j, cposz + 19, "chaospersists", "spider_driver");
+            this.placeLevelSpawner(level, cposx + 19, cposy + j, cposz, "chaospersists", "spider_driver");
+            this.placeLevelSpawner(level, cposx, cposy + j, cposz + 19, "chaospersists", "spider_driver");
         }
-        var8 = EntityList.createEntityByIDFromName(new net.minecraft.util.ResourceLocation("chaospersists", "robot_spider"), world);
-        if (var8 != null) {
-            var8.setLocationAndAngles((double)(cposx + 10), (double)(cposy + 1), (double)(cposz + 10), world.rand.nextFloat() * 360.0f, 0.0f);
-            world.spawnEntity(var8);
-        }
+        com.astryxion.chaospersists.entity.Dragon.spawnCreature(level, "robot_spider", cposx + 10, cposy + 1, cposz + 10);
     }
 
-    public void makeRedAntHangout(World world, int cposx, int cposy, int cposz) {
-        Entity var8 = null;
+    public void makeRedAntHangout(Object worldObj, int cposx, int cposy, int cposz) {
+        net.minecraft.world.level.Level level = (net.minecraft.world.level.Level) worldObj;
+        net.minecraft.util.RandomSource rand = level.getRandom();
+        net.minecraft.world.level.block.Block redAntBlock =
+                (net.minecraft.world.level.block.Block) (Object) ChaosPersists.MyRedAntBlock;
         for (int i = 0; i < 16; ++i) {
             for (int j = -1; j < 16; ++j) {
                 for (int k = 0; k < 16; ++k) {
-                    Block blk = Blocks.AIR;
+                    net.minecraft.world.level.block.Block blk = net.minecraft.world.level.block.Blocks.AIR;
                     if (j == -1) {
-                        blk = Blocks.STONE;
+                        blk = net.minecraft.world.level.block.Blocks.STONE;
                     }
                     if (j == 0) {
-                        blk = Blocks.GRAVEL;
+                        blk = net.minecraft.world.level.block.Blocks.GRAVEL;
                         if (!(i >= 3 && i <= 12 || k >= 3 && k <= 12)) {
-                            blk = ChaosPersists.MyRedAntBlock;
+                            blk = redAntBlock;
                         }
                     }
-                    ChaosPersists.setBlockFast((World)world, (int)(cposx + i), (int)(cposy + j), (int)(cposz + k), (Block)blk, (int)0, (int)2);
+                    ChaosPersists.setBlockFast(level, cposx + i, cposy + j, cposz + k, blk, 0, 2);
                 }
             }
         }
-        var8 = EntityList.createEntityByIDFromName(new net.minecraft.util.ResourceLocation("chaospersists", "robot_red_ant"), world);
-        if (var8 != null) {
-            var8.setLocationAndAngles((double)(cposx + 8), (double)(cposy + 1), (double)(cposz + 8), world.rand.nextFloat() * 360.0f, 0.0f);
-            world.spawnEntity(var8);
-        }
+        com.astryxion.chaospersists.entity.Dragon.spawnCreature(level, "robot_red_ant", cposx + 8, cposy + 1, cposz + 8);
     }
 }
 

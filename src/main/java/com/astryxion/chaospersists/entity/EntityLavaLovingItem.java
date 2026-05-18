@@ -1,42 +1,64 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.EntityLavaLovingItem
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.item.ItemStack
- *  net.minecraft.util.DamageSource
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.DamageSource;
-import net.minecraft.world.World;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
-public class EntityLavaLovingItem
-extends EntityItem {
-    public EntityLavaLovingItem(World par1World, double par2, double par4, double par6, ItemStack par8ItemStack) {
-        super(par1World, par2, par4, par6, par8ItemStack);
-                this.isImmuneToFire = true;
-        this.hurtResistantTime = 300;
+public class EntityLavaLovingItem extends ItemEntity {
+    private boolean chaosFireImmune = true;
+    private int chaosInvulnerableTime = 300;
+
+    public EntityLavaLovingItem(EntityType<? extends ItemEntity> type, Level level) {
+        super(type, level);
+        this.noFire();
+    }
+
+    public EntityLavaLovingItem(Level level, double x, double y, double z, ItemStack stack) {
+        super(level, x, y, z, stack);
+        this.noFire();
     }
 
     public void noFire() {
-                this.isImmuneToFire = true;
-        this.hurtResistantTime = 300;
+        this.chaosFireImmune = true;
+        this.chaosInvulnerableTime = 300;
     }
 
     public void yesFire() {
-                this.isImmuneToFire = false;
-        this.hurtResistantTime = 0;
+        this.chaosFireImmune = false;
+        this.chaosInvulnerableTime = 0;
     }
 
-    protected void dealFireDamage(float par1) {
-        if (!this.isImmuneToFire) {
-            this.attackEntityFrom(DamageSource.IN_FIRE, par1);
+    @Override
+    public boolean fireImmune() {
+        return this.chaosFireImmune || super.fireImmune();
+    }
+
+    @Override
+    public void lavaHurt() {
+        if (!this.fireImmune()) {
+            this.hurt(this.damageSources().lava(), 4.0f);
         }
     }
-}
 
+    @Override
+    public void tick() {
+        super.tick();
+        if (this.chaosInvulnerableTime > 0) {
+            --this.chaosInvulnerableTime;
+        }
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.chaosInvulnerableTime > 0 && !source.is(DamageTypes.IN_FIRE)) {
+            return false;
+        }
+        if (source.is(DamageTypes.IN_FIRE) && this.fireImmune()) {
+            return false;
+        }
+        return super.hurt(source, amount);
+    }
+}

@@ -1,82 +1,137 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.MyUtils
- *  com.astryxion.chaospersists.ThunderBolt
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.effect.EntityLightningBolt
- *  net.minecraft.entity.projectile.EntityThrowable
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.math.RayTraceResult
- *  net.minecraft.world.Explosion
- *  net.minecraft.world.GameRules
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import com.astryxion.chaospersists.util.MyUtils;
-import java.util.Random;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.effect.EntityLightningBolt;
-import net.minecraft.entity.projectile.EntityThrowable;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.world.Explosion;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.Level.ExplosionInteraction;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
-public class ThunderBolt
-extends EntityThrowable {
-    public ThunderBolt(World par1World) {
-        super(par1World);
+public class ThunderBolt extends ThrowableProjectile {
+
+    public ThunderBolt(EntityType<? extends ThunderBolt> type, Level level) {
+        super(type, level);
     }
 
-    public ThunderBolt(World par1World, EntityLivingBase par3EntityPlayer) {
-        super(par1World, par3EntityPlayer);
+    public ThunderBolt(EntityType<? extends ThunderBolt> type, LivingEntity shooter, Level level) {
+        super(type, shooter, level);
     }
 
-    public ThunderBolt(World par1World, EntityLivingBase par2EntityLiving, int par3) {
-        super(par1World, par2EntityLiving);
+    public ThunderBolt(EntityType<? extends ThunderBolt> type, LivingEntity shooter, Level level, int par3) {
+        super(type, shooter, level);
     }
 
-    public ThunderBolt(World par1World, double par2, double par4, double par6) {
-        super(par1World, par2, par4, par6);
+    public ThunderBolt(EntityType<? extends ThunderBolt> type, double x, double y, double z, Level level) {
+        super(type, x, y, z, level);
     }
 
-    protected void onImpact(RayTraceResult par1MovingObjectPosition) {
-        if (par1MovingObjectPosition.entityHit != null) {
+    @Override
+    protected void onHit(HitResult result) {
+        if (result.getType() == HitResult.Type.ENTITY) {
+            EntityHitResult entityHit = (EntityHitResult) result;
+            Entity hit = entityHit.getEntity();
             float var2 = 40.0f;
-            if (MyUtils.isRoyalty((Entity)par1MovingObjectPosition.entityHit)) {
-                this.setDead();
+            if (isRoyalty(hit)) {
+                this.discard();
                 return;
             }
-            par1MovingObjectPosition.entityHit.attackEntityFrom(DamageSource.causeThrownDamage((Entity)this, (Entity)this.getThrower()), var2 / 2.0f);
-            par1MovingObjectPosition.entityHit.attackEntityFrom(DamageSource.causeMobDamage((EntityLivingBase)this.getThrower()), var2 / 2.0f);
-            par1MovingObjectPosition.entityHit.setFire(1);
+            hit.hurt(this.damageSources().thrown(this, this.getOwner()), var2 / 2.0f);
+            if (this.getOwner() instanceof LivingEntity thrower) {
+                hit.hurt(this.damageSources().mobAttack(thrower), var2 / 2.0f);
+            }
+            hit.setRemainingFireTicks(20);
         }
         int mx = 20;
         for (int var3 = 0; var3 < mx; ++var3) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, this.posX + (double)this.rand.nextFloat() - (double)this.rand.nextFloat(), this.posY + (double)this.rand.nextFloat() - (double)this.rand.nextFloat(), this.posZ + (double)this.rand.nextFloat(), 0.0, 0.0, 0.0);
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_LARGE, this.posX + (double)this.rand.nextFloat() - (double)this.rand.nextFloat(), this.posY + (double)this.rand.nextFloat() - (double)this.rand.nextFloat(), this.posZ + (double)this.rand.nextFloat() - (double)this.rand.nextFloat(), 0.0, 0.0, 0.0);
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FIREWORKS_SPARK, this.posX, this.posY, this.posZ, this.world.rand.nextGaussian(), this.world.rand.nextGaussian(), this.world.rand.nextGaussian());
+            this.level()
+                    .addParticle(
+                            ParticleTypes.SMOKE,
+                            this.getX() + this.random.nextFloat() - this.random.nextFloat(),
+                            this.getY() + this.random.nextFloat() - this.random.nextFloat(),
+                            this.getZ() + this.random.nextFloat(),
+                            0.0,
+                            0.0,
+                            0.0);
+            this.level()
+                    .addParticle(
+                            ParticleTypes.LARGE_SMOKE,
+                            this.getX() + this.random.nextFloat() - this.random.nextFloat(),
+                            this.getY() + this.random.nextFloat() - this.random.nextFloat(),
+                            this.getZ() + this.random.nextFloat() - this.random.nextFloat(),
+                            0.0,
+                            0.0,
+                            0.0);
+            this.level()
+                    .addParticle(
+                            ParticleTypes.FIREWORK,
+                            this.getX(),
+                            this.getY(),
+                            this.getZ(),
+                            this.random.nextGaussian(),
+                            this.random.nextGaussian(),
+                            this.random.nextGaussian());
         }
-        this.playSound(net.minecraft.init.SoundEvents.ENTITY_GENERIC_EXPLODE, 0.5f, 1.0f + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.5f);
-        if (!this.world.isRemote) {
-            this.world.createExplosion((Entity)this, this.posX, this.posY, this.posZ, 3.0f, this.world.getGameRules().getBoolean("mobGriefing"));
+        this.playSound(SoundEvents.GENERIC_EXPLODE, 0.5f, 1.0f + (this.random.nextFloat() - this.random.nextFloat()) * 0.5f);
+        if (!this.level().isClientSide) {
+            this.level()
+                    .explode(
+                            this,
+                            this.getX(),
+                            this.getY(),
+                            this.getZ(),
+                            3.0f,
+                            this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)
+                                    ? ExplosionInteraction.MOB
+                                    : ExplosionInteraction.NONE);
+            LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(this.level());
+            if (lightning != null) {
+                lightning.moveTo(this.getX(), this.getY() + 1.0, this.getZ());
+                lightning.setVisualOnly(false);
+                this.level().addFreshEntity(lightning);
+            }
         }
-        this.world.addWeatherEffect((Entity)new net.minecraft.entity.effect.EntityLightningBolt(this.world, this.posX, this.posY + 1.0, this.posZ, false));
-        this.setDead();
+        this.discard();
     }
 
-    public void onUpdate() {
-        super.onUpdate();
+    @Override
+    public void tick() {
+        super.tick();
         int mx = 4;
         for (int i = 0; i < mx; ++i) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.FIREWORKS_SPARK, this.posX, this.posY, this.posZ, this.world.rand.nextGaussian() / 10.0, this.world.rand.nextGaussian() / 10.0, this.world.rand.nextGaussian() / 10.0);
+            this.level()
+                    .addParticle(
+                            ParticleTypes.FIREWORK,
+                            this.getX(),
+                            this.getY(),
+                            this.getZ(),
+                            this.random.nextGaussian() / 10.0,
+                            this.random.nextGaussian() / 10.0,
+                            this.random.nextGaussian() / 10.0);
         }
     }
-}
 
+    private static boolean isRoyalty(Entity e) {
+        if (!(e instanceof LivingEntity)) {
+            return false;
+        }
+        String n = e.getClass().getSimpleName();
+        return "ThePrince".equals(n)
+                || "ThePrinceTeen".equals(n)
+                || "ThePrinceAdult".equals(n)
+                || "ThePrincess".equals(n)
+                || "TheKing".equals(n)
+                || "KingHead".equals(n)
+                || "TheQueen".equals(n)
+                || "QueenHead".equals(n)
+                || "PurplePower".equals(n);
+    }
+
+    @Override
+    protected void defineSynchedData() {}
+}

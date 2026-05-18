@@ -1,26 +1,17 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.common.network.NetworkRegistry
- *  net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper
- *  net.minecraftforge.fml.relauncher.Side
- *  com.astryxion.chaospersists.CommonProxyChaos
- *  com.astryxion.chaospersists.RiderControlMessage
- *  com.astryxion.chaospersists.RiderControlMessageHandler
- */
 package com.astryxion.chaospersists.proxy;
 
-import net.minecraftforge.fml.common.network.NetworkRegistry;
-import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
-import net.minecraftforge.fml.relauncher.Side;
 import com.astryxion.chaospersists.network.RiderControlMessage;
 import com.astryxion.chaospersists.network.RiderControlMessageHandler;
+import java.util.Optional;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.simple.SimpleChannel;
 
 public class CommonProxyChaos {
-    private SimpleNetworkWrapper network;
+    private SimpleChannel network;
 
-    public SimpleNetworkWrapper getNetwork() {
+    public SimpleChannel getNetwork() {
         return this.network;
     }
 
@@ -46,12 +37,21 @@ public class CommonProxyChaos {
     }
 
     public void registerNetworkStuff() {
-        this.network = NetworkRegistry.INSTANCE.newSimpleChannel("chaospersists");
-        this.network.registerMessage(RiderControlMessageHandler.class, RiderControlMessage.class, 0, Side.SERVER);
+        this.network = NetworkRegistry.newSimpleChannel(
+                ResourceLocation.fromNamespaceAndPath("chaospersists", "chaospersists"),
+                () -> "1.0",
+                "1.0"::equals,
+                "1.0"::equals);
+        this.network.registerMessage(
+                0,
+                RiderControlMessage.class,
+                RiderControlMessage::encode,
+                RiderControlMessage::decode,
+                RiderControlMessageHandler::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
     public int setArmorPrefix(String string) {
         return 0;
     }
 }
-

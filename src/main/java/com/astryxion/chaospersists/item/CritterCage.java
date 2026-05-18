@@ -1,99 +1,82 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  net.minecraftforge.fml.relauncher.Side
- *  net.minecraftforge.fml.relauncher.SideOnly
- *  com.astryxion.chaospersists.CritterCage
- *  com.astryxion.chaospersists.EntityCage
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.client.renderer.texture.IIconRegister
- *  net.minecraft.creativetab.CreativeTabs
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.EntityList
- *  net.minecraft.entity.EntityLiving
- *  net.minecraft.entity.IEntityLivingData
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.monster.EntitySkeleton
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.PlayerCapabilities
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.util.IIcon
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.item;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import com.astryxion.chaospersists.entity.EntityCage;
 import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.Random;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.IEntityLivingData;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntitySkeleton;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.PlayerCapabilities;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.entity.EntityCage;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
 
-/*
- * Exception performing whole class analysis ignored.
- */
-public class CritterCage
-extends Item {
+public class CritterCage extends Item {
     public int cage_id = 0;
 
     public CritterCage(int i, int j) {
+        super(new Properties().stacksTo(16));
         this.cage_id = j;
-        this.maxStackSize = 16;
-        this.setCreativeTab(CreativeTabs.MISC);
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
-        ItemStack stack = player.getHeldItem(hand);
-        world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_SNOWBALL_THROW, SoundCategory.PLAYERS, 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
-        if (!world.isRemote) {
-            EntityCage cage = new EntityCage(world, player, this.cage_id);
-            cage.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 1.5F, 1.0F);
-            world.spawnEntity(cage);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        level.playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.SNOWBALL_THROW,
+                SoundSource.PLAYERS,
+                0.5F,
+                0.4F / (level.getRandom().nextFloat() * 0.4F + 0.8F));
+        if (!level.isClientSide) {
+            EntityCage cage =
+                    new EntityCage(ChaosPersists.ENTITY_TYPE_CAGE.get(), level, player, this.cage_id);
+            cage.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
+            level.addFreshEntity(cage);
         }
-        if (!player.capabilities.isCreativeMode) {
+        if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
-        return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 
     @Override
-    public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-        ItemStack stack = player.getHeldItem(hand);
-        world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_SNOWBALL_THROW, SoundCategory.PLAYERS, 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
-        if (!world.isRemote) {
-            EntityCage cage = new EntityCage(world, player, this.cage_id);
-            cage.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 1.5F, 1.0F);
-            world.spawnEntity(cage);
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        Player player = context.getPlayer();
+        if (player == null) {
+            return InteractionResult.PASS;
         }
-        if (!player.capabilities.isCreativeMode) {
+        ItemStack stack = context.getItemInHand();
+        level.playSound(
+                null,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                SoundEvents.SNOWBALL_THROW,
+                SoundSource.PLAYERS,
+                0.5F,
+                0.4F / (level.getRandom().nextFloat() * 0.4F + 0.8F));
+        if (!level.isClientSide) {
+            EntityCage cage =
+                    new EntityCage(ChaosPersists.ENTITY_TYPE_CAGE.get(), level, player, this.cage_id);
+            cage.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
+            level.addFreshEntity(cage);
+        }
+        if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
-        return EnumActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
-    /** Spawns the mob for the given filled cage_id at the given position. Used by EntityCage.onImpact for release. */
-    public static Entity spawnMobForCage(World world, int cageId, double x, double y, double z) {
+    /** Spawns the mob for the given filled cage_id at the given position. Used by EntityCage.onHit for release. */
+    public static Entity spawnMobForCage(Level level, int cageId, double x, double y, double z) {
         int entityID = 0;
         int skelly_type = 0;
         String name = null;
@@ -552,48 +535,15 @@ extends Item {
             default:
                 return null;
         }
-        Entity ent = spawnCreature(world, entityID, name, x + 0.5, y + 1.1, z + 0.5);
-        if (ent != null && entityID == 51 && skelly_type != 0) {
-            EntitySkeleton sk = (EntitySkeleton)ent;
-        }
-        return ent;
-    }
-
-    public static Entity spawnCreature(World par0World, int par1, String name, double par2, double par4, double par6) {
-        Entity var8 = null;
-        if (name == null) {
-            net.minecraft.util.ResourceLocation key = EntityList.getKey(EntityList.getClassFromID(par1));
-            if (key != null) {
-                var8 = EntityList.createEntityByIDFromName(key, par0World);
+        if (name != null) {
+            if ("WTF?".equals(name)) {
+                name = "gamma_metroid";
+            } else if ("CaveFisher".equals(name)) {
+                name = "cave_fisher";
+            } else if ("T. Rex".equals(name)) {
+                name = "trex";
             }
-        } else {
-            net.minecraft.util.ResourceLocation res;
-            if (name.contains(":")) {
-                res = new net.minecraft.util.ResourceLocation(name);
-            } else {
-                String path = name;
-                if ("WTF?".equals(name)) {
-                    path = "gamma_metroid";
-                } else if ("CaveFisher".equals(name)) {
-                    path = "cave_fisher";
-                } else if ("T. Rex".equals(name)) {
-                    path = "trex";
-                } else {
-                    path = name.toLowerCase().replace(" ", "_");
-                }
-                res = new net.minecraft.util.ResourceLocation("chaospersists", path);
-            }
-            var8 = EntityList.createEntityByIDFromName(res, par0World);
         }
-        if (var8 != null) {
-            var8.setLocationAndAngles(par2, par4, par6, par0World.rand.nextFloat() * 360.0f, 0.0f);
-            if ((par1 == 100 || par1 == 120) && var8 instanceof EntityLiving) {
-                EntityLiving sk = (EntityLiving)var8;
-                sk.onInitialSpawn(par0World.getDifficultyForLocation(new BlockPos(sk)), (IEntityLivingData)null);
-            }
-            par0World.spawnEntity(var8);
-            ((EntityLiving)var8).playLivingSound();
-        }
-        return var8;
+        return ItemSpawnEgg.spawnCreature(level, entityID, name, x + 0.5, y + 1.1, z + 0.5);
     }
 }

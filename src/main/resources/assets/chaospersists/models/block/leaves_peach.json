@@ -15,7 +15,7 @@
     }
   ],
   "textures": {
-    "particle": "chaospersists:blocks/leaves_peach",
-    "all": "chaospersists:blocks/leaves_peach"
+    "particle": "chaospersists:block/leaves_peach",
+    "all": "chaospersists:block/leaves_peach"
   }
 }

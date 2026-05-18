@@ -1,117 +1,170 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.EnderReaper
- *  com.astryxion.chaospersists.MobStats
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.block.material.Material
- *  net.minecraft.entity.DataWatcher
- *  net.minecraft.entity.Entity
- *  net.minecraft.entity.SharedMonsterAttributes
- *  net.minecraft.entity.ai.attributes.AttributeModifier
- *  net.minecraft.entity.ai.attributes.IAttribute
- *  net.minecraft.entity.ai.attributes.IAttributeInstance
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.monster.EntityMob
- *  net.minecraft.entity.player.EntityPlayer
- *  net.minecraft.entity.player.InventoryPlayer
- *  net.minecraft.init.Blocks
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.item.ItemStack
- *  net.minecraft.nbt.NBTTagCompound
- *  net.minecraft.tileentity.MobSpawnerBaseLogic
- *  net.minecraft.tileentity.TileEntity
- *  net.minecraft.tileentity.TileEntityMobSpawner
- *  net.minecraft.util.math.AxisAlignedBB
- *  net.minecraft.util.DamageSource
- *  net.minecraft.util.EntityDamageSourceIndirect
- *  net.minecraft.util.MathHelper
- *  net.minecraft.util.math.Vec3d
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import com.astryxion.chaospersists.util.MobStats;
-import com.astryxion.chaospersists.core.ChaosPersists;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.MobSpawnerBaseLogic;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.EntityDamageSourceIndirect;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.util.MyUtils;
 
-public class EnderReaper
-extends EntityMob {
-    private static final DataParameter<Byte> SCREAMING = EntityDataManager.createKey(EnderReaper.class, DataSerializers.BYTE);
-    private static final UUID attackingSpeedBoostModifierUUID = UUID.fromString("020E0DFB-87AE-4653-9556-831010E291A0");
-    private static final AttributeModifier attackingSpeedBoostModifier = new AttributeModifier(attackingSpeedBoostModifierUUID, "Attacking speed boost", 6.199999809265137, 0).setSaved(false);
+import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.util.SpawnerFixHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import java.util.List;
+import java.util.UUID;
+
+public class EnderReaper extends Monster {
+    private static final EntityDataAccessor<Byte> SCREAMING =
+            SynchedEntityData.defineId(EnderReaper.class, EntityDataSerializers.BYTE);
+    private static final UUID ATTACKING_SPEED_BOOST_UUID =
+            UUID.fromString("020E0DFB-87AE-4653-9556-831010E291A0");
+    private static final AttributeModifier ATTACKING_SPEED_BOOST =
+            new AttributeModifier(
+                    ATTACKING_SPEED_BOOST_UUID,
+                    "Attacking speed boost",
+                    6.199999809265137,
+                    AttributeModifier.Operation.ADDITION);
     private int teleportDelay;
     private int stareTimer;
-    private Entity lastEntityToAttack;
+    private LivingEntity lastEntityToAttack;
 
-    public EnderReaper(World par1World) {
-        super(par1World);
-        this.setSize(0.7f, 2.9f);
-        this.stepHeight = 1.0f;
+    public EnderReaper(EntityType<? extends EnderReaper> type, Level level) {
+        super(type, level);
+        this.setMaxUpStep(1.0F);
     }
 
-    protected void applyEntityAttributes() {
-        super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)ChaosPersists.EnderReaper_stats.health);
-        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.37);
-        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue((double)ChaosPersists.EnderReaper_stats.attack);
+    public static AttributeSupplier.Builder createAttributes() {
+        return Monster.createMonsterAttributes()
+                .add(Attributes.MAX_HEALTH, (double) ChaosPersists.EnderReaper_stats.health)
+                .add(Attributes.MOVEMENT_SPEED, 0.37)
+                .add(Attributes.ATTACK_DAMAGE, (double) ChaosPersists.EnderReaper_stats.attack)
+                .add(Attributes.ARMOR, (double) ChaosPersists.EnderReaper_stats.defense);
     }
 
-    protected void entityInit() {
-        super.entityInit();
-        this.getDataManager().register(SCREAMING, (byte)0);
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(SCREAMING, (byte) 0);
     }
 
-    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {
-        super.writeEntityToNBT(par1NBTTagCompound);
+    @Override
+    public void tick() {
+        if (this.isInWaterRainOrBubble()) {
+            this.hurt(this.damageSources().drown(), 1.0f);
+        }
+        if (this.lastEntityToAttack != this.getTarget()) {
+            AttributeInstance attributeinstance = this.getAttribute(Attributes.MOVEMENT_SPEED);
+            attributeinstance.removeModifier(ATTACKING_SPEED_BOOST);
+            if (this.getTarget() != null) {
+                attributeinstance.addTransientModifier(ATTACKING_SPEED_BOOST);
+            }
+        }
+        this.lastEntityToAttack = this.getTarget();
+        if (this.level().isClientSide) {
+            for (int i = 0; i < 2; ++i) {
+                this.level()
+                        .addParticle(
+                                ParticleTypes.PORTAL,
+                                this.getX() + (this.random.nextDouble() - 0.5) * (double) this.getBbWidth(),
+                                this.getY()
+                                        + this.random.nextDouble() * (double) this.getBbHeight()
+                                        - 0.25,
+                                this.getZ() + (this.random.nextDouble() - 0.5) * (double) this.getBbWidth(),
+                                (this.random.nextDouble() - 0.5) * 2.0,
+                                -this.random.nextDouble(),
+                                (this.random.nextDouble() - 0.5) * 2.0);
+            }
+        }
+        if (this.level().isDay()
+                && !this.level().isClientSide
+                && this.getLightLevelDependentMagicValue() > 0.5f
+                && this.level().canSeeSky(this.blockPosition())
+                && this.random.nextFloat() * 30.0f
+                        < (this.getLightLevelDependentMagicValue() - 0.4f) * 2.0f) {
+            this.setTarget(null);
+            this.setScreaming(false);
+            this.teleportRandomly();
+        }
+        if (this.isInWaterRainOrBubble() || this.isOnFire()) {
+            this.setScreaming(false);
+            this.teleportRandomly();
+        }
+        LivingEntity target = this.getTarget();
+        if (target != null) {
+            this.getLookControl().setLookAt(target, 100.0f, 100.0f);
+        }
+        if (!this.level().isClientSide && this.isAlive()) {
+            if (target != null) {
+                if (target instanceof Player player && this.shouldAttackPlayer(player)) {
+                    if (this.distanceToSqr(target) < 16.0) {
+                        this.teleportRandomly();
+                    }
+                    this.teleportDelay = 0;
+                } else if (this.distanceToSqr(target) > 256.0
+                        && this.teleportDelay++ >= 30
+                        && this.teleportToEntity(target)) {
+                    this.teleportDelay = 0;
+                }
+            } else {
+                this.setScreaming(false);
+                this.teleportDelay = 0;
+            }
+        }
+        super.tick();
     }
 
-    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound) {
-        super.readEntityFromNBT(par1NBTTagCompound);
+    @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        Player player = this.findPlayerToAttack();
+        this.setTarget(player);
     }
 
-    protected Entity findPlayerToAttack() {
+    protected Player findPlayerToAttack() {
         if (ChaosPersists.PlayNicely != 0) {
             return null;
         }
-        EntityPlayer entityplayer = this.world.getNearestAttackablePlayer(this, 81.0, 81.0);
+        Player entityplayer = this.level().getNearestPlayer(this, 81.0);
         if (entityplayer != null) {
             if (this.shouldAttackPlayer(entityplayer)) {
                 if (this.stareTimer == 0) {
-                    this.world.playSound(null, entityplayer.posX, entityplayer.posY, entityplayer.posZ, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft", "entity.endermen.stare")), net.minecraft.util.SoundCategory.HOSTILE, 1.0f, 1.0f);
+                    this.level()
+                            .playSound(
+                                    null,
+                                    entityplayer.getX(),
+                                    entityplayer.getY(),
+                                    entityplayer.getZ(),
+                                    SoundEvents.ENDERMAN_STARE,
+                                    SoundSource.HOSTILE,
+                                    1.0f,
+                                    1.0f);
                 }
                 if (this.stareTimer++ == 5) {
                     this.stareTimer = 0;
@@ -125,216 +178,271 @@ extends EntityMob {
         return null;
     }
 
-    private boolean shouldAttackPlayer(EntityPlayer par1EntityPlayer) {
-        ItemStack itemstack = par1EntityPlayer.inventory.armorInventory.get(3);
-        if (itemstack != null && !itemstack.isEmpty() && itemstack.getItem() == Item.getItemFromBlock((Block)Blocks.PUMPKIN)) {
+    private boolean shouldAttackPlayer(Player par1EntityPlayer) {
+        ItemStack itemstack = par1EntityPlayer.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
+        if (!itemstack.isEmpty() && itemstack.is(Blocks.CARVED_PUMPKIN.asItem())) {
             return false;
         }
-        Vec3d Vec3d = par1EntityPlayer.getLook(1.0f).normalize();
-        Vec3d vec31 = new Vec3d((double)(this.posX - par1EntityPlayer.posX), (double)(this.getEntityBoundingBox().minY + (double)(this.height / 2.0f) - (par1EntityPlayer.posY + (double)par1EntityPlayer.getEyeHeight())), (double)(this.posZ - par1EntityPlayer.posZ));
+        Vec3 look = par1EntityPlayer.getViewVector(1.0f).normalize();
+        Vec3 vec31 =
+                new Vec3(
+                        this.getX() - par1EntityPlayer.getX(),
+                        this.getBoundingBox().minY
+                                + (double) (this.getBbHeight() / 2.0f)
+                                - (par1EntityPlayer.getY() + (double) par1EntityPlayer.getEyeHeight()),
+                        this.getZ() - par1EntityPlayer.getZ());
         double d0 = vec31.length();
-        double d1 = Vec3d.dotProduct(vec31 = vec31.normalize());
-        return d1 > 1.0 - 0.025 / d0 ? par1EntityPlayer.canEntityBeSeen((Entity)this) : false;
-    }
-
-    public void onLivingUpdate() {
-        float f;
-        if (this.isWet()) {
-            this.attackEntityFrom(DamageSource.DROWN, 1.0f);
-        }
-        if (this.lastEntityToAttack != this.getAttackTarget()) {
-            IAttributeInstance attributeinstance = this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
-            attributeinstance.removeModifier(attackingSpeedBoostModifier);
-            if (this.getAttackTarget() != null) {
-                attributeinstance.applyModifier(attackingSpeedBoostModifier);
-            }
-        }
-        this.lastEntityToAttack = this.getAttackTarget();
-        for (int i = 0; i < 2; ++i) {
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.PORTAL, this.posX + (this.rand.nextDouble() - 0.5) * (double)this.width, this.posY + this.rand.nextDouble() * (double)this.height - 0.25, this.posZ + (this.rand.nextDouble() - 0.5) * (double)this.width, (this.rand.nextDouble() - 0.5) * 2.0, - this.rand.nextDouble(), (this.rand.nextDouble() - 0.5) * 2.0);
-        }
-        if (this.world.isDaytime() && !this.world.isRemote && (f = this.getBrightness()) > 0.5f && this.world.canBlockSeeSky(new net.minecraft.util.math.BlockPos(MathHelper.floor(this.posX), MathHelper.floor(this.posY), MathHelper.floor(this.posZ))) && this.rand.nextFloat() * 30.0f < (f - 0.4f) * 2.0f) {
-            this.setAttackTarget(null);
-            this.setScreaming(false);
-            this.teleportRandomly();
-        }
-        if (this.isWet() || this.isBurning()) {
-            this.setScreaming(false);
-            this.teleportRandomly();
-        }
-        this.isJumping = false;
-        if (this.getAttackTarget() != null) {
-            this.faceEntity(this.getAttackTarget(), 100.0f, 100.0f);
-        }
-        if (!this.world.isRemote && this.isEntityAlive()) {
-            if (this.getAttackTarget() != null) {
-                if (this.getAttackTarget() instanceof EntityPlayer && this.shouldAttackPlayer((EntityPlayer)this.getAttackTarget())) {
-                    if (this.getAttackTarget().getDistanceSq((Entity)this) < 16.0) {
-                        this.teleportRandomly();
-                    }
-                    this.teleportDelay = 0;
-                } else if (this.getAttackTarget().getDistanceSq((Entity)this) > 256.0 && this.teleportDelay++ >= 30 && this.teleportToEntity(this.getAttackTarget())) {
-                    this.teleportDelay = 0;
-                }
-            } else {
-                this.setScreaming(false);
-                this.teleportDelay = 0;
-            }
-        }
-        super.onLivingUpdate();
+        vec31 = vec31.normalize();
+        double d1 = look.dot(vec31);
+        return d1 > 1.0 - 0.025 / d0 && par1EntityPlayer.hasLineOfSight(this);
     }
 
     protected boolean teleportRandomly() {
-        double d0 = this.posX + (this.rand.nextDouble() - 0.5) * 64.0;
-        double d1 = this.posY + (double)(this.rand.nextInt(64) - 32);
-        double d2 = this.posZ + (this.rand.nextDouble() - 0.5) * 64.0;
-        return this.teleportTo(d0, d1, d2);
+        double d0 = this.getX() + (this.random.nextDouble() - 0.5) * 64.0;
+        double d1 = this.getY() + (double) (this.random.nextInt(64) - 32);
+        double d2 = this.getZ() + (this.random.nextDouble() - 0.5) * 64.0;
+        return this.tryEnderTeleportTo(d0, d1, d2);
     }
 
     protected boolean teleportToEntity(Entity par1Entity) {
-        Vec3d Vec3d = new Vec3d((double)(this.posX - par1Entity.posX), (double)(this.getEntityBoundingBox().minY + (double)(this.height / 2.0f) - par1Entity.posY + (double)par1Entity.getEyeHeight()), (double)(this.posZ - par1Entity.posZ));
-        Vec3d = Vec3d.normalize();
+        Vec3 vec3 =
+                new Vec3(
+                        this.getX() - par1Entity.getX(),
+                        this.getBoundingBox().minY
+                                + (double) (this.getBbHeight() / 2.0f)
+                                - par1Entity.getY()
+                                + (double) par1Entity.getEyeHeight(),
+                        this.getZ() - par1Entity.getZ());
+        vec3 = vec3.normalize();
         double d0 = 16.0;
-        double d1 = this.posX + (this.rand.nextDouble() - 0.5) * 8.0 - Vec3d.x * d0;
-        double d2 = this.posY + (double)(this.rand.nextInt(16) - 8) - Vec3d.y * d0;
-        double d3 = this.posZ + (this.rand.nextDouble() - 0.5) * 8.0 - Vec3d.z * d0;
-        return this.teleportTo(d1, d2, d3);
+        double d1 = this.getX() + (this.random.nextDouble() - 0.5) * 8.0 - vec3.x * d0;
+        double d2 = this.getY() + (double) (this.random.nextInt(16) - 8) - vec3.y * d0;
+        double d3 = this.getZ() + (this.random.nextDouble() - 0.5) * 8.0 - vec3.z * d0;
+        return this.tryEnderTeleportTo(d1, d2, d3);
     }
 
-    protected boolean teleportTo(double par1, double par3, double par5) {
-        int j;
-        int k;
-        double d3 = this.posX;
-        double d4 = this.posY;
-        double d5 = this.posZ;
-        this.posX = par1;
-        this.posY = par3;
-        this.posZ = par5;
+    public boolean tryEnderTeleportTo(double par1, double par3, double par5) {
+        double d3 = this.getX();
+        double d4 = this.getY();
+        double d5 = this.getZ();
+        this.setPos(par1, par3, par5);
         boolean flag = false;
-        int i = MathHelper.floor(this.posX);
-        net.minecraft.util.math.BlockPos blockPos = new net.minecraft.util.math.BlockPos(i, j = MathHelper.floor(this.posY), k = MathHelper.floor(this.posZ));
-        if (this.world.isBlockLoaded(blockPos)) {
+        int i = Mth.floor(this.getX());
+        int j = Mth.floor(this.getY());
+        int k = Mth.floor(this.getZ());
+        BlockPos blockPos = new BlockPos(i, j, k);
+        if (this.level().hasChunkAt(blockPos)) {
             boolean flag1 = false;
-            while (!flag1 && j > 0) {
-                Block l = this.world.getBlockState(new net.minecraft.util.math.BlockPos(i, j - 1, k)).getBlock();
-                if (l != Blocks.AIR && l.getMaterial(this.world.getBlockState(new net.minecraft.util.math.BlockPos(i, j - 1, k))).blocksMovement()) {
+            while (!flag1 && j > this.level().getMinBuildHeight()) {
+                BlockPos below = new BlockPos(i, j - 1, k);
+                BlockState state = this.level().getBlockState(below);
+                if (!state.isAir() && state.isSolid()) {
                     flag1 = true;
-                    continue;
+                } else {
+                    this.setPos(this.getX(), this.getY() - 1.0, this.getZ());
+                    --j;
                 }
-                this.posY -= 1.0;
-                --j;
             }
             if (flag1) {
-                this.setPosition(this.posX, this.posY, this.posZ);
-                if (this.world.getCollisionBoxes(this, this.getEntityBoundingBox()).isEmpty() && !this.world.isMaterialInBB(this.getEntityBoundingBox(), net.minecraft.block.material.Material.WATER) && !this.world.isMaterialInBB(this.getEntityBoundingBox(), net.minecraft.block.material.Material.LAVA)) {
+                this.setPos(this.getX(), this.getY(), this.getZ());
+                AABB box = this.getBoundingBox();
+                if (this.level().noCollision(this, box) && !this.isInFluid(box)) {
                     flag = true;
                 }
             }
         }
         if (!flag) {
-            this.setPosition(d3, d4, d5);
+            this.setPos(d3, d4, d5);
             return false;
         }
         int short1 = 128;
-        for (int lx = 0; lx < short1; ++lx) {
-            double d6 = (double)lx / ((double)short1 - 1.0);
-            float f = (this.rand.nextFloat() - 0.5f) * 0.2f;
-            float f1 = (this.rand.nextFloat() - 0.5f) * 0.2f;
-            float f2 = (this.rand.nextFloat() - 0.5f) * 0.2f;
-            double d7 = d3 + (this.posX - d3) * d6 + (this.rand.nextDouble() - 0.5) * (double)this.width * 2.0;
-            double d8 = d4 + (this.posY - d4) * d6 + this.rand.nextDouble() * (double)this.height;
-            double d9 = d5 + (this.posZ - d5) * d6 + (this.rand.nextDouble() - 0.5) * (double)this.width * 2.0;
-            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.PORTAL, d7, d8, d9, (double)f, (double)f1, (double)f2);
+        if (this.level().isClientSide) {
+            for (int lx = 0; lx < short1; ++lx) {
+                double d6 = (double) lx / ((double) short1 - 1.0);
+                float pf = (this.random.nextFloat() - 0.5f) * 0.2f;
+                float pf1 = (this.random.nextFloat() - 0.5f) * 0.2f;
+                float pf2 = (this.random.nextFloat() - 0.5f) * 0.2f;
+                double d7 =
+                        d3
+                                + (this.getX() - d3) * d6
+                                + (this.random.nextDouble() - 0.5) * (double) this.getBbWidth() * 2.0;
+                double d8 = d4 + (this.getY() - d4) * d6 + this.random.nextDouble() * (double) this.getBbHeight();
+                double d9 =
+                        d5
+                                + (this.getZ() - d5) * d6
+                                + (this.random.nextDouble() - 0.5) * (double) this.getBbWidth() * 2.0;
+                this.level().addParticle(ParticleTypes.PORTAL, d7, d8, d9, (double) pf, (double) pf1, (double) pf2);
+            }
+        } else {
+            this.level()
+                    .playSound(
+                            null,
+                            d3,
+                            d4,
+                            d5,
+                            SoundEvents.ENDERMAN_TELEPORT,
+                            SoundSource.HOSTILE,
+                            1.0f,
+                            1.0f);
+            this.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0f, 1.0f);
         }
-        this.world.playSound(null, d3, d4, d5, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft", "entity.endermen.teleport")), net.minecraft.util.SoundCategory.HOSTILE, 1.0f, 1.0f);
-        this.playSound(net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft", "entity.endermen.teleport")), 1.0f, 1.0f);
         return true;
     }
 
-    protected net.minecraft.util.SoundEvent getAmbientSound() {
-        return this.isScreaming() ? net.minecraft.init.SoundEvents.ENTITY_ENDERMEN_SCREAM : net.minecraft.init.SoundEvents.ENTITY_ENDERMEN_AMBIENT;
-    }
-
-    protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource damageSource) {
-        return net.minecraft.init.SoundEvents.ENTITY_ENDERMEN_HURT;
-    }
-
-    protected net.minecraft.util.SoundEvent getDeathSound() {
-        return net.minecraft.init.SoundEvents.ENTITY_ENDERMEN_DEATH;
-    }
-
-    protected Item getDropItem() {
-        return Items.ENDER_EYE;
-    }
-
-    public int getTotalArmorValue() {
-        return ChaosPersists.EnderReaper_stats.defense;
-    }
-
-    protected void dropFewItems(boolean par1, int par2) {
-        Item j = this.getDropItem();
-        if (j != null) {
-            int k = this.rand.nextInt(2 + par2);
-            for (int l = 0; l < k; ++l) {
-                this.dropItem(j, 1);
-            }
-        }
-    }
-
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-        if (this.isEntityInvulnerable(par1DamageSource)) {
-            return false;
-        }
-        this.setScreaming(true);
-        if (par1DamageSource instanceof net.minecraft.util.EntityDamageSourceIndirect) {
-            for (int i = 0; i < 16; ++i) {
-                if (!this.teleportRandomly()) continue;
-                return true;
-            }
-            return super.attackEntityFrom(par1DamageSource, par2);
-        }
-        return super.attackEntityFrom(par1DamageSource, par2);
-    }
-
-    public boolean getCanSpawnHere() {
-        for (int k = -3; k < 3; ++k) {
-            for (int j = -3; j < 3; ++j) {
-                for (int i = 0; i < 5; ++i) {
-                    Block bid = this.world.getBlockState(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k)).getBlock();
-                    if (bid != Blocks.MOB_SPAWNER) continue;
-                    TileEntityMobSpawner tileentitymobspawner = null;
-                    tileentitymobspawner = (TileEntityMobSpawner)this.world.getTileEntity(new net.minecraft.util.math.BlockPos((int)this.posX + j, (int)this.posY + i, (int)this.posZ + k));
-                                        String s = null;
-                    net.minecraft.util.ResourceLocation id = com.astryxion.chaospersists.util.SpawnerFixHelper.getMobSpawnerEntityId(tileentitymobspawner.getSpawnerBaseLogic());
-                    if (id != null) s = id.getPath();
-                    if (s == null || !s.equals("Ender Reaper")) continue;
-                    return true;
+    private boolean isInFluid(AABB box) {
+        int minX = Mth.floor(box.minX);
+        int maxX = Mth.floor(box.maxX);
+        int minY = Mth.floor(box.minY);
+        int maxY = Mth.floor(box.maxY);
+        int minZ = Mth.floor(box.minZ);
+        int maxZ = Mth.floor(box.maxZ);
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int x = minX; x <= maxX; ++x) {
+            for (int y = minY; y <= maxY; ++y) {
+                for (int z = minZ; z <= maxZ; ++z) {
+                    pos.set(x, y, z);
+                    FluidState fluid = this.level().getFluidState(pos);
+                    if (fluid.is(FluidTags.WATER) || fluid.is(FluidTags.LAVA)) {
+                        return true;
+                    }
                 }
             }
         }
-        if (!this.isValidLightLevel()) {
+        return false;
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return this.isScreaming() ? SoundEvents.ENDERMAN_SCREAM : SoundEvents.ENDERMAN_AMBIENT;
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return SoundEvents.ENDERMAN_HURT;
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return SoundEvents.ENDERMAN_DEATH;
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        int k = this.random.nextInt(2 + looting);
+        for (int l = 0; l < k; ++l) {
+            this.spawnAtLocation(Items.ENDER_EYE);
+        }
+    }
+
+    @Override
+    public boolean hurt(DamageSource par1DamageSource, float par2) {
+        if (this.isInvulnerableTo(par1DamageSource)) {
             return false;
         }
-        if (this.world.isDaytime()) {
+        this.setScreaming(true);
+        if (par1DamageSource.isIndirect()) {
+            for (int i = 0; i < 16; ++i) {
+                if (this.teleportRandomly()) {
+                    return true;
+                }
+            }
+            return super.hurt(par1DamageSource, par2);
+        }
+        return super.hurt(par1DamageSource, par2);
+    }
+
+    public static boolean checkEnderReaperSpawnRules(
+            EntityType<EnderReaper> type,
+            ServerLevelAccessor level,
+            MobSpawnType spawnType,
+            BlockPos pos,
+            net.minecraft.util.RandomSource random) {
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
+        for (int k = -3; k < 3; ++k) {
+            for (int j = -3; j < 3; ++j) {
+                for (int i = 0; i < 5; ++i) {
+                    checkPos.set(pos.getX() + j, pos.getY() + i, pos.getZ() + k);
+                    if (MyUtils.getBlockStateForSpawnRules(level, checkPos).getBlock() != Blocks.SPAWNER) {
+                        continue;
+                    }
+                    if (!(MyUtils.getBlockEntityForSpawnRules(level, checkPos) instanceof SpawnerBlockEntity spawner)) {
+                        continue;
+                    }
+                    ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityIdFromBlockEntity(spawner);
+                    if (id == null) {
+                        continue;
+                    }
+                    ResourceLocation reaperId =
+                            ResourceLocation.fromNamespaceAndPath("chaospersists", "ender_reaper");
+                    ResourceLocation norm = SpawnerFixHelper.normalizeSpawnerEntityId(id);
+                    if (SpawnerFixHelper.entityIdsMatchForSpawner(norm, reaperId)
+                            || "Ender Reaper".equals(id.getPath())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        if (!Monster.checkMonsterSpawnRules(type, level, spawnType, pos, random)) {
             return false;
         }
-        if (this.posY < 30.0) {
+        if (MyUtils.isDay(level)) {
             return false;
         }
-        EnderReaper target = null;
-        target = (EnderReaper)this.world.findNearestEntityWithinAABB(EnderReaper.class, this.getEntityBoundingBox().expand(16.0, 8.0, 16.0), (Entity)this);
-        if (target != null) {
+        if (pos.getY() < 30) {
             return false;
         }
-        return true;
+        List<EnderReaper> nearby =
+                level.getLevel().getEntitiesOfClass(EnderReaper.class, new AABB(pos).inflate(16.0, 8.0, 16.0));
+        return nearby.isEmpty();
+    }
+
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        BlockPos pos = this.blockPosition();
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
+        for (int k = -3; k < 3; ++k) {
+            for (int j = -3; j < 3; ++j) {
+                for (int i = 0; i < 5; ++i) {
+                    checkPos.set(pos.getX() + j, pos.getY() + i, pos.getZ() + k);
+                    if (MyUtils.getBlockStateForSpawnRules(level, checkPos).getBlock() != Blocks.SPAWNER) {
+                        continue;
+                    }
+                    if (!(MyUtils.getBlockEntityForSpawnRules(level, checkPos) instanceof SpawnerBlockEntity spawner)) {
+                        continue;
+                    }
+                    ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityIdFromBlockEntity(spawner);
+                    if (id == null) {
+                        continue;
+                    }
+                    ResourceLocation reaperId =
+                            ResourceLocation.fromNamespaceAndPath("chaospersists", "ender_reaper");
+                    ResourceLocation norm = SpawnerFixHelper.normalizeSpawnerEntityId(id);
+                    if (SpawnerFixHelper.entityIdsMatchForSpawner(norm, reaperId)
+                            || "Ender Reaper".equals(id.getPath())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        if (level.getMaxLocalRawBrightness(pos) > 7) {
+            return false;
+        }
+        if (this.level().isDay()) {
+            return false;
+        }
+        if (this.getY() < 30.0) {
+            return false;
+        }
+        return this.level()
+                .getEntitiesOfClass(EnderReaper.class, this.getBoundingBox().inflate(16.0, 8.0, 16.0))
+                .isEmpty();
     }
 
     public boolean isScreaming() {
-        return this.getDataManager().get(SCREAMING).byteValue() > 0;
+        return this.entityData.get(SCREAMING) > 0;
     }
 
     public void setScreaming(boolean par1) {
-        this.getDataManager().set(SCREAMING, (byte)(par1 ? 1 : 0));
+        this.entityData.set(SCREAMING, (byte) (par1 ? 1 : 0));
     }
 }
-

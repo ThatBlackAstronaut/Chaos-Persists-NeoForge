@@ -1,24 +1,13 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.CrystalMaze
- *  com.astryxion.chaospersists.ChaosPersists
- *  net.minecraft.block.Block
- *  net.minecraft.init.Blocks
- *  net.minecraft.world.World
- *  net.minecraft.world.chunk.Chunk
- */
 package com.astryxion.chaospersists.block;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
 import java.awt.Point;
 import java.util.Random;
 import java.util.Vector;
-import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 public class CrystalMaze {
     public static final int WTOP = 1;
@@ -26,52 +15,52 @@ public class CrystalMaze {
     public static final int WBOT = 4;
     public static final int WLFT = 8;
 
-    public void buildCrystalMaze(World world, int x, int y, int z, Chunk chunk) {
+    public void buildCrystalMaze(Level level, int x, int y, int z, LevelChunk chunk) {
         for (int i = 0; i < 16; ++i) {
             for (int j = 0; j < 16; ++j) {
                 for (int k = 0; k < 3; ++k) {
-                    ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(x + j), (int)(y + k), (int)(z + i), (Block)Blocks.AIR, (int)0);
+                    ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(x + j), (int)(y + k), (int)(z + i), Blocks.AIR, (int)0);
                 }
             }
         }
-        this.makeMaze(world, x, y, z, 4, 4, 4, 1, chunk);
-        this.openCrystalMaze(world, x, y, z, 4, 4, 4, chunk);
+        this.makeMaze(level, x, y, z, 4, 4, 4, 1, chunk);
+        this.openCrystalMaze(level, x, y, z, 4, 4, 4, chunk);
     }
 
-    private void openCrystalMaze(World world, int xx, int yy, int zz, int xw, int zw, int csz, Chunk chunk) {
+    private void openCrystalMaze(Level level, int xx, int yy, int zz, int xw, int zw, int csz, LevelChunk chunk) {
         int i;
         int j;
         for (i = 0; i < zw * csz; ++i) {
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)xx, (int)yy, (int)(zz + i), (Block)Blocks.AIR, (int)0);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)xx, (int)(yy + 1), (int)(zz + i), (Block)Blocks.AIR, (int)0);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)xx, (int)(yy + 2), (int)(zz + i), (Block)Blocks.AIR, (int)0);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + i), (int)yy, (int)zz, (Block)Blocks.AIR, (int)0);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + i), (int)(yy + 1), (int)zz, (Block)Blocks.AIR, (int)0);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + i), (int)(yy + 2), (int)zz, (Block)Blocks.AIR, (int)0);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + zw * csz - 1), (int)yy, (int)(zz + i), (Block)Blocks.AIR, (int)0);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + zw * csz - 1), (int)(yy + 1), (int)(zz + i), (Block)Blocks.AIR, (int)0);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + zw * csz - 1), (int)(yy + 2), (int)(zz + i), (Block)Blocks.AIR, (int)0);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + i), (int)yy, (int)(zz + zw * csz - 1), (Block)Blocks.AIR, (int)0);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + i), (int)(yy + 1), (int)(zz + zw * csz - 1), (Block)Blocks.AIR, (int)0);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + i), (int)(yy + 2), (int)(zz + zw * csz - 1), (Block)Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)xx, (int)yy, (int)(zz + i), Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)xx, (int)(yy + 1), (int)(zz + i), Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)xx, (int)(yy + 2), (int)(zz + i), Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + i), (int)yy, (int)zz, Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + i), (int)(yy + 1), (int)zz, Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + i), (int)(yy + 2), (int)zz, Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + zw * csz - 1), (int)yy, (int)(zz + i), Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + zw * csz - 1), (int)(yy + 1), (int)(zz + i), Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + zw * csz - 1), (int)(yy + 2), (int)(zz + i), Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + i), (int)yy, (int)(zz + zw * csz - 1), Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + i), (int)(yy + 1), (int)(zz + zw * csz - 1), Blocks.AIR, (int)0);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + i), (int)(yy + 2), (int)(zz + zw * csz - 1), Blocks.AIR, (int)0);
         }
         for (i = 0; i < zw * csz; ++i) {
             for (j = 0; j < zw * csz; ++j) {
-                ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + j), (int)(yy - 1), (int)(zz + i), (Block)Blocks.BEDROCK, (int)0);
-                ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + j), (int)(yy + 3), (int)(zz + i), (Block)Blocks.BEDROCK, (int)0);
+                ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + j), (int)(yy - 1), (int)(zz + i), Blocks.BEDROCK, (int)0);
+                ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + j), (int)(yy + 3), (int)(zz + i), Blocks.BEDROCK, (int)0);
             }
         }
         for (int k = 0; k < 4; ++k) {
-            i = world.rand.nextInt(zw * csz);
-            j = world.rand.nextInt(zw * csz);
-            ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + j), (int)(yy + 3), (int)(zz + i), (Block)ChaosPersists.CrystalStone, (int)0);
+            i = level.getRandom().nextInt(zw * csz);
+            j = level.getRandom().nextInt(zw * csz);
+            ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + j), (int)(yy + 3), (int)(zz + i), ChaosPersists.CrystalStone, (int)0);
         }
-        i = world.rand.nextInt(zw * csz);
-        j = world.rand.nextInt(zw * csz);
-        ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(xx + j), (int)(yy - 1), (int)(zz + i), (Block)ChaosPersists.CrystalStone, (int)0);
+        i = level.getRandom().nextInt(zw * csz);
+        j = level.getRandom().nextInt(zw * csz);
+        ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(xx + j), (int)(yy - 1), (int)(zz + i), ChaosPersists.CrystalStone, (int)0);
     }
 
-    private void makeMaze(World world, int xx, int yy, int zz, int xw, int zw, int csz, int b, Chunk chunk) {
+    private void makeMaze(Level level, int xx, int yy, int zz, int xw, int zw, int csz, int b, LevelChunk chunk) {
         int y;
         int x;
         int gridw = xw;
@@ -130,21 +119,21 @@ public class CrystalMaze {
             for (y = 0; y < gridh; ++y) {
                 int val = cells[x][y];
                 if ((val & 1) != 0) {
-                    this.drawSide(world, x * cellsize, y * cellsize, (x + 1) * cellsize, y * cellsize, xx, yy, zz, cellsize, gridh, gridw, b, chunk);
+                    this.drawSide(level, x * cellsize, y * cellsize, (x + 1) * cellsize, y * cellsize, xx, yy, zz, cellsize, gridh, gridw, b, chunk);
                 }
                 if ((val & 2) != 0) {
-                    this.drawSide(world, (x + 1) * cellsize - 1, y * cellsize, (x + 1) * cellsize - 1, (y + 1) * cellsize, xx, yy, zz, cellsize, gridh, gridw, b, chunk);
+                    this.drawSide(level, (x + 1) * cellsize - 1, y * cellsize, (x + 1) * cellsize - 1, (y + 1) * cellsize, xx, yy, zz, cellsize, gridh, gridw, b, chunk);
                 }
                 if ((val & 4) != 0) {
-                    this.drawSide(world, x * cellsize, (y + 1) * cellsize - 1, (x + 1) * cellsize, (y + 1) * cellsize - 1, xx, yy, zz, cellsize, gridh, gridw, b, chunk);
+                    this.drawSide(level, x * cellsize, (y + 1) * cellsize - 1, (x + 1) * cellsize, (y + 1) * cellsize - 1, xx, yy, zz, cellsize, gridh, gridw, b, chunk);
                 }
                 if ((val & 8) == 0) continue;
-                this.drawSide(world, x * cellsize, y * cellsize, x * cellsize, (y + 1) * cellsize, xx, yy, zz, cellsize, gridh, gridw, b, chunk);
+                this.drawSide(level, x * cellsize, y * cellsize, x * cellsize, (y + 1) * cellsize, xx, yy, zz, cellsize, gridh, gridw, b, chunk);
             }
         }
     }
 
-    private void drawSide(World world, int fromx, int fromz, int tox, int toz, int x, int y, int z, int cellsize, int gridh, int gridw, int bb, Chunk chunk) {
+    private void drawSide(Level level, int fromx, int fromz, int tox, int toz, int x, int y, int z, int cellsize, int gridh, int gridw, int bb, LevelChunk chunk) {
         int i;
         Block blk = Blocks.OBSIDIAN;
         if (bb != 0) {
@@ -164,17 +153,17 @@ public class CrystalMaze {
             i = fromx;
             for (int j = fromz; j <= toz; ++j) {
                 if (j >= cellsize * gridh) continue;
-                ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(i + x), (int)y, (int)(j + z), (Block)blk, (int)0);
-                ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(i + x), (int)(y + 1), (int)(j + z), (Block)blk, (int)0);
-                ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(i + x), (int)(y + 2), (int)(j + z), (Block)blk, (int)0);
+                ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(i + x), (int)y, (int)(j + z), blk, (int)0);
+                ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(i + x), (int)(y + 1), (int)(j + z), blk, (int)0);
+                ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(i + x), (int)(y + 2), (int)(j + z), blk, (int)0);
             }
         } else {
             int j = fromz;
             for (i = fromx; i <= tox; ++i) {
                 if (i >= cellsize * gridw) continue;
-                ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(i + x), (int)y, (int)(j + z), (Block)blk, (int)0);
-                ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(i + x), (int)(y + 1), (int)(j + z), (Block)blk, (int)0);
-                ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(i + x), (int)(y + 2), (int)(j + z), (Block)blk, (int)0);
+                ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(i + x), (int)y, (int)(j + z), blk, (int)0);
+                ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(i + x), (int)(y + 1), (int)(j + z), blk, (int)0);
+                ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(i + x), (int)(y + 2), (int)(j + z), blk, (int)0);
             }
         }
     }
@@ -275,7 +264,7 @@ public class CrystalMaze {
         return s;
     }
 
-    private void clearArea(World world, int x, int y, int z, Chunk chunk) {
+    private void clearArea(Level level, int x, int y, int z, LevelChunk chunk) {
         int i;
         int j;
         int k;
@@ -286,17 +275,18 @@ public class CrystalMaze {
             }
             for (j = 0; j < hi; ++j) {
                 for (k = 0; k < 30; ++k) {
-                    ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(x + i), (int)(y + j), (int)(z + k), (Block)Blocks.AIR, (int)0);
+                    ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(x + i), (int)(y + j), (int)(z + k), Blocks.AIR, (int)0);
                 }
             }
         }
         for (i = 0; i < 5; ++i) {
             for (j = 0; j < 6; ++j) {
                 for (k = 0; k < 30; ++k) {
-                    ChaosPersists.setBlockIDWithMetadataInChunk((Chunk)chunk, (int)(x - i), (int)(y + j), (int)(z + k), (Block)Blocks.AIR, (int)0);
+                    ChaosPersists.setBlockIDWithMetadataInChunk(chunk, (int)(x - i), (int)(y + j), (int)(z + k), Blocks.AIR, (int)0);
                 }
             }
         }
     }
 }
+
 

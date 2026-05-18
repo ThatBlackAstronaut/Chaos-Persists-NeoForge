@@ -1,41 +1,45 @@
 package com.astryxion.chaospersists.item;
 
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.core.ChaosPersists;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
 
 /**
  * Places a hoverboard entity. 1.7.10 used {@code EntityList.createEntityByName("Hoverboard", world)};
- * we construct {@link Elevator} directly so spawn never depends on registry lookup succeeding.
+ * we construct {@link Elevator} via {@link ChaosPersists#ENTITY_TYPE_ELEVATOR} so spawn never depends on registry lookup succeeding.
  */
 public class ItemElevator extends Item {
 
     public ItemElevator(int par1) {
-        this.setMaxStackSize(1);
-        this.setCreativeTab(CreativeTabs.TRANSPORTATION);
+        this(new Properties().stacksTo(1));
+    }
+
+    public ItemElevator(Properties properties) {
+        super(properties);
     }
 
     @Override
-    public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
-        ItemStack stack = player.getHeldItem(hand);
-        if (world.isRemote) {
-            return EnumActionResult.SUCCESS;
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        Player player = context.getPlayer();
+        if (level.isClientSide || player == null) {
+            return InteractionResult.SUCCESS;
         }
-        Elevator elevator = new Elevator(world);
-        double x = (double) pos.getX() + 0.5D;
-        double y = (double) pos.getY() + 1.2D;
-        double z = (double) pos.getZ() + 0.5D;
-        elevator.setLocationAndAngles(x, y, z, world.rand.nextFloat() * 360.0f, 0.0f);
-        world.spawnEntity(elevator);
-        if (!player.capabilities.isCreativeMode) {
-            stack.shrink(1);
+        Elevator elevator = ChaosPersists.ENTITY_TYPE_ELEVATOR.get().create(level);
+        if (elevator == null) {
+            return InteractionResult.FAIL;
         }
-        return EnumActionResult.SUCCESS;
+        double x = (double) context.getClickedPos().getX() + 0.5;
+        double y = (double) context.getClickedPos().getY() + 1.2;
+        double z = (double) context.getClickedPos().getZ() + 0.5;
+        elevator.moveTo(x, y, z, level.getRandom().nextFloat() * 360.0f, 0.0f);
+        level.addFreshEntity(elevator);
+        if (!player.getAbilities().instabuild) {
+            context.getItemInHand().shrink(1);
+        }
+        return InteractionResult.SUCCESS;
     }
 }

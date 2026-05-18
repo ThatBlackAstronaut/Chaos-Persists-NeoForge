@@ -1,112 +1,250 @@
 package com.astryxion.chaospersists.core;
 
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.RegistryObject;
+import net.minecraft.world.entity.EntityType;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.Mod.Instance;
-import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
-import net.minecraftforge.fml.common.registry.EntityRegistry;
-import net.minecraftforge.fml.common.registry.GameRegistry;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.GregorianCalendar;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.BlockDispenser;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.passive.EntityTameable;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EnumCreatureType;
-import net.minecraft.entity.monster.IMob;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemBow;
-import net.minecraft.item.ItemFishingRod;
-import net.minecraft.item.ItemFood;
-import net.minecraft.item.Item.ToolMaterial;
-import net.minecraft.item.ItemArmor;
-import net.minecraft.item.ItemArmor.ArmorMaterial;
-import net.minecraft.item.ItemHoe;
-import net.minecraft.item.EnumAction;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
-import net.minecraft.item.ItemTool;
-import net.minecraft.item.ItemMonsterPlacer;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.EnumSkyBlock;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldProvider;
-import net.minecraft.world.DimensionType;
-import net.minecraft.init.Biomes;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
-import net.minecraft.world.storage.loot.LootTableList;
-import net.minecraft.world.storage.loot.LootPool;
-import net.minecraft.world.storage.loot.LootEntryItem;
-import net.minecraft.world.storage.loot.functions.LootFunction;
-import net.minecraft.world.storage.loot.functions.SetCount;
-import net.minecraft.world.storage.loot.conditions.LootCondition;
-import net.minecraft.world.storage.loot.RandomValueRange;
-import net.minecraftforge.event.LootTableLoadEvent;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.furnace.FurnaceFuelBurnTimeEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.level.biome.MobSpawnSettings;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.RangedAttribute;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
+import com.astryxion.chaospersists.compat.minecraft.init.Biomes;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DispenserBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
+import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
+import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.flag.FeatureFlagSet;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.HoeItem;
+import net.minecraft.world.item.FishingRodItem;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.DiggerItem;
+import net.minecraft.world.item.UseAnim;
+import com.astryxion.chaospersists.compat.forge.common.CreativeTabCompat;
+import com.astryxion.chaospersists.compat.forge.common.RegistryCompat;
+import com.astryxion.chaospersists.compat.forge.fml.common.event.FMLInitializationEvent;
+import com.astryxion.chaospersists.compat.forge.fml.common.event.FMLPostInitializationEvent;
+import com.astryxion.chaospersists.compat.forge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
+import com.astryxion.chaospersists.compat.minecraft.block.BlockDispenser;
+import com.astryxion.chaospersists.compat.minecraft.world.item.ItemMonsterPlacer;
+import com.astryxion.chaospersists.compat.minecraft.world.storage.loot.LootTableList;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraftforge.common.extensions.IForgeMenuType;
+import com.astryxion.chaospersists.container.ContainerCrystalWorkbench;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraft.client.renderer.entity.ArrowRenderer;
+import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.common.MinecraftForge;
+import com.astryxion.chaospersists.compat.forge.common.config.Configuration;
+import com.astryxion.chaospersists.compat.forge.fml.common.network.NetworkRegistry;
+import com.astryxion.chaospersists.compat.forge.common.config.Property;
+import com.astryxion.chaospersists.compat.forge.common.util.EnumHelper;
+import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.living.LivingSpawnEvent;
-import net.minecraftforge.event.world.ChunkEvent;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
-import net.minecraftforge.common.util.EnumHelper;
-import net.minecraftforge.fml.common.FMLLog;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.ai.attributes.RangedAttribute;
+import net.minecraftforge.event.entity.living.MobSpawnEvent;
+import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import com.astryxion.chaospersists.compat.forge.fml.common.registry.EntityRegistry;
+import com.astryxion.chaospersists.compat.forge.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegisterEvent;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
+import net.minecraftforge.event.furnace.FurnaceFuelBurnTimeEvent;
+import net.minecraftforge.event.LootTableLoadEvent;
+import com.astryxion.chaospersists.model.*;
+import com.astryxion.chaospersists.render.RenderAlien;
+import com.astryxion.chaospersists.render.RenderBoyfriend;
+import com.astryxion.chaospersists.render.RenderCage;
+import com.astryxion.chaospersists.render.RenderElevator;
+import com.astryxion.chaospersists.render.RenderGirlfriend;
+import com.astryxion.chaospersists.render.RenderItemUrchin;
+import com.astryxion.chaospersists.render.RenderPurplePower;
+import com.astryxion.chaospersists.render.RenderShoe;
+import com.astryxion.chaospersists.render.RenderSpiderDriver;
+import com.astryxion.chaospersists.render.RenderThrowableBillboard;
+import com.astryxion.chaospersists.render.RenderUltimateArrow;
+import com.astryxion.chaospersists.render.RenderUltimateFishHook;
+import com.astryxion.chaospersists.render.RenderAlosaurus;
+import com.astryxion.chaospersists.render.RenderAnt;
+import com.astryxion.chaospersists.render.RenderAntRobot;
+import com.astryxion.chaospersists.render.RenderAttackSquid;
+import com.astryxion.chaospersists.render.RenderBandP;
+import com.astryxion.chaospersists.render.RenderBaryonyx;
+import com.astryxion.chaospersists.render.RenderBasilisk;
+import com.astryxion.chaospersists.render.RenderBeaver;
+import com.astryxion.chaospersists.render.RenderBee;
+import com.astryxion.chaospersists.render.RenderBrutalfly;
+import com.astryxion.chaospersists.render.RenderButterfly;
+import com.astryxion.chaospersists.render.RenderCamarasaurus;
+import com.astryxion.chaospersists.render.RenderCassowary;
+import com.astryxion.chaospersists.render.RenderCaterKiller;
+import com.astryxion.chaospersists.render.RenderCaveFisher;
+import com.astryxion.chaospersists.render.RenderCephadrome;
+import com.astryxion.chaospersists.render.RenderChipmunk;
+import com.astryxion.chaospersists.render.RenderCliffRacer;
+import com.astryxion.chaospersists.render.RenderCloudShark;
+import com.astryxion.chaospersists.render.RenderCockateil;
+import com.astryxion.chaospersists.render.RenderCoin;
+import com.astryxion.chaospersists.render.RenderCrab;
+import com.astryxion.chaospersists.render.RenderCreepingHorror;
+import com.astryxion.chaospersists.render.RenderCricket;
+import com.astryxion.chaospersists.render.RenderCryolophosaurus;
+import com.astryxion.chaospersists.render.RenderDragon;
+import com.astryxion.chaospersists.render.RenderDragonfly;
+import com.astryxion.chaospersists.render.RenderDungeonBeast;
+import com.astryxion.chaospersists.render.RenderEasterBunny;
+import com.astryxion.chaospersists.render.RenderEmperorScorpion;
+import com.astryxion.chaospersists.render.RenderEnchantedCow;
+import com.astryxion.chaospersists.render.RenderEnderKnight;
+import com.astryxion.chaospersists.render.RenderEnderReaper;
+import com.astryxion.chaospersists.render.RenderFairy;
+import com.astryxion.chaospersists.render.RenderFirefly;
+import com.astryxion.chaospersists.render.RenderFlounder;
+import com.astryxion.chaospersists.render.RenderFrog;
+import com.astryxion.chaospersists.render.RenderGammaMetroid;
+import com.astryxion.chaospersists.render.RenderGazelle;
+import com.astryxion.chaospersists.render.RenderGhost;
+import com.astryxion.chaospersists.render.RenderGhostSkelly;
+import com.astryxion.chaospersists.render.RenderGiantRobot;
+import com.astryxion.chaospersists.render.RenderGodzilla;
+import com.astryxion.chaospersists.render.RenderGodzillaHead;
+import com.astryxion.chaospersists.render.RenderKingHead;
+import com.astryxion.chaospersists.render.RenderQueenHead;
+import com.astryxion.chaospersists.render.RenderThrownRock;
+import com.astryxion.chaospersists.render.RenderGoldFish;
+import com.astryxion.chaospersists.render.RenderHammerhead;
+import com.astryxion.chaospersists.render.RenderHerculesBeetle;
+import com.astryxion.chaospersists.render.RenderHydrolisc;
+import com.astryxion.chaospersists.render.RenderIrukandji;
+import com.astryxion.chaospersists.render.RenderIsland;
+import com.astryxion.chaospersists.render.RenderIslandToo;
+import com.astryxion.chaospersists.render.RenderKraken;
+import com.astryxion.chaospersists.render.RenderKyuubi;
+import com.astryxion.chaospersists.render.RenderLeafMonster;
+import com.astryxion.chaospersists.render.RenderLeon;
+import com.astryxion.chaospersists.render.RenderLizard;
+import com.astryxion.chaospersists.render.RenderLurkingTerror;
+import com.astryxion.chaospersists.render.RenderMantis;
+import com.astryxion.chaospersists.render.RenderMolenoid;
+import com.astryxion.chaospersists.render.RenderMosquito;
+import com.astryxion.chaospersists.render.RenderNastysaurus;
+import com.astryxion.chaospersists.render.RenderOstrich;
+import com.astryxion.chaospersists.render.RenderPeacock;
+import com.astryxion.chaospersists.render.RenderPitchBlack;
+import com.astryxion.chaospersists.render.RenderPointysaurus;
+import com.astryxion.chaospersists.render.RenderRat;
+import com.astryxion.chaospersists.render.RenderRobot1;
+import com.astryxion.chaospersists.render.RenderRobot2;
+import com.astryxion.chaospersists.render.RenderRobot3;
+import com.astryxion.chaospersists.render.RenderRobot4;
+import com.astryxion.chaospersists.render.RenderRobot5;
+import com.astryxion.chaospersists.render.RenderRockBase;
+import com.astryxion.chaospersists.render.RenderRotator;
+import com.astryxion.chaospersists.render.RenderRubberDucky;
+import com.astryxion.chaospersists.render.RenderScorpion;
+import com.astryxion.chaospersists.render.RenderSeaMonster;
+import com.astryxion.chaospersists.render.RenderSeaViper;
+import com.astryxion.chaospersists.render.RenderSkate;
+import com.astryxion.chaospersists.render.RenderSpiderRobot;
+import com.astryxion.chaospersists.render.RenderSpitBug;
+import com.astryxion.chaospersists.render.RenderSpyro;
+import com.astryxion.chaospersists.render.RenderStinkBug;
+import com.astryxion.chaospersists.render.RenderStinky;
+import com.astryxion.chaospersists.render.RenderTRex;
+import com.astryxion.chaospersists.render.RenderTerribleTerror;
+import com.astryxion.chaospersists.render.RenderTheKing;
+import com.astryxion.chaospersists.render.RenderThePrince;
+import com.astryxion.chaospersists.render.RenderThePrinceAdult;
+import com.astryxion.chaospersists.render.RenderThePrinceTeen;
+import com.astryxion.chaospersists.render.RenderThePrincess;
+import com.astryxion.chaospersists.render.RenderTheQueen;
+import com.astryxion.chaospersists.render.RenderTriffid;
+import com.astryxion.chaospersists.render.RenderTrooperBug;
+import com.astryxion.chaospersists.render.RenderTshirt;
+import com.astryxion.chaospersists.render.RenderUrchin;
+import com.astryxion.chaospersists.render.RenderVelocityRaptor;
+import com.astryxion.chaospersists.render.RenderVortex;
+import com.astryxion.chaospersists.render.RenderWaterDragon;
+import com.astryxion.chaospersists.render.RenderWhale;
+import com.astryxion.chaospersists.render.RenderWormLarge;
+import com.astryxion.chaospersists.render.RenderWormMedium;
+import com.astryxion.chaospersists.render.RenderWormSmall;
 
 import com.astryxion.chaospersists.util.ArmorStats;
 import com.astryxion.chaospersists.util.Trees;
-import com.astryxion.chaospersists.world.biome.BiomeChaosPlains;
-import com.astryxion.chaospersists.world.biome.BiomeCrystalPlains;
-import com.astryxion.chaospersists.world.biome.BiomeDangerPlains;
-import com.astryxion.chaospersists.world.biome.BiomeGenUtopianPlains;
-import com.astryxion.chaospersists.world.biome.BiomeMiningDimension;
-import com.astryxion.chaospersists.world.biome.BiomeVillagePlains;
+import com.astryxion.chaospersists.world.biome.BiomeUtopia;
 import com.astryxion.chaospersists.world.dimension.structure.BasiliskMaze;
 import com.astryxion.chaospersists.world.dimension.structure.RubyBirdDungeon;
 import com.astryxion.chaospersists.world.dimension.structure.GenericDungeon;
@@ -265,6 +403,7 @@ import com.astryxion.chaospersists.item.InkSack;
 import com.astryxion.chaospersists.item.LaserBall;
 import com.astryxion.chaospersists.item.IceBall;
 import com.astryxion.chaospersists.item.Acid;
+import com.astryxion.chaospersists.item.BetterFireball;
 import com.astryxion.chaospersists.entity.DeadIrukandji;
 import com.astryxion.chaospersists.entity.BerthaHit;
 import com.astryxion.chaospersists.item.PurplePower;
@@ -391,13 +530,8 @@ import com.astryxion.chaospersists.item.Shoes;
 import com.astryxion.chaospersists.entity.EntityCage;
 import com.astryxion.chaospersists.item.UltimateArrow;
 import com.astryxion.chaospersists.item.IrukandjiArrow;
-import com.astryxion.chaospersists.world.dimension.worldprovider.WorldProviderChaos;
-import com.astryxion.chaospersists.world.dimension.worldprovider.WorldProviderChaos2;
-import com.astryxion.chaospersists.world.dimension.worldprovider.WorldProviderChaos3;
-import com.astryxion.chaospersists.world.dimension.worldprovider.WorldProviderChaos4;
-import com.astryxion.chaospersists.world.dimension.worldprovider.WorldProviderChaos5;
-import com.astryxion.chaospersists.world.dimension.worldprovider.WorldProviderChaos6;
 import com.astryxion.chaospersists.tileentity.TileEntityCrystalFurnace;
+import com.astryxion.chaospersists.item.ThunderBolt;
 import com.astryxion.chaospersists.item.CritterCage;
 import com.astryxion.chaospersists.item.ItemSpawnEgg;
 import com.astryxion.chaospersists.util.DispenserBehaviorChaosEgg;
@@ -409,23 +543,2103 @@ import com.astryxion.chaospersists.util.MyDispenserBehaviorIceball;
 import com.astryxion.chaospersists.util.MyDispenserBehaviorDeadIrukandji;
 import com.astryxion.chaospersists.util.MyDispenserBehaviorLaserball;
 import com.astryxion.chaospersists.util.MyDispenserBehaviorRock;
-import com.astryxion.chaospersists.command.CommandDanger;
-import com.astryxion.chaospersists.command.CommandCrystal;
-import com.astryxion.chaospersists.command.CommandChaos;
+import com.astryxion.chaospersists.command.CommandMining;
 import com.astryxion.chaospersists.command.CommandUtopia;
 import com.astryxion.chaospersists.command.CommandVillageMania;
-import com.astryxion.chaospersists.command.CommandMining;
 import com.astryxion.chaospersists.block.AntBlock;
 import com.astryxion.chaospersists.block.CrystalAntBlock;
+import com.astryxion.chaospersists.item.ThunderBolt;
 
-@Mod(modid="chaospersists", name="OreSpawn", version="1.12.2-20.3")
+@Mod(ChaosPersists.MODID)
 public class ChaosPersists
 {
+  private static final org.apache.logging.log4j.Logger LOGGER =
+      org.apache.logging.log4j.LogManager.getLogger(ChaosPersists.class);
 
-  @SidedProxy(clientSide="com.astryxion.chaospersists.proxy.ClientProxyChaos", serverSide="com.astryxion.chaospersists.proxy.CommonProxyChaos")
-  public static com.astryxion.chaospersists.proxy.CommonProxyChaos proxy;
+  public static final String MODID = "chaospersists";
 
-  @Mod.Instance("chaospersists")
+  private static ItemStack creativeTabIconItem(String itemPath, Item fallback) {
+    Item item = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, itemPath));
+    return new ItemStack(item != null && item != Items.AIR ? item : fallback);
+  }
+
+  private static ItemStack creativeTabIconBlock(String blockPath, Item fallback) {
+    Block block = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, blockPath));
+    return block != null ? new ItemStack(block) : new ItemStack(fallback);
+  }
+
+  public static final DeferredRegister<Block> BLOCKS =
+      DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
+  public static final DeferredRegister<Item> ITEMS =
+      DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
+  public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
+      DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, MODID);
+  public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
+      DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, MODID);
+  public static final DeferredRegister<MenuType<?>> MENU_TYPES =
+      DeferredRegister.create(ForgeRegistries.MENU_TYPES, MODID);
+  public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
+      DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+
+  public static final RegistryObject<CreativeModeTab> TAB_CHAOS_ITEMS =
+      CREATIVE_MODE_TABS.register(
+          "chaos_items",
+          () ->
+              CreativeModeTab.builder()
+                  .title(Component.translatable("itemGroup.chaospersists.chaos_items"))
+                  .icon(() -> creativeTabIconItem("minersdream", Items.AIR))
+                  .build());
+  public static final RegistryObject<CreativeModeTab> TAB_CHAOS_BLOCKS =
+      CREATIVE_MODE_TABS.register(
+          "chaos_blocks",
+          () ->
+              CreativeModeTab.builder()
+                  .title(Component.translatable("itemGroup.chaospersists.chaos_blocks"))
+                  .icon(() -> creativeTabIconBlock("antblock", Items.STONE))
+                  .build());
+  public static final RegistryObject<CreativeModeTab> TAB_CHAOS_FOODS =
+      CREATIVE_MODE_TABS.register(
+          "chaos_foods",
+          () ->
+              CreativeModeTab.builder()
+                  .title(Component.translatable("itemGroup.chaospersists.chaos_foods"))
+                  .icon(() -> creativeTabIconItem("corn_seed", Items.BREAD))
+                  .build());
+  public static final RegistryObject<CreativeModeTab> TAB_CHAOS_TOOLS =
+      CREATIVE_MODE_TABS.register(
+          "chaos_tools",
+          () ->
+              CreativeModeTab.builder()
+                  .title(Component.translatable("itemGroup.chaospersists.chaos_tools"))
+                  .icon(() -> creativeTabIconItem("ultimatepickaxe", Items.IRON_PICKAXE))
+                  .build());
+  public static final RegistryObject<CreativeModeTab> TAB_CHAOS_WEAPONS =
+      CREATIVE_MODE_TABS.register(
+          "chaos_weapons",
+          () ->
+              CreativeModeTab.builder()
+                  .title(Component.translatable("itemGroup.chaospersists.chaos_weapons"))
+                  .icon(() -> creativeTabIconItem("ultimatesword", Items.IRON_SWORD))
+                  .build());
+  public static final RegistryObject<CreativeModeTab> TAB_CHAOS_MOBS =
+      CREATIVE_MODE_TABS.register(
+          "chaos_mobs",
+          () ->
+              CreativeModeTab.builder()
+                  .title(Component.translatable("itemGroup.chaospersists.chaos_mobs"))
+                  .icon(() -> creativeTabIconItem("eggtheking", Items.EGG))
+                  .build());
+  public static final RegistryObject<CreativeModeTab> TAB_CHAOS_ARMOR =
+      CREATIVE_MODE_TABS.register(
+          "chaos_armor",
+          () ->
+              CreativeModeTab.builder()
+                  .title(Component.translatable("itemGroup.chaospersists.chaos_armor"))
+                  .icon(() -> creativeTabIconItem("royal_chest", Items.IRON_CHESTPLATE))
+                  .build());
+
+  public static final RegistryObject<MenuType<ContainerCrystalWorkbench>> MENU_CRYSTAL_WORKBENCH =
+      MENU_TYPES.register(
+          "crystal_workbench",
+          () -> IForgeMenuType.create(ContainerCrystalWorkbench::new));
+
+  public static final RegistryObject<BlockEntityType<TileEntityCrystalFurnace>> BLOCK_ENTITY_CRYSTAL_FURNACE =
+      BLOCK_ENTITY_TYPES.register(
+          "crystalfurnace",
+          () ->
+              BlockEntityType.Builder.of(
+                      TileEntityCrystalFurnace::new,
+                      BuiltInRegistries.BLOCK
+                          .getOptional(ResourceLocation.fromNamespaceAndPath(MODID, "crystalfurnace"))
+                          .orElse(Blocks.FURNACE))
+                  .build(null));
+
+  static {
+    IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+    BLOCKS.register(modBus);
+    ITEMS.register(modBus);
+    ENTITY_TYPES.register(modBus);
+    BLOCK_ENTITY_TYPES.register(modBus);
+    MENU_TYPES.register(modBus);
+    CREATIVE_MODE_TABS.register(modBus);
+    registerAllCritterCages();
+    registerAllWeaponsAndArmor();
+    registerAllFoodItems();
+    registerAllSaltMaterialItems();
+    registerAllSpawnEggs();
+    registerAllPreInitBlocks();
+    registerAllPreInitItems();
+  }
+
+  public static final RegistryObject<EntityType<UltimateFishHook>> ENTITY_TYPE_ULTIMATE_FISH_HOOK = ENTITY_TYPES.register("ultimate_fish_hook",
+      () -> EntityType.Builder.<UltimateFishHook>of(UltimateFishHook::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("ultimate_fish_hook"));
+  public static final RegistryObject<EntityType<SunspotUrchin>> ENTITY_TYPE_SUNSPOT_URCHIN = ENTITY_TYPES.register("sunspot_urchin",
+      () -> EntityType.Builder.<SunspotUrchin>of(SunspotUrchin::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("sunspot_urchin"));
+  public static final RegistryObject<EntityType<WaterBall>> ENTITY_TYPE_WATER_BALL = ENTITY_TYPES.register("water_ball",
+      () -> EntityType.Builder.<WaterBall>of(WaterBall::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("water_ball"));
+  public static final RegistryObject<EntityType<InkSack>> ENTITY_TYPE_INK_SACK = ENTITY_TYPES.register("ink_sack",
+      () -> EntityType.Builder.<InkSack>of(InkSack::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("ink_sack"));
+  public static final RegistryObject<EntityType<LaserBall>> ENTITY_TYPE_LASER_BALL = ENTITY_TYPES.register("laser_ball",
+      () -> EntityType.Builder.<LaserBall>of(LaserBall::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("laser_ball"));
+  public static final RegistryObject<EntityType<IceBall>> ENTITY_TYPE_ICE_BALL = ENTITY_TYPES.register("ice_ball",
+      () -> EntityType.Builder.<IceBall>of(IceBall::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("ice_ball"));
+  public static final RegistryObject<EntityType<Acid>> ENTITY_TYPE_ACID = ENTITY_TYPES.register("acid",
+      () -> EntityType.Builder.<Acid>of(Acid::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("acid"));
+  public static final RegistryObject<EntityType<BetterFireball>> ENTITY_TYPE_BETTER_FIREBALL = ENTITY_TYPES.register("better_fireball",
+      () -> EntityType.Builder.<BetterFireball>of(BetterFireball::new, MobCategory.MISC).sized(1.0f, 1.0f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("better_fireball"));
+  public static final RegistryObject<EntityType<DeadIrukandji>> ENTITY_TYPE_DEAD_IRUKANDJI = ENTITY_TYPES.register("dead_irukandji",
+      () -> EntityType.Builder.<DeadIrukandji>of(DeadIrukandji::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("dead_irukandji"));
+  public static final RegistryObject<EntityType<BerthaHit>> ENTITY_TYPE_BERTHA_HIT = ENTITY_TYPES.register("bertha_hit",
+      () -> EntityType.Builder.<BerthaHit>of(BerthaHit::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("bertha_hit"));
+  public static final RegistryObject<EntityType<PurplePower>> ENTITY_TYPE_PURPLE_POWER = ENTITY_TYPES.register("purple_power",
+      () -> EntityType.Builder.<PurplePower>of(PurplePower::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("purple_power"));
+  public static final RegistryObject<EntityType<EntityThrownRock>> ENTITY_TYPE_THROWN_ROCK = ENTITY_TYPES.register("thrown_rock",
+      () -> EntityType.Builder.<EntityThrownRock>of(EntityThrownRock::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("thrown_rock"));
+  public static final RegistryObject<EntityType<ThunderBolt>> ENTITY_TYPE_THUNDER_BOLT = ENTITY_TYPES.register("thunder_bolt",
+      () -> EntityType.Builder.<ThunderBolt>of(ThunderBolt::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("thunder_bolt"));
+  public static final RegistryObject<EntityType<Girlfriend>> ENTITY_TYPE_GIRLFRIEND = ENTITY_TYPES.register("girlfriend",
+      () -> EntityType.Builder.<Girlfriend>of(Girlfriend::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("girlfriend"));
+  public static final RegistryObject<EntityType<RedCow>> ENTITY_TYPE_RED_COW = ENTITY_TYPES.register("apple_cow",
+      () -> EntityType.Builder.<RedCow>of(RedCow::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("apple_cow"));
+  public static final RegistryObject<EntityType<GoldCow>> ENTITY_TYPE_GOLD_COW = ENTITY_TYPES.register("golden_apple_cow",
+      () -> EntityType.Builder.<GoldCow>of(GoldCow::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("golden_apple_cow"));
+  public static final RegistryObject<EntityType<EnchantedCow>> ENTITY_TYPE_ENCHANTED_COW = ENTITY_TYPES.register("enchanted_golden_apple_cow",
+      () -> EntityType.Builder.<EnchantedCow>of(EnchantedCow::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("enchanted_golden_apple_cow"));
+  public static final RegistryObject<EntityType<EntityButterfly>> ENTITY_TYPE_BUTTERFLY = ENTITY_TYPES.register("butterfly",
+      () -> EntityType.Builder.<EntityButterfly>of(EntityButterfly::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("butterfly"));
+  public static final RegistryObject<EntityType<EntityLunaMoth>> ENTITY_TYPE_MOTH = ENTITY_TYPES.register("moth",
+      () -> EntityType.Builder.<EntityLunaMoth>of(EntityLunaMoth::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("moth"));
+  public static final RegistryObject<EntityType<EntityMosquito>> ENTITY_TYPE_MOSQUITO = ENTITY_TYPES.register("mosquito",
+      () -> EntityType.Builder.<EntityMosquito>of(EntityMosquito::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(16).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("mosquito"));
+  public static final RegistryObject<EntityType<Firefly>> ENTITY_TYPE_FIREFLY = ENTITY_TYPES.register("firefly",
+      () -> EntityType.Builder.<Firefly>of(Firefly::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("firefly"));
+  public static final RegistryObject<EntityType<Bee>> ENTITY_TYPE_BEE = ENTITY_TYPES.register("bee",
+      () -> EntityType.Builder.<Bee>of(Bee::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("bee"));
+  public static final RegistryObject<EntityType<Mothra>> ENTITY_TYPE_MOTHRA = ENTITY_TYPES.register("mothra",
+      () -> EntityType.Builder.<Mothra>of(Mothra::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("mothra"));
+  public static final RegistryObject<EntityType<EntityAnt>> ENTITY_TYPE_ANT = ENTITY_TYPES.register("ant",
+      () -> EntityType.Builder.<EntityAnt>of(EntityAnt::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(16).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ant"));
+  public static final RegistryObject<EntityType<EntityRedAnt>> ENTITY_TYPE_RED_ANT = ENTITY_TYPES.register("red_ant",
+      () -> EntityType.Builder.<EntityRedAnt>of(EntityRedAnt::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(16).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("red_ant"));
+  public static final RegistryObject<EntityType<EntityRainbowAnt>> ENTITY_TYPE_RAINBOW_ANT = ENTITY_TYPES.register("rainbow_ant",
+      () -> EntityType.Builder.<EntityRainbowAnt>of(EntityRainbowAnt::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(16).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("rainbow_ant"));
+  public static final RegistryObject<EntityType<EntityUnstableAnt>> ENTITY_TYPE_UNSTABLE_ANT = ENTITY_TYPES.register("unstable_ant",
+      () -> EntityType.Builder.<EntityUnstableAnt>of(EntityUnstableAnt::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(16).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("unstable_ant"));
+  public static final RegistryObject<EntityType<Robot1>> ENTITY_TYPE_ROBOT1 = ENTITY_TYPES.register("bomb_omb",
+      () -> EntityType.Builder.<Robot1>of(Robot1::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("bomb_omb"));
+  public static final RegistryObject<EntityType<Robot2>> ENTITY_TYPE_ROBOT2 = ENTITY_TYPES.register("robo_pounder",
+      () -> EntityType.Builder.<Robot2>of(Robot2::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("robo_pounder"));
+  public static final RegistryObject<EntityType<Robot3>> ENTITY_TYPE_ROBOT3 = ENTITY_TYPES.register("robo_gunner",
+      () -> EntityType.Builder.<Robot3>of(Robot3::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("robo_gunner"));
+  public static final RegistryObject<EntityType<Robot4>> ENTITY_TYPE_ROBOT4 = ENTITY_TYPES.register("robo_warrior",
+      () -> EntityType.Builder.<Robot4>of(Robot4::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("robo_warrior"));
+  public static final RegistryObject<EntityType<Robot5>> ENTITY_TYPE_ROBOT5 = ENTITY_TYPES.register("robo_sniper",
+      () -> EntityType.Builder.<Robot5>of(Robot5::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("robo_sniper"));
+  public static final RegistryObject<EntityType<Alosaurus>> ENTITY_TYPE_ALOSAURUS = ENTITY_TYPES.register("alosaurus",
+      () -> EntityType.Builder.<Alosaurus>of(Alosaurus::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("alosaurus"));
+  public static final RegistryObject<EntityType<Cryolophosaurus>> ENTITY_TYPE_CRYOLOPHOSAURUS = ENTITY_TYPES.register("cryolophosaurus",
+      () -> EntityType.Builder.<Cryolophosaurus>of(Cryolophosaurus::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cryolophosaurus"));
+  public static final RegistryObject<EntityType<Basilisk>> ENTITY_TYPE_BASILISK = ENTITY_TYPES.register("basilisk",
+      () -> EntityType.Builder.<Basilisk>of(Basilisk::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("basilisk"));
+  public static final RegistryObject<EntityType<Camarasaurus>> ENTITY_TYPE_CAMARASAURUS = ENTITY_TYPES.register("camarasaurus",
+      () -> EntityType.Builder.<Camarasaurus>of(Camarasaurus::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("camarasaurus"));
+  public static final RegistryObject<EntityType<Hydrolisc>> ENTITY_TYPE_HYDROLISC = ENTITY_TYPES.register("hydrolisc",
+      () -> EntityType.Builder.<Hydrolisc>of(Hydrolisc::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("hydrolisc"));
+  public static final RegistryObject<EntityType<VelocityRaptor>> ENTITY_TYPE_VELOCITY_RAPTOR = ENTITY_TYPES.register("velocity_raptor",
+      () -> EntityType.Builder.<VelocityRaptor>of(VelocityRaptor::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("velocity_raptor"));
+  public static final RegistryObject<EntityType<Dragonfly>> ENTITY_TYPE_DRAGONFLY = ENTITY_TYPES.register("dragonfly",
+      () -> EntityType.Builder.<Dragonfly>of(Dragonfly::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("dragonfly"));
+  public static final RegistryObject<EntityType<EmperorScorpion>> ENTITY_TYPE_EMPEROR_SCORPION = ENTITY_TYPES.register("emperor_scorpion",
+      () -> EntityType.Builder.<EmperorScorpion>of(EmperorScorpion::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("emperor_scorpion"));
+  public static final RegistryObject<EntityType<Scorpion>> ENTITY_TYPE_SCORPION = ENTITY_TYPES.register("scorpion",
+      () -> EntityType.Builder.<Scorpion>of(Scorpion::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("scorpion"));
+  public static final RegistryObject<EntityType<CaveFisher>> ENTITY_TYPE_CAVE_FISHER = ENTITY_TYPES.register("cave_fisher",
+      () -> EntityType.Builder.<CaveFisher>of(CaveFisher::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cave_fisher"));
+  public static final RegistryObject<EntityType<Spyro>> ENTITY_TYPE_BABY_DRAGON = ENTITY_TYPES.register("baby_dragon",
+      () -> EntityType.Builder.<Spyro>of(Spyro::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("baby_dragon"));
+  public static final RegistryObject<EntityType<Baryonyx>> ENTITY_TYPE_BARYONYX = ENTITY_TYPES.register("baryonyx",
+      () -> EntityType.Builder.<Baryonyx>of(Baryonyx::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("baryonyx"));
+  public static final RegistryObject<EntityType<GammaMetroid>> ENTITY_TYPE_GAMMA_METROID = ENTITY_TYPES.register("gamma_metroid",
+      () -> EntityType.Builder.<GammaMetroid>of(GammaMetroid::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("gamma_metroid"));
+  public static final RegistryObject<EntityType<GammaMetroid>> ENTITY_TYPE_WTF = ENTITY_TYPES.register("wtf",
+      () -> EntityType.Builder.<GammaMetroid>of(GammaMetroid::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("wtf"));
+  public static final RegistryObject<EntityType<Cockateil>> ENTITY_TYPE_BIRD = ENTITY_TYPES.register("bird",
+      () -> EntityType.Builder.<Cockateil>of(Cockateil::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("bird"));
+  public static final RegistryObject<EntityType<RubyBird>> ENTITY_TYPE_RUBY_BIRD = ENTITY_TYPES.register("ruby_bird",
+      () -> EntityType.Builder.<RubyBird>of(RubyBird::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ruby_bird"));
+  public static final RegistryObject<EntityType<Kyuubi>> ENTITY_TYPE_KYUUBI = ENTITY_TYPES.register("kyuubi",
+      () -> EntityType.Builder.<Kyuubi>of(Kyuubi::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("kyuubi"));
+  public static final RegistryObject<EntityType<WaterDragon>> ENTITY_TYPE_WATER_DRAGON = ENTITY_TYPES.register("water_dragon",
+      () -> EntityType.Builder.<WaterDragon>of(WaterDragon::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("water_dragon"));
+  public static final RegistryObject<EntityType<AttackSquid>> ENTITY_TYPE_ATTACK_SQUID = ENTITY_TYPES.register("attack_squid",
+      () -> EntityType.Builder.<AttackSquid>of(AttackSquid::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("attack_squid"));
+  public static final RegistryObject<EntityType<Alien>> ENTITY_TYPE_ALIEN = ENTITY_TYPES.register("alien",
+      () -> EntityType.Builder.<Alien>of(Alien::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("alien"));
+  public static final RegistryObject<EntityType<Elevator>> ENTITY_TYPE_ELEVATOR = ENTITY_TYPES.register("hoverboard",
+      () -> EntityType.Builder.<Elevator>of(Elevator::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("hoverboard"));
+  public static final RegistryObject<EntityType<Kraken>> ENTITY_TYPE_THE_KRAKEN = ENTITY_TYPES.register("the_kraken",
+      () -> EntityType.Builder.<Kraken>of(Kraken::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_kraken"));
+  public static final RegistryObject<EntityType<Lizard>> ENTITY_TYPE_LIZARD = ENTITY_TYPES.register("lizard",
+      () -> EntityType.Builder.<Lizard>of(Lizard::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("lizard"));
+  public static final RegistryObject<EntityType<Cephadrome>> ENTITY_TYPE_CEPHADROME = ENTITY_TYPES.register("cephadrome",
+      () -> EntityType.Builder.<Cephadrome>of(Cephadrome::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("cephadrome"));
+  public static final RegistryObject<EntityType<Dragon>> ENTITY_TYPE_DRAGON = ENTITY_TYPES.register("dragon",
+      () -> EntityType.Builder.<Dragon>of(Dragon::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("dragon"));
+  public static final RegistryObject<EntityType<Chipmunk>> ENTITY_TYPE_CHIPMUNK = ENTITY_TYPES.register("chipmunk",
+      () -> EntityType.Builder.<Chipmunk>of(Chipmunk::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("chipmunk"));
+  public static final RegistryObject<EntityType<Gazelle>> ENTITY_TYPE_GAZELLE = ENTITY_TYPES.register("gazelle",
+      () -> EntityType.Builder.<Gazelle>of(Gazelle::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("gazelle"));
+  public static final RegistryObject<EntityType<Ostrich>> ENTITY_TYPE_OSTRICH = ENTITY_TYPES.register("ostrich",
+      () -> EntityType.Builder.<Ostrich>of(Ostrich::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("ostrich"));
+  public static final RegistryObject<EntityType<TrooperBug>> ENTITY_TYPE_TROOPER_BUG = ENTITY_TYPES.register("jumpy_bug",
+      () -> EntityType.Builder.<TrooperBug>of(TrooperBug::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("jumpy_bug"));
+  public static final RegistryObject<EntityType<SpitBug>> ENTITY_TYPE_SPIT_BUG = ENTITY_TYPES.register("spit_bug",
+      () -> EntityType.Builder.<SpitBug>of(SpitBug::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("spit_bug"));
+  public static final RegistryObject<EntityType<StinkBug>> ENTITY_TYPE_STINK_BUG = ENTITY_TYPES.register("stink_bug",
+      () -> EntityType.Builder.<StinkBug>of(StinkBug::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("stink_bug"));
+  public static final RegistryObject<EntityType<Tshirt>> ENTITY_TYPE_TSHIRT = ENTITY_TYPES.register("tshirt",
+      () -> EntityType.Builder.<Tshirt>of(Tshirt::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("tshirt"));
+  public static final RegistryObject<EntityType<Island>> ENTITY_TYPE_ISLAND = ENTITY_TYPES.register("island",
+      () -> EntityType.Builder.<Island>of(Island::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("island"));
+  public static final RegistryObject<EntityType<IslandToo>> ENTITY_TYPE_ISLAND_TOO = ENTITY_TYPES.register("island_too",
+      () -> EntityType.Builder.<IslandToo>of(IslandToo::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("island_too"));
+  public static final RegistryObject<EntityType<CreepingHorror>> ENTITY_TYPE_CREEPING_HORROR = ENTITY_TYPES.register("creeping_horror",
+      () -> EntityType.Builder.<CreepingHorror>of(CreepingHorror::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("creeping_horror"));
+  public static final RegistryObject<EntityType<TerribleTerror>> ENTITY_TYPE_TERRIBLE_TERROR = ENTITY_TYPES.register("terrible_terror",
+      () -> EntityType.Builder.<TerribleTerror>of(TerribleTerror::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("terrible_terror"));
+  public static final RegistryObject<EntityType<CliffRacer>> ENTITY_TYPE_CLIFF_RACER = ENTITY_TYPES.register("cliff_racer",
+      () -> EntityType.Builder.<CliffRacer>of(CliffRacer::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cliff_racer"));
+  public static final RegistryObject<EntityType<Triffid>> ENTITY_TYPE_TRIFFID = ENTITY_TYPES.register("triffid",
+      () -> EntityType.Builder.<Triffid>of(Triffid::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("triffid"));
+  public static final RegistryObject<EntityType<PitchBlack>> ENTITY_TYPE_NIGHTMARE = ENTITY_TYPES.register("nightmare",
+      () -> EntityType.Builder.<PitchBlack>of(PitchBlack::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("nightmare"));
+  public static final RegistryObject<EntityType<LurkingTerror>> ENTITY_TYPE_LURKING_TERROR = ENTITY_TYPES.register("lurking_terror",
+      () -> EntityType.Builder.<LurkingTerror>of(LurkingTerror::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("lurking_terror"));
+  public static final RegistryObject<EntityType<Godzilla>> ENTITY_TYPE_MOBZILLA = ENTITY_TYPES.register("mobzilla",
+      () -> EntityType.Builder.<Godzilla>of(Godzilla::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("mobzilla"));
+  public static final RegistryObject<EntityType<Ghost>> ENTITY_TYPE_GHOST = ENTITY_TYPES.register("ghost",
+      () -> EntityType.Builder.<Ghost>of(Ghost::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ghost"));
+  public static final RegistryObject<EntityType<GhostSkelly>> ENTITY_TYPE_GHOST_PUMPKIN_SKELLY = ENTITY_TYPES.register("ghost_pumpkin_skelly",
+      () -> EntityType.Builder.<GhostSkelly>of(GhostSkelly::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ghost_pumpkin_skelly"));
+  public static final RegistryObject<EntityType<WormSmall>> ENTITY_TYPE_SMALL_WORM = ENTITY_TYPES.register("small_worm",
+      () -> EntityType.Builder.<WormSmall>of(WormSmall::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("small_worm"));
+  public static final RegistryObject<EntityType<WormMedium>> ENTITY_TYPE_MEDIUM_WORM = ENTITY_TYPES.register("medium_worm",
+      () -> EntityType.Builder.<WormMedium>of(WormMedium::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("medium_worm"));
+  public static final RegistryObject<EntityType<WormLarge>> ENTITY_TYPE_LARGE_WORM = ENTITY_TYPES.register("large_worm",
+      () -> EntityType.Builder.<WormLarge>of(WormLarge::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("large_worm"));
+  public static final RegistryObject<EntityType<Cassowary>> ENTITY_TYPE_CASSOWARY = ENTITY_TYPES.register("cassowary",
+      () -> EntityType.Builder.<Cassowary>of(Cassowary::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cassowary"));
+  public static final RegistryObject<EntityType<CloudShark>> ENTITY_TYPE_CLOUD_SHARK = ENTITY_TYPES.register("cloud_shark",
+      () -> EntityType.Builder.<CloudShark>of(CloudShark::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cloud_shark"));
+  public static final RegistryObject<EntityType<GoldFish>> ENTITY_TYPE_GOLD_FISH = ENTITY_TYPES.register("gold_fish",
+      () -> EntityType.Builder.<GoldFish>of(GoldFish::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("gold_fish"));
+  public static final RegistryObject<EntityType<LeafMonster>> ENTITY_TYPE_LEAF_MONSTER = ENTITY_TYPES.register("leaf_monster",
+      () -> EntityType.Builder.<LeafMonster>of(LeafMonster::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("leaf_monster"));
+  public static final RegistryObject<EntityType<GodzillaHead>> ENTITY_TYPE_MOBZILLA_HEAD = ENTITY_TYPES.register("mobzilla_head",
+      () -> EntityType.Builder.<GodzillaHead>of(GodzillaHead::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(10).setShouldReceiveVelocityUpdates(true).build("mobzilla_head"));
+  public static final RegistryObject<EntityType<EnderKnight>> ENTITY_TYPE_ENDER_KNIGHT = ENTITY_TYPES.register("ender_knight",
+      () -> EntityType.Builder.<EnderKnight>of(EnderKnight::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ender_knight"));
+  public static final RegistryObject<EntityType<EnderReaper>> ENTITY_TYPE_ENDER_REAPER = ENTITY_TYPES.register("ender_reaper",
+      () -> EntityType.Builder.<EnderReaper>of(EnderReaper::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ender_reaper"));
+  public static final RegistryObject<EntityType<Beaver>> ENTITY_TYPE_BEAVER = ENTITY_TYPES.register("beaver",
+      () -> EntityType.Builder.<Beaver>of(Beaver::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("beaver"));
+  public static final RegistryObject<EntityType<Termite>> ENTITY_TYPE_TERMITE = ENTITY_TYPES.register("termite",
+      () -> EntityType.Builder.<Termite>of(Termite::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("termite"));
+  public static final RegistryObject<EntityType<Fairy>> ENTITY_TYPE_FAIRY = ENTITY_TYPES.register("fairy",
+      () -> EntityType.Builder.<Fairy>of(Fairy::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("fairy"));
+  public static final RegistryObject<EntityType<Peacock>> ENTITY_TYPE_PEACOCK = ENTITY_TYPES.register("peacock",
+      () -> EntityType.Builder.<Peacock>of(Peacock::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("peacock"));
+  public static final RegistryObject<EntityType<Rotator>> ENTITY_TYPE_ROTATOR = ENTITY_TYPES.register("rotator",
+      () -> EntityType.Builder.<Rotator>of(Rotator::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("rotator"));
+  public static final RegistryObject<EntityType<Vortex>> ENTITY_TYPE_VORTEX = ENTITY_TYPES.register("vortex",
+      () -> EntityType.Builder.<Vortex>of(Vortex::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("vortex"));
+  public static final RegistryObject<EntityType<DungeonBeast>> ENTITY_TYPE_DUNGEON_BEAST = ENTITY_TYPES.register("dungeon_beast",
+      () -> EntityType.Builder.<DungeonBeast>of(DungeonBeast::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("dungeon_beast"));
+  public static final RegistryObject<EntityType<Rat>> ENTITY_TYPE_RAT = ENTITY_TYPES.register("rat",
+      () -> EntityType.Builder.<Rat>of(Rat::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("rat"));
+  public static final RegistryObject<EntityType<Flounder>> ENTITY_TYPE_FLOUNDER = ENTITY_TYPES.register("flounder",
+      () -> EntityType.Builder.<Flounder>of(Flounder::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("flounder"));
+  public static final RegistryObject<EntityType<Whale>> ENTITY_TYPE_WHALE = ENTITY_TYPES.register("whale",
+      () -> EntityType.Builder.<Whale>of(Whale::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("whale"));
+  public static final RegistryObject<EntityType<Irukandji>> ENTITY_TYPE_IRUKANDJI = ENTITY_TYPES.register("irukandji",
+      () -> EntityType.Builder.<Irukandji>of(Irukandji::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("irukandji"));
+  public static final RegistryObject<EntityType<Skate>> ENTITY_TYPE_SKATE = ENTITY_TYPES.register("skate",
+      () -> EntityType.Builder.<Skate>of(Skate::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("skate"));
+  public static final RegistryObject<EntityType<Urchin>> ENTITY_TYPE_URCHIN = ENTITY_TYPES.register("crystal_urchin",
+      () -> EntityType.Builder.<Urchin>of(Urchin::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("crystal_urchin"));
+  public static final RegistryObject<EntityType<Mantis>> ENTITY_TYPE_MANTIS = ENTITY_TYPES.register("mantis",
+      () -> EntityType.Builder.<Mantis>of(Mantis::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("mantis"));
+  public static final RegistryObject<EntityType<HerculesBeetle>> ENTITY_TYPE_HERCULES_BEETLE = ENTITY_TYPES.register("hercules_beetle",
+      () -> EntityType.Builder.<HerculesBeetle>of(HerculesBeetle::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("hercules_beetle"));
+  public static final RegistryObject<EntityType<TRex>> ENTITY_TYPE_TREX = ENTITY_TYPES.register("trex",
+      () -> EntityType.Builder.<TRex>of(TRex::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("trex"));
+  public static final RegistryObject<EntityType<TRex>> ENTITY_TYPE_T_REX = ENTITY_TYPES.register("t._rex",
+      () -> EntityType.Builder.<TRex>of(TRex::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("t._rex"));
+  public static final RegistryObject<EntityType<Stinky>> ENTITY_TYPE_STINKY = ENTITY_TYPES.register("stinky",
+      () -> EntityType.Builder.<Stinky>of(Stinky::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("stinky"));
+  public static final RegistryObject<EntityType<Coin>> ENTITY_TYPE_COIN = ENTITY_TYPES.register("coin",
+      () -> EntityType.Builder.<Coin>of(Coin::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("coin"));
+  public static final RegistryObject<EntityType<TheKing>> ENTITY_TYPE_THE_KING = ENTITY_TYPES.register("the_king",
+      () -> EntityType.Builder.<TheKing>of(TheKing::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_king"));
+  public static final RegistryObject<EntityType<KingHead>> ENTITY_TYPE_KING_HEAD = ENTITY_TYPES.register("king_head",
+      () -> EntityType.Builder.<KingHead>of(KingHead::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(10).setShouldReceiveVelocityUpdates(true).build("king_head"));
+  public static final RegistryObject<EntityType<TheQueen>> ENTITY_TYPE_THE_QUEEN = ENTITY_TYPES.register("the_queen",
+      () -> EntityType.Builder.<TheQueen>of(TheQueen::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_queen"));
+  public static final RegistryObject<EntityType<QueenHead>> ENTITY_TYPE_QUEEN_HEAD = ENTITY_TYPES.register("queen_head",
+      () -> EntityType.Builder.<QueenHead>of(QueenHead::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(10).setShouldReceiveVelocityUpdates(true).build("queen_head"));
+  public static final RegistryObject<EntityType<Boyfriend>> ENTITY_TYPE_BOYFRIEND = ENTITY_TYPES.register("boyfriend",
+      () -> EntityType.Builder.<Boyfriend>of(Boyfriend::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("boyfriend"));
+  public static final RegistryObject<EntityType<ThePrince>> ENTITY_TYPE_THE_PRINCE = ENTITY_TYPES.register("the_prince",
+      () -> EntityType.Builder.<ThePrince>of(ThePrince::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_prince"));
+  public static final RegistryObject<EntityType<Molenoid>> ENTITY_TYPE_MOLENOID = ENTITY_TYPES.register("molenoid",
+      () -> EntityType.Builder.<Molenoid>of(Molenoid::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("molenoid"));
+  public static final RegistryObject<EntityType<SeaMonster>> ENTITY_TYPE_SEA_MONSTER = ENTITY_TYPES.register("sea_monster",
+      () -> EntityType.Builder.<SeaMonster>of(SeaMonster::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("sea_monster"));
+  public static final RegistryObject<EntityType<SeaViper>> ENTITY_TYPE_SEA_VIPER = ENTITY_TYPES.register("sea_viper",
+      () -> EntityType.Builder.<SeaViper>of(SeaViper::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("sea_viper"));
+  public static final RegistryObject<EntityType<EasterBunny>> ENTITY_TYPE_EASTER_BUNNY = ENTITY_TYPES.register("easter_bunny",
+      () -> EntityType.Builder.<EasterBunny>of(EasterBunny::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("easter_bunny"));
+  public static final RegistryObject<EntityType<CaterKiller>> ENTITY_TYPE_CATERKILLER = ENTITY_TYPES.register("caterkiller",
+      () -> EntityType.Builder.<CaterKiller>of(CaterKiller::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("caterkiller"));
+  public static final RegistryObject<EntityType<CrystalCow>> ENTITY_TYPE_CRYSTAL_COW = ENTITY_TYPES.register("crystal_apple_cow",
+      () -> EntityType.Builder.<CrystalCow>of(CrystalCow::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("crystal_apple_cow"));
+  public static final RegistryObject<EntityType<Leon>> ENTITY_TYPE_LEONOPTERYX = ENTITY_TYPES.register("leonopteryx",
+      () -> EntityType.Builder.<Leon>of(Leon::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("leonopteryx"));
+  public static final RegistryObject<EntityType<Hammerhead>> ENTITY_TYPE_HAMMERHEAD = ENTITY_TYPES.register("hammerhead",
+      () -> EntityType.Builder.<Hammerhead>of(Hammerhead::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("hammerhead"));
+  public static final RegistryObject<EntityType<RubberDucky>> ENTITY_TYPE_RUBBER_DUCKY = ENTITY_TYPES.register("rubber_ducky",
+      () -> EntityType.Builder.<RubberDucky>of(RubberDucky::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("rubber_ducky"));
+  public static final RegistryObject<EntityType<ThePrinceTeen>> ENTITY_TYPE_THE_YOUNG_PRINCE = ENTITY_TYPES.register("the_young_prince",
+      () -> EntityType.Builder.<ThePrinceTeen>of(ThePrinceTeen::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_young_prince"));
+  public static final RegistryObject<EntityType<BandP>> ENTITY_TYPE_CRIMINAL = ENTITY_TYPES.register("criminal",
+      () -> EntityType.Builder.<BandP>of(BandP::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("criminal"));
+  public static final RegistryObject<EntityType<RockBase>> ENTITY_TYPE_ROCK = ENTITY_TYPES.register("rock",
+      () -> EntityType.Builder.<RockBase>of(RockBase::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("rock"));
+  public static final RegistryObject<EntityType<Brutalfly>> ENTITY_TYPE_BRUTALFLY = ENTITY_TYPES.register("brutalfly",
+      () -> EntityType.Builder.<Brutalfly>of(Brutalfly::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("brutalfly"));
+  public static final RegistryObject<EntityType<Nastysaurus>> ENTITY_TYPE_NASTYSAURUS = ENTITY_TYPES.register("nastysaurus",
+      () -> EntityType.Builder.<Nastysaurus>of(Nastysaurus::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("nastysaurus"));
+  public static final RegistryObject<EntityType<Pointysaurus>> ENTITY_TYPE_POINTYSAURUS = ENTITY_TYPES.register("pointysaurus",
+      () -> EntityType.Builder.<Pointysaurus>of(Pointysaurus::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("pointysaurus"));
+  public static final RegistryObject<EntityType<Cricket>> ENTITY_TYPE_CRICKET = ENTITY_TYPES.register("cricket",
+      () -> EntityType.Builder.<Cricket>of(Cricket::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cricket"));
+  public static final RegistryObject<EntityType<ThePrincess>> ENTITY_TYPE_THE_PRINCESS = ENTITY_TYPES.register("the_princess",
+      () -> EntityType.Builder.<ThePrincess>of(ThePrincess::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_princess"));
+  public static final RegistryObject<EntityType<Frog>> ENTITY_TYPE_FROG = ENTITY_TYPES.register("frog",
+      () -> EntityType.Builder.<Frog>of(Frog::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("frog"));
+  public static final RegistryObject<EntityType<ThePrinceAdult>> ENTITY_TYPE_THE_YOUNG_ADULT_PRINCE = ENTITY_TYPES.register("the_young_adult_prince",
+      () -> EntityType.Builder.<ThePrinceAdult>of(ThePrinceAdult::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_young_adult_prince"));
+  public static final RegistryObject<EntityType<SpiderRobot>> ENTITY_TYPE_SPIDER_ROBOT = ENTITY_TYPES.register("robot_spider",
+      () -> EntityType.Builder.<SpiderRobot>of(SpiderRobot::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("robot_spider"));
+  public static final RegistryObject<EntityType<SpiderDriver>> ENTITY_TYPE_SPIDER_DRIVER = ENTITY_TYPES.register("spider_driver",
+      () -> EntityType.Builder.<SpiderDriver>of(SpiderDriver::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("spider_driver"));
+  public static final RegistryObject<EntityType<GiantRobot>> ENTITY_TYPE_GIANT_ROBOT = ENTITY_TYPES.register("jeffery",
+      () -> EntityType.Builder.<GiantRobot>of(GiantRobot::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("jeffery"));
+  public static final RegistryObject<EntityType<AntRobot>> ENTITY_TYPE_ANT_ROBOT = ENTITY_TYPES.register("robot_red_ant",
+      () -> EntityType.Builder.<AntRobot>of(AntRobot::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("robot_red_ant"));
+  public static final RegistryObject<EntityType<Crab>> ENTITY_TYPE_CRAB = ENTITY_TYPES.register("crab",
+      () -> EntityType.Builder.<Crab>of(Crab::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("crab"));
+  public static final RegistryObject<EntityType<Shoes>> ENTITY_TYPE_SHOES = ENTITY_TYPES.register("shoes",
+      () -> EntityType.Builder.<Shoes>of(Shoes::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("shoes"));
+  public static final RegistryObject<EntityType<EntityCage>> ENTITY_TYPE_CAGE = ENTITY_TYPES.register("entity_cage",
+      () -> EntityType.Builder.<EntityCage>of(EntityCage::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("entity_cage"));
+  public static final RegistryObject<EntityType<UltimateArrow>> ENTITY_TYPE_ULTIMATE_ARROW = ENTITY_TYPES.register("ultimate_arrow",
+      () -> EntityType.Builder.<UltimateArrow>of(UltimateArrow::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("ultimate_arrow"));
+  public static final RegistryObject<EntityType<IrukandjiArrow>> ENTITY_TYPE_IRUKANDJI_ARROW = ENTITY_TYPES.register("irukandji_arrow",
+      () -> EntityType.Builder.<IrukandjiArrow>of(IrukandjiArrow::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("irukandji_arrow"));
+
+private static void registerAllCritterCages() {
+    ITEMS.register("cageempty", () -> new CritterCage(0, 160));
+    ITEMS.register("cagespider", () -> new CritterCage(0, 161));
+    ITEMS.register("cagebat", () -> new CritterCage(0, 162));
+    ITEMS.register("cagecow", () -> new CritterCage(0, 163));
+    ITEMS.register("cagepig", () -> new CritterCage(0, 164));
+    ITEMS.register("cagesquid", () -> new CritterCage(0, 165));
+    ITEMS.register("cagechicken", () -> new CritterCage(0, 166));
+    ITEMS.register("cagecreeper", () -> new CritterCage(0, 167));
+    ITEMS.register("cageskeleton", () -> new CritterCage(0, 168));
+    ITEMS.register("cagezombie", () -> new CritterCage(0, 169));
+    ITEMS.register("cageslime", () -> new CritterCage(0, 170));
+    ITEMS.register("cageghast", () -> new CritterCage(0, 171));
+    ITEMS.register("cagezombiepigman", () -> new CritterCage(0, 172));
+    ITEMS.register("cageenderman", () -> new CritterCage(0, 173));
+    ITEMS.register("cagecavespider", () -> new CritterCage(0, 174));
+    ITEMS.register("cagesilverfish", () -> new CritterCage(0, 175));
+    ITEMS.register("cagemagmacube", () -> new CritterCage(0, 176));
+    ITEMS.register("cagewitch", () -> new CritterCage(0, 177));
+    ITEMS.register("cagesheep", () -> new CritterCage(0, 178));
+    ITEMS.register("cagewolf", () -> new CritterCage(0, 179));
+    ITEMS.register("cagemooshroom", () -> new CritterCage(0, 180));
+    ITEMS.register("cageocelot", () -> new CritterCage(0, 181));
+    ITEMS.register("cageblaze", () -> new CritterCage(0, 182));
+    ITEMS.register("cagegirlfriend", () -> new CritterCage(0, 183));
+    ITEMS.register("cageboyfriend", () -> new CritterCage(0, 215));
+    ITEMS.register("cagewitherskeleton", () -> new CritterCage(0, 188));
+    ITEMS.register("cageenderdragon", () -> new CritterCage(0, 184));
+    ITEMS.register("cagesnowgolem", () -> new CritterCage(0, 185));
+    ITEMS.register("cageirongolem", () -> new CritterCage(0, 186));
+    ITEMS.register("cagewitherboss", () -> new CritterCage(0, 187));
+    ITEMS.register("cageredcow", () -> new CritterCage(0, 189));
+    ITEMS.register("cagegoldcow", () -> new CritterCage(0, 190));
+    ITEMS.register("cageenchantedcow", () -> new CritterCage(0, 191));
+    ITEMS.register("cagemothra", () -> new CritterCage(0, 208));
+    ITEMS.register("cagealosaurus", () -> new CritterCage(0, 209));
+    ITEMS.register("cagecryolophosaurus", () -> new CritterCage(0, 210));
+    ITEMS.register("cagecamarasaurus", () -> new CritterCage(0, 211));
+    ITEMS.register("cagevelocityraptor", () -> new CritterCage(0, 212));
+    ITEMS.register("cagehydrolisc", () -> new CritterCage(0, 213));
+    ITEMS.register("cagebasilisc", () -> new CritterCage(0, 214));
+    ITEMS.register("cagedragonfly", () -> new CritterCage(0, 220));
+    ITEMS.register("cageemperorscorpion", () -> new CritterCage(0, 222));
+    ITEMS.register("cagescorpion", () -> new CritterCage(0, 224));
+    ITEMS.register("cagecavefisher", () -> new CritterCage(0, 226));
+    ITEMS.register("cagespyro", () -> new CritterCage(0, 228));
+    ITEMS.register("cagebaryonyx", () -> new CritterCage(0, 230));
+    ITEMS.register("cagegammametroid", () -> new CritterCage(0, 232));
+    ITEMS.register("cagecockateil", () -> new CritterCage(0, 234));
+    ITEMS.register("cagekyuubi", () -> new CritterCage(0, 236));
+    ITEMS.register("cagealien", () -> new CritterCage(0, 238));
+    ITEMS.register("cageattacksquid", () -> new CritterCage(0, 240));
+    ITEMS.register("cagewaterdragon", () -> new CritterCage(0, 242));
+    ITEMS.register("cagecephadrome", () -> new CritterCage(0, 248));
+    ITEMS.register("cagekraken", () -> new CritterCage(0, 244));
+    ITEMS.register("cagelizard", () -> new CritterCage(0, 246));
+    ITEMS.register("cagedragon", () -> new CritterCage(0, 250));
+    ITEMS.register("cagebee", () -> new CritterCage(0, 252));
+    ITEMS.register("cagehorse", () -> new CritterCage(0, 253));
+    ITEMS.register("cagefirefly", () -> new CritterCage(0, 255));
+    ITEMS.register("cagechipmunk", () -> new CritterCage(0, 256));
+    ITEMS.register("cagegazelle", () -> new CritterCage(0, 257));
+    ITEMS.register("cageostrich", () -> new CritterCage(0, 258));
+    ITEMS.register("cagetrooper", () -> new CritterCage(0, 259));
+    ITEMS.register("cagespit", () -> new CritterCage(0, 260));
+    ITEMS.register("cagestink", () -> new CritterCage(0, 261));
+    ITEMS.register("cagecreepinghorror", () -> new CritterCage(0, 268));
+    ITEMS.register("cageterribleterror", () -> new CritterCage(0, 269));
+    ITEMS.register("cagecliffracer", () -> new CritterCage(0, 270));
+    ITEMS.register("cagetriffid", () -> new CritterCage(0, 271));
+    ITEMS.register("cagenightmare", () -> new CritterCage(0, 272));
+    ITEMS.register("cagelurkingterror", () -> new CritterCage(0, 273));
+    ITEMS.register("cagesmallworm", () -> new CritterCage(0, 281));
+    ITEMS.register("cagemediumworm", () -> new CritterCage(0, 282));
+    ITEMS.register("cagelargeworm", () -> new CritterCage(0, 283));
+    ITEMS.register("cagecassowary", () -> new CritterCage(0, 284));
+    ITEMS.register("cagecloudshark", () -> new CritterCage(0, 285));
+    ITEMS.register("cagegoldfish", () -> new CritterCage(0, 286));
+    ITEMS.register("cageleafmonster", () -> new CritterCage(0, 287));
+    ITEMS.register("cageenderknight", () -> new CritterCage(0, 296));
+    ITEMS.register("cageenderreaper", () -> new CritterCage(0, 297));
+    ITEMS.register("cagebeaver", () -> new CritterCage(0, 300));
+    ITEMS.register("cageurchin", () -> new CritterCage(0, 323));
+    ITEMS.register("cageflounder", () -> new CritterCage(0, 319));
+    ITEMS.register("cageskate", () -> new CritterCage(0, 322));
+    ITEMS.register("cagerotator", () -> new CritterCage(0, 313));
+    ITEMS.register("cagepeacock", () -> new CritterCage(0, 315));
+    ITEMS.register("cagefairy", () -> new CritterCage(0, 316));
+    ITEMS.register("cagedungeonbeast", () -> new CritterCage(0, 317));
+    ITEMS.register("cagevortex", () -> new CritterCage(0, 314));
+    ITEMS.register("cagerat", () -> new CritterCage(0, 318));
+    ITEMS.register("cagewhale", () -> new CritterCage(0, 320));
+    ITEMS.register("cageirukandji", () -> new CritterCage(0, 321));
+    ITEMS.register("cagetrex", () -> new CritterCage(0, 345));
+    ITEMS.register("cagehercules", () -> new CritterCage(0, 346));
+    ITEMS.register("cagemantis", () -> new CritterCage(0, 347));
+    ITEMS.register("cagestinky", () -> new CritterCage(0, 348));
+    ITEMS.register("cageeasterbunny", () -> new CritterCage(0, 150));
+    ITEMS.register("cagecaterkiller", () -> new CritterCage(0, 151));
+    ITEMS.register("cagemolenoid", () -> new CritterCage(0, 152));
+    ITEMS.register("cageseamonster", () -> new CritterCage(0, 153));
+    ITEMS.register("cageseaviper", () -> new CritterCage(0, 154));
+    ITEMS.register("cageleon", () -> new CritterCage(0, 357));
+    ITEMS.register("cagehammerhead", () -> new CritterCage(0, 359));
+    ITEMS.register("cagerubberducky", () -> new CritterCage(0, 361));
+    ITEMS.register("cagecrystalcow", () -> new CritterCage(0, 216));
+    ITEMS.register("cagevillager", () -> new CritterCage(0, 217));
+    ITEMS.register("cagecriminal", () -> new CritterCage(0, 218));
+    ITEMS.register("cagebrutalfly", () -> new CritterCage(0, 373));
+    ITEMS.register("cagenastysaurus", () -> new CritterCage(0, 374));
+    ITEMS.register("cagepointysaurus", () -> new CritterCage(0, 375));
+    ITEMS.register("cagecricket", () -> new CritterCage(0, 376));
+    ITEMS.register("cagefrog", () -> new CritterCage(0, 377));
+    ITEMS.register("cagespiderdriver", () -> new CritterCage(0, 382));
+    ITEMS.register("cagecrab", () -> new CritterCage(0, 384));
+  }
+
+
+    private static void registerAllPreInitBlocks() {
+    BLOCKS.register("antblock", () -> new AntBlock(0));
+    BLOCKS.register("blockamethyst", BlockRuby::new);
+    BLOCKS.register("blockenderpearl", OreGenericEgg::new);
+    BLOCKS.register("blockeyeofender", OreGenericEgg::new);
+    BLOCKS.register("blockmobzillascale", BlockRuby::new);
+    BLOCKS.register("blockruby", BlockRuby::new);
+    BLOCKS.register("blockteleport", RTPBlock::new);
+    BLOCKS.register("blocktitanium", BlockTitanium::new);
+    BLOCKS.register("blockuranium", BlockUranium::new);
+    BLOCKS.register("corn_plant0", BlockCorn::new);
+    BLOCKS.register("corn_plant1", BlockCorn::new);
+    BLOCKS.register("corn_plant2", BlockCorn::new);
+    BLOCKS.register("corn_plant3", BlockCorn::new);
+    BLOCKS.register("creeperrepellent", () -> new CreeperRepellent());
+    BLOCKS.register("crystalcoal", () -> new OreCrystal(0.6F, 6.0F, 20.0F));
+    BLOCKS.register("crystalcrystal", () -> new OreCrystalCrystal(0.4F, 12.0F, 40.0F));
+    BLOCKS.register("crystalfairy", () -> new OreBasicStone(2.5F, 14.0F));
+    BLOCKS.register("crystalpink_block", BlockCrystal::new);
+    BLOCKS.register("crystalrat", () -> new OreBasicStone(2.5F, 14.0F));
+    BLOCKS.register("crystalsapling", BlockCrystalPlant::new);
+    BLOCKS.register("crystalsapling2", BlockCrystalPlant::new);
+    BLOCKS.register("crystalsapling3", BlockCrystalPlant::new);
+    BLOCKS.register("crystalstone", () -> new OreBasicStone(2.0F, 10.0F));
+    BLOCKS.register("crystaltorch", () -> new BlockCrystalTorch());
+    BLOCKS.register("ducttape", BlockDuctTape::new);
+    BLOCKS.register("dungeonspawner", () -> new DungeonSpawnerBlock());
+    BLOCKS.register("experiencesapling", BlockExperiencePlant::new);
+    BLOCKS.register("extremetorch", () -> new BlockExtremeTorch());
+    BLOCKS.register("island", () -> new IslandBlock());
+    BLOCKS.register("kingspawner", () -> new KingSpawnerBlock());
+    BLOCKS.register("krakenrepellent", () -> new KrakenRepellent());
+    BLOCKS.register("lavafoam", Lavafoam::new);
+    BLOCKS.register("lettuce_0", BlockLettuce::new);
+    BLOCKS.register("lettuce_1", BlockLettuce::new);
+    BLOCKS.register("lettuce_2", BlockLettuce::new);
+    BLOCKS.register("lettuce_3", BlockLettuce::new);
+    BLOCKS.register("moledirt", () -> new MoleDirtBlock());
+    BLOCKS.register("oreamethyst", OreAmethyst::new);
+    BLOCKS.register("oreruby", OreRuby::new);
+    BLOCKS.register("oresalt", OreSalt::new);
+    BLOCKS.register("oretitanium", OreTitanium::new);
+    BLOCKS.register("oreuranium", OreUranium::new);
+    BLOCKS.register("pizza", BlockPizza::new);
+    BLOCKS.register("queenspawner", () -> new QueenSpawnerBlock());
+    BLOCKS.register("quinoa_0", BlockQuinoa::new);
+    BLOCKS.register("quinoa_1", BlockQuinoa::new);
+    BLOCKS.register("quinoa_2", BlockQuinoa::new);
+    BLOCKS.register("quinoa_3", BlockQuinoa::new);
+    BLOCKS.register("radish_plant", BlockRadish::new);
+    BLOCKS.register("rainbowantblock", () -> new AntBlock(0));
+    BLOCKS.register("redantblock", () -> new AntBlock(0));
+    BLOCKS.register("redanttroll", () -> new OreBasicStone(2.5F, 14.0F));
+    BLOCKS.register("rice_plant", BlockRice::new);
+    BLOCKS.register("termiteblock", () -> new AntBlock(0));
+    BLOCKS.register("termitetroll", () -> new OreBasicStone(2.5F, 14.0F));
+    BLOCKS.register("tigerseye", () -> new OreCrystalCrystal(0.5F, 15.0F, 60.0F));
+    BLOCKS.register("tigerseye_block", BlockCrystal::new);
+    BLOCKS.register("tomato_plant0", BlockTomato::new);
+    BLOCKS.register("tomato_plant1", BlockTomato::new);
+    BLOCKS.register("tomato_plant2", BlockTomato::new);
+    BLOCKS.register("tomato_plant3", BlockTomato::new);
+    BLOCKS.register("unstableantblock", () -> new AntBlock(0));
+    BLOCKS.register("butterfly_plant", BlockButterflyPlant::new);
+    BLOCKS.register("crystalflower_blue", MyBlockFlower::new);
+    BLOCKS.register("crystalflower_green", MyBlockFlower::new);
+    BLOCKS.register("crystalflower_red", MyBlockFlower::new);
+    BLOCKS.register("crystalflower_yellow", MyBlockFlower::new);
+    BLOCKS.register("crystalfurnace", () -> new CrystalFurnace(2.0F, 10.0F));
+    BLOCKS.register("crystaltreeleaves", BlockCrystalLeaves::new);
+    BLOCKS.register("crystaltreeleaves2", BlockCrystalLeaves::new);
+    BLOCKS.register("crystaltreeleaves3", BlockCrystalLeaves::new);
+    BLOCKS.register("crystaltreelog", BlockCrystalTreeLog::new);
+    BLOCKS.register("duplicatortreelog", BlockDuplicatorLog::new);
+    BLOCKS.register("firefly_plant", BlockFireflyPlant::new);
+    BLOCKS.register("flower_black", MyBlockFlower::new);
+    BLOCKS.register("flower_blue", MyBlockFlower::new);
+    BLOCKS.register("flower_pink", MyBlockFlower::new);
+    BLOCKS.register("flower_scary", MyBlockFlower::new);
+    BLOCKS.register("leaves_apple", BlockAppleLeaves::new);
+    BLOCKS.register("leaves_cherry", BlockScaryLeaves::new);
+    BLOCKS.register("leaves_experience", BlockExperienceLeaves::new);
+    BLOCKS.register("leaves_peach", BlockScaryLeaves::new);
+    BLOCKS.register("leaves_scary", BlockScaryLeaves::new);
+    BLOCKS.register("mosquito_plant", BlockMosquitoPlant::new);
+    BLOCKS.register("moth_plant", BlockMothPlant::new);
+    BLOCKS.register("skytreelog", BlockSkyTreeLog::new);
+    BLOCKS.register("strawberry_plant", BlockStrawberry::new);
+    BLOCKS.register("crystalgrass", () -> new CrystalGrass(0.6F, 2.0F));
+    BLOCKS.register("crystalplanks", () -> new CrystalWood(1.5F, 4.0F));
+    BLOCKS.register("crystalworkbench", () -> new CrystalWorkbench(1.0F, 5.0F));
+    BLOCKS.register("crystaltermiteblock", () -> new CrystalAntBlock(0));
+    BLOCKS.register("orealien", OreGenericEgg::new);
+    BLOCKS.register("orealosaurus", OreGenericEgg::new);
+    BLOCKS.register("oreattacksquid", OreGenericEgg::new);
+    BLOCKS.register("orebaryonyx", OreGenericEgg::new);
+    BLOCKS.register("orebasilisc", OreGenericEgg::new);
+    BLOCKS.register("orebat", OreGenericEgg::new);
+    BLOCKS.register("orebeaver", OreGenericEgg::new);
+    BLOCKS.register("orebee", OreGenericEgg::new);
+    BLOCKS.register("oreblaze", OreGenericEgg::new);
+    BLOCKS.register("oreboyfriend", OreGenericEgg::new);
+    BLOCKS.register("orebrutalfly", OreGenericEgg::new);
+    BLOCKS.register("orecamarasaurus", OreGenericEgg::new);
+    BLOCKS.register("orecassowary", OreGenericEgg::new);
+    BLOCKS.register("orecaterkiller", OreGenericEgg::new);
+    BLOCKS.register("orecavefisher", OreGenericEgg::new);
+    BLOCKS.register("orecavespider", OreGenericEgg::new);
+    BLOCKS.register("orecephadrome", OreGenericEgg::new);
+    BLOCKS.register("orechicken", OreGenericEgg::new);
+    BLOCKS.register("orechipmunk", OreGenericEgg::new);
+    BLOCKS.register("orecliffracer", OreGenericEgg::new);
+    BLOCKS.register("orecloudshark", OreGenericEgg::new);
+    BLOCKS.register("orecockateil", OreGenericEgg::new);
+    BLOCKS.register("orecow", OreGenericEgg::new);
+    BLOCKS.register("orecrab", OreGenericEgg::new);
+    BLOCKS.register("orecreeper", OreGenericEgg::new);
+    BLOCKS.register("orecreepinghorror", OreGenericEgg::new);
+    BLOCKS.register("orecricket", OreGenericEgg::new);
+    BLOCKS.register("orecriminal", OreGenericEgg::new);
+    BLOCKS.register("orecryolophosaurus", OreGenericEgg::new);
+    BLOCKS.register("orecrystalcow", OreGenericEgg::new);
+    BLOCKS.register("oredragon", OreGenericEgg::new);
+    BLOCKS.register("oredragonfly", OreGenericEgg::new);
+    BLOCKS.register("oredungeonbeast", OreGenericEgg::new);
+    BLOCKS.register("oreeasterbunny", OreGenericEgg::new);
+    BLOCKS.register("oreemperorscorpion", OreGenericEgg::new);
+    BLOCKS.register("oreenchantedcow", OreGenericEgg::new);
+    BLOCKS.register("oreenderdragon", OreGenericEgg::new);
+    BLOCKS.register("oreenderknight", OreGenericEgg::new);
+    BLOCKS.register("oreenderman", OreGenericEgg::new);
+    BLOCKS.register("oreenderreaper", OreGenericEgg::new);
+    BLOCKS.register("orefairy", OreGenericEgg::new);
+    BLOCKS.register("oreflounder", OreGenericEgg::new);
+    BLOCKS.register("orefrog", OreGenericEgg::new);
+    BLOCKS.register("oregammametroid", OreGenericEgg::new);
+    BLOCKS.register("oregazelle", OreGenericEgg::new);
+    BLOCKS.register("oreghast", OreGenericEgg::new);
+    BLOCKS.register("oregirlfriend", OreGenericEgg::new);
+    BLOCKS.register("oregodzilla", OreGenericEgg::new);
+    BLOCKS.register("oregodzillapart", OreGenericEgg::new);
+    BLOCKS.register("oregoldcow", OreGenericEgg::new);
+    BLOCKS.register("oregoldfish", OreGenericEgg::new);
+    BLOCKS.register("orehammerhead", OreGenericEgg::new);
+    BLOCKS.register("orehercules", OreGenericEgg::new);
+    BLOCKS.register("orehorse", OreGenericEgg::new);
+    BLOCKS.register("orehydrolisc", OreGenericEgg::new);
+    BLOCKS.register("oreirongolem", OreGenericEgg::new);
+    BLOCKS.register("oreirukandji", OreGenericEgg::new);
+    BLOCKS.register("orekraken", OreGenericEgg::new);
+    BLOCKS.register("orekyuubi", OreGenericEgg::new);
+    BLOCKS.register("orelargeworm", OreGenericEgg::new);
+    BLOCKS.register("oreleafmonster", OreGenericEgg::new);
+    BLOCKS.register("oreleon", OreGenericEgg::new);
+    BLOCKS.register("orelizard", OreGenericEgg::new);
+    BLOCKS.register("orelurkingterror", OreGenericEgg::new);
+    BLOCKS.register("oremagmacube", OreGenericEgg::new);
+    BLOCKS.register("oremantis", OreGenericEgg::new);
+    BLOCKS.register("oremediumworm", OreGenericEgg::new);
+    BLOCKS.register("oremolenoid", OreGenericEgg::new);
+    BLOCKS.register("oremooshroom", OreGenericEgg::new);
+    BLOCKS.register("oremothra", OreGenericEgg::new);
+    BLOCKS.register("orenastysaurus", OreGenericEgg::new);
+    BLOCKS.register("orenightmare", OreGenericEgg::new);
+    BLOCKS.register("oreocelot", OreGenericEgg::new);
+    BLOCKS.register("oreostrich", OreGenericEgg::new);
+    BLOCKS.register("orepeacock", OreGenericEgg::new);
+    BLOCKS.register("orepig", OreGenericEgg::new);
+    BLOCKS.register("orepointysaurus", OreGenericEgg::new);
+    BLOCKS.register("orerat", OreGenericEgg::new);
+    BLOCKS.register("oreredcow", OreGenericEgg::new);
+    BLOCKS.register("orerotator", OreGenericEgg::new);
+    BLOCKS.register("orerubberducky", OreGenericEgg::new);
+    BLOCKS.register("orescorpion", OreGenericEgg::new);
+    BLOCKS.register("oreseamonster", OreGenericEgg::new);
+    BLOCKS.register("oreseaviper", OreGenericEgg::new);
+    BLOCKS.register("oresheep", OreGenericEgg::new);
+    BLOCKS.register("oresilverfish", OreGenericEgg::new);
+    BLOCKS.register("oreskate", OreGenericEgg::new);
+    BLOCKS.register("oreskeleton", OreGenericEgg::new);
+    BLOCKS.register("oreslime", OreGenericEgg::new);
+    BLOCKS.register("oresmallworm", OreGenericEgg::new);
+    BLOCKS.register("oresnowgolem", OreGenericEgg::new);
+    BLOCKS.register("orespider", OreGenericEgg::new);
+    BLOCKS.register("orespiderdriver", OreGenericEgg::new);
+    BLOCKS.register("orespit", OreGenericEgg::new);
+    BLOCKS.register("orespyro", OreGenericEgg::new);
+    BLOCKS.register("oresquid", OreGenericEgg::new);
+    BLOCKS.register("orestink", OreGenericEgg::new);
+    BLOCKS.register("orestinky", OreGenericEgg::new);
+    BLOCKS.register("oreterribleterror", OreGenericEgg::new);
+    BLOCKS.register("oretheking", OreGenericEgg::new);
+    BLOCKS.register("orethekingpart", OreGenericEgg::new);
+    BLOCKS.register("orethequeen", OreGenericEgg::new);
+    BLOCKS.register("orethequeenpart", OreGenericEgg::new);
+    BLOCKS.register("oretrex", OreGenericEgg::new);
+    BLOCKS.register("oretriffid", OreGenericEgg::new);
+    BLOCKS.register("oretrooper", OreGenericEgg::new);
+    BLOCKS.register("oretshirt", OreGenericEgg::new);
+    BLOCKS.register("oreurchin", OreGenericEgg::new);
+    BLOCKS.register("orevelocityraptor", OreGenericEgg::new);
+    BLOCKS.register("orevillager", OreGenericEgg::new);
+    BLOCKS.register("orevortex", OreGenericEgg::new);
+    BLOCKS.register("orewaterdragon", OreGenericEgg::new);
+    BLOCKS.register("orewhale", OreGenericEgg::new);
+    BLOCKS.register("orewitch", OreGenericEgg::new);
+    BLOCKS.register("orewitherboss", OreGenericEgg::new);
+    BLOCKS.register("orewitherskeleton", OreGenericEgg::new);
+    BLOCKS.register("orewolf", OreGenericEgg::new);
+    BLOCKS.register("orezombie", OreGenericEgg::new);
+    BLOCKS.register("orezombiepigman", OreGenericEgg::new);
+  }
+
+  private static void registerAllPreInitItems() {
+    ITEMS.register(
+        "pizza",
+        () ->
+            new ItemPizza(
+                (BlockPizza)
+                    BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "pizza"))));
+    ITEMS.register(
+        "ducttape",
+        () ->
+            new ItemDuctTape(
+                (BlockDuctTape)
+                    BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "ducttape"))));
+    ITEMS.register(
+        "island",
+        () ->
+            new IslandBlock.ItemIslandBlock(
+                (IslandBlock)
+                    BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "island")),
+                new Item.Properties()));
+    ITEMS.register("acid", () -> new ItemAcid(BaseItemID + 247));
+    ITEMS.register("antrobotkit", () -> new ItemSpiderRobotKit(BaseItemID + 473));
+    ITEMS.register("appletree_seed", () -> new ItemAppleSeed(BaseItemID + 211));
+    ITEMS.register("bluefish", () -> new ItemGenericFish(4, 0.4F, false));
+    ITEMS.register(
+        "butterfly_seed",
+        () ->
+            new ItemButterflySeed(
+                (BlockButterflyPlant)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "butterfly_plant")),
+                Blocks.FARMLAND));
+    ITEMS.register("cherrytree_seed", () -> new ItemAppleSeed(BaseItemID + 217));
+    ITEMS.register(
+        "corn_seed",
+        () ->
+            new ItemCornCob(
+                6,
+                0.75F,
+                (BlockCorn)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "corn_plant0")),
+                Blocks.FARMLAND));
+    ITEMS.register("creeperlauncher", () -> new ItemCreeperLauncher(BaseItemID + 252));
+    ITEMS.register("crystalsticks", () -> new ItemCrystalSticks(BaseItemID + 254));
+    ITEMS.register("deadirukandji", () -> new ItemIrukandji(BaseItemID + 258));
+    ITEMS.register("elevator", () -> new ItemElevator(BaseItemID + 235));
+    ITEMS.register("experiencetree_seed", () -> new ItemExperienceTreeSeed(BaseItemID + 216));
+    ITEMS.register(
+        "firefly_seed",
+        () ->
+            new ItemFireflySeed(
+                (BlockFireflyPlant)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "firefly_plant")),
+                Blocks.FARMLAND));
+    ITEMS.register("greenfish", () -> new ItemGenericFish(3, 0.5F, false));
+    ITEMS.register("greyfish", () -> new ItemGenericFish(5, 0.5F, false));
+    ITEMS.register("iceball", () -> new ItemIceBall(BaseItemID + 239));
+    ITEMS.register("instantgarden", () -> new InstantGarden(BaseItemID + 328));
+    ITEMS.register("instantshelter", () -> new InstantShelter(BaseItemID + 327));
+    ITEMS.register("irukandjiarrow", () -> new ItemIrukandjiArrow(BaseItemID + 372));
+    ITEMS.register("laserball", () -> new ItemLaserBall(BaseItemID + 242));
+    ITEMS.register(
+        "lettuce_seed",
+        () ->
+            new ItemLettuce(
+                3,
+                0.45F,
+                (BlockLettuce)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "lettuce_0")),
+                Blocks.FARMLAND));
+    ITEMS.register("magicapple", () -> new ItemMagicApple(BaseItemID + 236));
+    ITEMS.register("minersdream", () -> new ItemMinersDream(BaseItemID + 237));
+    ITEMS.register(
+        "mosquito_seed",
+        () ->
+            new ItemMosquitoSeed(
+                (BlockMosquitoPlant)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "mosquito_plant")),
+                Blocks.FARMLAND));
+    ITEMS.register(
+        "moth_seed",
+        () ->
+            new ItemMothSeed(
+                (BlockMothPlant)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "moth_plant")),
+                Blocks.FARMLAND));
+    ITEMS.register("netherlost", () -> new ItemNetherLost(BaseItemID + 253));
+    ITEMS.register("peachtree_seed", () -> new ItemAppleSeed(BaseItemID + 218));
+    ITEMS.register("pinkfish", () -> new ItemGenericFish(4, 0.6F, false));
+    ITEMS.register(
+        "quinoa",
+        () ->
+            new ItemCornCob(
+                7,
+                0.85F,
+                (BlockQuinoa)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "quinoa_0")),
+                (CrystalGrass)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "crystalgrass"))));
+    ITEMS.register(
+        "radish",
+        () ->
+            new ItemRadish(
+                2,
+                0.45F,
+                (BlockRadish)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "radish_plant")),
+                Blocks.FARMLAND));
+    ITEMS.register("randomdungeon", () -> new ItemRandomDungeon(BaseItemID + 421));
+    ITEMS.register("raygun", () -> new ItemRayGun(BaseItemID + 243));
+    ITEMS.register(
+        "rice",
+        () ->
+            new ItemRadish(
+                5,
+                0.65F,
+                (BlockRice)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "rice_plant")),
+                (CrystalGrass)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "crystalgrass"))));
+    ITEMS.register("rock", () -> new ItemRock(BaseItemID + 435));
+    ITEMS.register("rockblue", () -> new ItemRock(BaseItemID + 439));
+    ITEMS.register("rockcrystalblue", () -> new ItemRock(BaseItemID + 445));
+    ITEMS.register("rockcrystalgreen", () -> new ItemRock(BaseItemID + 444));
+    ITEMS.register("rockcrystalred", () -> new ItemRock(BaseItemID + 443));
+    ITEMS.register("rockcrystaltnt", () -> new ItemRock(BaseItemID + 446));
+    ITEMS.register("rockfish", () -> new ItemGenericFish(3, 0.7F, false));
+    ITEMS.register("rockgreen", () -> new ItemRock(BaseItemID + 438));
+    ITEMS.register("rockpurple", () -> new ItemRock(BaseItemID + 440));
+    ITEMS.register("rockred", () -> new ItemRock(BaseItemID + 437));
+    ITEMS.register("rocksmall", () -> new ItemRock(BaseItemID + 436));
+    ITEMS.register("rockspikey", () -> new ItemRock(BaseItemID + 441));
+    ITEMS.register("rocktnt", () -> new ItemRock(BaseItemID + 442));
+    ITEMS.register("sifter", () -> new ItemSifter(BaseItemID + 325));
+    ITEMS.register("sparkfish", () -> new ItemSparkFish(1, 0.2F, false));
+    ITEMS.register("spiderrobotkit", () -> new ItemSpiderRobotKit(BaseItemID + 471));
+    ITEMS.register("squidzookasmall", () -> new ItemSquidZooka(BaseItemID + 317));
+    ITEMS.register("step_accross", () -> new StepAccross(BaseItemID + 234));
+    ITEMS.register("step_down", () -> new StepDown(BaseItemID + 233));
+    ITEMS.register("step_up", () -> new StepUp(BaseItemID + 232));
+    ITEMS.register(
+        "strawberry_seed",
+        () ->
+            new ItemStrawberrySeed(
+                (BlockStrawberry)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "strawberry_plant")),
+                Blocks.FARMLAND));
+    ITEMS.register("thunderstaff", () -> new ItemThunderStaff(BaseItemID + 240));
+    ITEMS.register(
+        "tomato_seed",
+        () ->
+            new ItemTomato(
+                4,
+                0.55F,
+                (BlockTomato)
+                    BuiltInRegistries.BLOCK.get(
+                        ResourceLocation.fromNamespaceAndPath(MODID, "tomato_plant0")),
+                Blocks.FARMLAND));
+    ITEMS.register("waterball", () -> new ItemWaterBall(BaseItemID + 244));
+    ITEMS.register("woodfish", () -> new ItemGenericFish(5, 0.7F, false));
+    ITEMS.register("wrench", () -> new ItemWrench(BaseItemID + 472));
+    ITEMS.register("zoo10", () -> new ZooCage(0, 17));
+    ITEMS.register("zoo2", () -> new ZooCage(0, 3));
+    ITEMS.register("zoo4", () -> new ZooCage(0, 5));
+    ITEMS.register("zoo6", () -> new ZooCage(0, 9));
+    ITEMS.register("zoo8", () -> new ZooCage(0, 13));
+    ITEMS.register("zookeeper", () -> new ItemZooKeeper(BaseItemID + 230));
+  }
+
+  private static void registerAllSpawnEggs() {
+    ITEMS.register("eggwitherskeleton", () -> new ItemSpawnEgg(0, 192));
+    ITEMS.register("eggenderdragon", () -> new ItemSpawnEgg(0, 193));
+    ITEMS.register("eggsnowgolem", () -> new ItemSpawnEgg(0, 194));
+    ITEMS.register("eggirongolem", () -> new ItemSpawnEgg(0, 195));
+    ITEMS.register("eggwitherboss", () -> new ItemSpawnEgg(0, 196));
+    ITEMS.register("egggirlfriend", () -> new ItemSpawnEgg(0, 197));
+    ITEMS.register("eggredcow", () -> new ItemSpawnEgg(0, 198));
+    ITEMS.register("eggcrystalcow", () -> new ItemSpawnEgg(0, 363));
+    ITEMS.register("egggoldcow", () -> new ItemSpawnEgg(0, 199));
+    ITEMS.register("eggenchantedcow", () -> new ItemSpawnEgg(0, 200));
+    ITEMS.register("eggmothra", () -> new ItemSpawnEgg(0, 201));
+    ITEMS.register("eggalosaurus", () -> new ItemSpawnEgg(0, 202));
+    ITEMS.register("eggcryolophosaurus", () -> new ItemSpawnEgg(0, 203));
+    ITEMS.register("eggcamarasaurus", () -> new ItemSpawnEgg(0, 204));
+    ITEMS.register("eggvelocityraptor", () -> new ItemSpawnEgg(0, 205));
+    ITEMS.register("egghydrolisc", () -> new ItemSpawnEgg(0, 206));
+    ITEMS.register("eggbasilisc", () -> new ItemSpawnEgg(0, 207));
+    ITEMS.register("eggdragonfly", () -> new ItemSpawnEgg(0, 221));
+    ITEMS.register("eggemperorscorpion", () -> new ItemSpawnEgg(0, 223));
+    ITEMS.register("eggscorpion", () -> new ItemSpawnEgg(0, 225));
+    ITEMS.register("eggcavefisher", () -> new ItemSpawnEgg(0, 227));
+    ITEMS.register("eggspyro", () -> new ItemSpawnEgg(0, 229));
+    ITEMS.register("eggbaryonyx", () -> new ItemSpawnEgg(0, 231));
+    ITEMS.register("egggammametroid", () -> new ItemSpawnEgg(0, 233));
+    ITEMS.register("eggcockateil", () -> new ItemSpawnEgg(0, 235));
+    ITEMS.register("eggkyuubi", () -> new ItemSpawnEgg(0, 237));
+    ITEMS.register("eggalien", () -> new ItemSpawnEgg(0, 239));
+    ITEMS.register("eggattacksquid", () -> new ItemSpawnEgg(0, 241));
+    ITEMS.register("eggwaterdragon", () -> new ItemSpawnEgg(0, 243));
+    ITEMS.register("eggcephadrome", () -> new ItemSpawnEgg(0, 249));
+    ITEMS.register("eggkraken", () -> new ItemSpawnEgg(0, 245));
+    ITEMS.register("egglizard", () -> new ItemSpawnEgg(0, 247));
+    ITEMS.register("eggdragon", () -> new ItemSpawnEgg(0, 251));
+    ITEMS.register("eggbee", () -> new ItemSpawnEgg(0, 254));
+    ITEMS.register("eggtrooper", () -> new ItemSpawnEgg(0, 262));
+    ITEMS.register("eggspit", () -> new ItemSpawnEgg(0, 263));
+    ITEMS.register("eggstink", () -> new ItemSpawnEgg(0, 264));
+    ITEMS.register("eggostrich", () -> new ItemSpawnEgg(0, 265));
+    ITEMS.register("egggazelle", () -> new ItemSpawnEgg(0, 266));
+    ITEMS.register("eggchipmunk", () -> new ItemSpawnEgg(0, 267));
+    ITEMS.register("eggcreepinghorror", () -> new ItemSpawnEgg(0, 274));
+    ITEMS.register("eggterribleterror", () -> new ItemSpawnEgg(0, 275));
+    ITEMS.register("eggcliffracer", () -> new ItemSpawnEgg(0, 276));
+    ITEMS.register("eggtriffid", () -> new ItemSpawnEgg(0, 277));
+    ITEMS.register("eggnightmare", () -> new ItemSpawnEgg(0, 278));
+    ITEMS.register("egglurkingterror", () -> new ItemSpawnEgg(0, 279));
+    ITEMS.register("egggodzilla", () -> new ItemSpawnEgg(0, 280));
+    ITEMS.register("eggsmallworm", () -> new ItemSpawnEgg(0, 288));
+    ITEMS.register("eggmediumworm", () -> new ItemSpawnEgg(0, 289));
+    ITEMS.register("egglargeworm", () -> new ItemSpawnEgg(0, 290));
+    ITEMS.register("eggcassowary", () -> new ItemSpawnEgg(0, 291));
+    ITEMS.register("eggcloudshark", () -> new ItemSpawnEgg(0, 292));
+    ITEMS.register("egggoldfish", () -> new ItemSpawnEgg(0, 293));
+    ITEMS.register("eggleafmonster", () -> new ItemSpawnEgg(0, 294));
+    ITEMS.register("eggtshirt", () -> new ItemSpawnEgg(0, 295));
+    ITEMS.register("eggenderknight", () -> new ItemSpawnEgg(0, 298));
+    ITEMS.register("eggenderreaper", () -> new ItemSpawnEgg(0, 299));
+    ITEMS.register("eggbeaver", () -> new ItemSpawnEgg(0, 301));
+    ITEMS.register("eggrotator", () -> new ItemSpawnEgg(0, 302));
+    ITEMS.register("eggvortex", () -> new ItemSpawnEgg(0, 303));
+    ITEMS.register("eggpeacock", () -> new ItemSpawnEgg(0, 304));
+    ITEMS.register("eggfairy", () -> new ItemSpawnEgg(0, 305));
+    ITEMS.register("eggdungeonbeast", () -> new ItemSpawnEgg(0, 306));
+    ITEMS.register("eggrat", () -> new ItemSpawnEgg(0, 307));
+    ITEMS.register("eggflounder", () -> new ItemSpawnEgg(0, 308));
+    ITEMS.register("eggwhale", () -> new ItemSpawnEgg(0, 309));
+    ITEMS.register("eggirukandji", () -> new ItemSpawnEgg(0, 310));
+    ITEMS.register("eggskate", () -> new ItemSpawnEgg(0, 311));
+    ITEMS.register("eggurchin", () -> new ItemSpawnEgg(0, 312));
+    ITEMS.register("eggrobot1", () -> new ItemSpawnEgg(0, 324));
+    ITEMS.register("eggrobot2", () -> new ItemSpawnEgg(0, 325));
+    ITEMS.register("eggrobot3", () -> new ItemSpawnEgg(0, 326));
+    ITEMS.register("eggrobot4", () -> new ItemSpawnEgg(0, 327));
+    ITEMS.register("eggghost", () -> new ItemSpawnEgg(0, 328));
+    ITEMS.register("eggghostskelly", () -> new ItemSpawnEgg(0, 329));
+    ITEMS.register("eggbrownant", () -> new ItemSpawnEgg(0, 330));
+    ITEMS.register("eggredant", () -> new ItemSpawnEgg(0, 331));
+    ITEMS.register("eggrainbowant", () -> new ItemSpawnEgg(0, 332));
+    ITEMS.register("eggunstableant", () -> new ItemSpawnEgg(0, 333));
+    ITEMS.register("eggtermite", () -> new ItemSpawnEgg(0, 334));
+    ITEMS.register("eggbutterfly", () -> new ItemSpawnEgg(0, 335));
+    ITEMS.register("eggmoth", () -> new ItemSpawnEgg(0, 336));
+    ITEMS.register("eggmosquito", () -> new ItemSpawnEgg(0, 337));
+    ITEMS.register("eggfirefly", () -> new ItemSpawnEgg(0, 338));
+    ITEMS.register("eggtrex", () -> new ItemSpawnEgg(0, 339));
+    ITEMS.register("egghercules", () -> new ItemSpawnEgg(0, 340));
+    ITEMS.register("eggmantis", () -> new ItemSpawnEgg(0, 341));
+    ITEMS.register("eggstinky", () -> new ItemSpawnEgg(0, 342));
+    ITEMS.register("eggrobot5", () -> new ItemSpawnEgg(0, 343));
+    ITEMS.register("eggcoin", () -> new ItemSpawnEgg(0, 344));
+    ITEMS.register("eggboyfriend", () -> new ItemSpawnEgg(0, 349));
+    ITEMS.register("eggtheking", () -> new ItemSpawnEgg(0, 350));
+    ITEMS.register("eggthequeen", () -> new ItemSpawnEgg(0, 366));
+    ITEMS.register("eggtheprince", () -> new ItemSpawnEgg(0, 351));
+    ITEMS.register("eggeasterbunny", () -> new ItemSpawnEgg(0, 352));
+    ITEMS.register("eggmolenoid", () -> new ItemSpawnEgg(0, 353));
+    ITEMS.register("eggseamonster", () -> new ItemSpawnEgg(0, 354));
+    ITEMS.register("eggseaviper", () -> new ItemSpawnEgg(0, 355));
+    ITEMS.register("eggcaterkiller", () -> new ItemSpawnEgg(0, 356));
+    ITEMS.register("eggrubberducky", () -> new ItemSpawnEgg(0, 362));
+    ITEMS.register("egghammerhead", () -> new ItemSpawnEgg(0, 360));
+    ITEMS.register("eggleon", () -> new ItemSpawnEgg(0, 358));
+    ITEMS.register("eggcriminal", () -> new ItemSpawnEgg(0, 365));
+    ITEMS.register("eggbrutalfly", () -> new ItemSpawnEgg(0, 367));
+    ITEMS.register("eggnastysaurus", () -> new ItemSpawnEgg(0, 368));
+    ITEMS.register("eggpointysaurus", () -> new ItemSpawnEgg(0, 369));
+    ITEMS.register("eggcricket", () -> new ItemSpawnEgg(0, 370));
+    ITEMS.register("eggtheprincess", () -> new ItemSpawnEgg(0, 371));
+    ITEMS.register("eggfrog", () -> new ItemSpawnEgg(0, 372));
+    ITEMS.register("eggrobot6", () -> new ItemSpawnEgg(0, 378));
+    ITEMS.register("eggantrobot", () -> new ItemSpawnEgg(0, 379));
+    ITEMS.register("eggspiderrobot", () -> new ItemSpawnEgg(0, 380));
+    ITEMS.register("eggspiderdriver", () -> new ItemSpawnEgg(0, 381));
+    ITEMS.register("eggcrab", () -> new ItemSpawnEgg(0, 383));
+  }
+
+  private static void registerAllWeaponsAndArmor() {
+    ITEMS.register("ingoturanium", () -> new IngotUranium());
+    ITEMS.register("ingottitanium", () -> new IngotTitanium());
+    ITEMS.register("crystalpink_ingot", () -> new IngotUranium());
+    ITEMS.register("tigerseye_ingot", () -> new IngotUranium());
+    ITEMS.register("ultimatesword", () -> new UltimateSword(toolULTIMATE));
+    ITEMS.register("ultimatepickaxe", () -> new UltimatePickaxe(toolULTIMATE));
+    ITEMS.register("ultimateshovel", () -> new UltimateShovel(toolULTIMATE));
+    ITEMS.register("ultimatehoe", () -> new UltimateHoe(toolULTIMATE));
+    ITEMS.register("ultimateaxe", () -> new UltimateAxe(toolULTIMATE));
+    ITEMS.register("nightmaresword", () -> new NightmareSword(toolNIGHTMARE));
+    ITEMS.register("berthasmall", () -> new Bertha(toolBERTHA));
+    ITEMS.register("slicesmall", () -> new Bertha(toolBERTHA));
+    ITEMS.register("royalsmall", () -> new Bertha(toolROYAL));
+    ITEMS.register("hammysmall", () -> new Bertha(toolHAMMY));
+    ITEMS.register("battleaxesmall", () -> new UltimateSword(toolBATTLE));
+    ITEMS.register("chainsawsmall", () -> new UltimateSword(toolCHAINSAW));
+    ITEMS.register("queenbattleaxesmall", () -> new UltimateSword(toolQUEENBATTLE));
+    ITEMS.register("emeraldsword", () -> new EmeraldSword(toolEMERALD));
+    ITEMS.register("emeraldpickaxe", () -> new EmeraldPickaxe(toolEMERALD));
+    ITEMS.register("emeraldshovel", () -> new EmeraldShovel(toolEMERALD));
+    ITEMS.register("emeraldhoe", () -> new EmeraldHoe(toolEMERALD));
+    ITEMS.register("emeraldaxe", () -> new EmeraldAxe(toolEMERALD));
+    ITEMS.register("experiencesword", () -> new ExperienceSword(toolEMERALD));
+    ITEMS.register("poisonsword", () -> new PoisonSword(toolEMERALD));
+    ITEMS.register("ratsword", () -> new RatSword(toolEMERALD));
+    ITEMS.register("fairysword", () -> new FairySword(toolEMERALD));
+    ITEMS.register("mantisclaw", () -> new MantisClaw(toolEMERALD));
+    ITEMS.register("bighammer", () -> new BigHammer(toolAMETHYST));
+    ITEMS.register("rubysword", () -> new RubySword(toolRUBY));
+    ITEMS.register("rubypickaxe", () -> new RubyPickaxe(toolRUBY));
+    ITEMS.register("rubyshovel", () -> new RubyShovel(toolRUBY));
+    ITEMS.register("rubyhoe", () -> new RubyHoe(toolRUBY));
+    ITEMS.register("rubyaxe", () -> new RubyAxe(toolRUBY));
+    ITEMS.register("amethystsword", () -> new AmethystSword(toolAMETHYST));
+    ITEMS.register("amethystpickaxe", () -> new AmethystPickaxe(toolAMETHYST));
+    ITEMS.register("amethystshovel", () -> new AmethystShovel(toolAMETHYST));
+    ITEMS.register("amethysthoe", () -> new AmethystHoe(toolAMETHYST));
+    ITEMS.register("amethystaxe", () -> new AmethystAxe(toolAMETHYST));
+    ITEMS.register("crystalwoodsword", () -> new CrystalSword(toolCRYSTALWOOD));
+    ITEMS.register("crystalwoodpickaxe", () -> new CrystalPickaxe(toolCRYSTALWOOD));
+    ITEMS.register("crystalwoodshovel", () -> new CrystalShovel(toolCRYSTALWOOD));
+    ITEMS.register("crystalwoodhoe", () -> new CrystalHoe(toolCRYSTALWOOD));
+    ITEMS.register("crystalwoodaxe", () -> new CrystalAxe(toolCRYSTALWOOD));
+    ITEMS.register("crystalpinksword", () -> new CrystalSword(toolCRYSTALPINK));
+    ITEMS.register("crystalpinkpickaxe", () -> new CrystalPickaxe(toolCRYSTALPINK));
+    ITEMS.register("crystalpinkshovel", () -> new CrystalShovel(toolCRYSTALPINK));
+    ITEMS.register("crystalpinkhoe", () -> new CrystalHoe(toolCRYSTALPINK));
+    ITEMS.register("crystalpinkaxe", () -> new CrystalAxe(toolCRYSTALPINK));
+    ITEMS.register("crystalstonesword", () -> new CrystalSword(toolCRYSTALSTONE));
+    ITEMS.register("crystalstonepickaxe", () -> new CrystalPickaxe(toolCRYSTALSTONE));
+    ITEMS.register("crystalstoneshovel", () -> new CrystalShovel(toolCRYSTALSTONE));
+    ITEMS.register("crystalstonehoe", () -> new CrystalHoe(toolCRYSTALSTONE));
+    ITEMS.register("crystalstoneaxe", () -> new CrystalAxe(toolCRYSTALSTONE));
+    ITEMS.register("tigerseye_sword", () -> new CrystalSword(toolTIGERSEYE));
+    ITEMS.register("tigerseye_pickaxe", () -> new CrystalPickaxe(toolTIGERSEYE));
+    ITEMS.register("tigerseye_shovel", () -> new CrystalShovel(toolTIGERSEYE));
+    ITEMS.register("tigerseye_hoe", () -> new CrystalHoe(toolTIGERSEYE));
+    ITEMS.register("tigerseye_axe", () -> new CrystalAxe(toolTIGERSEYE));
+    ITEMS.register("rosesword", () -> new EmeraldSword(toolEMERALD));
+    ITEMS.register("redheels", () -> new ItemShoes(2));
+    ITEMS.register("blackheels", () -> new ItemShoes(3));
+    ITEMS.register("slippers", () -> new ItemShoes(4));
+    ITEMS.register("boots", () -> new ItemShoes(5));
+    ITEMS.register("gamecontroller", () -> new ItemShoes(6));
+    ITEMS.register("ultimatebow", () -> new UltimateBow(BaseItemID + 303));
+    ITEMS.register("skatebow", () -> new SkateBow(BaseItemID + 373));
+    ITEMS.register("ultimatefishingrod", () -> new UltimateFishingRod(BaseItemID + 304));
+    ITEMS.register("experiencecatcher", () -> new ExperienceCatcher(BaseItemID + 238));
+    ITEMS.register("ultimate_helmet", () -> new ItemChaosArmor(armorULTIMATE, 0, 0));
+    ITEMS.register("ultimate_chest", () -> new ItemChaosArmor(armorULTIMATE, 0, 1));
+    ITEMS.register("ultimate_leggings", () -> new ItemChaosArmor(armorULTIMATE, 0, 2));
+    ITEMS.register("ultimate_boots", () -> new ItemChaosArmor(armorULTIMATE, 0, 3));
+    ITEMS.register("lavaeel_helmet", () -> new ItemChaosArmor(armorLAVAEEL, 0, 0));
+    ITEMS.register("lavaeel_chest", () -> new ItemChaosArmor(armorLAVAEEL, 0, 1));
+    ITEMS.register("lavaeel_leggings", () -> new ItemChaosArmor(armorLAVAEEL, 0, 2));
+    ITEMS.register("lavaeel_boots", () -> new ItemChaosArmor(armorLAVAEEL, 0, 3));
+    ITEMS.register("mothscale_helmet", () -> new ItemChaosArmor(armorMOTHSCALE, 0, 0));
+    ITEMS.register("mothscale_chest", () -> new ItemChaosArmor(armorMOTHSCALE, 0, 1));
+    ITEMS.register("mothscale_leggings", () -> new ItemChaosArmor(armorMOTHSCALE, 0, 2));
+    ITEMS.register("mothscale_boots", () -> new ItemChaosArmor(armorMOTHSCALE, 0, 3));
+    ITEMS.register("emerald_helmet", () -> new ItemChaosArmor(armorEMERALD, 0, 0));
+    ITEMS.register("emerald_chest", () -> new ItemChaosArmor(armorEMERALD, 0, 1));
+    ITEMS.register("emerald_leggings", () -> new ItemChaosArmor(armorEMERALD, 0, 2));
+    ITEMS.register("emerald_boots", () -> new ItemChaosArmor(armorEMERALD, 0, 3));
+    ITEMS.register("experience_helmet", () -> new ItemChaosArmor(armorEXPERIENCE, 0, 0));
+    ITEMS.register("experience_chest", () -> new ItemChaosArmor(armorEXPERIENCE, 0, 1));
+    ITEMS.register("experience_leggings", () -> new ItemChaosArmor(armorEXPERIENCE, 0, 2));
+    ITEMS.register("experience_boots", () -> new ItemChaosArmor(armorEXPERIENCE, 0, 3));
+    ITEMS.register("ruby_helmet", () -> new ItemChaosArmor(armorRUBY, 0, 0));
+    ITEMS.register("ruby_chest", () -> new ItemChaosArmor(armorRUBY, 0, 1));
+    ITEMS.register("ruby_leggings", () -> new ItemChaosArmor(armorRUBY, 0, 2));
+    ITEMS.register("ruby_boots", () -> new ItemChaosArmor(armorRUBY, 0, 3));
+    ITEMS.register("amethyst_helmet", () -> new ItemChaosArmor(armorAMETHYST, 0, 0));
+    ITEMS.register("amethyst_chest", () -> new ItemChaosArmor(armorAMETHYST, 0, 1));
+    ITEMS.register("amethyst_leggings", () -> new ItemChaosArmor(armorAMETHYST, 0, 2));
+    ITEMS.register("amethyst_boots", () -> new ItemChaosArmor(armorAMETHYST, 0, 3));
+    ITEMS.register("pink_helmet", () -> new ItemChaosArmor(armorPINK, 0, 0));
+    ITEMS.register("pink_chest", () -> new ItemChaosArmor(armorPINK, 0, 1));
+    ITEMS.register("pink_leggings", () -> new ItemChaosArmor(armorPINK, 0, 2));
+    ITEMS.register("pink_boots", () -> new ItemChaosArmor(armorPINK, 0, 3));
+    ITEMS.register("tigerseye_helmet", () -> new ItemChaosArmor(armorTIGERSEYE, 0, 0));
+    ITEMS.register("tigerseye_chest", () -> new ItemChaosArmor(armorTIGERSEYE, 0, 1));
+    ITEMS.register("tigerseye_leggings", () -> new ItemChaosArmor(armorTIGERSEYE, 0, 2));
+    ITEMS.register("tigerseye_boots", () -> new ItemChaosArmor(armorTIGERSEYE, 0, 3));
+    ITEMS.register("peacock_boots", () -> new ItemChaosArmor(armorPEACOCK, 0, 3));
+    ITEMS.register("peacock_helmet", () -> new ItemChaosArmor(armorPEACOCK, 0, 0));
+    ITEMS.register("peacock_chest", () -> new ItemChaosArmor(armorPEACOCK, 0, 1));
+    ITEMS.register("peacock_leggings", () -> new ItemChaosArmor(armorPEACOCK, 0, 2));
+    ITEMS.register("mobzilla_helmet", () -> new ItemChaosArmor(armorMOBZILLA, 0, 0));
+    ITEMS.register("mobzilla_chest", () -> new ItemChaosArmor(armorMOBZILLA, 0, 1));
+    ITEMS.register("mobzilla_leggings", () -> new ItemChaosArmor(armorMOBZILLA, 0, 2));
+    ITEMS.register("mobzilla_boots", () -> new ItemChaosArmor(armorMOBZILLA, 0, 3));
+    ITEMS.register("royal_helmet", () -> new ItemChaosArmor(armorROYAL, 0, 0));
+    ITEMS.register("royal_chest", () -> new ItemChaosArmor(armorROYAL, 0, 1));
+    ITEMS.register("royal_leggings", () -> new ItemChaosArmor(armorROYAL, 0, 2));
+    ITEMS.register("royal_boots", () -> new ItemChaosArmor(armorROYAL, 0, 3));
+    ITEMS.register("lapis_helmet", () -> new ItemChaosArmor(armorLAPIS, 0, 0));
+    ITEMS.register("lapis_chest", () -> new ItemChaosArmor(armorLAPIS, 0, 1));
+    ITEMS.register("lapis_leggings", () -> new ItemChaosArmor(armorLAPIS, 0, 2));
+    ITEMS.register("lapis_boots", () -> new ItemChaosArmor(armorLAPIS, 0, 3));
+    ITEMS.register("queen_helmet", () -> new ItemChaosArmor(armorQUEEN, 0, 0));
+    ITEMS.register("queen_chest", () -> new ItemChaosArmor(armorQUEEN, 0, 1));
+    ITEMS.register("queen_leggings", () -> new ItemChaosArmor(armorQUEEN, 0, 2));
+    ITEMS.register("queen_boots", () -> new ItemChaosArmor(armorQUEEN, 0, 3));
+  }
+
+  private static void registerAllFoodItems() {
+    ITEMS.register("firefish", () -> new ItemFireFish(4, 0.6F, false));
+    ITEMS.register("sunfish", () -> new ItemSunFish(6, 0.6F, false));
+    ITEMS.register("lavaeel", () -> new ItemLavaEel(2, 0.6F, false));
+    ITEMS.register("sunspoturchin", () -> new ItemSunspotUrchin(BaseItemID + 246));
+    ITEMS.register("popcorn", () -> new ItemPopcorn(1, 0.5F, false));
+    ITEMS.register("popcorn_buttered", () -> new ItemPopcorn(2, 0.6F, false));
+    ITEMS.register("popcorn_buttered_salted", () -> new ItemPopcorn(3, 0.75F, false));
+    ITEMS.register("popcorn_bag", () -> new ItemPopcorn(10, 1.25F, false));
+    ITEMS.register("butter", () -> new ItemPopcorn(1, 0.5F, false));
+    ITEMS.register("corndog_cooked", () -> new ItemPopcorn(16, 2.5F, false));
+    ITEMS.register("corndog_raw", () -> new ItemPopcorn(4, 0.6F, false));
+    ITEMS.register("buttercandy", () -> new ItemSunFish(4, 0.5F, false));
+    ITEMS.register("cookedbacon", () -> new ItemSunFish(14, 1.5F, false));
+    ITEMS.register("bacon", () -> new ItemPopcorn(8, 1.0F, false));
+    ITEMS.register("cookedcrabmeat", () -> new ItemSunFish(6, 0.75F, false));
+    ITEMS.register("crabmeat", () -> new ItemPopcorn(4, 0.25F, false));
+    ITEMS.register("cheese", () -> new ItemPopcorn(4, 0.5F, false));
+    ITEMS.register("salad", () -> new ItemPopcorn(10, 0.95F, false));
+    ITEMS.register("blt_sandwich", () -> new ItemPopcorn(12, 0.95F, false));
+    ITEMS.register("crabbypatty", () -> new ItemPopcorn(16, 2.35F, false));
+    ITEMS.register("cookedpeacock", () -> new ItemPopcorn(12, 1.4F, false));
+    ITEMS.register("rawpeacock", () -> new ItemPopcorn(6, 0.7F, false));
+    ITEMS.register("strawberry", () -> new ItemStrawberry(2, 0.65F, false));
+    ITEMS.register("cherries", () -> new ItemStrawberry(3, 0.45F, false));
+    ITEMS.register("peach", () -> new ItemStrawberry(4, 0.55F, false));
+    ITEMS.register("crystalapple", () -> new ItemSunFish(5, 0.85F, false));
+    ITEMS.register("heart", () -> new ItemSunFish(8, 0.95F, false));
+  }
+
+  private static void registerAllSaltMaterialItems() {
+    ITEMS.register("mothscale", () -> new ItemSalt(BaseItemID + 156));
+    ITEMS.register("queenscale", () -> new ItemSalt(BaseItemID + 453));
+    ITEMS.register("nightmarescale", () -> new ItemSalt(BaseItemID + 158));
+    ITEMS.register("emperorscorpionscale", () -> new ItemSalt(BaseItemID + 159));
+    ITEMS.register("basiliskscale", () -> new ItemSalt(BaseItemID + 160));
+    ITEMS.register("waterdragonscale", () -> new ItemSalt(BaseItemID + 161));
+    ITEMS.register("peacockfeather", () -> new ItemSalt(BaseItemID + 255));
+    ITEMS.register("jumpybugscale", () -> new ItemSalt(BaseItemID + 162));
+    ITEMS.register("krakentooth", () -> new ItemSalt(BaseItemID + 163));
+    ITEMS.register("godzillascale", () -> new ItemSalt(BaseItemID + 164));
+    ITEMS.register("greengoo", () -> new ItemSalt(BaseItemID + 154));
+    ITEMS.register("bbhandle", () -> new ItemSalt(BaseItemID + 406));
+    ITEMS.register("bbguard", () -> new ItemSalt(BaseItemID + 407));
+    ITEMS.register("bbblade", () -> new ItemSalt(BaseItemID + 408));
+    ITEMS.register("molenoidnose", () -> new ItemSalt(BaseItemID + 409));
+    ITEMS.register("seamonsterscale", () -> new ItemSalt(BaseItemID + 410));
+    ITEMS.register("wormtooth", () -> new ItemSalt(BaseItemID + 411));
+    ITEMS.register("trextooth", () -> new ItemSalt(BaseItemID + 412));
+    ITEMS.register("caterkillerjaw", () -> new ItemSalt(BaseItemID + 413));
+    ITEMS.register("seavipertongue", () -> new ItemSalt(BaseItemID + 414));
+    ITEMS.register("vortexeye", () -> new ItemSalt(BaseItemID + 415));
+    ITEMS.register("salt", () -> new ItemSalt(BaseItemID + 178));
+    ITEMS.register("ruby", () -> new ItemSalt(BaseItemID + 270));
+    ITEMS.register("amethyst", () -> new ItemSalt(BaseItemID + 260));
+    ITEMS.register("uranium_nugget", () -> new ItemSalt(BaseItemID + 150));
+    ITEMS.register("titanium_nugget", () -> new ItemSalt(BaseItemID + 151));
+    ITEMS.register("deadstinkbug", () -> new ItemSalt(BaseItemID + 155));
+  }
+
+  public ChaosPersists() {
+    instance = this;
+    proxy =
+        net.minecraftforge.fml.loading.FMLEnvironment.dist == net.minecraftforge.api.distmarker.Dist.CLIENT
+            ? new com.astryxion.chaospersists.proxy.ClientProxyChaos()
+            : new com.astryxion.chaospersists.proxy.CommonProxyChaos();
+    IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+    modBus.addListener(this::commonSetup);
+    modBus.addListener(this::onEntityAttributeCreation);
+    modBus.addListener(this::registerEntityRenderers);
+    modBus.addListener(this::buildCreativeModeTabContents);
+    modBus.addListener(this::clientInit);
+    MinecraftForge.EVENT_BUS.register(this);
+    ensureEarlyConfigLoaded();
+  }
+
+  private static boolean earlyConfigLoaded = false;
+
+  private static synchronized void ensureEarlyConfigLoaded() {
+    if (earlyConfigLoaded) {
+      return;
+    }
+    earlyConfigLoaded = true;
+    loadEarlyMobConfig();
+    loadEarlyWeaponArmorConfig();
+    initToolAndArmorMaterialsIfNeeded();
+  }
+
+  private static void loadEarlyMobConfig() {
+    Configuration config =
+        new Configuration(
+            net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get()
+                .resolve("chaospersists.cfg")
+                .toFile());
+    config.load();
+    getMobs(config, "chaospersistsMOBS");
+    config.save();
+  }
+
+  private static void loadEarlyWeaponArmorConfig() {
+    Configuration config =
+        new Configuration(
+            net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get()
+                .resolve("chaospersists.cfg")
+                .toFile());
+    config.load();
+    String weapons = "chaospersistsWEAPONS";
+    Amethyst_armorstats = get_armorstats(config, "Amethyst", 100, 3, 6, 8, 3, 10, 0, 0, 0, 0, 0, 0, 0, 0);
+    Emerald_armorstats = get_armorstats(config, "Emerald", 60, 3, 8, 6, 3, 40, 0, 0, 0, 0, 0, 0, 0, 0);
+    Experience_armorstats = get_armorstats(config, "Experience", 70, 5, 9, 7, 4, 50, 0, 0, 2, 0, 1, 0, 0, 1);
+    MothScale_armorstats = get_armorstats(config, "MothScale", 50, 2, 7, 5, 2, 50, 0, 0, 3, 3, 3, 0, 0, 5);
+    LavaEel_armorstats = get_armorstats(config, "LavaEel", 40, 2, 7, 5, 2, 35, 1, 2, 3, 2, 10, 0, 0, 2);
+    Ultimate_armorstats = get_armorstats(config, "Ultimate", 200, 6, 12, 10, 6, 100, 2, 3, 5, 5, 5, 5, 0, 3);
+    Pink_armorstats = get_armorstats(config, "Pink", 50, 3, 7, 5, 2, 40, 0, 0, 0, 0, 0, 0, 0, 0);
+    TigersEye_armorstats = get_armorstats(config, "TigersEye", 80, 4, 8, 7, 4, 55, 0, 0, 0, 0, 0, 0, 0, 0);
+    Peacock_armorstats = get_armorstats(config, "Peacock", 40, 2, 5, 4, 2, 30, 0, 0, 0, 0, 0, 0, 0, 10);
+    Mobzilla_armorstats = get_armorstats(config, "Mobzilla", 1000, 7, 13, 11, 7, 150, 0, 0, 10, 10, 10, 10, 5, 10);
+    Ruby_armorstats = get_armorstats(config, "Ruby", 90, 4, 9, 8, 4, 40, 0, 0, 0, 0, 0, 0, 0, 0);
+    Royal_armorstats = get_armorstats(config, "Royal", 2000, 8, 14, 12, 8, 200, 1, 2, 10, 10, 10, 10, 5, 10);
+    Lapis_armorstats = get_armorstats(config, "Lapis", 60, 2, 7, 5, 2, 60, 1, 1, 1, 0, 0, 1, 0, 0);
+    Queen_armorstats = get_armorstats(config, "Queen", 1500, 9, 16, 14, 9, 150, 0, 0, 0, 0, 0, 0, 0, 0);
+    ultimate_stats = get_weaponstats(config, weapons, "Ultimate", 10, 3000, 15, 36, 100);
+    nightmare_stats = get_weaponstats(config, weapons, "Nightmare", 3, 1800, 12, 26, 60);
+    bertha_stats = get_weaponstats(config, weapons, "Bertha", 3, 9000, 15, 496, 100);
+    crystalwood_stats = get_weaponstats(config, weapons, "CrystalWood", 2, 300, 3, 2, 15);
+    crystalstone_stats = get_weaponstats(config, weapons, "CrystalStone", 3, 800, 6, 5, 45);
+    crystalpink_stats = get_weaponstats(config, weapons, "Pink", 4, 1100, 10, 7, 65);
+    tigerseye_stats = get_weaponstats(config, weapons, "TigersEye", 4, 1600, 12, 8, 75);
+    ruby_stats = get_weaponstats(config, weapons, "Ruby", 5, 1500, 11, 16, 85);
+    amethyst_stats = get_weaponstats(config, weapons, "Amethyst", 4, 2000, 11, 11, 70);
+    emerald_stats = get_weaponstats(config, weapons, "Emerald", 3, 1300, 10, 6, 75);
+    royal_stats = get_weaponstats(config, weapons, "Royal", 3, 10000, 15, 746, 150);
+    hammy_stats = get_weaponstats(config, weapons, "Attitude", 5, 2000, 15, 82, 100);
+    battleaxe_stats = get_weaponstats(config, weapons, "BattleAxe", 3, 1500, 15, 46, 75);
+    chainsaw_stats = get_weaponstats(config, weapons, "Chainsaw", 3, 1500, 10, 56, 75);
+    queenbattleaxe_stats = get_weaponstats(config, weapons, "QueenBattleAxe", 3, 2200, 15, 662, 100);
+    config.save();
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void initToolAndArmorMaterialsIfNeeded() {
+    if (toolULTIMATE != null) {
+      return;
+    }
+    toolULTIMATE =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "ULTIMATE",
+                    ultimate_stats.harvestlevel,
+                    ultimate_stats.maxuses,
+                    ultimate_stats.efficiency,
+                    ultimate_stats.damage,
+                    ultimate_stats.enchantability);
+    toolNIGHTMARE =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "NIGHTMARE",
+                    nightmare_stats.harvestlevel,
+                    nightmare_stats.maxuses,
+                    nightmare_stats.efficiency,
+                    nightmare_stats.damage,
+                    nightmare_stats.enchantability);
+    toolEMERALD =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "REALEMERALD",
+                    emerald_stats.harvestlevel,
+                    emerald_stats.maxuses,
+                    emerald_stats.efficiency,
+                    emerald_stats.damage,
+                    emerald_stats.enchantability);
+    toolRUBY =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "RUBY",
+                    ruby_stats.harvestlevel,
+                    ruby_stats.maxuses,
+                    ruby_stats.efficiency,
+                    ruby_stats.damage,
+                    ruby_stats.enchantability);
+    toolAMETHYST =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "AMETHYST",
+                    amethyst_stats.harvestlevel,
+                    amethyst_stats.maxuses,
+                    amethyst_stats.efficiency,
+                    amethyst_stats.damage,
+                    amethyst_stats.enchantability);
+    toolBERTHA =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "BERTHA",
+                    bertha_stats.harvestlevel,
+                    bertha_stats.maxuses,
+                    bertha_stats.efficiency,
+                    bertha_stats.damage,
+                    bertha_stats.enchantability);
+    toolCRYSTALWOOD =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "CRYSTALWOOD",
+                    crystalwood_stats.harvestlevel,
+                    crystalwood_stats.maxuses,
+                    crystalwood_stats.efficiency,
+                    crystalwood_stats.damage,
+                    crystalwood_stats.enchantability);
+    toolCRYSTALSTONE =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "CRYSTALSTONE",
+                    crystalstone_stats.harvestlevel,
+                    crystalstone_stats.maxuses,
+                    crystalstone_stats.efficiency,
+                    crystalstone_stats.damage,
+                    crystalstone_stats.enchantability);
+    toolCRYSTALPINK =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "CRYSTALPINK",
+                    crystalpink_stats.harvestlevel,
+                    crystalpink_stats.maxuses,
+                    crystalpink_stats.efficiency,
+                    crystalpink_stats.damage,
+                    crystalpink_stats.enchantability);
+    toolTIGERSEYE =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "TIGERSEYE",
+                    tigerseye_stats.harvestlevel,
+                    tigerseye_stats.maxuses,
+                    tigerseye_stats.efficiency,
+                    tigerseye_stats.damage,
+                    tigerseye_stats.enchantability);
+    toolROYAL =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "ROYAL",
+                    royal_stats.harvestlevel,
+                    royal_stats.maxuses,
+                    royal_stats.efficiency,
+                    royal_stats.damage,
+                    royal_stats.enchantability);
+    toolHAMMY =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "HAMMY",
+                    hammy_stats.harvestlevel,
+                    hammy_stats.maxuses,
+                    hammy_stats.efficiency,
+                    hammy_stats.damage,
+                    hammy_stats.enchantability);
+    toolBATTLE =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "BATTLE",
+                    battleaxe_stats.harvestlevel,
+                    battleaxe_stats.maxuses,
+                    battleaxe_stats.efficiency,
+                    battleaxe_stats.damage,
+                    battleaxe_stats.enchantability);
+    toolCHAINSAW =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "CHAINSAW",
+                    chainsaw_stats.harvestlevel,
+                    chainsaw_stats.maxuses,
+                    chainsaw_stats.efficiency,
+                    chainsaw_stats.damage,
+                    chainsaw_stats.enchantability);
+    toolQUEENBATTLE =
+        (Tier)
+            (Object)
+                EnumHelper.addToolMaterial(
+                    "QUEENBATTLE",
+                    queenbattleaxe_stats.harvestlevel,
+                    queenbattleaxe_stats.maxuses,
+                    queenbattleaxe_stats.efficiency,
+                    queenbattleaxe_stats.damage,
+                    queenbattleaxe_stats.enchantability);
+    armorULTIMATE =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "ULTIMATE",
+                    MODID,
+                    Ultimate_armorstats.durability,
+                    new int[] {
+                      Ultimate_armorstats.head_protection,
+                      Ultimate_armorstats.chest_protection,
+                      Ultimate_armorstats.leg_protection,
+                      Ultimate_armorstats.boot_protection
+                    },
+                    Ultimate_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorMOBZILLA =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "MOBZILLA",
+                    MODID,
+                    Mobzilla_armorstats.durability,
+                    new int[] {
+                      Mobzilla_armorstats.head_protection,
+                      Mobzilla_armorstats.chest_protection,
+                      Mobzilla_armorstats.leg_protection,
+                      Mobzilla_armorstats.boot_protection
+                    },
+                    Mobzilla_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorLAVAEEL =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "LAVAEEL",
+                    MODID,
+                    LavaEel_armorstats.durability,
+                    new int[] {
+                      LavaEel_armorstats.head_protection,
+                      LavaEel_armorstats.chest_protection,
+                      LavaEel_armorstats.leg_protection,
+                      LavaEel_armorstats.boot_protection
+                    },
+                    LavaEel_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorMOTHSCALE =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "MOTHSCALE",
+                    MODID,
+                    MothScale_armorstats.durability,
+                    new int[] {
+                      MothScale_armorstats.head_protection,
+                      MothScale_armorstats.chest_protection,
+                      MothScale_armorstats.leg_protection,
+                      MothScale_armorstats.boot_protection
+                    },
+                    MothScale_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorEMERALD =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "EMERALD",
+                    MODID,
+                    Emerald_armorstats.durability,
+                    new int[] {
+                      Emerald_armorstats.head_protection,
+                      Emerald_armorstats.chest_protection,
+                      Emerald_armorstats.leg_protection,
+                      Emerald_armorstats.boot_protection
+                    },
+                    Emerald_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorEXPERIENCE =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "EXPERIENCE",
+                    MODID,
+                    Experience_armorstats.durability,
+                    new int[] {
+                      Experience_armorstats.head_protection,
+                      Experience_armorstats.chest_protection,
+                      Experience_armorstats.leg_protection,
+                      Experience_armorstats.boot_protection
+                    },
+                    Experience_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorRUBY =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "RUBY",
+                    MODID,
+                    Ruby_armorstats.durability,
+                    new int[] {
+                      Ruby_armorstats.head_protection,
+                      Ruby_armorstats.chest_protection,
+                      Ruby_armorstats.leg_protection,
+                      Ruby_armorstats.boot_protection
+                    },
+                    Ruby_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorAMETHYST =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "AMETHYST",
+                    MODID,
+                    Amethyst_armorstats.durability,
+                    new int[] {
+                      Amethyst_armorstats.head_protection,
+                      Amethyst_armorstats.chest_protection,
+                      Amethyst_armorstats.leg_protection,
+                      Amethyst_armorstats.boot_protection
+                    },
+                    Amethyst_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorPINK =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "PINK",
+                    MODID,
+                    Pink_armorstats.durability,
+                    new int[] {
+                      Pink_armorstats.head_protection,
+                      Pink_armorstats.chest_protection,
+                      Pink_armorstats.leg_protection,
+                      Pink_armorstats.boot_protection
+                    },
+                    Pink_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorTIGERSEYE =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "TIGERSEYE",
+                    MODID,
+                    TigersEye_armorstats.durability,
+                    new int[] {
+                      TigersEye_armorstats.head_protection,
+                      TigersEye_armorstats.chest_protection,
+                      TigersEye_armorstats.leg_protection,
+                      TigersEye_armorstats.boot_protection
+                    },
+                    TigersEye_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorPEACOCK =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "PEACOCK",
+                    MODID,
+                    Peacock_armorstats.durability,
+                    new int[] {
+                      Peacock_armorstats.head_protection,
+                      Peacock_armorstats.chest_protection,
+                      Peacock_armorstats.leg_protection,
+                      Peacock_armorstats.boot_protection
+                    },
+                    Peacock_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorROYAL =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "ROYAL",
+                    MODID,
+                    Royal_armorstats.durability,
+                    new int[] {
+                      Royal_armorstats.head_protection,
+                      Royal_armorstats.chest_protection,
+                      Royal_armorstats.leg_protection,
+                      Royal_armorstats.boot_protection
+                    },
+                    Royal_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorLAPIS =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "LAPIS",
+                    MODID,
+                    Lapis_armorstats.durability,
+                    new int[] {
+                      Lapis_armorstats.head_protection,
+                      Lapis_armorstats.chest_protection,
+                      Lapis_armorstats.leg_protection,
+                      Lapis_armorstats.boot_protection
+                    },
+                    Lapis_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+    armorQUEEN =
+        (ArmorMaterial)
+            (Object)
+                EnumHelper.addArmorMaterial(
+                    "QUEEN",
+                    MODID,
+                    Queen_armorstats.durability,
+                    new int[] {
+                      Queen_armorstats.head_protection,
+                      Queen_armorstats.chest_protection,
+                      Queen_armorstats.leg_protection,
+                      Queen_armorstats.boot_protection
+                    },
+                    Queen_armorstats.enchantability,
+                    net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
+                    0.0f);
+  }
+
+  private void commonSetup(final FMLCommonSetupEvent event) {
+    preInit(event);
+    postInit(new FMLPostInitializationEvent());
+  }
+
+  private void clientInit(final net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
+    load(new FMLInitializationEvent());
+  }
+
+  @SubscribeEvent
+  public void onRegisterCommands(RegisterCommandsEvent event) {
+    CommandUtopia.register(event.getDispatcher());
+    CommandMining.register(event.getDispatcher());
+    CommandVillageMania.register(event.getDispatcher());
+    serverStarting(new FMLServerStartingEvent(event));
+  }
+
+  private void buildCreativeModeTabContents(BuildCreativeModeTabContentsEvent event) {
+    applyChaosCreativeTabs();
+    ResourceKey<CreativeModeTab> tabKey = event.getTabKey();
+    FeatureFlagSet flags = event.getFlags();
+    java.util.List<Item> tabItems = new java.util.ArrayList<>();
+    for (Item item : BuiltInRegistries.ITEM) {
+      CreativeModeTab assigned = CreativeTabCompat.getCreativeTab(item);
+      if (assigned == null) {
+        continue;
+      }
+      if (BuiltInRegistries.CREATIVE_MODE_TAB.getResourceKey(assigned).orElse(null) != tabKey) {
+        continue;
+      }
+      if (!isValidCreativeTabItem(item, flags)) {
+        continue;
+      }
+      tabItems.add(item);
+    }
+    tabItems.sort(
+        Comparator.comparing(
+            item -> BuiltInRegistries.ITEM.getKey(item).toString(), Comparator.naturalOrder()));
+    for (Item item : tabItems) {
+      event.accept(new ItemStack(item, 1));
+    }
+    normalizeCreativeTabEntryStacks(event);
+  }
+
+  private static boolean isValidCreativeTabItem(Item item, FeatureFlagSet flags) {
+    if (item == null || item == Items.AIR) {
+      return false;
+    }
+    if (item instanceof BlockItem blockItem) {
+      Block block = blockItem.getBlock();
+      if (block == null || block == Blocks.AIR) {
+        return false;
+      }
+    }
+    return item.isEnabled(flags);
+  }
+
+  private static boolean isValidCreativeTabStack(ItemStack stack, FeatureFlagSet flags) {
+    if (stack.isEmpty() || stack.getCount() != 1) {
+      return false;
+    }
+    return isValidCreativeTabItem(stack.getItem(), flags);
+  }
+
+  /** Forge creative tabs require stack size 1; drop broken BlockItems and fix counts. */
+  private static void normalizeCreativeTabEntryStacks(BuildCreativeModeTabContentsEvent event) {
+    var entries = event.getEntries();
+    FeatureFlagSet flags = event.getFlags();
+    java.util.List<java.util.Map.Entry<ItemStack, CreativeModeTab.TabVisibility>> snapshot =
+        new java.util.ArrayList<>();
+    for (java.util.Map.Entry<ItemStack, CreativeModeTab.TabVisibility> entry : entries) {
+      snapshot.add(entry);
+    }
+    for (java.util.Map.Entry<ItemStack, CreativeModeTab.TabVisibility> entry : snapshot) {
+      ItemStack stack = entry.getKey();
+      if (!isValidCreativeTabStack(stack, flags)) {
+        entries.remove(stack);
+        continue;
+      }
+      if (stack.getCount() == 1) {
+        continue;
+      }
+      entries.remove(stack);
+      ItemStack fixed = stack.copy();
+      fixed.setCount(1);
+      entries.put(fixed, entry.getValue());
+    }
+  }
+
+  public static ResourceKey<Level> getUtopiaDimensionKey() {
+    return ResourceKey.create(
+        Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(MODID, "utopia"));
+  }
+
+  public static ResourceKey<Level> getMiningDimensionKey() {
+    return ResourceKey.create(
+        Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(MODID, "mining"));
+  }
+
+  public static ResourceKey<Level> getVillageDimensionKey() {
+    return ResourceKey.create(
+        Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(MODID, "village"));
+  }
+
+  /** Legacy dimension index (1=Utopia, 2=Mining, 3=Village Mania). */
+  public static ResourceKey<Level> getDimensionKey(int n) {
+    if (n == 2) {
+      return getMiningDimensionKey();
+    }
+    if (n == 3) {
+      return getVillageDimensionKey();
+    }
+    return getUtopiaDimensionKey();
+  }
+
+  public static int getDimension() {
+    return DimensionID;
+  }
+
+  public static int getDimension(int n) {
+    if (n == 2) {
+      return DimensionID2;
+    }
+    if (n == 3) {
+      return DimensionID3;
+    }
+    return DimensionID;
+  }
+
+      public void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
+    event.put(ENTITY_TYPE_PURPLE_POWER.get(), PurplePower.createAttributes().build());
+    event.put(ENTITY_TYPE_GIRLFRIEND.get(), Girlfriend.createAttributes().build());
+    event.put(ENTITY_TYPE_RED_COW.get(), RedCow.createAttributes().build());
+    event.put(ENTITY_TYPE_GOLD_COW.get(), RedCow.createAttributes().build());
+    event.put(ENTITY_TYPE_ENCHANTED_COW.get(), RedCow.createAttributes().build());
+    event.put(ENTITY_TYPE_CRYSTAL_COW.get(), RedCow.createAttributes().build());
+    event.put(ENTITY_TYPE_BUTTERFLY.get(), EntityButterfly.createAttributes().build());
+    event.put(ENTITY_TYPE_MOTH.get(), EntityLunaMoth.createAttributes().build());
+    event.put(ENTITY_TYPE_MOSQUITO.get(), EntityMosquito.createAttributes().build());
+    event.put(ENTITY_TYPE_FIREFLY.get(), Firefly.createAttributes().build());
+    event.put(ENTITY_TYPE_BEE.get(), Bee.createAttributes().build());
+    event.put(ENTITY_TYPE_MOTHRA.get(), Mothra.createAttributes().build());
+    event.put(ENTITY_TYPE_ANT.get(), EntityAnt.createAttributes().build());
+    event.put(ENTITY_TYPE_RED_ANT.get(), EntityRedAnt.createAttributes().build());
+    event.put(ENTITY_TYPE_RAINBOW_ANT.get(), EntityRainbowAnt.createAttributes().build());
+    event.put(ENTITY_TYPE_UNSTABLE_ANT.get(), EntityUnstableAnt.createAttributes().build());
+    event.put(ENTITY_TYPE_ROBOT1.get(), Robot1.createAttributes().build());
+    event.put(ENTITY_TYPE_ROBOT2.get(), Robot2.createAttributes().build());
+    event.put(ENTITY_TYPE_ROBOT3.get(), Robot3.createAttributes().build());
+    event.put(ENTITY_TYPE_ROBOT4.get(), Robot4.createAttributes().build());
+    event.put(ENTITY_TYPE_ROBOT5.get(), Robot5.createAttributes().build());
+    event.put(ENTITY_TYPE_ALOSAURUS.get(), Alosaurus.createAttributes().build());
+    event.put(ENTITY_TYPE_CRYOLOPHOSAURUS.get(), Cryolophosaurus.createAttributes().build());
+    event.put(ENTITY_TYPE_BASILISK.get(), Basilisk.createAttributes().build());
+    event.put(ENTITY_TYPE_CAMARASAURUS.get(), Camarasaurus.createAttributes().build());
+    event.put(ENTITY_TYPE_HYDROLISC.get(), Hydrolisc.createAttributes().build());
+    event.put(ENTITY_TYPE_VELOCITY_RAPTOR.get(), VelocityRaptor.createAttributes().build());
+    event.put(ENTITY_TYPE_DRAGONFLY.get(), Dragonfly.createAttributes().build());
+    event.put(ENTITY_TYPE_EMPEROR_SCORPION.get(), EmperorScorpion.createAttributes().build());
+    event.put(ENTITY_TYPE_SCORPION.get(), Scorpion.createAttributes().build());
+    event.put(ENTITY_TYPE_CAVE_FISHER.get(), CaveFisher.createAttributes().build());
+    event.put(ENTITY_TYPE_BABY_DRAGON.get(), Spyro.createAttributes().build());
+    event.put(ENTITY_TYPE_BARYONYX.get(), Baryonyx.createAttributes().build());
+    event.put(ENTITY_TYPE_GAMMA_METROID.get(), GammaMetroid.createAttributes().build());
+    event.put(ENTITY_TYPE_WTF.get(), GammaMetroid.createAttributes().build());
+    event.put(ENTITY_TYPE_BIRD.get(), Cockateil.createAttributes().build());
+    event.put(ENTITY_TYPE_RUBY_BIRD.get(), RubyBird.createAttributes().build());
+    event.put(ENTITY_TYPE_KYUUBI.get(), Kyuubi.createAttributes().build());
+    event.put(ENTITY_TYPE_WATER_DRAGON.get(), WaterDragon.createAttributes().build());
+    event.put(ENTITY_TYPE_ATTACK_SQUID.get(), AttackSquid.createAttributes().build());
+    event.put(ENTITY_TYPE_ALIEN.get(), Alien.createAttributes().build());
+    event.put(ENTITY_TYPE_ELEVATOR.get(), Elevator.createAttributes().build());
+    event.put(ENTITY_TYPE_THE_KRAKEN.get(), Kraken.createAttributes().build());
+    event.put(ENTITY_TYPE_LIZARD.get(), Lizard.createAttributes().build());
+    event.put(ENTITY_TYPE_CEPHADROME.get(), Cephadrome.createAttributes().build());
+    event.put(ENTITY_TYPE_DRAGON.get(), Dragon.createAttributes().build());
+    event.put(ENTITY_TYPE_CHIPMUNK.get(), Chipmunk.createAttributes().build());
+    event.put(ENTITY_TYPE_GAZELLE.get(), Gazelle.createAttributes().build());
+    event.put(ENTITY_TYPE_OSTRICH.get(), Ostrich.createAttributes().build());
+    event.put(ENTITY_TYPE_TROOPER_BUG.get(), TrooperBug.createAttributes().build());
+    event.put(ENTITY_TYPE_SPIT_BUG.get(), SpitBug.createAttributes().build());
+    event.put(ENTITY_TYPE_STINK_BUG.get(), StinkBug.createAttributes().build());
+    event.put(ENTITY_TYPE_TSHIRT.get(), Tshirt.createAttributes().build());
+    event.put(ENTITY_TYPE_ISLAND.get(), Island.createAttributes().build());
+    event.put(ENTITY_TYPE_ISLAND_TOO.get(), IslandToo.createAttributes().build());
+    event.put(ENTITY_TYPE_CREEPING_HORROR.get(), CreepingHorror.createAttributes().build());
+    event.put(ENTITY_TYPE_TERRIBLE_TERROR.get(), TerribleTerror.createAttributes().build());
+    event.put(ENTITY_TYPE_CLIFF_RACER.get(), CliffRacer.createAttributes().build());
+    event.put(ENTITY_TYPE_TRIFFID.get(), Triffid.createAttributes().build());
+    event.put(ENTITY_TYPE_NIGHTMARE.get(), PitchBlack.createAttributes().build());
+    event.put(ENTITY_TYPE_LURKING_TERROR.get(), LurkingTerror.createAttributes().build());
+    event.put(ENTITY_TYPE_MOBZILLA.get(), Godzilla.createAttributes().build());
+    event.put(ENTITY_TYPE_GHOST.get(), Ghost.createAttributes().build());
+    event.put(ENTITY_TYPE_GHOST_PUMPKIN_SKELLY.get(), GhostSkelly.createAttributes().build());
+    event.put(ENTITY_TYPE_SMALL_WORM.get(), WormSmall.createAttributes().build());
+    event.put(ENTITY_TYPE_MEDIUM_WORM.get(), WormMedium.createAttributes().build());
+    event.put(ENTITY_TYPE_LARGE_WORM.get(), WormLarge.createAttributes().build());
+    event.put(ENTITY_TYPE_CASSOWARY.get(), Cassowary.createAttributes().build());
+    event.put(ENTITY_TYPE_CLOUD_SHARK.get(), CloudShark.createAttributes().build());
+    event.put(ENTITY_TYPE_GOLD_FISH.get(), GoldFish.createAttributes().build());
+    event.put(ENTITY_TYPE_LEAF_MONSTER.get(), LeafMonster.createAttributes().build());
+    event.put(ENTITY_TYPE_MOBZILLA_HEAD.get(), GodzillaHead.createAttributes().build());
+    event.put(ENTITY_TYPE_ENDER_KNIGHT.get(), EnderKnight.createAttributes().build());
+    event.put(ENTITY_TYPE_ENDER_REAPER.get(), EnderReaper.createAttributes().build());
+    event.put(ENTITY_TYPE_BEAVER.get(), Beaver.createAttributes().build());
+    event.put(ENTITY_TYPE_TERMITE.get(), Termite.createAttributes().build());
+    event.put(ENTITY_TYPE_FAIRY.get(), Fairy.createAttributes().build());
+    event.put(ENTITY_TYPE_PEACOCK.get(), Peacock.createAttributes().build());
+    event.put(ENTITY_TYPE_ROTATOR.get(), Rotator.createAttributes().build());
+    event.put(ENTITY_TYPE_VORTEX.get(), Vortex.createAttributes().build());
+    event.put(ENTITY_TYPE_DUNGEON_BEAST.get(), DungeonBeast.createAttributes().build());
+    event.put(ENTITY_TYPE_RAT.get(), Rat.createAttributes().build());
+    event.put(ENTITY_TYPE_FLOUNDER.get(), Flounder.createAttributes().build());
+    event.put(ENTITY_TYPE_WHALE.get(), Whale.createAttributes().build());
+    event.put(ENTITY_TYPE_IRUKANDJI.get(), Irukandji.createAttributes().build());
+    event.put(ENTITY_TYPE_SKATE.get(), Skate.createAttributes().build());
+    event.put(ENTITY_TYPE_URCHIN.get(), Urchin.createAttributes().build());
+    event.put(ENTITY_TYPE_MANTIS.get(), Mantis.createAttributes().build());
+    event.put(ENTITY_TYPE_HERCULES_BEETLE.get(), HerculesBeetle.createAttributes().build());
+    event.put(ENTITY_TYPE_TREX.get(), TRex.createAttributes().build());
+    event.put(ENTITY_TYPE_T_REX.get(), TRex.createAttributes().build());
+    event.put(ENTITY_TYPE_STINKY.get(), Stinky.createAttributes().build());
+    event.put(ENTITY_TYPE_COIN.get(), Coin.createAttributes().build());
+    event.put(ENTITY_TYPE_THE_KING.get(), TheKing.createAttributes().build());
+    event.put(ENTITY_TYPE_KING_HEAD.get(), KingHead.createAttributes().build());
+    event.put(ENTITY_TYPE_THE_QUEEN.get(), TheQueen.createAttributes().build());
+    event.put(ENTITY_TYPE_QUEEN_HEAD.get(), QueenHead.createAttributes().build());
+    event.put(ENTITY_TYPE_BOYFRIEND.get(), Boyfriend.createAttributes().build());
+    event.put(ENTITY_TYPE_THE_PRINCE.get(), ThePrince.createAttributes().build());
+    event.put(ENTITY_TYPE_MOLENOID.get(), Molenoid.createAttributes().build());
+    event.put(ENTITY_TYPE_SEA_MONSTER.get(), SeaMonster.createAttributes().build());
+    event.put(ENTITY_TYPE_SEA_VIPER.get(), SeaViper.createAttributes().build());
+    event.put(ENTITY_TYPE_EASTER_BUNNY.get(), EasterBunny.createAttributes().build());
+    event.put(ENTITY_TYPE_CATERKILLER.get(), CaterKiller.createAttributes().build());
+    event.put(ENTITY_TYPE_LEONOPTERYX.get(), Leon.createAttributes().build());
+    event.put(ENTITY_TYPE_HAMMERHEAD.get(), Hammerhead.createAttributes().build());
+    event.put(ENTITY_TYPE_RUBBER_DUCKY.get(), RubberDucky.createAttributes().build());
+    event.put(ENTITY_TYPE_THE_YOUNG_PRINCE.get(), ThePrinceTeen.createAttributes().build());
+    event.put(ENTITY_TYPE_CRIMINAL.get(), BandP.createAttributes().build());
+    event.put(ENTITY_TYPE_ROCK.get(), RockBase.createAttributes().build());
+    event.put(ENTITY_TYPE_BRUTALFLY.get(), Brutalfly.createAttributes().build());
+    event.put(ENTITY_TYPE_NASTYSAURUS.get(), Nastysaurus.createAttributes().build());
+    event.put(ENTITY_TYPE_POINTYSAURUS.get(), Pointysaurus.createAttributes().build());
+    event.put(ENTITY_TYPE_CRICKET.get(), Cricket.createAttributes().build());
+    event.put(ENTITY_TYPE_THE_PRINCESS.get(), ThePrincess.createAttributes().build());
+    event.put(ENTITY_TYPE_FROG.get(), Frog.createAttributes().build());
+    event.put(ENTITY_TYPE_THE_YOUNG_ADULT_PRINCE.get(), ThePrinceAdult.createAttributes().build());
+    event.put(ENTITY_TYPE_SPIDER_ROBOT.get(), SpiderRobot.createAttributes().build());
+    event.put(ENTITY_TYPE_SPIDER_DRIVER.get(), net.minecraft.world.entity.monster.Spider.createAttributes().build());
+    event.put(ENTITY_TYPE_GIANT_ROBOT.get(), GiantRobot.createAttributes().build());
+    event.put(ENTITY_TYPE_ANT_ROBOT.get(), AntRobot.createAttributes().build());
+    event.put(ENTITY_TYPE_CRAB.get(), Crab.createAttributes().build());
+  }
+
+    @OnlyIn(Dist.CLIENT)
+  public void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+    final ResourceLocation texLaserBall = ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/laserball.png");
+    final ResourceLocation texIceBall = ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/iceball.png");
+    final ResourceLocation texAcid = ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/acid.png");
+    final ResourceLocation texDeadIruk = ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/deadirukandji.png");
+    final ResourceLocation texFireball =
+            ResourceLocation.withDefaultNamespace("textures/entity/ghast/ghast_fireball.png");
+    final ResourceLocation texArrow =
+            ResourceLocation.withDefaultNamespace("textures/entity/projectiles/arrow.png");
+    event.registerEntityRenderer(ENTITY_TYPE_ACID.get(), ctx -> new RenderThrowableBillboard(ctx, texAcid));
+    event.registerEntityRenderer(ENTITY_TYPE_BETTER_FIREBALL.get(), ctx -> new RenderThrowableBillboard(ctx, texFireball));
+    event.registerEntityRenderer(ENTITY_TYPE_ALIEN.get(), ctx -> new RenderAlien(ctx, new ModelAlien(0.22f), 0.35f, 1.1f));
+    event.registerEntityRenderer(ENTITY_TYPE_ALOSAURUS.get(), ctx -> new RenderAlosaurus(ctx, new ModelAlosaurus(0.22f), 1.0f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_ANT.get(), ctx -> new RenderAnt(ctx, new ModelAnt(), 0.1f, 0.25f));
+    event.registerEntityRenderer(ENTITY_TYPE_ANT_ROBOT.get(), ctx -> new RenderAntRobot(ctx, new ModelAntRobot(1.0f), 0.99f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_ATTACK_SQUID.get(), ctx -> new RenderAttackSquid(ctx, new ModelAttackSquid(1.0f), 0.25f, 0.9f));
+    event.registerEntityRenderer(ENTITY_TYPE_BABY_DRAGON.get(), ctx -> new RenderSpyro(ctx, new ModelSpyro(0.65f), 0.65f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_BARYONYX.get(), ctx -> new RenderBaryonyx(ctx, new ModelBaryonyx(0.25f), 1.0f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_BASILISK.get(), ctx -> new RenderBasilisk(ctx, new ModelBasilisk(0.3f), 0.5f, 1.25f));
+    event.registerEntityRenderer(ENTITY_TYPE_BEAVER.get(), ctx -> new RenderBeaver(ctx, new ModelBeaver(0.5f), 0.15f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_BEE.get(), ctx -> new RenderBee(ctx, new ModelBee(2.0f), 0.9f, 1.1f));
+    event.registerEntityRenderer(ENTITY_TYPE_BERTHA_HIT.get(), ctx -> new RenderItemUrchin(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_BIRD.get(), ctx -> new RenderCockateil(ctx, new ModelCockateil(1.0f), 0.3f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_BOYFRIEND.get(), ctx -> new RenderBoyfriend(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_BRUTALFLY.get(), ctx -> new RenderBrutalfly(ctx, new ModelBrutalfly(0.2f), 0.75f, 9.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_BUTTERFLY.get(), ctx -> new RenderButterfly(ctx, new ModelButterfly(1.0f), 0.3f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_CAGE.get(), ctx -> new RenderCage(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_CAMARASAURUS.get(), ctx -> new RenderCamarasaurus(ctx, new ModelCamarasaurus(0.65f), 0.65f, 0.65f));
+    event.registerEntityRenderer(ENTITY_TYPE_CASSOWARY.get(), ctx -> new RenderCassowary(ctx, new ModelCassowary(0.55f), 0.5f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_CATERKILLER.get(), ctx -> new RenderCaterKiller(ctx, new ModelCaterKiller(0.22f), 1.0f, 1.25f));
+    event.registerEntityRenderer(ENTITY_TYPE_CAVE_FISHER.get(), ctx -> new RenderCaveFisher(ctx, new ModelCaveFisher(), 0.35f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_CEPHADROME.get(), ctx -> new RenderCephadrome(ctx, new ModelCephadrome(0.55f), 1.25f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_CHIPMUNK.get(), ctx -> new RenderChipmunk(ctx, new ModelChipmunk(1.0f), 0.15f, 0.9f));
+    event.registerEntityRenderer(ENTITY_TYPE_CLIFF_RACER.get(), ctx -> new RenderCliffRacer(ctx, new ModelCliffRacer(1.0f), 0.3f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_CLOUD_SHARK.get(), ctx -> new RenderCloudShark(ctx, new ModelCloudShark(1.0f), 0.5f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_COIN.get(), ctx -> new RenderCoin(ctx, new ModelCoin(0.22f), 0.75f, 0.125f));
+    event.registerEntityRenderer(ENTITY_TYPE_CRAB.get(), ctx -> new RenderCrab(ctx, new ModelCrab(), 0.99f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_CREEPING_HORROR.get(), ctx -> new RenderCreepingHorror(ctx, new ModelCreepingHorror(0.75f), 0.45f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_CRICKET.get(), ctx -> new RenderCricket(ctx, new ModelCricket(2.5f), 0.15f, 0.5f));
+    event.registerEntityRenderer(ENTITY_TYPE_CRIMINAL.get(), ctx -> new RenderBandP(ctx, new ModelBandP(0.4f), 1.0f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_CRYOLOPHOSAURUS.get(), ctx -> new RenderCryolophosaurus(ctx, new ModelCryolophosaurus(0.75f), 0.75f, 0.5f));
+    event.registerEntityRenderer(ENTITY_TYPE_CRYSTAL_COW.get(), ctx -> new RenderEnchantedCow(ctx, new net.minecraft.client.model.CowModel<>(ctx.bakeLayer(net.minecraft.client.model.geom.ModelLayers.COW)), 0.7f));
+    event.registerEntityRenderer(ENTITY_TYPE_DEAD_IRUKANDJI.get(), ctx -> new RenderThrowableBillboard(ctx, texDeadIruk));
+    event.registerEntityRenderer(
+            ENTITY_TYPE_IRUKANDJI_ARROW.get(),
+            ctx ->
+                    new ArrowRenderer<IrukandjiArrow>(ctx) {
+                        @Override
+                        public ResourceLocation getTextureLocation(IrukandjiArrow entity) {
+                            return texArrow;
+                        }
+                    });
+    event.registerEntityRenderer(ENTITY_TYPE_DRAGON.get(), ctx -> new RenderDragon(ctx, new ModelDragon(0.65f), 1.25f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_DRAGONFLY.get(), ctx -> new RenderDragonfly(ctx, new ModelDragonfly(2.0f), 0.3f, 1.5f));
+    event.registerEntityRenderer(ENTITY_TYPE_DUNGEON_BEAST.get(), ctx -> new RenderDungeonBeast(ctx, new ModelDungeonBeast(0.62f), 0.25f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_EASTER_BUNNY.get(), ctx -> new RenderEasterBunny(ctx, new ModelEasterBunny(0.55f), 0.5f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_ELEVATOR.get(), ctx -> new RenderElevator(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_EMPEROR_SCORPION.get(), ctx -> new RenderEmperorScorpion(ctx, new ModelEmperorScorpion(0.22f), 0.95f, 1.5f));
+    event.registerEntityRenderer(ENTITY_TYPE_ENCHANTED_COW.get(), ctx -> new RenderEnchantedCow(ctx, new net.minecraft.client.model.CowModel<>(ctx.bakeLayer(net.minecraft.client.model.geom.ModelLayers.COW)), 0.7f));
+    event.registerEntityRenderer(ENTITY_TYPE_ENDER_KNIGHT.get(), ctx -> new RenderEnderKnight(ctx, new ModelEnderKnight(0.21f), 0.3f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_ENDER_REAPER.get(), ctx -> new RenderEnderReaper(ctx, new ModelEnderReaper(0.23f), 0.2f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_FAIRY.get(), ctx -> new RenderFairy(ctx, new ModelFairy(1.5f), 0.1f, 0.35f));
+    event.registerEntityRenderer(ENTITY_TYPE_FIREFLY.get(), ctx -> new RenderFirefly(ctx, new ModelFirefly(2.5f), 0.2f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_FLOUNDER.get(), ctx -> new RenderFlounder(ctx, new ModelFlounder(), 0.1f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_FROG.get(), ctx -> new RenderFrog(ctx, new ModelFrog(1.0f), 0.35f, 1.0f));
+    event.registerEntityRenderer(
+            ENTITY_TYPE_GAMMA_METROID.get(),
+            ctx -> new RenderGammaMetroid(ctx, new ModelGammaMetroid(0.45f), 0.75f, 0.9f));
+    event.registerEntityRenderer(ENTITY_TYPE_GAZELLE.get(), ctx -> new RenderGazelle(ctx, new ModelGazelle(0.65f), 0.45f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_GHOST.get(), ctx -> new RenderGhost(ctx, new ModelGhost(), 0.0f, 0.65f));
+    event.registerEntityRenderer(ENTITY_TYPE_GHOST_PUMPKIN_SKELLY.get(), ctx -> new RenderGhostSkelly(ctx, new ModelGhostSkelly(), 0.0f, 1.05f));
+    event.registerEntityRenderer(ENTITY_TYPE_GIANT_ROBOT.get(), ctx -> new RenderGiantRobot(ctx, new ModelGiantRobot(0.25f), 0.99f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_GIRLFRIEND.get(), ctx -> new RenderGirlfriend(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_GOLD_COW.get(), ctx -> new RenderEnchantedCow(ctx, new net.minecraft.client.model.CowModel<>(ctx.bakeLayer(net.minecraft.client.model.geom.ModelLayers.COW)), 0.7f));
+    event.registerEntityRenderer(ENTITY_TYPE_GOLD_FISH.get(), ctx -> new RenderGoldFish(ctx, new ModelGoldFish(0.7f), 0.2f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_HAMMERHEAD.get(), ctx -> new RenderHammerhead(ctx, new ModelHammerhead(0.33f), 1.0f, 2.5f));
+    event.registerEntityRenderer(ENTITY_TYPE_HERCULES_BEETLE.get(), ctx -> new RenderHerculesBeetle(ctx, new ModelHerculesBeetle(1.0f), 0.99f, 1.1f));
+    event.registerEntityRenderer(ENTITY_TYPE_HYDROLISC.get(), ctx -> new RenderHydrolisc(ctx, new ModelHydrolisc(0.65f), 0.65f, 0.65f));
+    event.registerEntityRenderer(ENTITY_TYPE_ICE_BALL.get(), ctx -> new RenderThrowableBillboard(ctx, texIceBall));
+    event.registerEntityRenderer(ENTITY_TYPE_INK_SACK.get(), ctx -> new RenderItemUrchin(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_IRUKANDJI.get(), ctx -> new RenderIrukandji(ctx, new ModelIrukandji(), 0.1f, 0.25f));
+    event.registerEntityRenderer(ENTITY_TYPE_ISLAND.get(), ctx -> new RenderIsland(ctx, new ModelIsland(1.0f), 0.25f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_ISLAND_TOO.get(), ctx -> new RenderIslandToo(ctx, new ModelIsland(1.0f), 0.25f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_KING_HEAD.get(), ctx -> new RenderKingHead(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_KYUUBI.get(), ctx -> new RenderKyuubi(ctx, new ModelKyuubi(0.5f), 0.1f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_LARGE_WORM.get(), ctx -> new RenderWormLarge(ctx, new ModelWormLarge(), 0.9f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_LASER_BALL.get(), ctx -> new RenderThrowableBillboard(ctx, texLaserBall));
+    event.registerEntityRenderer(ENTITY_TYPE_LEAF_MONSTER.get(), ctx -> new RenderLeafMonster(ctx, new ModelLeafMonster(1.0f), 0.65f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_LEONOPTERYX.get(), ctx -> new RenderLeon(ctx, new ModelLeon(0.22f), 1.0f, 1.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_LIZARD.get(), ctx -> new RenderLizard(ctx, new ModelLizard(0.65f), 0.75f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_LURKING_TERROR.get(), ctx -> new RenderLurkingTerror(ctx, new ModelLurkingTerror(0.85f), 0.45f, 0.85f));
+    event.registerEntityRenderer(ENTITY_TYPE_MANTIS.get(), ctx -> new RenderMantis(ctx, new ModelMantis(2.0f), 0.9f, 1.1f));
+    event.registerEntityRenderer(ENTITY_TYPE_MEDIUM_WORM.get(), ctx -> new RenderWormMedium(ctx, new ModelWormMedium(), 0.25f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_MOBZILLA.get(), ctx -> new RenderGodzilla(ctx, new ModelGodzilla(0.2f), 1.0f, 2.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_MOBZILLA_HEAD.get(), ctx -> new RenderGodzillaHead(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_MOLENOID.get(), ctx -> new RenderMolenoid(ctx, new ModelMolenoid(0.5f), 1.0f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_MOSQUITO.get(), ctx -> new RenderMosquito(ctx, new ModelMosquito(), 0.3f, 0.5f));
+    event.registerEntityRenderer(ENTITY_TYPE_MOTH.get(), ctx -> new RenderButterfly(ctx, new ModelButterfly(0.75f), 0.4f, 1.5f));
+    event.registerEntityRenderer(ENTITY_TYPE_MOTHRA.get(), ctx -> new RenderButterfly(ctx, new ModelButterfly(0.2f), 0.75f, 10.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_NASTYSAURUS.get(), ctx -> new RenderNastysaurus(ctx, new ModelNastysaurus(0.65f), 1.0f, 1.5f));
+    event.registerEntityRenderer(ENTITY_TYPE_NIGHTMARE.get(), ctx -> new RenderPitchBlack(ctx, new ModelPitchBlack(0.65f), 1.25f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_OSTRICH.get(), ctx -> new RenderOstrich(ctx, new ModelOstrich(0.65f), 0.55f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_PEACOCK.get(), ctx -> new RenderPeacock(ctx, new ModelPeacock(0.75f), 0.25f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_POINTYSAURUS.get(), ctx -> new RenderPointysaurus(ctx, new ModelPointysaurus(1.0f), 1.0f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_PURPLE_POWER.get(), ctx -> new RenderPurplePower(ctx, new ModelPurplePower(1.0f), 0.3f, 2.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_QUEEN_HEAD.get(), ctx -> new RenderQueenHead(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_RAINBOW_ANT.get(), ctx -> new RenderAnt(ctx, new ModelAnt(), 0.1f, 0.25f));
+    event.registerEntityRenderer(ENTITY_TYPE_RAT.get(), ctx -> new RenderRat(ctx, new ModelRat(1.0f), 0.1f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_RED_ANT.get(), ctx -> new RenderAnt(ctx, new ModelAnt(), 0.15f, 0.35f));
+    event.registerEntityRenderer(ENTITY_TYPE_RED_COW.get(), ctx -> new RenderEnchantedCow(ctx, new net.minecraft.client.model.CowModel<>(ctx.bakeLayer(net.minecraft.client.model.geom.ModelLayers.COW)), 0.7f));
+    event.registerEntityRenderer(ENTITY_TYPE_ROBOT1.get(), ctx -> new RenderRobot1(ctx, new ModelRobot1(2.0f), 0.3f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_ROBOT2.get(), ctx -> new RenderRobot2(ctx, new ModelRobot2(1.0f), 1.0f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_ROBOT3.get(), ctx -> new RenderRobot3(ctx, new ModelRobot3(1.0f), 1.0f, 0.5f));
+    event.registerEntityRenderer(ENTITY_TYPE_ROBOT4.get(), ctx -> new RenderRobot4(ctx, new ModelRobot4(1.0f), 1.0f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_ROBOT5.get(), ctx -> new RenderRobot5(ctx, new ModelRobot5(1.0f), 0.5f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_ROCK.get(), ctx -> new RenderRockBase(ctx, new ModelRockBase(1.0f), 0.0f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_ROTATOR.get(), ctx -> new RenderRotator(ctx, new ModelRotator(0.25f), 0.1f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_RUBBER_DUCKY.get(), ctx -> new RenderRubberDucky(ctx, new ModelRubberDucky(1.0f), 0.15f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_RUBY_BIRD.get(), ctx -> new RenderCockateil(ctx, new ModelCockateil(1.0f), 0.3f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_SCORPION.get(), ctx -> new RenderScorpion(ctx, new ModelScorpion(), 0.35f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_SEA_MONSTER.get(), ctx -> new RenderSeaMonster(ctx, new ModelSeaMonster(0.5f), 1.0f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_SEA_VIPER.get(), ctx -> new RenderSeaViper(ctx, new ModelSeaViper(0.5f), 1.0f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_SHOES.get(), ctx -> new RenderShoe(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_SKATE.get(), ctx -> new RenderSkate(ctx, new ModelSkate(), 0.1f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_SMALL_WORM.get(), ctx -> new RenderWormSmall(ctx, new ModelWormSmall(), 0.1f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_SPIDER_DRIVER.get(), ctx -> new RenderSpiderDriver(ctx, 0.5f));
+    event.registerEntityRenderer(ENTITY_TYPE_SPIDER_ROBOT.get(), ctx -> new RenderSpiderRobot(ctx, new ModelSpiderRobot(1.0f), 0.99f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_SPIT_BUG.get(), ctx -> new RenderSpitBug(ctx, new ModelSpitBug(0.55f), 0.55f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_STINK_BUG.get(), ctx -> new RenderStinkBug(ctx, new ModelStinkBug(0.75f), 0.35f, 0.85f));
+    event.registerEntityRenderer(ENTITY_TYPE_STINKY.get(), ctx -> new RenderStinky(ctx, new ModelStinky(0.65f), 0.75f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_SUNSPOT_URCHIN.get(), ctx -> new RenderItemUrchin(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_T_REX.get(), ctx -> new RenderTRex(ctx, new ModelTRex(0.2f), 1.0f, 1.2f));
+    event.registerEntityRenderer(ENTITY_TYPE_TREX.get(), ctx -> new RenderTRex(ctx, new ModelTRex(0.2f), 1.0f, 1.2f));
+    event.registerEntityRenderer(ENTITY_TYPE_TERMITE.get(), ctx -> new RenderAnt(ctx, new ModelAnt(), 0.15f, 0.35f));
+    event.registerEntityRenderer(ENTITY_TYPE_TERRIBLE_TERROR.get(), ctx -> new RenderTerribleTerror(ctx, new ModelTerribleTerror(0.75f), 0.45f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_THE_KING.get(), ctx -> new RenderTheKing(ctx, new ModelTheKing(0.65f), 1.9f, 2.1f));
+    event.registerEntityRenderer(ENTITY_TYPE_THE_KRAKEN.get(), ctx -> new RenderKraken(ctx, new ModelKraken(1.0f), 1.0f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_THE_PRINCE.get(), ctx -> new RenderThePrince(ctx, new ModelThePrince(0.65f), 0.75f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_THE_PRINCESS.get(), ctx -> new RenderThePrincess(ctx, new ModelThePrincess(0.65f), 0.7f, 0.7f));
+    event.registerEntityRenderer(ENTITY_TYPE_THE_QUEEN.get(), ctx -> new RenderTheQueen(ctx, new ModelTheQueen(0.65f), 1.9f, 2.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_THE_YOUNG_ADULT_PRINCE.get(), ctx -> new RenderThePrinceAdult(ctx, new ModelThePrinceAdult(0.65f), 1.2f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_THE_YOUNG_PRINCE.get(), ctx -> new RenderThePrinceTeen(ctx, new ModelThePrinceTeen(0.65f), 1.0f, 1.25f));
+    event.registerEntityRenderer(ENTITY_TYPE_THROWN_ROCK.get(), ctx -> new RenderThrownRock(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_THUNDER_BOLT.get(), ctx -> new RenderThrowableBillboard(ctx, texLaserBall));
+    event.registerEntityRenderer(ENTITY_TYPE_TRIFFID.get(), ctx -> new RenderTriffid(ctx, new ModelTriffid(1.0f), 0.3f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_TROOPER_BUG.get(), ctx -> new RenderTrooperBug(ctx, new ModelTrooperBug(0.22f), 0.95f, 1.1f));
+    event.registerEntityRenderer(ENTITY_TYPE_TSHIRT.get(), ctx -> new RenderTshirt(ctx, new ModelTshirt(0.22f), 1.0f, 0.33f));
+    event.registerEntityRenderer(ENTITY_TYPE_ULTIMATE_ARROW.get(), ctx -> new RenderUltimateArrow(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_ULTIMATE_FISH_HOOK.get(), ctx -> new com.astryxion.chaospersists.render.RenderUltimateFishHook(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_UNSTABLE_ANT.get(), ctx -> new RenderAnt(ctx, new ModelAnt(), 0.1f, 0.25f));
+    event.registerEntityRenderer(ENTITY_TYPE_URCHIN.get(), ctx -> new RenderUrchin(ctx, new ModelUrchin(1.0f), 0.35f, 1.25f));
+    event.registerEntityRenderer(ENTITY_TYPE_VELOCITY_RAPTOR.get(), ctx -> new RenderVelocityRaptor(ctx, new ModelVelocityRaptor(1.25f), 0.55f, 0.75f));
+    event.registerEntityRenderer(ENTITY_TYPE_VORTEX.get(), ctx -> new RenderVortex(ctx, new ModelVortex(0.25f), 0.1f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_WATER_BALL.get(), ctx -> new RenderItemUrchin(ctx));
+    event.registerEntityRenderer(ENTITY_TYPE_WATER_DRAGON.get(), ctx -> new RenderWaterDragon(ctx, new ModelWaterDragon(0.5f), 0.85f, 1.1f));
+    event.registerEntityRenderer(ENTITY_TYPE_WHALE.get(), ctx -> new RenderWhale(ctx, new ModelWhale(), 0.1f, 1.0f));
+    event.registerEntityRenderer(ENTITY_TYPE_WTF.get(), ctx -> new RenderGammaMetroid(ctx, new ModelGammaMetroid(0.45f), 0.75f, 0.9f));
+  }
+
+
+    public static com.astryxion.chaospersists.proxy.CommonProxyChaos proxy;
+
   public static ChaosPersists instance;
   public static com.astryxion.chaospersists.util.KeyHandler MyKeyhandler = null;
   public static int flyup_keystate = 0;
@@ -433,42 +2647,15 @@ public class ChaosPersists
   public static int BaseBlockID = 2700;
   public static int BaseItemID = 9000;
   public static int BaseBiomeID = 120;
-  public static int BaseDimensionID = 80;
-
-  /** When true, logs resolved dimension numeric IDs at startup (see chaospersistsIDS). */
-  public static boolean LogRegisteredDimensionIds = true;
-
   public static int BiomeUtopiaID = 0;
   public static int BiomeIslandsID = 0;
   public static int BiomeCrystalID = 0;
   public static int BiomeVillageID = 0;
   public static int BiomeChaosID = 0;
   public static int BiomeMiningID = 0;
-  public static BiomeGenUtopianPlains UTOPIA_BIOME = null;
-  public static BiomeVillagePlains VILLAGE_BIOME = null;
-  public static BiomeDangerPlains DANGER_BIOME = null;
-  public static BiomeCrystalPlains CRYSTAL_BIOME = null;
-  public static BiomeChaosPlains CHAOS_BIOME = null;
-  public static BiomeMiningDimension MINING_BIOME = null;
   public static int DimensionID = 0;
   public static int DimensionID2 = 0;
   public static int DimensionID3 = 0;
-  public static int DimensionID4 = 0;
-  public static int DimensionID5 = 0;
-  public static int DimensionID6 = 0;
-
-  /** Returns DimensionID for dimension index 1-6 (1=main chaospersists, 2-6=other dimensions). */
-  public static int getDimension() { return DimensionID; }
-  public static int getDimension(int n) {
-    switch (n) {
-      case 2: return DimensionID2;
-      case 3: return DimensionID3;
-      case 4: return DimensionID4;
-      case 5: return DimensionID5;
-      case 6: return DimensionID6;
-      default: return DimensionID;
-    }
-  }
 
   public static int godzilla_has_spawned = 0;
   public static int current_dimension = 0;
@@ -812,21 +2999,21 @@ public class ChaosPersists
   public static Item MyAmethystHoe;
   public static Item MyAmethystAxe;
   public static Item MyRoseSword;
-  static Item.ToolMaterial toolULTIMATE;
-  static Item.ToolMaterial toolNIGHTMARE;
-  static Item.ToolMaterial toolBERTHA;
-  static Item.ToolMaterial toolCRYSTALWOOD;
-  static Item.ToolMaterial toolCRYSTALSTONE;
-  static Item.ToolMaterial toolCRYSTALPINK;
-  static Item.ToolMaterial toolTIGERSEYE;
-  static Item.ToolMaterial toolRUBY;
-  static Item.ToolMaterial toolAMETHYST;
-  static Item.ToolMaterial toolEMERALD;
-  static Item.ToolMaterial toolROYAL;
-  static Item.ToolMaterial toolHAMMY;
-  static Item.ToolMaterial toolBATTLE;
-  static Item.ToolMaterial toolCHAINSAW;
-  static Item.ToolMaterial toolQUEENBATTLE;
+  static Tier toolULTIMATE;
+  static Tier toolNIGHTMARE;
+  static Tier toolBERTHA;
+  static Tier toolCRYSTALWOOD;
+  static Tier toolCRYSTALSTONE;
+  static Tier toolCRYSTALPINK;
+  static Tier toolTIGERSEYE;
+  static Tier toolRUBY;
+  static Tier toolAMETHYST;
+  static Tier toolEMERALD;
+  static Tier toolROYAL;
+  static Tier toolHAMMY;
+  static Tier toolBATTLE;
+  static Tier toolCHAINSAW;
+  static Tier toolQUEENBATTLE;
   public static WeaponStats ultimate_stats = null;
   public static WeaponStats nightmare_stats = null;
   public static WeaponStats bertha_stats = null;
@@ -937,20 +3124,20 @@ public class ChaosPersists
   public static Item MyStepUp;
   public static Item MyStepDown;
   public static Item MyStepAccross;
-  public static ItemArmor.ArmorMaterial armorULTIMATE;
-  public static ItemArmor.ArmorMaterial armorMOBZILLA;
-  public static ItemArmor.ArmorMaterial armorLAVAEEL;
-  public static ItemArmor.ArmorMaterial armorMOTHSCALE;
-  public static ItemArmor.ArmorMaterial armorEMERALD;
-  public static ItemArmor.ArmorMaterial armorEXPERIENCE;
-  public static ItemArmor.ArmorMaterial armorRUBY;
-  public static ItemArmor.ArmorMaterial armorAMETHYST;
-  public static ItemArmor.ArmorMaterial armorPINK;
-  public static ItemArmor.ArmorMaterial armorTIGERSEYE;
-  public static ItemArmor.ArmorMaterial armorPEACOCK;
-  public static ItemArmor.ArmorMaterial armorROYAL;
-  public static ItemArmor.ArmorMaterial armorLAPIS;
-  public static ItemArmor.ArmorMaterial armorQUEEN;
+  public static ArmorMaterial armorULTIMATE;
+  public static ArmorMaterial armorMOBZILLA;
+  public static ArmorMaterial armorLAVAEEL;
+  public static ArmorMaterial armorMOTHSCALE;
+  public static ArmorMaterial armorEMERALD;
+  public static ArmorMaterial armorEXPERIENCE;
+  public static ArmorMaterial armorRUBY;
+  public static ArmorMaterial armorAMETHYST;
+  public static ArmorMaterial armorPINK;
+  public static ArmorMaterial armorTIGERSEYE;
+  public static ArmorMaterial armorPEACOCK;
+  public static ArmorMaterial armorROYAL;
+  public static ArmorMaterial armorLAPIS;
+  public static ArmorMaterial armorQUEEN;
   public static ItemChaosArmor UltimateHelmet;
   public static ItemChaosArmor UltimateBody;
   public static ItemChaosArmor UltimateLegs;
@@ -1316,6 +3503,7 @@ public class ChaosPersists
   public static Item RandomDungeon;
   public static Item MinersDream;
   public static Block ExtremeTorch;
+  public static final java.util.function.Supplier<BlockExtremeTorch> BLOCK_EXTREME_TORCH = () -> (BlockExtremeTorch) ExtremeTorch;
   public static Block MyEnderPearlBlock;
   public static Block MyEyeOfEnderBlock;
   public static Block MyExperiencePlant;
@@ -1553,47 +3741,30 @@ public class ChaosPersists
   {
     try
     {
-      IAttribute attr = SharedMonsterAttributes.MAX_HEALTH;
+      Attribute attr = net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH;
       if (!(attr instanceof RangedAttribute))
       {
         return;
       }
       RangedAttribute ranged = (RangedAttribute)attr;
-      Field target = null;
-      for (Field f : RangedAttribute.class.getDeclaredFields())
-      {
-        if (f.getType() != double.class || !Modifier.isFinal(f.getModifiers()))
-        {
-          continue;
-        }
-        f.setAccessible(true);
-        double v = f.getDouble(ranged);
-        if (Math.abs(v - 1024.0D) < 1.0E-6D)
-        {
-          target = f;
-          break;
-        }
-      }
-      if (target == null)
+      if (Math.abs(ranged.getMaxValue() - 1024.0D) >= 1.0E-6D)
       {
         return;
       }
-      Field modifiers = Field.class.getDeclaredField("modifiers");
-      modifiers.setAccessible(true);
-      modifiers.setInt(target, target.getModifiers() & ~Modifier.FINAL);
-      target.setDouble(ranged, 1.0E9D);
+      MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(RangedAttribute.class, MethodHandles.lookup());
+      VarHandle maxHealthCap = lookup.findVarHandle(RangedAttribute.class, "maxValue", double.class);
+      maxHealthCap.set(ranged, 1.0E9D);
     }
     catch (Throwable t)
     {
-      FMLLog.log.error("ChaosPersists: failed to raise generic.maxHealth cap; boss HP may stay capped at 1024", t);
+      LOGGER.error("ChaosPersists: failed to raise generic.maxHealth cap; boss HP may stay capped at 1024", t);
     }
   }
 
-  @Mod.EventHandler
-  public void preInit(FMLPreInitializationEvent event)
+  public void preInit(FMLCommonSetupEvent event)
   {
     raiseVanillaMaxHealthCap();
-    Configuration config = new Configuration(event.getSuggestedConfigurationFile());
+    Configuration config = new Configuration(FMLPaths.CONFIGDIR.get().resolve("chaospersists.cfg").toFile());
     String ids = "chaospersistsIDS";
     String mobs = "chaospersistsMOBS";
     String tweaks = "chaospersistsTWEAKS";
@@ -1729,25 +3900,25 @@ public class ChaosPersists
 
     laySomeEggs();
 
-    MyOreUraniumBlock = new OreUranium().setTranslationKey("oreuranium").setRegistryName("chaospersists", "oreuranium");
-    MyOreTitaniumBlock = new OreTitanium().setTranslationKey("oretitanium").setRegistryName("chaospersists", "oretitanium");
-    MyIngotUranium = new IngotUranium().setTranslationKey("ingoturanium").setRegistryName("chaospersists", "ingoturanium");
-    MyIngotTitanium = new IngotTitanium().setTranslationKey("ingottitanium").setRegistryName("chaospersists", "ingottitanium");
-    MyBlockUraniumBlock = new BlockUranium().setTranslationKey("blockuranium").setRegistryName("chaospersists", "blockuranium");
-    MyBlockTitaniumBlock = new BlockTitanium().setTranslationKey("blocktitanium").setRegistryName("chaospersists", "blocktitanium");
-    MyBlockMobzillaScaleBlock = new BlockRuby().setTranslationKey("blockmobzillascale").setRegistryName("chaospersists", "blockmobzillascale");
-    MyLavafoamBlock = new Lavafoam().setTranslationKey("lavafoam").setRegistryName("chaospersists", "lavafoam");
-    MyBlockRubyBlock = new BlockRuby().setTranslationKey("blockruby").setRegistryName("chaospersists", "blockruby");
-    MyBlockAmethystBlock = new BlockRuby().setTranslationKey("blockamethyst").setRegistryName("chaospersists", "blockamethyst");
-    MyCrystalPinkBlock = new BlockCrystal().setTranslationKey("crystalpink_block").setRegistryName("chaospersists", "crystalpink_block");
-    MyCrystalPinkIngot = new IngotUranium().setTranslationKey("crystalpink_ingot").setRegistryName("chaospersists", "crystalpink_ingot");
-    MyTigersEyeBlock = new BlockCrystal().setTranslationKey("tigerseye_block").setRegistryName("chaospersists", "tigerseye_block");
-    MyTigersEyeIngot = new IngotUranium().setTranslationKey("tigerseye_ingot").setRegistryName("chaospersists", "tigerseye_ingot");
+    MyOreUraniumBlock = (OreUranium) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "oreuranium"));
+    MyOreTitaniumBlock = (OreTitanium) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "oretitanium"));
+    MyIngotUranium = (IngotUranium) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ingoturanium"));
+    MyIngotTitanium = (IngotTitanium) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ingottitanium"));
+    MyBlockUraniumBlock = (BlockUranium) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "blockuranium"));
+    MyBlockTitaniumBlock = (BlockTitanium) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "blocktitanium"));
+    MyBlockMobzillaScaleBlock = (BlockRuby) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "blockmobzillascale"));
+    MyLavafoamBlock = (Lavafoam) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "lavafoam"));
+    MyBlockRubyBlock = (BlockRuby) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "blockruby"));
+    MyBlockAmethystBlock = (BlockRuby) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "blockamethyst"));
+    MyCrystalPinkBlock = (BlockCrystal) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalpink_block"));
+    MyCrystalPinkIngot = (IngotUranium) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalpink_ingot"));
+    MyTigersEyeBlock = (BlockCrystal) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye_block"));
+    MyTigersEyeIngot = (IngotUranium) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye_ingot"));
 
-    MyPizzaBlock = new BlockPizza().setTranslationKey("pizza").setRegistryName("chaospersists", "pizza");
-    MyPizzaItem = new ItemPizza(MyPizzaBlock).setMaxStackSize(1).setCreativeTab(CreativeTabs.FOOD).setTranslationKey("pizza").setRegistryName("chaospersists", "pizza");
-    MyDuctTapeBlock = new BlockDuctTape().setTranslationKey("ducttape").setRegistryName("chaospersists", "ducttape");
-    MyDuctTapeItem = new ItemDuctTape(MyDuctTapeBlock).setMaxStackSize(1).setCreativeTab(CreativeTabs.TOOLS).setTranslationKey("ducttape").setRegistryName("chaospersists", "ducttape");
+    MyPizzaBlock = (BlockPizza) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "pizza"));
+    MyPizzaItem = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "pizza"));
+    MyDuctTapeBlock = (BlockDuctTape) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "ducttape"));
+    MyDuctTapeItem = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ducttape"));
 
     toolULTIMATE = EnumHelper.addToolMaterial("ULTIMATE", ultimate_stats.harvestlevel, ultimate_stats.maxuses, ultimate_stats.efficiency, ultimate_stats.damage, ultimate_stats.enchantability);
 
@@ -1779,383 +3950,382 @@ public class ChaosPersists
 
     toolQUEENBATTLE = EnumHelper.addToolMaterial("QUEENBATTLE", queenbattleaxe_stats.harvestlevel, queenbattleaxe_stats.maxuses, queenbattleaxe_stats.efficiency, queenbattleaxe_stats.damage, queenbattleaxe_stats.enchantability);
 
-    MyUltimateSword = new UltimateSword(toolULTIMATE).setTranslationKey("ultimatesword").setRegistryName("chaospersists", "ultimatesword");
-    MyUltimatePickaxe = new UltimatePickaxe(toolULTIMATE).setTranslationKey("ultimatepickaxe").setRegistryName("chaospersists", "ultimatepickaxe");
-    MyUltimatePickaxe.setHarvestLevel("pickaxe", ultimate_stats.harvestlevel);
-    MyUltimateShovel = new UltimateShovel(toolULTIMATE).setTranslationKey("ultimateshovel").setRegistryName("chaospersists", "ultimateshovel");
-    MyUltimateShovel.setHarvestLevel("shovel", ultimate_stats.harvestlevel);
-    MyUltimateHoe = new UltimateHoe(toolULTIMATE).setTranslationKey("ultimatehoe").setRegistryName("chaospersists", "ultimatehoe");
-    MyUltimateAxe = new UltimateAxe(toolULTIMATE).setTranslationKey("ultimateaxe").setRegistryName("chaospersists", "ultimateaxe");
-    MyUltimateAxe.setHarvestLevel("axe", ultimate_stats.harvestlevel);
-    MyNightmareSword = new NightmareSword(toolNIGHTMARE).setTranslationKey("nightmaresword").setRegistryName("chaospersists", "nightmaresword");
-    MyBertha = new Bertha(toolBERTHA).setTranslationKey("berthasmall").setRegistryName("chaospersists", "berthasmall");
-    MySlice = new Bertha(toolBERTHA).setTranslationKey("slicesmall").setRegistryName("chaospersists", "slicesmall");
-    MyRoyal = new Bertha(toolROYAL).setTranslationKey("royalsmall").setRegistryName("chaospersists", "royalsmall");
-    MyHammy = new Bertha(toolHAMMY).setTranslationKey("hammysmall").setRegistryName("chaospersists", "hammysmall");
-    MyBattleAxe = new UltimateSword(toolBATTLE).setTranslationKey("battleaxesmall").setRegistryName("chaospersists", "battleaxesmall");
-    MyChainsaw = new UltimateSword(toolCHAINSAW).setTranslationKey("chainsawsmall").setRegistryName("chaospersists", "chainsawsmall");
-    MyQueenBattleAxe = new UltimateSword(toolQUEENBATTLE).setTranslationKey("queenbattleaxesmall").setRegistryName("chaospersists", "queenbattleaxesmall");
+    MyUltimateSword = (UltimateSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimatesword"));
+    MyUltimatePickaxe = (UltimatePickaxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimatepickaxe"));
+    MyUltimateShovel = (UltimateShovel) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimateshovel"));
+    MyUltimateHoe = (UltimateHoe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimatehoe"));
+    MyUltimateAxe = (UltimateAxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimateaxe"));
+    MyNightmareSword = (NightmareSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "nightmaresword"));
+    MyBertha = (Bertha) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "berthasmall"));
+    MySlice = (Bertha) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "slicesmall"));
+    MyRoyal = (Bertha) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "royalsmall"));
+    MyHammy = (Bertha) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "hammysmall"));
+    MyBattleAxe = (UltimateSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "battleaxesmall"));
+    MyChainsaw = (UltimateSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "chainsawsmall"));
+    MyQueenBattleAxe = (UltimateSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "queenbattleaxesmall"));
 
-    MyEmeraldSword = new EmeraldSword(toolEMERALD).setTranslationKey("emeraldsword").setRegistryName("chaospersists", "emeraldsword");
-    MyEmeraldPickaxe = new EmeraldPickaxe(toolEMERALD).setTranslationKey("emeraldpickaxe").setRegistryName("chaospersists", "emeraldpickaxe");
-    MyEmeraldShovel = new EmeraldShovel(toolEMERALD).setTranslationKey("emeraldshovel").setRegistryName("chaospersists", "emeraldshovel");
-    MyEmeraldHoe = new EmeraldHoe(toolEMERALD).setTranslationKey("emeraldhoe").setRegistryName("chaospersists", "emeraldhoe");
-    MyEmeraldAxe = new EmeraldAxe(toolEMERALD).setTranslationKey("emeraldaxe").setRegistryName("chaospersists", "emeraldaxe");
-    MyExperienceSword = new ExperienceSword(toolEMERALD).setTranslationKey("experiencesword").setRegistryName("chaospersists", "experiencesword");
-    MyPoisonSword = new PoisonSword(toolEMERALD).setTranslationKey("poisonsword").setRegistryName("chaospersists", "poisonsword");
-    MyRatSword = new RatSword(toolEMERALD).setTranslationKey("ratsword").setRegistryName("chaospersists", "ratsword");
-    MyFairySword = new FairySword(toolEMERALD).setTranslationKey("fairysword").setRegistryName("chaospersists", "fairysword");
-    MyMantisClaw = new MantisClaw(toolEMERALD).setTranslationKey("mantisclaw").setRegistryName("chaospersists", "mantisclaw");
-    MyBigHammer = new BigHammer(toolAMETHYST).setTranslationKey("bighammer").setRegistryName("chaospersists", "bighammer");
-    MyRubySword = new RubySword(toolRUBY).setTranslationKey("rubysword").setRegistryName("chaospersists", "rubysword");
-    MyRubyPickaxe = new RubyPickaxe(toolRUBY).setTranslationKey("rubypickaxe").setRegistryName("chaospersists", "rubypickaxe");
-    MyRubyPickaxe.setHarvestLevel("pickaxe", ruby_stats.harvestlevel);
-    MyRubyShovel = new RubyShovel(toolRUBY).setTranslationKey("rubyshovel").setRegistryName("chaospersists", "rubyshovel");
-    MyRubyShovel.setHarvestLevel("shovel", ruby_stats.harvestlevel);
-    MyRubyHoe = new RubyHoe(toolRUBY).setTranslationKey("rubyhoe").setRegistryName("chaospersists", "rubyhoe");
-    MyRubyAxe = new RubyAxe(toolRUBY).setTranslationKey("rubyaxe").setRegistryName("chaospersists", "rubyaxe");
-    MyRubyAxe.setHarvestLevel("axe", ruby_stats.harvestlevel);
-    MyAmethystSword = new AmethystSword(toolAMETHYST).setTranslationKey("amethystsword").setRegistryName("chaospersists", "amethystsword");
-    MyAmethystPickaxe = new AmethystPickaxe(toolAMETHYST).setTranslationKey("amethystpickaxe").setRegistryName("chaospersists", "amethystpickaxe");
-    MyAmethystPickaxe.setHarvestLevel("pickaxe", amethyst_stats.harvestlevel);
-    MyAmethystShovel = new AmethystShovel(toolAMETHYST).setTranslationKey("amethystshovel").setRegistryName("chaospersists", "amethystshovel");
-    MyAmethystShovel.setHarvestLevel("shovel", amethyst_stats.harvestlevel);
-    MyAmethystHoe = new AmethystHoe(toolAMETHYST).setTranslationKey("amethysthoe").setRegistryName("chaospersists", "amethysthoe");
-    MyAmethystAxe = new AmethystAxe(toolAMETHYST).setTranslationKey("amethystaxe").setRegistryName("chaospersists", "amethystaxe");
-    MyAmethystAxe.setHarvestLevel("axe", amethyst_stats.harvestlevel);
-    MyCrystalWoodSword = new CrystalSword(toolCRYSTALWOOD).setTranslationKey("crystalwoodsword").setRegistryName("chaospersists", "crystalwoodsword");
-    MyCrystalWoodPickaxe = new CrystalPickaxe(toolCRYSTALWOOD).setTranslationKey("crystalwoodpickaxe").setRegistryName("chaospersists", "crystalwoodpickaxe");
-    MyCrystalWoodShovel = new CrystalShovel(toolCRYSTALWOOD).setTranslationKey("crystalwoodshovel").setRegistryName("chaospersists", "crystalwoodshovel");
-    MyCrystalWoodHoe = new CrystalHoe(toolCRYSTALWOOD).setTranslationKey("crystalwoodhoe").setRegistryName("chaospersists", "crystalwoodhoe");
-    MyCrystalWoodAxe = new CrystalAxe(toolCRYSTALWOOD).setTranslationKey("crystalwoodaxe").setRegistryName("chaospersists", "crystalwoodaxe");
-    MyCrystalPinkSword = new CrystalSword(toolCRYSTALPINK).setTranslationKey("crystalpinksword").setRegistryName("chaospersists", "crystalpinksword");
-    MyCrystalPinkPickaxe = new CrystalPickaxe(toolCRYSTALPINK).setTranslationKey("crystalpinkpickaxe").setRegistryName("chaospersists", "crystalpinkpickaxe");
-    MyCrystalPinkShovel = new CrystalShovel(toolCRYSTALPINK).setTranslationKey("crystalpinkshovel").setRegistryName("chaospersists", "crystalpinkshovel");
-    MyCrystalPinkHoe = new CrystalHoe(toolCRYSTALPINK).setTranslationKey("crystalpinkhoe").setRegistryName("chaospersists", "crystalpinkhoe");
-    MyCrystalPinkAxe = new CrystalAxe(toolCRYSTALPINK).setTranslationKey("crystalpinkaxe").setRegistryName("chaospersists", "crystalpinkaxe");
-    MyCrystalStoneSword = new CrystalSword(toolCRYSTALSTONE).setTranslationKey("crystalstonesword").setRegistryName("chaospersists", "crystalstonesword");
-    MyCrystalStonePickaxe = new CrystalPickaxe(toolCRYSTALSTONE).setTranslationKey("crystalstonepickaxe").setRegistryName("chaospersists", "crystalstonepickaxe");
-    MyCrystalStoneShovel = new CrystalShovel(toolCRYSTALSTONE).setTranslationKey("crystalstoneshovel").setRegistryName("chaospersists", "crystalstoneshovel");
-    MyCrystalStoneHoe = new CrystalHoe(toolCRYSTALSTONE).setTranslationKey("crystalstonehoe").setRegistryName("chaospersists", "crystalstonehoe");
-    MyCrystalStoneAxe = new CrystalAxe(toolCRYSTALSTONE).setTranslationKey("crystalstoneaxe").setRegistryName("chaospersists", "crystalstoneaxe");
-    MyTigersEyeSword = new CrystalSword(toolTIGERSEYE).setTranslationKey("tigerseye_sword").setRegistryName("chaospersists", "tigerseye_sword");
-    MyTigersEyePickaxe = new CrystalPickaxe(toolTIGERSEYE).setTranslationKey("tigerseye_pickaxe").setRegistryName("chaospersists", "tigerseye_pickaxe");
-    MyTigersEyeShovel = new CrystalShovel(toolTIGERSEYE).setTranslationKey("tigerseye_shovel").setRegistryName("chaospersists", "tigerseye_shovel");
-    MyTigersEyeHoe = new CrystalHoe(toolTIGERSEYE).setTranslationKey("tigerseye_hoe").setRegistryName("chaospersists", "tigerseye_hoe");
-    MyTigersEyeAxe = new CrystalAxe(toolTIGERSEYE).setTranslationKey("tigerseye_axe").setRegistryName("chaospersists", "tigerseye_axe");
-    MyRoseSword = new EmeraldSword(toolEMERALD).setTranslationKey("rosesword").setRegistryName("chaospersists", "rosesword");
+    MyEmeraldSword = (EmeraldSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "emeraldsword"));
+    MyEmeraldPickaxe = (EmeraldPickaxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "emeraldpickaxe"));
+    MyEmeraldShovel = (EmeraldShovel) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "emeraldshovel"));
+    MyEmeraldHoe = (EmeraldHoe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "emeraldhoe"));
+    MyEmeraldAxe = (EmeraldAxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "emeraldaxe"));
+    MyExperienceSword = (ExperienceSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "experiencesword"));
+    MyPoisonSword = (PoisonSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "poisonsword"));
+    MyRatSword = (RatSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ratsword"));
+    MyFairySword = (FairySword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "fairysword"));
+    MyMantisClaw = (MantisClaw) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "mantisclaw"));
+    MyBigHammer = (BigHammer) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "bighammer"));
+    MyRubySword = (RubySword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rubysword"));
+    MyRubyPickaxe = (RubyPickaxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rubypickaxe"));
+    MyRubyShovel = (RubyShovel) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rubyshovel"));
+    MyRubyHoe = (RubyHoe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rubyhoe"));
+    MyRubyAxe = (RubyAxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rubyaxe"));
+    MyAmethystSword = (AmethystSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "amethystsword"));
+    MyAmethystPickaxe = (AmethystPickaxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "amethystpickaxe"));
+    MyAmethystShovel = (AmethystShovel) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "amethystshovel"));
+    MyAmethystHoe = (AmethystHoe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "amethysthoe"));
+    MyAmethystAxe = (AmethystAxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "amethystaxe"));
+    MyCrystalWoodSword = (CrystalSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalwoodsword"));
+    MyCrystalWoodPickaxe = (CrystalPickaxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalwoodpickaxe"));
+    MyCrystalWoodShovel = (CrystalShovel) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalwoodshovel"));
+    MyCrystalWoodHoe = (CrystalHoe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalwoodhoe"));
+    MyCrystalWoodAxe = (CrystalAxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalwoodaxe"));
+    MyCrystalPinkSword = (CrystalSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalpinksword"));
+    MyCrystalPinkPickaxe = (CrystalPickaxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalpinkpickaxe"));
+    MyCrystalPinkShovel = (CrystalShovel) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalpinkshovel"));
+    MyCrystalPinkHoe = (CrystalHoe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalpinkhoe"));
+    MyCrystalPinkAxe = (CrystalAxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalpinkaxe"));
+    MyCrystalStoneSword = (CrystalSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalstonesword"));
+    MyCrystalStonePickaxe = (CrystalPickaxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalstonepickaxe"));
+    MyCrystalStoneShovel = (CrystalShovel) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalstoneshovel"));
+    MyCrystalStoneHoe = (CrystalHoe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalstonehoe"));
+    MyCrystalStoneAxe = (CrystalAxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalstoneaxe"));
+    MyTigersEyeSword = (CrystalSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye_sword"));
+    MyTigersEyePickaxe = (CrystalPickaxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye_pickaxe"));
+    MyTigersEyeShovel = (CrystalShovel) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye_shovel"));
+    MyTigersEyeHoe = (CrystalHoe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye_hoe"));
+    MyTigersEyeAxe = (CrystalAxe) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye_axe"));
+    MyRoseSword = (EmeraldSword) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rosesword"));
 
-    MyItemShoes = new ItemShoes(2).setTranslationKey("redheels").setRegistryName("chaospersists", "redheels");
-    MyItemShoes_1 = new ItemShoes(3).setTranslationKey("blackheels").setRegistryName("chaospersists", "blackheels");
-    MyItemShoes_2 = new ItemShoes(4).setTranslationKey("slippers").setRegistryName("chaospersists", "slippers");
-    MyItemShoes_3 = new ItemShoes(5).setTranslationKey("boots").setRegistryName("chaospersists", "boots");
-    MyItemGameController = new ItemShoes(6).setTranslationKey("gamecontroller").setRegistryName("chaospersists", "gamecontroller");
+    MyItemShoes = (ItemShoes) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "redheels"));
+    MyItemShoes_1 = (ItemShoes) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "blackheels"));
+    MyItemShoes_2 = (ItemShoes) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "slippers"));
+    MyItemShoes_3 = (ItemShoes) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "boots"));
+    MyItemGameController = (ItemShoes) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "gamecontroller"));
 
-    MyUltimateBow = new UltimateBow(BaseItemID + 303).setTranslationKey("ultimatebow").setRegistryName("chaospersists", "ultimatebow");
-    MySkateBow = new SkateBow(BaseItemID + 373).setTranslationKey("skatebow").setRegistryName("chaospersists", "skatebow");
+    MyUltimateBow = (UltimateBow) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimatebow"));
+    MySkateBow = (SkateBow) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "skatebow"));
 
-    MyUltimateFishingRod = new UltimateFishingRod(BaseItemID + 304).setTranslationKey("ultimatefishingrod").setRegistryName("chaospersists", "ultimatefishingrod");
+    MyUltimateFishingRod = (UltimateFishingRod) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimatefishingrod"));
     UltimateFishingRod = new ItemStack(MyUltimateFishingRod);
 
-    MyFireFish = new ItemFireFish(4, 0.6F, false).setTranslationKey("firefish").setRegistryName("chaospersists", "firefish");
-    MySunFish = new ItemSunFish(6, 0.6F, false).setTranslationKey("sunfish").setRegistryName("chaospersists", "sunfish");
-    MyLavaEel = new ItemLavaEel(2, 0.6F, false).setTranslationKey("lavaeel").setRegistryName("chaospersists", "lavaeel");
-    MyMothScale = new ItemSalt(BaseItemID + 156).setTranslationKey("mothscale").setRegistryName("chaospersists", "mothscale");
-    MyQueenScale = new ItemSalt(BaseItemID + 453).setTranslationKey("queenscale").setRegistryName("chaospersists", "queenscale");
-    MyNightmareScale = new ItemSalt(BaseItemID + 158).setTranslationKey("nightmarescale").setRegistryName("chaospersists", "nightmarescale");
-    MyEmperorScorpionScale = new ItemSalt(BaseItemID + 159).setTranslationKey("emperorscorpionscale").setRegistryName("chaospersists", "emperorscorpionscale");
-    MyBasiliskScale = new ItemSalt(BaseItemID + 160).setTranslationKey("basiliskscale").setRegistryName("chaospersists", "basiliskscale");
-    MyWaterDragonScale = new ItemSalt(BaseItemID + 161).setTranslationKey("waterdragonscale").setRegistryName("chaospersists", "waterdragonscale");
-    MyPeacockFeather = new ItemSalt(BaseItemID + 255).setTranslationKey("peacockfeather").setRegistryName("chaospersists", "peacockfeather");
-    MyJumpyBugScale = new ItemSalt(BaseItemID + 162).setTranslationKey("jumpybugscale").setRegistryName("chaospersists", "jumpybugscale");
-    MyKrakenTooth = new ItemSalt(BaseItemID + 163).setTranslationKey("krakentooth").setRegistryName("chaospersists", "krakentooth");
-    MyGodzillaScale = new ItemSalt(BaseItemID + 164).setTranslationKey("godzillascale").setRegistryName("chaospersists", "godzillascale");
-    GreenGoo = new ItemSalt(BaseItemID + 154).setTranslationKey("greengoo").setRegistryName("chaospersists", "greengoo");
-    SpiderRobotKit = new ItemSpiderRobotKit(BaseItemID + 471).setTranslationKey("spiderrobotkit").setRegistryName("chaospersists", "spiderrobotkit");
-    AntRobotKit = new ItemSpiderRobotKit(BaseItemID + 473).setTranslationKey("antrobotkit").setRegistryName("chaospersists", "antrobotkit");
-    ZooKeeper = new ItemZooKeeper(BaseItemID + 230).setTranslationKey("zookeeper").setRegistryName("chaospersists", "zookeeper");
-    CreeperLauncher = new ItemCreeperLauncher(BaseItemID + 252).setTranslationKey("creeperlauncher").setRegistryName("chaospersists", "creeperlauncher");
-    NetherLost = new ItemNetherLost(BaseItemID + 253).setTranslationKey("netherlost").setRegistryName("chaospersists", "netherlost");
-    CrystalSticks = new ItemCrystalSticks(BaseItemID + 254).setTranslationKey("crystalsticks").setRegistryName("chaospersists", "crystalsticks");
-    MySunspotUrchin = new ItemSunspotUrchin(BaseItemID + 246).setTranslationKey("sunspoturchin").setRegistryName("chaospersists", "sunspoturchin");
-    MySparkFish = new ItemSparkFish(1, 0.2F, false).setTranslationKey("sparkfish").setRegistryName("chaospersists", "sparkfish");
-    MyWaterBall = new ItemWaterBall(BaseItemID + 244).setTranslationKey("waterball").setRegistryName("chaospersists", "waterball");
-    MyLaserBall = new ItemLaserBall(BaseItemID + 242).setTranslationKey("laserball").setRegistryName("chaospersists", "laserball");
-    MyIceBall = new ItemIceBall(BaseItemID + 239).setTranslationKey("iceball").setRegistryName("chaospersists", "iceball");
-    MySmallRock = new ItemRock(BaseItemID + 436).setTranslationKey("rocksmall").setRegistryName("chaospersists", "rocksmall");
-    MyRock = new ItemRock(BaseItemID + 435).setTranslationKey("rock").setRegistryName("chaospersists", "rock");
-    MyRedRock = new ItemRock(BaseItemID + 437).setTranslationKey("rockred").setRegistryName("chaospersists", "rockred");
-    MyCrystalRedRock = new ItemRock(BaseItemID + 443).setTranslationKey("rockcrystalred").setRegistryName("chaospersists", "rockcrystalred");
-    MyCrystalGreenRock = new ItemRock(BaseItemID + 444).setTranslationKey("rockcrystalgreen").setRegistryName("chaospersists", "rockcrystalgreen");
-    MyCrystalBlueRock = new ItemRock(BaseItemID + 445).setTranslationKey("rockcrystalblue").setRegistryName("chaospersists", "rockcrystalblue");
-    MyCrystalTNTRock = new ItemRock(BaseItemID + 446).setTranslationKey("rockcrystaltnt").setRegistryName("chaospersists", "rockcrystaltnt");
-    MyGreenRock = new ItemRock(BaseItemID + 438).setTranslationKey("rockgreen").setRegistryName("chaospersists", "rockgreen");
-    MyBlueRock = new ItemRock(BaseItemID + 439).setTranslationKey("rockblue").setRegistryName("chaospersists", "rockblue");
-    MyPurpleRock = new ItemRock(BaseItemID + 440).setTranslationKey("rockpurple").setRegistryName("chaospersists", "rockpurple");
-    MySpikeyRock = new ItemRock(BaseItemID + 441).setTranslationKey("rockspikey").setRegistryName("chaospersists", "rockspikey");
-    MyTNTRock = new ItemRock(BaseItemID + 442).setTranslationKey("rocktnt").setRegistryName("chaospersists", "rocktnt");
-    MyRayGun = new ItemRayGun(BaseItemID + 243).setTranslationKey("raygun").setRegistryName("chaospersists", "raygun");
-    MyThunderStaff = new ItemThunderStaff(BaseItemID + 240).setTranslationKey("thunderstaff").setRegistryName("chaospersists", "thunderstaff");
-    MyWrench = new ItemWrench(BaseItemID + 472).setTranslationKey("wrench").setRegistryName("chaospersists", "wrench");
-    MyAcid = new ItemAcid(BaseItemID + 247).setTranslationKey("acid").setRegistryName("chaospersists", "acid");
-    MyIrukandji = new ItemIrukandji(BaseItemID + 258).setTranslationKey("deadirukandji").setRegistryName("chaospersists", "deadirukandji");
-    MyIrukandjiArrow = new ItemIrukandjiArrow(BaseItemID + 372).setTranslationKey("irukandjiarrow").setRegistryName("chaospersists", "irukandjiarrow");
-    MyGreenFish = new ItemGenericFish(3, 0.5F, false).setTranslationKey("greenfish").setRegistryName("chaospersists", "greenfish");
-    MyBlueFish = new ItemGenericFish(4, 0.4F, false).setTranslationKey("bluefish").setRegistryName("chaospersists", "bluefish");
-    MyPinkFish = new ItemGenericFish(4, 0.6F, false).setTranslationKey("pinkfish").setRegistryName("chaospersists", "pinkfish");
-    MyRockFish = new ItemGenericFish(3, 0.7F, false).setTranslationKey("rockfish").setRegistryName("chaospersists", "rockfish");
-    MyWoodFish = new ItemGenericFish(5, 0.7F, false).setTranslationKey("woodfish").setRegistryName("chaospersists", "woodfish");
-    MyGreyFish = new ItemGenericFish(5, 0.5F, false).setTranslationKey("greyfish").setRegistryName("chaospersists", "greyfish");
-    Sifter = new ItemSifter(BaseItemID + 325).setTranslationKey("sifter").setRegistryName("chaospersists", "sifter");
-    MySquidZooka = new ItemSquidZooka(BaseItemID + 317).setTranslationKey("squidzookasmall").setRegistryName("chaospersists", "squidzookasmall");
+    MyFireFish = (ItemFireFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "firefish"));
+    MySunFish = (ItemSunFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "sunfish"));
+    MyLavaEel = (ItemLavaEel) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "lavaeel"));
+    MyMothScale = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "mothscale"));
+    MyQueenScale = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "queenscale"));
+    MyNightmareScale = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "nightmarescale"));
+    MyEmperorScorpionScale = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "emperorscorpionscale"));
+    MyBasiliskScale = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "basiliskscale"));
+    MyWaterDragonScale = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "waterdragonscale"));
+    MyPeacockFeather = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "peacockfeather"));
+    MyJumpyBugScale = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "jumpybugscale"));
+    MyKrakenTooth = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "krakentooth"));
+    MyGodzillaScale = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "godzillascale"));
+    GreenGoo = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "greengoo"));
+    SpiderRobotKit = (ItemSpiderRobotKit) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "spiderrobotkit"));
+    AntRobotKit = (ItemSpiderRobotKit) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "antrobotkit"));
+    ZooKeeper = (ItemZooKeeper) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "zookeeper"));
+    CreeperLauncher = (ItemCreeperLauncher) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "creeperlauncher"));
+    NetherLost = (ItemNetherLost) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "netherlost"));
+    CrystalSticks = (ItemCrystalSticks) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalsticks"));
+    MySunspotUrchin = (ItemSunspotUrchin) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "sunspoturchin"));
+    MySparkFish = (ItemSparkFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "sparkfish"));
+    MyWaterBall = (ItemWaterBall) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "waterball"));
+    MyLaserBall = (ItemLaserBall) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "laserball"));
+    MyIceBall = (ItemIceBall) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "iceball"));
+    MySmallRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rocksmall"));
+    MyRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rock"));
+    MyRedRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rockred"));
+    MyCrystalRedRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rockcrystalred"));
+    MyCrystalGreenRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rockcrystalgreen"));
+    MyCrystalBlueRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rockcrystalblue"));
+    MyCrystalTNTRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rockcrystaltnt"));
+    MyGreenRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rockgreen"));
+    MyBlueRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rockblue"));
+    MyPurpleRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rockpurple"));
+    MySpikeyRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rockspikey"));
+    MyTNTRock = (ItemRock) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rocktnt"));
+    MyRayGun = (ItemRayGun) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "raygun"));
+    MyThunderStaff = (ItemThunderStaff) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "thunderstaff"));
+    MyWrench = (ItemWrench) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "wrench"));
+    MyAcid = (ItemAcid) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "acid"));
+    MyIrukandji = (ItemIrukandji) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "deadirukandji"));
+    MyIrukandjiArrow = (ItemIrukandjiArrow) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "irukandjiarrow"));
+    MyGreenFish = (ItemGenericFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "greenfish"));
+    MyBlueFish = (ItemGenericFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "bluefish"));
+    MyPinkFish = (ItemGenericFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "pinkfish"));
+    MyRockFish = (ItemGenericFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rockfish"));
+    MyWoodFish = (ItemGenericFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "woodfish"));
+    MyGreyFish = (ItemGenericFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "greyfish"));
+    Sifter = (ItemSifter) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "sifter"));
+    MySquidZooka = (ItemSquidZooka) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "squidzookasmall"));
 
-    BerthaHandle = new ItemSalt(BaseItemID + 406).setTranslationKey("bbhandle").setRegistryName("chaospersists", "bbhandle");
-    BerthaGuard = new ItemSalt(BaseItemID + 407).setTranslationKey("bbguard").setRegistryName("chaospersists", "bbguard");
-    BerthaBlade = new ItemSalt(BaseItemID + 408).setTranslationKey("bbblade").setRegistryName("chaospersists", "bbblade");
-    MolenoidNose = new ItemSalt(BaseItemID + 409).setTranslationKey("molenoidnose").setRegistryName("chaospersists", "molenoidnose");
-    SeaMonsterScale = new ItemSalt(BaseItemID + 410).setTranslationKey("seamonsterscale").setRegistryName("chaospersists", "seamonsterscale");
-    WormTooth = new ItemSalt(BaseItemID + 411).setTranslationKey("wormtooth").setRegistryName("chaospersists", "wormtooth");
-    TRexTooth = new ItemSalt(BaseItemID + 412).setTranslationKey("trextooth").setRegistryName("chaospersists", "trextooth");
-    CaterKillerJaw = new ItemSalt(BaseItemID + 413).setTranslationKey("caterkillerjaw").setRegistryName("chaospersists", "caterkillerjaw");
-    SeaViperTongue = new ItemSalt(BaseItemID + 414).setTranslationKey("seavipertongue").setRegistryName("chaospersists", "seavipertongue");
-    VortexEye = new ItemSalt(BaseItemID + 415).setTranslationKey("vortexeye").setRegistryName("chaospersists", "vortexeye");
+    BerthaHandle = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "bbhandle"));
+    BerthaGuard = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "bbguard"));
+    BerthaBlade = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "bbblade"));
+    MolenoidNose = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "molenoidnose"));
+    SeaMonsterScale = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "seamonsterscale"));
+    WormTooth = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "wormtooth"));
+    TRexTooth = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "trextooth"));
+    CaterKillerJaw = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "caterkillerjaw"));
+    SeaViperTongue = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "seavipertongue"));
+    VortexEye = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "vortexeye"));
 
-    armorULTIMATE = EnumHelper.addArmorMaterial("ULTIMATE", "chaospersists", Ultimate_armorstats.durability, new int[] { Ultimate_armorstats.head_protection, Ultimate_armorstats.chest_protection, Ultimate_armorstats.leg_protection, Ultimate_armorstats.boot_protection }, Ultimate_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorULTIMATE = EnumHelper.addArmorMaterial("ULTIMATE", "chaospersists", Ultimate_armorstats.durability, new int[] { Ultimate_armorstats.head_protection, Ultimate_armorstats.chest_protection, Ultimate_armorstats.leg_protection, Ultimate_armorstats.boot_protection }, Ultimate_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorMOBZILLA = EnumHelper.addArmorMaterial("MOBZILLA", "chaospersists", Mobzilla_armorstats.durability, new int[] { Mobzilla_armorstats.head_protection, Mobzilla_armorstats.chest_protection, Mobzilla_armorstats.leg_protection, Mobzilla_armorstats.boot_protection }, Mobzilla_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 4.0f);
+    armorMOBZILLA = EnumHelper.addArmorMaterial("MOBZILLA", "chaospersists", Mobzilla_armorstats.durability, new int[] { Mobzilla_armorstats.head_protection, Mobzilla_armorstats.chest_protection, Mobzilla_armorstats.leg_protection, Mobzilla_armorstats.boot_protection }, Mobzilla_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 4.0f);
 
-    armorLAVAEEL = EnumHelper.addArmorMaterial("LAVAEEL", "chaospersists", LavaEel_armorstats.durability, new int[] { LavaEel_armorstats.head_protection, LavaEel_armorstats.chest_protection, LavaEel_armorstats.leg_protection, LavaEel_armorstats.boot_protection }, LavaEel_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorLAVAEEL = EnumHelper.addArmorMaterial("LAVAEEL", "chaospersists", LavaEel_armorstats.durability, new int[] { LavaEel_armorstats.head_protection, LavaEel_armorstats.chest_protection, LavaEel_armorstats.leg_protection, LavaEel_armorstats.boot_protection }, LavaEel_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorMOTHSCALE = EnumHelper.addArmorMaterial("MOTHSCALE", "chaospersists", MothScale_armorstats.durability, new int[] { MothScale_armorstats.head_protection, MothScale_armorstats.chest_protection, MothScale_armorstats.leg_protection, MothScale_armorstats.boot_protection }, MothScale_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorMOTHSCALE = EnumHelper.addArmorMaterial("MOTHSCALE", "chaospersists", MothScale_armorstats.durability, new int[] { MothScale_armorstats.head_protection, MothScale_armorstats.chest_protection, MothScale_armorstats.leg_protection, MothScale_armorstats.boot_protection }, MothScale_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorEMERALD = EnumHelper.addArmorMaterial("EMERALD", "chaospersists", Emerald_armorstats.durability, new int[] { Emerald_armorstats.head_protection, Emerald_armorstats.chest_protection, Emerald_armorstats.leg_protection, Emerald_armorstats.boot_protection }, Emerald_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorEMERALD = EnumHelper.addArmorMaterial("EMERALD", "chaospersists", Emerald_armorstats.durability, new int[] { Emerald_armorstats.head_protection, Emerald_armorstats.chest_protection, Emerald_armorstats.leg_protection, Emerald_armorstats.boot_protection }, Emerald_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorEXPERIENCE = EnumHelper.addArmorMaterial("EXPERIENCE", "chaospersists", Experience_armorstats.durability, new int[] { Experience_armorstats.head_protection, Experience_armorstats.chest_protection, Experience_armorstats.leg_protection, Experience_armorstats.boot_protection }, Experience_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorEXPERIENCE = EnumHelper.addArmorMaterial("EXPERIENCE", "chaospersists", Experience_armorstats.durability, new int[] { Experience_armorstats.head_protection, Experience_armorstats.chest_protection, Experience_armorstats.leg_protection, Experience_armorstats.boot_protection }, Experience_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorRUBY = EnumHelper.addArmorMaterial("RUBY", "chaospersists", Ruby_armorstats.durability, new int[] { Ruby_armorstats.head_protection, Ruby_armorstats.chest_protection, Ruby_armorstats.leg_protection, Ruby_armorstats.boot_protection }, Ruby_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 2.5f);
+    armorRUBY = EnumHelper.addArmorMaterial("RUBY", "chaospersists", Ruby_armorstats.durability, new int[] { Ruby_armorstats.head_protection, Ruby_armorstats.chest_protection, Ruby_armorstats.leg_protection, Ruby_armorstats.boot_protection }, Ruby_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 2.5f);
 
-    armorAMETHYST = EnumHelper.addArmorMaterial("AMETHYST", "chaospersists", Amethyst_armorstats.durability, new int[] { Amethyst_armorstats.head_protection, Amethyst_armorstats.chest_protection, Amethyst_armorstats.leg_protection, Amethyst_armorstats.boot_protection }, Amethyst_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 2.0f);
+    armorAMETHYST = EnumHelper.addArmorMaterial("AMETHYST", "chaospersists", Amethyst_armorstats.durability, new int[] { Amethyst_armorstats.head_protection, Amethyst_armorstats.chest_protection, Amethyst_armorstats.leg_protection, Amethyst_armorstats.boot_protection }, Amethyst_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 2.0f);
 
-    armorPINK = EnumHelper.addArmorMaterial("PINK", "chaospersists", Pink_armorstats.durability, new int[] { Pink_armorstats.head_protection, Pink_armorstats.chest_protection, Pink_armorstats.leg_protection, Pink_armorstats.boot_protection }, Pink_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorPINK = EnumHelper.addArmorMaterial("PINK", "chaospersists", Pink_armorstats.durability, new int[] { Pink_armorstats.head_protection, Pink_armorstats.chest_protection, Pink_armorstats.leg_protection, Pink_armorstats.boot_protection }, Pink_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorTIGERSEYE = EnumHelper.addArmorMaterial("TIGERSEYE", "chaospersists", TigersEye_armorstats.durability, new int[] { TigersEye_armorstats.head_protection, TigersEye_armorstats.chest_protection, TigersEye_armorstats.leg_protection, TigersEye_armorstats.boot_protection }, TigersEye_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorTIGERSEYE = EnumHelper.addArmorMaterial("TIGERSEYE", "chaospersists", TigersEye_armorstats.durability, new int[] { TigersEye_armorstats.head_protection, TigersEye_armorstats.chest_protection, TigersEye_armorstats.leg_protection, TigersEye_armorstats.boot_protection }, TigersEye_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorPEACOCK = EnumHelper.addArmorMaterial("PEACOCK", "chaospersists", Peacock_armorstats.durability, new int[] { Peacock_armorstats.head_protection, Peacock_armorstats.chest_protection, Peacock_armorstats.leg_protection, Peacock_armorstats.boot_protection }, Peacock_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorPEACOCK = EnumHelper.addArmorMaterial("PEACOCK", "chaospersists", Peacock_armorstats.durability, new int[] { Peacock_armorstats.head_protection, Peacock_armorstats.chest_protection, Peacock_armorstats.leg_protection, Peacock_armorstats.boot_protection }, Peacock_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorROYAL = EnumHelper.addArmorMaterial("ROYAL", "chaospersists", Royal_armorstats.durability, new int[] { Royal_armorstats.head_protection, Royal_armorstats.chest_protection, Royal_armorstats.leg_protection, Royal_armorstats.boot_protection }, Royal_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 5.0f);
+    armorROYAL = EnumHelper.addArmorMaterial("ROYAL", "chaospersists", Royal_armorstats.durability, new int[] { Royal_armorstats.head_protection, Royal_armorstats.chest_protection, Royal_armorstats.leg_protection, Royal_armorstats.boot_protection }, Royal_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 5.0f);
 
-    armorLAPIS = EnumHelper.addArmorMaterial("LAPIS", "chaospersists", Lapis_armorstats.durability, new int[] { Lapis_armorstats.head_protection, Lapis_armorstats.chest_protection, Lapis_armorstats.leg_protection, Lapis_armorstats.boot_protection }, Lapis_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorLAPIS = EnumHelper.addArmorMaterial("LAPIS", "chaospersists", Lapis_armorstats.durability, new int[] { Lapis_armorstats.head_protection, Lapis_armorstats.chest_protection, Lapis_armorstats.leg_protection, Lapis_armorstats.boot_protection }, Lapis_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
 
-    armorQUEEN = EnumHelper.addArmorMaterial("QUEEN", "chaospersists", Queen_armorstats.durability, new int[] { Queen_armorstats.head_protection, Queen_armorstats.chest_protection, Queen_armorstats.leg_protection, Queen_armorstats.boot_protection }, Queen_armorstats.enchantability, SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 0.0f);
+    armorQUEEN = EnumHelper.addArmorMaterial("QUEEN", "chaospersists", Queen_armorstats.durability, new int[] { Queen_armorstats.head_protection, Queen_armorstats.chest_protection, Queen_armorstats.leg_protection, Queen_armorstats.boot_protection }, Queen_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
 
-    UltimateHelmet = (ItemChaosArmor)new ItemChaosArmor(armorULTIMATE, proxy.setArmorPrefix("ultimate"), 0).setTranslationKey("ultimate_helmet").setRegistryName("chaospersists", "ultimate_helmet");
-    UltimateBody = (ItemChaosArmor)new ItemChaosArmor(armorULTIMATE, proxy.setArmorPrefix("ultimate"), 1).setTranslationKey("ultimate_chest").setRegistryName("chaospersists", "ultimate_chest");
-    UltimateLegs = (ItemChaosArmor)new ItemChaosArmor(armorULTIMATE, proxy.setArmorPrefix("ultimate"), 2).setTranslationKey("ultimate_leggings").setRegistryName("chaospersists", "ultimate_leggings");
-    UltimateBoots = (ItemChaosArmor)new ItemChaosArmor(armorULTIMATE, proxy.setArmorPrefix("ultimate"), 3).setTranslationKey("ultimate_boots").setRegistryName("chaospersists", "ultimate_boots");
-    LavaEelHelmet = (ItemChaosArmor)new ItemChaosArmor(armorLAVAEEL, proxy.setArmorPrefix("lavaeel"), 0).setTranslationKey("lavaeel_helmet").setRegistryName("chaospersists", "lavaeel_helmet");
-    LavaEelBody = (ItemChaosArmor)new ItemChaosArmor(armorLAVAEEL, proxy.setArmorPrefix("lavaeel"), 1).setTranslationKey("lavaeel_chest").setRegistryName("chaospersists", "lavaeel_chest");
-    LavaEelLegs = (ItemChaosArmor)new ItemChaosArmor(armorLAVAEEL, proxy.setArmorPrefix("lavaeel"), 2).setTranslationKey("lavaeel_leggings").setRegistryName("chaospersists", "lavaeel_leggings");
-    LavaEelBoots = (ItemChaosArmor)new ItemChaosArmor(armorLAVAEEL, proxy.setArmorPrefix("lavaeel"), 3).setTranslationKey("lavaeel_boots").setRegistryName("chaospersists", "lavaeel_boots");
-    MothScaleHelmet = (ItemChaosArmor)new ItemChaosArmor(armorMOTHSCALE, proxy.setArmorPrefix("mothscale"), 0).setTranslationKey("mothscale_helmet").setRegistryName("chaospersists", "mothscale_helmet");
-    MothScaleBody = (ItemChaosArmor)new ItemChaosArmor(armorMOTHSCALE, proxy.setArmorPrefix("mothscale"), 1).setTranslationKey("mothscale_chest").setRegistryName("chaospersists", "mothscale_chest");
-    MothScaleLegs = (ItemChaosArmor)new ItemChaosArmor(armorMOTHSCALE, proxy.setArmorPrefix("mothscale"), 2).setTranslationKey("mothscale_leggings").setRegistryName("chaospersists", "mothscale_leggings");
-    MothScaleBoots = (ItemChaosArmor)new ItemChaosArmor(armorMOTHSCALE, proxy.setArmorPrefix("mothscale"), 3).setTranslationKey("mothscale_boots").setRegistryName("chaospersists", "mothscale_boots");
-    EmeraldHelmet = (ItemChaosArmor)new ItemChaosArmor(armorEMERALD, proxy.setArmorPrefix("emerald"), 0).setTranslationKey("emerald_helmet").setRegistryName("chaospersists", "emerald_helmet");
-    EmeraldBody = (ItemChaosArmor)new ItemChaosArmor(armorEMERALD, proxy.setArmorPrefix("emerald"), 1).setTranslationKey("emerald_chest").setRegistryName("chaospersists", "emerald_chest");
-    EmeraldLegs = (ItemChaosArmor)new ItemChaosArmor(armorEMERALD, proxy.setArmorPrefix("emerald"), 2).setTranslationKey("emerald_leggings").setRegistryName("chaospersists", "emerald_leggings");
-    EmeraldBoots = (ItemChaosArmor)new ItemChaosArmor(armorEMERALD, proxy.setArmorPrefix("emerald"), 3).setTranslationKey("emerald_boots").setRegistryName("chaospersists", "emerald_boots");
-    ExperienceHelmet = (ItemChaosArmor)new ItemChaosArmor(armorEXPERIENCE, proxy.setArmorPrefix("experience"), 0).setTranslationKey("experience_helmet").setRegistryName("chaospersists", "experience_helmet");
-    ExperienceBody = (ItemChaosArmor)new ItemChaosArmor(armorEXPERIENCE, proxy.setArmorPrefix("experience"), 1).setTranslationKey("experience_chest").setRegistryName("chaospersists", "experience_chest");
-    ExperienceLegs = (ItemChaosArmor)new ItemChaosArmor(armorEXPERIENCE, proxy.setArmorPrefix("experience"), 2).setTranslationKey("experience_leggings").setRegistryName("chaospersists", "experience_leggings");
-    ExperienceBoots = (ItemChaosArmor)new ItemChaosArmor(armorEXPERIENCE, proxy.setArmorPrefix("experience"), 3).setTranslationKey("experience_boots").setRegistryName("chaospersists", "experience_boots");
-    RubyHelmet = (ItemChaosArmor)new ItemChaosArmor(armorRUBY, proxy.setArmorPrefix("ruby"), 0).setTranslationKey("ruby_helmet").setRegistryName("chaospersists", "ruby_helmet");
-    RubyBody = (ItemChaosArmor)new ItemChaosArmor(armorRUBY, proxy.setArmorPrefix("ruby"), 1).setTranslationKey("ruby_chest").setRegistryName("chaospersists", "ruby_chest");
-    RubyLegs = (ItemChaosArmor)new ItemChaosArmor(armorRUBY, proxy.setArmorPrefix("ruby"), 2).setTranslationKey("ruby_leggings").setRegistryName("chaospersists", "ruby_leggings");
-    RubyBoots = (ItemChaosArmor)new ItemChaosArmor(armorRUBY, proxy.setArmorPrefix("ruby"), 3).setTranslationKey("ruby_boots").setRegistryName("chaospersists", "ruby_boots");
-    AmethystHelmet = (ItemChaosArmor)new ItemChaosArmor(armorAMETHYST, proxy.setArmorPrefix("amethyst"), 0).setTranslationKey("amethyst_helmet").setRegistryName("chaospersists", "amethyst_helmet");
-    AmethystBody = (ItemChaosArmor)new ItemChaosArmor(armorAMETHYST, proxy.setArmorPrefix("amethyst"), 1).setTranslationKey("amethyst_chest").setRegistryName("chaospersists", "amethyst_chest");
-    AmethystLegs = (ItemChaosArmor)new ItemChaosArmor(armorAMETHYST, proxy.setArmorPrefix("amethyst"), 2).setTranslationKey("amethyst_leggings").setRegistryName("chaospersists", "amethyst_leggings");
-    AmethystBoots = (ItemChaosArmor)new ItemChaosArmor(armorAMETHYST, proxy.setArmorPrefix("amethyst"), 3).setTranslationKey("amethyst_boots").setRegistryName("chaospersists", "amethyst_boots");
-    CrystalPinkHelmet = (ItemChaosArmor)new ItemChaosArmor(armorPINK, proxy.setArmorPrefix("pink"), 0).setTranslationKey("pink_helmet").setRegistryName("chaospersists", "pink_helmet");
-    CrystalPinkBody = (ItemChaosArmor)new ItemChaosArmor(armorPINK, proxy.setArmorPrefix("pink"), 1).setTranslationKey("pink_chest").setRegistryName("chaospersists", "pink_chest");
-    CrystalPinkLegs = (ItemChaosArmor)new ItemChaosArmor(armorPINK, proxy.setArmorPrefix("pink"), 2).setTranslationKey("pink_leggings").setRegistryName("chaospersists", "pink_leggings");
-    CrystalPinkBoots = (ItemChaosArmor)new ItemChaosArmor(armorPINK, proxy.setArmorPrefix("pink"), 3).setTranslationKey("pink_boots").setRegistryName("chaospersists", "pink_boots");
-    TigersEyeHelmet = (ItemChaosArmor)new ItemChaosArmor(armorTIGERSEYE, proxy.setArmorPrefix("tigerseye"), 0).setTranslationKey("tigerseye_helmet").setRegistryName("chaospersists", "tigerseye_helmet");
-    TigersEyeBody = (ItemChaosArmor)new ItemChaosArmor(armorTIGERSEYE, proxy.setArmorPrefix("tigerseye"), 1).setTranslationKey("tigerseye_chest").setRegistryName("chaospersists", "tigerseye_chest");
-    TigersEyeLegs = (ItemChaosArmor)new ItemChaosArmor(armorTIGERSEYE, proxy.setArmorPrefix("tigerseye"), 2).setTranslationKey("tigerseye_leggings").setRegistryName("chaospersists", "tigerseye_leggings");
-    TigersEyeBoots = (ItemChaosArmor)new ItemChaosArmor(armorTIGERSEYE, proxy.setArmorPrefix("tigerseye"), 3).setTranslationKey("tigerseye_boots").setRegistryName("chaospersists", "tigerseye_boots");
-    PeacockFeatherBoots = (ItemChaosArmor)new ItemChaosArmor(armorPEACOCK, proxy.setArmorPrefix("peacock"), 3).setTranslationKey("peacock_boots").setRegistryName("chaospersists", "peacock_boots");
-    PeacockFeatherHelmet = (ItemChaosArmor)new ItemChaosArmor(armorPEACOCK, proxy.setArmorPrefix("peacock"), 0).setTranslationKey("peacock_helmet").setRegistryName("chaospersists", "peacock_helmet");
-    PeacockFeatherBody = (ItemChaosArmor)new ItemChaosArmor(armorPEACOCK, proxy.setArmorPrefix("peacock"), 1).setTranslationKey("peacock_chest").setRegistryName("chaospersists", "peacock_chest");
-    PeacockFeatherLegs = (ItemChaosArmor)new ItemChaosArmor(armorPEACOCK, proxy.setArmorPrefix("peacock"), 2).setTranslationKey("peacock_leggings").setRegistryName("chaospersists", "peacock_leggings");
-    MobzillaHelmet = (ItemChaosArmor)new ItemChaosArmor(armorMOBZILLA, proxy.setArmorPrefix("mobzilla"), 0).setTranslationKey("mobzilla_helmet").setRegistryName("chaospersists", "mobzilla_helmet");
-    MobzillaBody = (ItemChaosArmor)new ItemChaosArmor(armorMOBZILLA, proxy.setArmorPrefix("mobzilla"), 1).setTranslationKey("mobzilla_chest").setRegistryName("chaospersists", "mobzilla_chest");
-    MobzillaLegs = (ItemChaosArmor)new ItemChaosArmor(armorMOBZILLA, proxy.setArmorPrefix("mobzilla"), 2).setTranslationKey("mobzilla_leggings").setRegistryName("chaospersists", "mobzilla_leggings");
-    MobzillaBoots = (ItemChaosArmor)new ItemChaosArmor(armorMOBZILLA, proxy.setArmorPrefix("mobzilla"), 3).setTranslationKey("mobzilla_boots").setRegistryName("chaospersists", "mobzilla_boots");
-    RoyalHelmet = (ItemChaosArmor)new ItemChaosArmor(armorROYAL, proxy.setArmorPrefix("royal"), 0).setTranslationKey("royal_helmet").setRegistryName("chaospersists", "royal_helmet");
-    RoyalBody = (ItemChaosArmor)new ItemChaosArmor(armorROYAL, proxy.setArmorPrefix("royal"), 1).setTranslationKey("royal_chest").setRegistryName("chaospersists", "royal_chest");
-    RoyalLegs = (ItemChaosArmor)new ItemChaosArmor(armorROYAL, proxy.setArmorPrefix("royal"), 2).setTranslationKey("royal_leggings").setRegistryName("chaospersists", "royal_leggings");
-    RoyalBoots = (ItemChaosArmor)new ItemChaosArmor(armorROYAL, proxy.setArmorPrefix("royal"), 3).setTranslationKey("royal_boots").setRegistryName("chaospersists", "royal_boots");
-    LapisHelmet = (ItemChaosArmor)new ItemChaosArmor(armorLAPIS, proxy.setArmorPrefix("lapis"), 0).setTranslationKey("lapis_helmet").setRegistryName("chaospersists", "lapis_helmet");
-    LapisBody = (ItemChaosArmor)new ItemChaosArmor(armorLAPIS, proxy.setArmorPrefix("lapis"), 1).setTranslationKey("lapis_chest").setRegistryName("chaospersists", "lapis_chest");
-    LapisLegs = (ItemChaosArmor)new ItemChaosArmor(armorLAPIS, proxy.setArmorPrefix("lapis"), 2).setTranslationKey("lapis_leggings").setRegistryName("chaospersists", "lapis_leggings");
-    LapisBoots = (ItemChaosArmor)new ItemChaosArmor(armorLAPIS, proxy.setArmorPrefix("lapis"), 3).setTranslationKey("lapis_boots").setRegistryName("chaospersists", "lapis_boots");
-    QueenHelmet = (ItemChaosArmor)new ItemChaosArmor(armorQUEEN, proxy.setArmorPrefix("queen"), 0).setTranslationKey("queen_helmet").setRegistryName("chaospersists", "queen_helmet");
-    QueenBody = (ItemChaosArmor)new ItemChaosArmor(armorQUEEN, proxy.setArmorPrefix("queen"), 1).setTranslationKey("queen_chest").setRegistryName("chaospersists", "queen_chest");
-    QueenLegs = (ItemChaosArmor)new ItemChaosArmor(armorQUEEN, proxy.setArmorPrefix("queen"), 2).setTranslationKey("queen_leggings").setRegistryName("chaospersists", "queen_leggings");
-    QueenBoots = (ItemChaosArmor)new ItemChaosArmor(armorQUEEN, proxy.setArmorPrefix("queen"), 3).setTranslationKey("queen_boots").setRegistryName("chaospersists", "queen_boots");
+    UltimateHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimate_helmet"));
+    UltimateBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimate_chest"));
+    UltimateLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimate_leggings"));
+    UltimateBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimate_boots"));
+    LavaEelHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "lavaeel_helmet"));
+    LavaEelBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "lavaeel_chest"));
+    LavaEelLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "lavaeel_leggings"));
+    LavaEelBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "lavaeel_boots"));
+    MothScaleHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "mothscale_helmet"));
+    MothScaleBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "mothscale_chest"));
+    MothScaleLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "mothscale_leggings"));
+    MothScaleBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "mothscale_boots"));
+    EmeraldHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "emerald_helmet"));
+    EmeraldBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "emerald_chest"));
+    EmeraldLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "emerald_leggings"));
+    EmeraldBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "emerald_boots"));
+    ExperienceHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "experience_helmet"));
+    ExperienceBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "experience_chest"));
+    ExperienceLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "experience_leggings"));
+    ExperienceBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "experience_boots"));
+    RubyHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ruby_helmet"));
+    RubyBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ruby_chest"));
+    RubyLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ruby_leggings"));
+    RubyBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ruby_boots"));
+    AmethystHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "amethyst_helmet"));
+    AmethystBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "amethyst_chest"));
+    AmethystLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "amethyst_leggings"));
+    AmethystBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "amethyst_boots"));
+    CrystalPinkHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "pink_helmet"));
+    CrystalPinkBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "pink_chest"));
+    CrystalPinkLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "pink_leggings"));
+    CrystalPinkBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "pink_boots"));
+    TigersEyeHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye_helmet"));
+    TigersEyeBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye_chest"));
+    TigersEyeLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye_leggings"));
+    TigersEyeBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye_boots"));
+    PeacockFeatherBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "peacock_boots"));
+    PeacockFeatherHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "peacock_helmet"));
+    PeacockFeatherBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "peacock_chest"));
+    PeacockFeatherLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "peacock_leggings"));
+    MobzillaHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "mobzilla_helmet"));
+    MobzillaBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "mobzilla_chest"));
+    MobzillaLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "mobzilla_leggings"));
+    MobzillaBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "mobzilla_boots"));
+    RoyalHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "royal_helmet"));
+    RoyalBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "royal_chest"));
+    RoyalLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "royal_leggings"));
+    RoyalBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "royal_boots"));
+    LapisHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "lapis_helmet"));
+    LapisBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "lapis_chest"));
+    LapisLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "lapis_leggings"));
+    LapisBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "lapis_boots"));
+    QueenHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "queen_helmet"));
+    QueenBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "queen_chest"));
+    QueenLegs = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "queen_leggings"));
+    QueenBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "queen_boots"));
 
-    MyOreSaltBlock = new OreSalt().setTranslationKey("oresalt").setRegistryName("chaospersists", "oresalt");
-    MySalt = new ItemSalt(BaseItemID + 178).setTranslationKey("salt").setRegistryName("chaospersists", "salt");
-    MyPopcorn = new ItemPopcorn(1, 0.5F, false).setTranslationKey("popcorn").setRegistryName("chaospersists", "popcorn");
-    MyButteredPopcorn = new ItemPopcorn(2, 0.6F, false).setTranslationKey("popcorn_buttered").setRegistryName("chaospersists", "popcorn_buttered");
-    MyButteredSaltedPopcorn = new ItemPopcorn(3, 0.75F, false).setTranslationKey("popcorn_buttered_salted").setRegistryName("chaospersists", "popcorn_buttered_salted");
-    MyPopcornBag = new ItemPopcorn(10, 1.25F, false).setTranslationKey("popcorn_bag").setRegistryName("chaospersists", "popcorn_bag");
-    MyButter = new ItemPopcorn(1, 0.5F, false).setTranslationKey("butter").setRegistryName("chaospersists", "butter");
-    MyCornDog = new ItemPopcorn(16, 2.5F, false).setTranslationKey("corndog_cooked").setRegistryName("chaospersists", "corndog_cooked");
-    MyRawCornDog = new ItemPopcorn(4, 0.6F, false).setTranslationKey("corndog_raw").setRegistryName("chaospersists", "corndog_raw");
-    MyButterCandy = new ItemSunFish(4, 0.5F, false).setTranslationKey("buttercandy").setRegistryName("chaospersists", "buttercandy");
-    MyBacon = new ItemSunFish(14, 1.5F, false).setTranslationKey("cookedbacon").setRegistryName("chaospersists", "cookedbacon");
-    MyRawBacon = new ItemPopcorn(8, 1.0F, false).setTranslationKey("bacon").setRegistryName("chaospersists", "bacon");
-    MyCrabMeat = new ItemSunFish(6, 0.75F, false).setTranslationKey("cookedcrabmeat").setRegistryName("chaospersists", "cookedcrabmeat");
-    MyRawCrabMeat = new ItemPopcorn(4, 0.25F, false).setTranslationKey("crabmeat").setRegistryName("chaospersists", "crabmeat");
-    MyCheese = new ItemPopcorn(4, 0.5F, false).setTranslationKey("cheese").setRegistryName("chaospersists", "cheese");
-    MySalad = new ItemPopcorn(10, 0.95F, false).setTranslationKey("salad").setRegistryName("chaospersists", "salad");
-    MyBLT = new ItemPopcorn(12, 0.95F, false).setTranslationKey("blt_sandwich").setRegistryName("chaospersists", "blt_sandwich");
-    MyCrabbyPatty = new ItemPopcorn(16, 2.35F, false).setTranslationKey("crabbypatty").setRegistryName("chaospersists", "crabbypatty");
-    MyOreRubyBlock = new OreRuby().setTranslationKey("oreruby").setRegistryName("chaospersists", "oreruby");
-    MyRuby = new ItemSalt(BaseItemID + 270).setTranslationKey("ruby").setRegistryName("chaospersists", "ruby");
-    MyOreAmethystBlock = new OreAmethyst().setTranslationKey("oreamethyst").setRegistryName("chaospersists", "oreamethyst");
-    MyAmethyst = new ItemSalt(BaseItemID + 260).setTranslationKey("amethyst").setRegistryName("chaospersists", "amethyst");
-    UraniumNugget = new ItemSalt(BaseItemID + 150).setTranslationKey("uranium_nugget").setRegistryName("chaospersists", "uranium_nugget");
-    TitaniumNugget = new ItemSalt(BaseItemID + 151).setTranslationKey("titanium_nugget").setRegistryName("chaospersists", "titanium_nugget");
-    CrystalStone = new OreBasicStone(2.0F, 10.0F).setTranslationKey("crystalstone").setRegistryName("chaospersists", "crystalstone");
-    CrystalCoal = new OreCrystal(0.6F, 6.0F, 20.0F).setTranslationKey("crystalcoal").setRegistryName("chaospersists", "crystalcoal");
-    CrystalGrass = new CrystalGrass(0.6F, 2.0F).setTranslationKey("crystalgrass").setRegistryName("chaospersists", "crystalgrass");
-    CrystalCrystal = new OreCrystalCrystal(0.4F, 12.0F, 40.0F).setTranslationKey("crystalcrystal").setRegistryName("chaospersists", "crystalcrystal");
-    TigersEye = new OreCrystalCrystal(0.5F, 15.0F, 60.0F).setTranslationKey("tigerseye").setRegistryName("chaospersists", "tigerseye");
-    CrystalPlanksBlock = new CrystalWood(1.5F, 4.0F).setTranslationKey("crystalplanks").setRegistryName("chaospersists", "crystalplanks");
-    CrystalWorkbenchBlock = new CrystalWorkbench(1.0F, 5.0F).setTranslationKey("crystalworkbench").setRegistryName("chaospersists", "crystalworkbench");
-    CrystalFurnaceBlock = new CrystalFurnace(2.0F, 10.0F);
-    CrystalFurnaceBlock.setTranslationKey("crystalfurnace");
-    CrystalFurnaceBlock.setRegistryName("chaospersists", "crystalfurnace");
-    MyPeacock = new ItemPopcorn(12, 1.4F, false).setTranslationKey("cookedpeacock").setRegistryName("chaospersists", "cookedpeacock");
-    MyRawPeacock = new ItemPopcorn(6, 0.7F, false).setTranslationKey("rawpeacock").setRegistryName("chaospersists", "rawpeacock");
-    CrystalRat = new OreBasicStone(2.5F, 14.0F).setTranslationKey("crystalrat").setRegistryName("chaospersists", "crystalrat");
-    CrystalFairy = new OreBasicStone(2.5F, 14.0F).setTranslationKey("crystalfairy").setRegistryName("chaospersists", "crystalfairy");
-    RedAntTroll = new OreBasicStone(2.5F, 14.0F).setTranslationKey("redanttroll").setRegistryName("chaospersists", "redanttroll");
-    TermiteTroll = new OreBasicStone(2.5F, 14.0F).setTranslationKey("termitetroll").setRegistryName("chaospersists", "termitetroll");
+    MyOreSaltBlock = (OreSalt) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "oresalt"));
+    MySalt = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "salt"));
+    MyPopcorn = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "popcorn"));
+    MyButteredPopcorn = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "popcorn_buttered"));
+    MyButteredSaltedPopcorn = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "popcorn_buttered_salted"));
+    MyPopcornBag = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "popcorn_bag"));
+    MyButter = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "butter"));
+    MyCornDog = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "corndog_cooked"));
+    MyRawCornDog = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "corndog_raw"));
+    MyButterCandy = (ItemSunFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "buttercandy"));
+    MyBacon = (ItemSunFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cookedbacon"));
+    MyRawBacon = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "bacon"));
+    MyCrabMeat = (ItemSunFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cookedcrabmeat"));
+    MyRawCrabMeat = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crabmeat"));
+    MyCheese = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cheese"));
+    MySalad = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "salad"));
+    MyBLT = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "blt_sandwich"));
+    MyCrabbyPatty = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crabbypatty"));
+    MyOreRubyBlock = (OreRuby) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "oreruby"));
+    MyRuby = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ruby"));
+    MyOreAmethystBlock = (OreAmethyst) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "oreamethyst"));
+    MyAmethyst = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "amethyst"));
+    UraniumNugget = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "uranium_nugget"));
+    TitaniumNugget = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "titanium_nugget"));
+    CrystalStone = (OreBasicStone) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalstone"));
+    CrystalCoal = (OreCrystal) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalcoal"));
+    CrystalGrass = (CrystalGrass) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalgrass"));
+    CrystalCrystal = (OreCrystalCrystal) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalcrystal"));
+    TigersEye = (OreCrystalCrystal) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "tigerseye"));
+    CrystalPlanksBlock = (CrystalWood) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalplanks"));
+    CrystalWorkbenchBlock = (CrystalWorkbench) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalworkbench"));
+    CrystalFurnaceBlock = (CrystalFurnace) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalfurnace"));
+    MyPeacock = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cookedpeacock"));
+    MyRawPeacock = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rawpeacock"));
+    CrystalRat = (OreBasicStone) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalrat"));
+    CrystalFairy = (OreBasicStone) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalfairy"));
+    RedAntTroll = (OreBasicStone) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "redanttroll"));
+    TermiteTroll = (OreBasicStone) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "termitetroll"));
 
-    MyRTPBlock = new RTPBlock().setTranslationKey("blockteleport").setRegistryName("chaospersists", "blockteleport");
-    MyStepUp = new StepUp(BaseItemID + 232).setTranslationKey("step_up").setRegistryName("chaospersists", "step_up");
-    MyStepDown = new StepDown(BaseItemID + 233).setTranslationKey("step_down").setRegistryName("chaospersists", "step_down");
-    MyStepAccross = new StepAccross(BaseItemID + 234).setTranslationKey("step_accross").setRegistryName("chaospersists", "step_accross");
-    MyMoleDirtBlock = new MoleDirtBlock().setHardness(0.6F).setTranslationKey("moledirt").setRegistryName("chaospersists", "moledirt");
+    MyRTPBlock = (RTPBlock) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "blockteleport"));
+    MyStepUp = (StepUp) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "step_up"));
+    MyStepDown = (StepDown) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "step_down"));
+    MyStepAccross = (StepAccross) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "step_accross"));
+    MyMoleDirtBlock = (MoleDirtBlock) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "moledirt"));
 
     initializeCagesAndEggs();
 
-    MyStrawberry = new ItemStrawberry(2, 0.65F, false).setTranslationKey("strawberry").setRegistryName("chaospersists", "strawberry");
-    MyStrawberryPlant = new BlockStrawberry().setRegistryName("chaospersists", "strawberry_plant").setTranslationKey("strawberry_plant");
-    MyStrawberrySeed = new ItemStrawberrySeed(MyStrawberryPlant, Blocks.FARMLAND).setTranslationKey("strawberry_seed").setRegistryName("chaospersists", "strawberry_seed");
-    MyButterflyPlant = new BlockButterflyPlant().setRegistryName("chaospersists", "butterfly_plant").setTranslationKey("butterfly_plant");
-    MyButterflySeed = new ItemButterflySeed(MyButterflyPlant, Blocks.FARMLAND).setTranslationKey("butterfly_seed").setRegistryName("chaospersists", "butterfly_seed");
-    MyMothPlant = new BlockMothPlant().setRegistryName("chaospersists", "moth_plant").setTranslationKey("moth_plant");
-    MyMothSeed = new ItemMothSeed(MyMothPlant, Blocks.FARMLAND).setTranslationKey("moth_seed").setRegistryName("chaospersists", "moth_seed");
-    MyMosquitoPlant = new BlockMosquitoPlant().setRegistryName("chaospersists", "mosquito_plant").setTranslationKey("mosquito_plant");
-    MyMosquitoSeed = new ItemMosquitoSeed(MyMosquitoPlant, Blocks.FARMLAND).setTranslationKey("mosquito_seed").setRegistryName("chaospersists", "mosquito_seed");
-    MyFireflyPlant = new BlockFireflyPlant().setRegistryName("chaospersists", "firefly_plant").setTranslationKey("firefly_plant");
-    MyFireflySeed = new ItemFireflySeed(MyFireflyPlant, Blocks.FARMLAND).setTranslationKey("firefly_seed").setRegistryName("chaospersists", "firefly_seed");
-    MyRadishPlant = new BlockRadish().setTranslationKey("radish_plant").setRegistryName("chaospersists", "radish_plant");
-    MyRadish = new ItemRadish(2, 0.45F, MyRadishPlant, Blocks.FARMLAND).setTranslationKey("radish").setRegistryName("chaospersists", "radish");
-    MyCherry = new ItemStrawberry(3, 0.45F, false).setTranslationKey("cherries").setRegistryName("chaospersists", "cherries");
-    MyPeach = new ItemStrawberry(4, 0.55F, false).setTranslationKey("peach").setRegistryName("chaospersists", "peach");
-    MyCrystalApple = new ItemSunFish(5, 0.85F, false).setTranslationKey("crystalapple").setRegistryName("chaospersists", "crystalapple");
-    MyLove = new ItemSunFish(8, 0.95F, false).setTranslationKey("heart").setRegistryName("chaospersists", "heart");
-    MyRicePlant = new BlockRice().setTranslationKey("rice_plant").setRegistryName("chaospersists", "rice_plant");
-    MyRice = new ItemRadish(5, 0.65F, MyRicePlant, CrystalGrass).setTranslationKey("rice").setRegistryName("chaospersists", "rice");
+    MyStrawberry = (ItemStrawberry) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "strawberry"));
+    MyStrawberryPlant = (BlockStrawberry) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "strawberry_plant"));
+    MyStrawberrySeed = (ItemStrawberrySeed) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "strawberry_seed"));
+    MyButterflyPlant = (BlockButterflyPlant) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "butterfly_plant"));
+    MyButterflySeed = (ItemButterflySeed) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "butterfly_seed"));
+    MyMothPlant = (BlockMothPlant) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "moth_plant"));
+    MyMothSeed = (ItemMothSeed) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "moth_seed"));
+    MyMosquitoPlant = (BlockMosquitoPlant) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "mosquito_plant"));
+    MyMosquitoSeed = (ItemMosquitoSeed) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "mosquito_seed"));
+    MyFireflyPlant = (BlockFireflyPlant) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "firefly_plant"));
+    MyFireflySeed = (ItemFireflySeed) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "firefly_seed"));
+    MyRadishPlant = (BlockRadish) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "radish_plant"));
+    MyRadish = (ItemRadish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "radish"));
+    MyCherry = (ItemStrawberry) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cherries"));
+    MyPeach = (ItemStrawberry) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "peach"));
+    MyCrystalApple = (ItemSunFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalapple"));
+    MyLove = (ItemSunFish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "heart"));
+    MyRicePlant = (BlockRice) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "rice_plant"));
+    MyRice = (ItemRadish) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "rice"));
 
-    MyElevator = new ItemElevator(BaseItemID + 235).setTranslationKey("elevator").setRegistryName("chaospersists", "elevator");
+    MyElevator = (ItemElevator) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "elevator"));
 
-    MyCornPlant1 = new BlockCorn().setTranslationKey("corn_plant0").setRegistryName("chaospersists", "corn_plant0");
-    MyCornPlant2 = new BlockCorn().setTranslationKey("corn_plant1").setRegistryName("chaospersists", "corn_plant1");
-    MyCornPlant3 = new BlockCorn().setTranslationKey("corn_plant2").setRegistryName("chaospersists", "corn_plant2");
-    MyCornPlant4 = new BlockCorn().setTranslationKey("corn_plant3").setRegistryName("chaospersists", "corn_plant3");
-    MyCornCob = new ItemCornCob(6, 0.75F, MyCornPlant1, Blocks.FARMLAND).setTranslationKey("corn_seed").setRegistryName("chaospersists", "corn_seed");
-    MyQuinoaPlant1 = new BlockQuinoa().setTranslationKey("quinoa_0").setRegistryName("chaospersists", "quinoa_0");
-    MyQuinoaPlant2 = new BlockQuinoa().setTranslationKey("quinoa_1").setRegistryName("chaospersists", "quinoa_1");
-    MyQuinoaPlant3 = new BlockQuinoa().setTranslationKey("quinoa_2").setRegistryName("chaospersists", "quinoa_2");
-    MyQuinoaPlant4 = new BlockQuinoa().setTranslationKey("quinoa_3").setRegistryName("chaospersists", "quinoa_3");
-    MyQuinoa = new ItemCornCob(7, 0.85F, MyQuinoaPlant1, CrystalGrass).setTranslationKey("quinoa").setRegistryName("chaospersists", "quinoa");
+    MyCornPlant1 = (BlockCorn) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "corn_plant0"));
+    MyCornPlant2 = (BlockCorn) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "corn_plant1"));
+    MyCornPlant3 = (BlockCorn) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "corn_plant2"));
+    MyCornPlant4 = (BlockCorn) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "corn_plant3"));
+    MyCornCob = (ItemCornCob) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "corn_seed"));
+    MyQuinoaPlant1 = (BlockQuinoa) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "quinoa_0"));
+    MyQuinoaPlant2 = (BlockQuinoa) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "quinoa_1"));
+    MyQuinoaPlant3 = (BlockQuinoa) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "quinoa_2"));
+    MyQuinoaPlant4 = (BlockQuinoa) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "quinoa_3"));
+    MyQuinoa = (ItemCornCob) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "quinoa"));
 
-    MyTomatoPlant1 = new BlockTomato().setTranslationKey("tomato_plant0").setRegistryName("chaospersists", "tomato_plant0");
-    MyTomatoPlant2 = new BlockTomato().setTranslationKey("tomato_plant1").setRegistryName("chaospersists", "tomato_plant1");
-    MyTomatoPlant3 = new BlockTomato().setTranslationKey("tomato_plant2").setRegistryName("chaospersists", "tomato_plant2");
-    MyTomatoPlant4 = new BlockTomato().setTranslationKey("tomato_plant3").setRegistryName("chaospersists", "tomato_plant3");
-    MyTomato = new ItemTomato(4, 0.55F, MyTomatoPlant1, Blocks.FARMLAND).setTranslationKey("tomato_seed").setRegistryName("chaospersists", "tomato_seed");
-    MyLettucePlant1 = new BlockLettuce().setTranslationKey("lettuce_0").setRegistryName("chaospersists", "lettuce_0");
-    MyLettucePlant2 = new BlockLettuce().setTranslationKey("lettuce_1").setRegistryName("chaospersists", "lettuce_1");
-    MyLettucePlant3 = new BlockLettuce().setTranslationKey("lettuce_2").setRegistryName("chaospersists", "lettuce_2");
-    MyLettucePlant4 = new BlockLettuce().setTranslationKey("lettuce_3").setRegistryName("chaospersists", "lettuce_3");
-    MyLettuce = new ItemLettuce(3, 0.45F, MyLettucePlant1, Blocks.FARMLAND).setTranslationKey("lettuce_seed").setRegistryName("chaospersists", "lettuce_seed");
+    MyTomatoPlant1 = (BlockTomato) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "tomato_plant0"));
+    MyTomatoPlant2 = (BlockTomato) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "tomato_plant1"));
+    MyTomatoPlant3 = (BlockTomato) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "tomato_plant2"));
+    MyTomatoPlant4 = (BlockTomato) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "tomato_plant3"));
+    MyTomato = (ItemTomato) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "tomato_seed"));
+    MyLettucePlant1 = (BlockLettuce) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "lettuce_0"));
+    MyLettucePlant2 = (BlockLettuce) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "lettuce_1"));
+    MyLettucePlant3 = (BlockLettuce) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "lettuce_2"));
+    MyLettucePlant4 = (BlockLettuce) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "lettuce_3"));
+    MyLettuce = (ItemLettuce) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "lettuce_seed"));
 
-    MagicApple = new ItemMagicApple(BaseItemID + 236).setTranslationKey("magicapple").setRegistryName("chaospersists", "magicapple");
-    MinersDream = new ItemMinersDream(BaseItemID + 237).setTranslationKey("minersdream").setRegistryName("chaospersists", "minersdream");
-    ExtremeTorch = new BlockExtremeTorch().setLightLevel(1.0F).setTranslationKey("extremetorch").setRegistryName("chaospersists", "extremetorch");
-    KrakenRepellent = new KrakenRepellent().setLightLevel(0.8F).setTranslationKey("krakenrepellent").setRegistryName("chaospersists", "krakenrepellent");
-    MyIslandBlock = new IslandBlock().setLightLevel(0.9F).setTranslationKey("island").setRegistryName("chaospersists", "island");
-    CreeperRepellent = new CreeperRepellent().setLightLevel(0.8F).setTranslationKey("creeperrepellent").setRegistryName("chaospersists", "creeperrepellent");
-    ZooCage2 = new ZooCage(0, 3).setTranslationKey("zoo2").setRegistryName("chaospersists", "zoo2");
-    ZooCage4 = new ZooCage(0, 5).setTranslationKey("zoo4").setRegistryName("chaospersists", "zoo4");
-    ZooCage6 = new ZooCage(0, 9).setTranslationKey("zoo6").setRegistryName("chaospersists", "zoo6");
-    ZooCage8 = new ZooCage(0, 13).setTranslationKey("zoo8").setRegistryName("chaospersists", "zoo8");
-    ZooCage10 = new ZooCage(0, 17).setTranslationKey("zoo10").setRegistryName("chaospersists", "zoo10");
-    InstantShelter = new InstantShelter(BaseItemID + 327).setTranslationKey("instantshelter").setRegistryName("chaospersists", "instantshelter");
-    InstantGarden = new InstantGarden(BaseItemID + 328).setTranslationKey("instantgarden").setRegistryName("chaospersists", "instantgarden");
-    CrystalTorch = new BlockCrystalTorch().setLightLevel(0.99F).setTranslationKey("crystaltorch").setRegistryName("chaospersists", "crystaltorch");
-    MyKingSpawnerBlock = new KingSpawnerBlock().setLightLevel(0.9F).setTranslationKey("kingspawner").setRegistryName("chaospersists", "kingspawner");
-    MyQueenSpawnerBlock = new QueenSpawnerBlock().setLightLevel(0.9F).setTranslationKey("queenspawner").setRegistryName("chaospersists", "queenspawner");
-    RandomDungeon = new ItemRandomDungeon(BaseItemID + 421).setTranslationKey("randomdungeon").setRegistryName("chaospersists", "randomdungeon");
-    MyDungeonSpawnerBlock = new DungeonSpawnerBlock().setLightLevel(0.9F).setTranslationKey("dungeonspawner").setRegistryName("chaospersists", "dungeonspawner");
+    MagicApple = (ItemMagicApple) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "magicapple"));
+    MinersDream = (ItemMinersDream) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "minersdream"));
+    ExtremeTorch = (BlockExtremeTorch) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "extremetorch"));
+    KrakenRepellent = (KrakenRepellent) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "krakenrepellent"));
+    MyIslandBlock = (IslandBlock) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "island"));
+    CreeperRepellent = (CreeperRepellent) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "creeperrepellent"));
+    ZooCage2 = (ZooCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "zoo2"));
+    ZooCage4 = (ZooCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "zoo4"));
+    ZooCage6 = (ZooCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "zoo6"));
+    ZooCage8 = (ZooCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "zoo8"));
+    ZooCage10 = (ZooCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "zoo10"));
+    InstantShelter = (InstantShelter) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "instantshelter"));
+    InstantGarden = (InstantGarden) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "instantgarden"));
+    CrystalTorch = (BlockCrystalTorch) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystaltorch"));
+    MyKingSpawnerBlock = (KingSpawnerBlock) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "kingspawner"));
+    MyQueenSpawnerBlock = (QueenSpawnerBlock) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "queenspawner"));
+    RandomDungeon = (ItemRandomDungeon) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "randomdungeon"));
+    MyDungeonSpawnerBlock = (DungeonSpawnerBlock) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "dungeonspawner"));
 
-    MyAppleLeaves = (BlockAppleLeaves)new BlockAppleLeaves().setHardness(0.2F).setLightOpacity(1).setTranslationKey("leaves_apple").setRegistryName("chaospersists", "leaves_apple");
-    MyAppleSeed = new ItemAppleSeed(BaseItemID + 211).setTranslationKey("appletree_seed").setRegistryName("chaospersists", "appletree_seed");
-    MySkyTreeLog = (BlockSkyTreeLog)new BlockSkyTreeLog().setHardness(0.2F).setTranslationKey("skytreelog").setRegistryName("chaospersists", "skytreelog");
+    MyAppleLeaves = (BlockAppleLeaves) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "leaves_apple"));
+    MyAppleSeed = (ItemAppleSeed) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "appletree_seed"));
+    MySkyTreeLog = (BlockSkyTreeLog) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "skytreelog"));
 
-    MyDT = (BlockDuplicatorLog)new BlockDuplicatorLog().setHardness(0.2F).setTranslationKey("duplicatortreelog").setRegistryName("chaospersists", "duplicatortreelog");
-    MyExperienceLeaves = (BlockExperienceLeaves)new BlockExperienceLeaves().setHardness(0.2F).setLightOpacity(1).setTranslationKey("leaves_experience").setRegistryName("chaospersists", "leaves_experience");
-    MyExperienceCatcher = new ExperienceCatcher(BaseItemID + 238).setTranslationKey("experiencecatcher").setRegistryName("chaospersists", "experiencecatcher");
-    MyExperienceTreeSeed = new ItemExperienceTreeSeed(BaseItemID + 216).setTranslationKey("experiencetree_seed").setRegistryName("chaospersists", "experiencetree_seed");
-    MyExperiencePlant = new BlockExperiencePlant().setTranslationKey("experiencesapling").setRegistryName("chaospersists", "experiencesapling");
-    MyDeadStinkBug = new ItemSalt(BaseItemID + 155).setTranslationKey("deadstinkbug").setRegistryName("chaospersists", "deadstinkbug");
-    MyFlowerPinkBlock = (MyBlockFlower)new MyBlockFlower().setHardness(0.0F).setTranslationKey("flower_pink").setRegistryName("chaospersists", "flower_pink");
-    MyFlowerBlueBlock = (MyBlockFlower)new MyBlockFlower().setHardness(0.0F).setTranslationKey("flower_blue").setRegistryName("chaospersists", "flower_blue");
-    MyFlowerBlackBlock = (MyBlockFlower)new MyBlockFlower().setHardness(0.0F).setTranslationKey("flower_black").setRegistryName("chaospersists", "flower_black");
-    MyFlowerScaryBlock = (MyBlockFlower)new MyBlockFlower().setHardness(0.0F).setTranslationKey("flower_scary").setRegistryName("chaospersists", "flower_scary");
-    MyScaryLeaves = (BlockScaryLeaves)new BlockScaryLeaves().setHardness(0.2F).setLightOpacity(1).setTranslationKey("leaves_scary").setRegistryName("chaospersists", "leaves_scary");
-    MyCherryLeaves = (BlockScaryLeaves)new BlockScaryLeaves().setHardness(0.15F).setLightOpacity(1).setTranslationKey("leaves_cherry").setRegistryName("chaospersists", "leaves_cherry");
-    MyPeachLeaves = (BlockScaryLeaves)new BlockScaryLeaves().setHardness(0.15F).setLightOpacity(1).setTranslationKey("leaves_peach").setRegistryName("chaospersists", "leaves_peach");
-    MyCherrySeed = new ItemAppleSeed(BaseItemID + 217).setTranslationKey("cherrytree_seed").setRegistryName("chaospersists", "cherrytree_seed");
-    MyPeachSeed = new ItemAppleSeed(BaseItemID + 218).setTranslationKey("peachtree_seed").setRegistryName("chaospersists", "peachtree_seed");
-    CrystalFlowerRedBlock = (MyBlockFlower)new MyBlockFlower().setHardness(0.0F).setTranslationKey("crystalflower_red").setRegistryName("chaospersists", "crystalflower_red");
-    CrystalFlowerGreenBlock = (MyBlockFlower)new MyBlockFlower().setHardness(0.0F).setTranslationKey("crystalflower_green").setRegistryName("chaospersists", "crystalflower_green");
-    CrystalFlowerBlueBlock = (MyBlockFlower)new MyBlockFlower().setHardness(0.0F).setTranslationKey("crystalflower_blue").setRegistryName("chaospersists", "crystalflower_blue");
-    CrystalFlowerYellowBlock = (MyBlockFlower)new MyBlockFlower().setHardness(0.0F).setTranslationKey("crystalflower_yellow").setRegistryName("chaospersists", "crystalflower_yellow");
-    MyCrystalLeaves = (BlockCrystalLeaves)new BlockCrystalLeaves().setHardness(0.2F).setLightOpacity(1).setTranslationKey("crystaltreeleaves").setRegistryName("chaospersists", "crystaltreeleaves");
-    MyCrystalTreeLog = (BlockCrystalTreeLog)new BlockCrystalTreeLog().setHardness(0.2F).setTranslationKey("crystaltreelog").setRegistryName("chaospersists", "crystaltreelog");
-    MyCrystalLeaves2 = (BlockCrystalLeaves)new BlockCrystalLeaves().setHardness(0.25F).setLightOpacity(1).setTranslationKey("crystaltreeleaves2").setRegistryName("chaospersists", "crystaltreeleaves2");
-    MyCrystalLeaves3 = (BlockCrystalLeaves)new BlockCrystalLeaves().setHardness(0.25F).setLightOpacity(1).setTranslationKey("crystaltreeleaves3").setRegistryName("chaospersists", "crystaltreeleaves3");
-    MyCrystalPlant = new BlockCrystalPlant().setTranslationKey("crystalsapling").setRegistryName("chaospersists", "crystalsapling");
-    MyCrystalPlant2 = new BlockCrystalPlant().setTranslationKey("crystalsapling2").setRegistryName("chaospersists", "crystalsapling2");
-    MyCrystalPlant3 = new BlockCrystalPlant().setTranslationKey("crystalsapling3").setRegistryName("chaospersists", "crystalsapling3");
+    MyDT = (BlockDuplicatorLog) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "duplicatortreelog"));
+    MyExperienceLeaves = (BlockExperienceLeaves) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "leaves_experience"));
+    MyExperienceCatcher = (ExperienceCatcher) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "experiencecatcher"));
+    MyExperienceTreeSeed = (ItemExperienceTreeSeed) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "experiencetree_seed"));
+    MyExperiencePlant = (BlockExperiencePlant) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "experiencesapling"));
+    MyDeadStinkBug = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "deadstinkbug"));
+    MyFlowerPinkBlock = (MyBlockFlower) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "flower_pink"));
+    MyFlowerBlueBlock = (MyBlockFlower) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "flower_blue"));
+    MyFlowerBlackBlock = (MyBlockFlower) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "flower_black"));
+    MyFlowerScaryBlock = (MyBlockFlower) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "flower_scary"));
+    MyScaryLeaves = (BlockScaryLeaves) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "leaves_scary"));
+    MyCherryLeaves = (BlockScaryLeaves) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "leaves_cherry"));
+    MyPeachLeaves = (BlockScaryLeaves) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "leaves_peach"));
+    MyCherrySeed = (ItemAppleSeed) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cherrytree_seed"));
+    MyPeachSeed = (ItemAppleSeed) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "peachtree_seed"));
+    CrystalFlowerRedBlock = (MyBlockFlower) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalflower_red"));
+    CrystalFlowerGreenBlock = (MyBlockFlower) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalflower_green"));
+    CrystalFlowerBlueBlock = (MyBlockFlower) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalflower_blue"));
+    CrystalFlowerYellowBlock = (MyBlockFlower) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalflower_yellow"));
+    MyCrystalLeaves = (BlockCrystalLeaves) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystaltreeleaves"));
+    MyCrystalTreeLog = (BlockCrystalTreeLog) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystaltreelog"));
+    MyCrystalLeaves2 = (BlockCrystalLeaves) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystaltreeleaves2"));
+    MyCrystalLeaves3 = (BlockCrystalLeaves) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystaltreeleaves3"));
+    MyCrystalPlant = (BlockCrystalPlant) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalsapling"));
+    MyCrystalPlant2 = (BlockCrystalPlant) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalsapling2"));
+    MyCrystalPlant3 = (BlockCrystalPlant) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalsapling3"));
 
-    MyEnderPearlBlock = new OreGenericEgg().setTranslationKey("blockenderpearl").setRegistryName("chaospersists", "blockenderpearl");
-    MyEyeOfEnderBlock = new OreGenericEgg().setTranslationKey("blockeyeofender").setRegistryName("chaospersists", "blockeyeofender");
+    MyEnderPearlBlock = (OreGenericEgg) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "blockenderpearl"));
+    MyEyeOfEnderBlock = (OreGenericEgg) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "blockeyeofender"));
 
     make_some_more_things();
     proxy.registerBlockModels();
   }
 
   private final Map<String, Integer> recipeNameUseCounts = new HashMap<String, Integer>();
+
+  /** 1.20.1 registry paths must be [a-z0-9/._-]; 1.12 ids used PascalCase. */
+  private static ResourceLocation cpId(String path) {
+    return ResourceLocation.fromNamespaceAndPath(MODID, path.toLowerCase(Locale.ROOT));
+  }
+
+  private static ResourceLocation normalizeRegistryPath(ResourceLocation id) {
+    String path = id.getPath().toLowerCase(Locale.ROOT);
+    return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), path);
+  }
 
   private ResourceLocation nextRecipeId(ResourceLocation baseId)
   {
@@ -2167,22 +4337,24 @@ public class ChaosPersists
     }
     int suffix = seen.intValue();
     recipeNameUseCounts.put(key, Integer.valueOf(suffix + 1));
-    return new ResourceLocation(baseId.getNamespace(), baseId.getPath() + "_" + suffix);
+    return ResourceLocation.fromNamespaceAndPath(baseId.getNamespace(), baseId.getPath() + "_" + suffix);
   }
 
   private void addShapedRecipe(ResourceLocation name, ResourceLocation group, ItemStack output, Object... params)
   {
-    GameRegistry.addShapedRecipe(nextRecipeId(name), group, output, params);
+    GameRegistry.addShapedRecipe(
+        nextRecipeId(normalizeRegistryPath(name)), normalizeRegistryPath(group), output, params);
   }
 
   private void addShapelessRecipe(ResourceLocation name, ResourceLocation group, ItemStack output, Ingredient... ingredients)
   {
-    GameRegistry.addShapelessRecipe(nextRecipeId(name), group, output, ingredients);
+    GameRegistry.addShapelessRecipe(
+        nextRecipeId(normalizeRegistryPath(name)), normalizeRegistryPath(group), output, ingredients);
   }
 
   private ItemStack createVanillaSpawnEgg(String entityId)
   {
-    ItemStack egg = new ItemStack(Items.SPAWN_EGG);
+    ItemStack egg = new ItemStack(Items.PIG_SPAWN_EGG);
     ItemMonsterPlacer.applyEntityIdToItemStack(egg, new ResourceLocation("minecraft", entityId));
     return egg;
   }
@@ -2405,25 +4577,9 @@ public class ChaosPersists
     GameRegistry.findRegistry(Block.class).register(MyRainbowAntBlock);
     GameRegistry.findRegistry(Block.class).register(MyUnstableAntBlock);
 
-    for (Block block : Block.REGISTRY) {
-        ResourceLocation rl = block.getRegistryName();
-        if (rl != null && "chaospersists".equals(rl.getNamespace())) {
-            String path = rl.getPath();
-            if (!"pizza".equals(path) && !"ducttape".equals(path) && !"island".equals(path)) {
-                ItemBlock itemBlock = new ItemBlock(block);
-                itemBlock.setRegistryName(rl);
-                itemBlock.setTranslationKey(block.getTranslationKey());
-                GameRegistry.findRegistry(Item.class).register(itemBlock);
-            }
-        }
-    }
-
     GameRegistry.findRegistry(Item.class).register(MyPizzaItem);
     GameRegistry.findRegistry(Item.class).register(MyDuctTapeItem);
-    IslandBlock.ItemIslandBlock islandItem = new IslandBlock.ItemIslandBlock(MyIslandBlock);
-    islandItem.setRegistryName(MyIslandBlock.getRegistryName());
-    islandItem.setTranslationKey(MyIslandBlock.getTranslationKey());
-    GameRegistry.findRegistry(Item.class).register(islandItem);
+    GameRegistry.findRegistry(Item.class).register(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "island")));
     GameRegistry.findRegistry(Item.class).register(MyIngotUranium);
     GameRegistry.findRegistry(Item.class).register(MyCrystalPinkIngot);
     GameRegistry.findRegistry(Item.class).register(MyTigersEyeIngot);
@@ -2901,307 +5057,307 @@ public class ChaosPersists
     GameRegistry.findRegistry(Item.class).register(QueenBoots);
 
     ItemStack OreSpiderEggStack = new ItemStack(MySpiderSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_spider"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("spider"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSpiderEggStack));
+    addShapelessRecipe(cpId("egg_spider"), cpId("eggs"), createVanillaSpawnEgg("spider"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSpiderEggStack));
 
     ItemStack OreBatEggStack = new ItemStack(MyBatSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_bat"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("bat"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreBatEggStack));
+    addShapelessRecipe(cpId("egg_bat"), cpId("eggs"), createVanillaSpawnEgg("bat"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreBatEggStack));
 
     ItemStack OreCowEggStack = new ItemStack(MyCowSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_cow"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("cow"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCowEggStack));
+    addShapelessRecipe(cpId("egg_cow"), cpId("eggs"), createVanillaSpawnEgg("cow"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCowEggStack));
 
     ItemStack OrePigEggStack = new ItemStack(MyPigSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_pig"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("pig"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OrePigEggStack));
+    addShapelessRecipe(cpId("egg_pig"), cpId("eggs"), createVanillaSpawnEgg("pig"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OrePigEggStack));
 
     ItemStack OreSquidEggStack = new ItemStack(MySquidSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_squid"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("squid"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSquidEggStack));
+    addShapelessRecipe(cpId("egg_squid"), cpId("eggs"), createVanillaSpawnEgg("squid"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSquidEggStack));
 
     ItemStack OreChickenEggStack = new ItemStack(MyChickenSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_chicken"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("chicken"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreChickenEggStack));
+    addShapelessRecipe(cpId("egg_chicken"), cpId("eggs"), createVanillaSpawnEgg("chicken"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreChickenEggStack));
 
     ItemStack OreCreeperEggStack = new ItemStack(MyCreeperSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_creeper"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("creeper"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCreeperEggStack));
+    addShapelessRecipe(cpId("egg_creeper"), cpId("eggs"), createVanillaSpawnEgg("creeper"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCreeperEggStack));
 
     ItemStack OreSkeletonEggStack = new ItemStack(MySkeletonSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_skeleton"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("skeleton"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSkeletonEggStack));
+    addShapelessRecipe(cpId("egg_skeleton"), cpId("eggs"), createVanillaSpawnEgg("skeleton"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSkeletonEggStack));
 
     ItemStack OreZombieEggStack = new ItemStack(MyZombieSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_zombie"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("zombie"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreZombieEggStack));
+    addShapelessRecipe(cpId("egg_zombie"), cpId("eggs"), createVanillaSpawnEgg("zombie"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreZombieEggStack));
 
     ItemStack OreSlimeEggStack = new ItemStack(MySlimeSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_slime"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("slime"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSlimeEggStack));
+    addShapelessRecipe(cpId("egg_slime"), cpId("eggs"), createVanillaSpawnEgg("slime"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSlimeEggStack));
 
     ItemStack OreGhastEggStack = new ItemStack(MyGhastSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_ghast"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("ghast"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreGhastEggStack));
+    addShapelessRecipe(cpId("egg_ghast"), cpId("eggs"), createVanillaSpawnEgg("ghast"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreGhastEggStack));
 
     ItemStack OreZombiePigmanEggStack = new ItemStack(MyZombiePigmanSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_zombie_pigman"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("zombie_pigman"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreZombiePigmanEggStack));
+    addShapelessRecipe(cpId("egg_zombie_pigman"), cpId("eggs"), createVanillaSpawnEgg("zombie_pigman"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreZombiePigmanEggStack));
 
     ItemStack OreEndermanEggStack = new ItemStack(MyEndermanSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_enderman"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("enderman"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreEndermanEggStack));
+    addShapelessRecipe(cpId("egg_enderman"), cpId("eggs"), createVanillaSpawnEgg("enderman"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreEndermanEggStack));
 
     ItemStack OreCaveSpiderEggStack = new ItemStack(MyCaveSpiderSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_cave_spider"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("cave_spider"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCaveSpiderEggStack));
+    addShapelessRecipe(cpId("egg_cave_spider"), cpId("eggs"), createVanillaSpawnEgg("cave_spider"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCaveSpiderEggStack));
 
     ItemStack OreSilverfishEggStack = new ItemStack(MySilverfishSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_silverfish"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("silverfish"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSilverfishEggStack));
+    addShapelessRecipe(cpId("egg_silverfish"), cpId("eggs"), createVanillaSpawnEgg("silverfish"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSilverfishEggStack));
 
     ItemStack OreMagmaCubeEggStack = new ItemStack(MyMagmaCubeSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_magma_cube"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("magma_cube"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreMagmaCubeEggStack));
+    addShapelessRecipe(cpId("egg_magma_cube"), cpId("eggs"), createVanillaSpawnEgg("magma_cube"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreMagmaCubeEggStack));
 
     ItemStack OreWitchEggStack = new ItemStack(MyWitchSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_witch"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("witch"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreWitchEggStack));
+    addShapelessRecipe(cpId("egg_witch"), cpId("eggs"), createVanillaSpawnEgg("witch"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreWitchEggStack));
 
     ItemStack OreSheepEggStack = new ItemStack(MySheepSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_sheep"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("sheep"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSheepEggStack));
+    addShapelessRecipe(cpId("egg_sheep"), cpId("eggs"), createVanillaSpawnEgg("sheep"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSheepEggStack));
 
     ItemStack OreWolfEggStack = new ItemStack(MyWolfSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_wolf"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("wolf"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreWolfEggStack));
+    addShapelessRecipe(cpId("egg_wolf"), cpId("eggs"), createVanillaSpawnEgg("wolf"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreWolfEggStack));
 
     ItemStack OreMooshroomEggStack = new ItemStack(MyMooshroomSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mooshroom"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("mooshroom"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreMooshroomEggStack));
+    addShapelessRecipe(cpId("egg_mooshroom"), cpId("eggs"), createVanillaSpawnEgg("mooshroom"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreMooshroomEggStack));
 
     ItemStack OreOcelotEggStack = new ItemStack(MyOcelotSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_ocelot"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("ocelot"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreOcelotEggStack));
+    addShapelessRecipe(cpId("egg_ocelot"), cpId("eggs"), createVanillaSpawnEgg("ocelot"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreOcelotEggStack));
 
     ItemStack OreBlazeEggStack = new ItemStack(MyBlazeSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_blaze"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("blaze"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreBlazeEggStack));
+    addShapelessRecipe(cpId("egg_blaze"), cpId("eggs"), createVanillaSpawnEgg("blaze"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreBlazeEggStack));
 
     ItemStack OreWitherSkeletonEggStack = new ItemStack(MyWitherSkeletonSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_wither_skeleton"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(WitherSkeletonEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreWitherSkeletonEggStack));
+    addShapelessRecipe(cpId("egg_wither_skeleton"), cpId("eggs"), new ItemStack(WitherSkeletonEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreWitherSkeletonEggStack));
 
     ItemStack OreEnderDragonEggStack = new ItemStack(MyEnderDragonSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_ender_dragon"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(EnderDragonEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreEnderDragonEggStack));
+    addShapelessRecipe(cpId("egg_ender_dragon"), cpId("eggs"), new ItemStack(EnderDragonEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreEnderDragonEggStack));
 
     ItemStack OreSnowGolemEggStack = new ItemStack(MySnowGolemSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_snow_golem"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(SnowGolemEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSnowGolemEggStack));
+    addShapelessRecipe(cpId("egg_snow_golem"), cpId("eggs"), new ItemStack(SnowGolemEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSnowGolemEggStack));
 
     ItemStack OreIronGolemEggStack = new ItemStack(MyIronGolemSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_iron_golem"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(IronGolemEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreIronGolemEggStack));
+    addShapelessRecipe(cpId("egg_iron_golem"), cpId("eggs"), new ItemStack(IronGolemEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreIronGolemEggStack));
 
     ItemStack OreWitherBossEggStack = new ItemStack(MyWitherBossSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_wither_boss"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(WitherBossEgg, 1, 64), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreWitherBossEggStack));
+    addShapelessRecipe(cpId("egg_wither_boss"), cpId("eggs"), new ItemStack(WitherBossEgg, 64), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreWitherBossEggStack));
 
     ItemStack OreGirlfriendEggStack = new ItemStack(MyGirlfriendSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_girlfriend"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(GirlfriendEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreGirlfriendEggStack));
+    addShapelessRecipe(cpId("egg_girlfriend"), cpId("eggs"), new ItemStack(GirlfriendEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreGirlfriendEggStack));
 
     ItemStack OreBoyfriendEggStack = new ItemStack(MyBoyfriendSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_boyfriend"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(BoyfriendEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreBoyfriendEggStack));
+    addShapelessRecipe(cpId("egg_boyfriend"), cpId("eggs"), new ItemStack(BoyfriendEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreBoyfriendEggStack));
 
     ItemStack OreRedCowEggStack = new ItemStack(MyRedCowSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_red_cow"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(RedCowEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreRedCowEggStack));
+    addShapelessRecipe(cpId("egg_red_cow"), cpId("eggs"), new ItemStack(RedCowEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreRedCowEggStack));
 
     ItemStack OreCrystalCowEggStack = new ItemStack(MyCrystalCowSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_crystal_cow"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CrystalCowEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCrystalCowEggStack));
+    addShapelessRecipe(cpId("egg_crystal_cow"), cpId("eggs"), new ItemStack(CrystalCowEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCrystalCowEggStack));
 
     ItemStack OreVillagerEggStack = new ItemStack(MyVillagerSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_villager"), new ResourceLocation("chaospersists", "eggs"), createVanillaSpawnEgg("villager"), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreVillagerEggStack));
+    addShapelessRecipe(cpId("egg_villager"), cpId("eggs"), createVanillaSpawnEgg("villager"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreVillagerEggStack));
 
     ItemStack OreGoldCowEggStack = new ItemStack(MyGoldCowSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_gold_cow"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(GoldCowEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreGoldCowEggStack));
+    addShapelessRecipe(cpId("egg_gold_cow"), cpId("eggs"), new ItemStack(GoldCowEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreGoldCowEggStack));
 
     ItemStack OreEnchantedCowEggStack = new ItemStack(MyEnchantedCowSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_enchanted_cow"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(EnchantedCowEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreEnchantedCowEggStack));
+    addShapelessRecipe(cpId("egg_enchanted_cow"), cpId("eggs"), new ItemStack(EnchantedCowEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreEnchantedCowEggStack));
 
     ItemStack OreMOTHRAEggStack = new ItemStack(MyMOTHRASpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mothra"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MOTHRAEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreMOTHRAEggStack));
+    addShapelessRecipe(cpId("egg_mothra"), cpId("eggs"), new ItemStack(MOTHRAEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreMOTHRAEggStack));
 
     ItemStack OreAloEggStack = new ItemStack(MyAloSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_alo"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(AloEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreAloEggStack));
+    addShapelessRecipe(cpId("egg_alo"), cpId("eggs"), new ItemStack(AloEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreAloEggStack));
 
     ItemStack OreCryoEggStack = new ItemStack(MyCryoSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_cryo"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CryoEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCryoEggStack));
+    addShapelessRecipe(cpId("egg_cryo"), cpId("eggs"), new ItemStack(CryoEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCryoEggStack));
 
     ItemStack OreCamaEggStack = new ItemStack(MyCamaSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_cama"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CamaEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCamaEggStack));
+    addShapelessRecipe(cpId("egg_cama"), cpId("eggs"), new ItemStack(CamaEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCamaEggStack));
 
     ItemStack OreVeloEggStack = new ItemStack(MyVeloSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_velo"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(VeloEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreVeloEggStack));
+    addShapelessRecipe(cpId("egg_velo"), cpId("eggs"), new ItemStack(VeloEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreVeloEggStack));
 
     ItemStack OreHydroEggStack = new ItemStack(MyHydroSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_hydro"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(HydroEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreHydroEggStack));
+    addShapelessRecipe(cpId("egg_hydro"), cpId("eggs"), new ItemStack(HydroEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreHydroEggStack));
 
     ItemStack OreBasilEggStack = new ItemStack(MyBasilSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_basil"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(BasilEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreBasilEggStack));
+    addShapelessRecipe(cpId("egg_basil"), cpId("eggs"), new ItemStack(BasilEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreBasilEggStack));
 
     ItemStack OreDragonflyEggStack = new ItemStack(MyDragonflySpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_dragonfly"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(DragonflyEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreDragonflyEggStack));
+    addShapelessRecipe(cpId("egg_dragonfly"), cpId("eggs"), new ItemStack(DragonflyEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreDragonflyEggStack));
 
     ItemStack OreEmperorScorpionEggStack = new ItemStack(MyEmperorScorpionSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_emperor_scorpion"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(EmperorScorpionEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreEmperorScorpionEggStack));
+    addShapelessRecipe(cpId("egg_emperor_scorpion"), cpId("eggs"), new ItemStack(EmperorScorpionEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreEmperorScorpionEggStack));
 
     ItemStack OreScorpionEggStack = new ItemStack(MyScorpionSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_scorpion"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(ScorpionEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreScorpionEggStack));
+    addShapelessRecipe(cpId("egg_scorpion"), cpId("eggs"), new ItemStack(ScorpionEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreScorpionEggStack));
 
     ItemStack OreCaveFisherEggStack = new ItemStack(MyCaveFisherSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_cave_fisher"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CaveFisherEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCaveFisherEggStack));
+    addShapelessRecipe(cpId("egg_cave_fisher"), cpId("eggs"), new ItemStack(CaveFisherEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCaveFisherEggStack));
 
     ItemStack OreSpyroEggStack = new ItemStack(MySpyroSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_spyro"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(SpyroEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSpyroEggStack));
+    addShapelessRecipe(cpId("egg_spyro"), cpId("eggs"), new ItemStack(SpyroEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSpyroEggStack));
 
     ItemStack OreBaryonyxEggStack = new ItemStack(MyBaryonyxSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_baryonyx"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(BaryonyxEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreBaryonyxEggStack));
+    addShapelessRecipe(cpId("egg_baryonyx"), cpId("eggs"), new ItemStack(BaryonyxEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreBaryonyxEggStack));
 
     ItemStack OreGammaMetroidEggStack = new ItemStack(MyGammaMetroidSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_gamma_metroid"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(GammaMetroidEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreGammaMetroidEggStack));
+    addShapelessRecipe(cpId("egg_gamma_metroid"), cpId("eggs"), new ItemStack(GammaMetroidEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreGammaMetroidEggStack));
 
     ItemStack OreCockateilEggStack = new ItemStack(MyCockateilSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_cockateil"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CockateilEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCockateilEggStack));
+    addShapelessRecipe(cpId("egg_cockateil"), cpId("eggs"), new ItemStack(CockateilEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCockateilEggStack));
 
     ItemStack OreKyuubiEggStack = new ItemStack(MyKyuubiSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_kyuubi"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(KyuubiEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreKyuubiEggStack));
+    addShapelessRecipe(cpId("egg_kyuubi"), cpId("eggs"), new ItemStack(KyuubiEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreKyuubiEggStack));
 
     ItemStack OreAlienEggStack = new ItemStack(MyAlienSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_alien"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(AlienEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreAlienEggStack));
+    addShapelessRecipe(cpId("egg_alien"), cpId("eggs"), new ItemStack(AlienEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreAlienEggStack));
 
     ItemStack OreAttackSquidEggStack = new ItemStack(MyAttackSquidSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(AttackSquidEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreAttackSquidEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(AttackSquidEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreAttackSquidEggStack));
 
     ItemStack OreWaterDragonEggStack = new ItemStack(MyWaterDragonSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(WaterDragonEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreWaterDragonEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(WaterDragonEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreWaterDragonEggStack));
 
     ItemStack OreKrakenEggStack = new ItemStack(MyKrakenSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(KrakenEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreKrakenEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(KrakenEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreKrakenEggStack));
 
     ItemStack OreLizardEggStack = new ItemStack(MyLizardSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(LizardEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreLizardEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(LizardEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreLizardEggStack));
 
     ItemStack OreCephadromeEggStack = new ItemStack(MyCephadromeSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CephadromeEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCephadromeEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CephadromeEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCephadromeEggStack));
 
     ItemStack OreDragonEggStack = new ItemStack(MyDragonSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(DragonEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreDragonEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(DragonEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreDragonEggStack));
 
     ItemStack OreBeeEggStack = new ItemStack(MyBeeSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(BeeEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreBeeEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(BeeEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreBeeEggStack));
 
     ItemStack OreHorseEggStack = new ItemStack(MyHorseSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_horse"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(Items.SPAWN_EGG, 1, 100), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreHorseEggStack));
+    addShapelessRecipe(cpId("egg_horse"), cpId("eggs"), new ItemStack(Items.PIG_SPAWN_EGG, 100), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreHorseEggStack));
 
     ItemStack OreTrooperBugEggStack = new ItemStack(MyTrooperBugSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(TrooperBugEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreTrooperBugEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(TrooperBugEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreTrooperBugEggStack));
 
     ItemStack OreSpitBugEggStack = new ItemStack(MySpitBugSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(SpitBugEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSpitBugEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(SpitBugEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSpitBugEggStack));
 
     ItemStack OreStinkBugEggStack = new ItemStack(MyStinkBugSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(StinkBugEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreStinkBugEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(StinkBugEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreStinkBugEggStack));
 
     ItemStack OreOstrichEggStack = new ItemStack(MyOstrichSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(OstrichEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreOstrichEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(OstrichEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreOstrichEggStack));
 
     ItemStack OreGazelleEggStack = new ItemStack(MyGazelleSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(GazelleEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreGazelleEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(GazelleEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreGazelleEggStack));
 
     ItemStack OreChipmunkEggStack = new ItemStack(MyChipmunkSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(ChipmunkEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreChipmunkEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(ChipmunkEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreChipmunkEggStack));
     ItemStack OreCreepingHorrorEggStack = new ItemStack(MyCreepingHorrorSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CreepingHorrorEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCreepingHorrorEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CreepingHorrorEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCreepingHorrorEggStack));
     ItemStack OreTerribleTerrorEggStack = new ItemStack(MyTerribleTerrorSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(TerribleTerrorEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreTerribleTerrorEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(TerribleTerrorEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreTerribleTerrorEggStack));
     ItemStack OreCliffRacerEggStack = new ItemStack(MyCliffRacerSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CliffRacerEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCliffRacerEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CliffRacerEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCliffRacerEggStack));
     ItemStack OreTriffidEggStack = new ItemStack(MyTriffidSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(TriffidEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreTriffidEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(TriffidEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreTriffidEggStack));
     ItemStack OrePitchBlackEggStack = new ItemStack(MyPitchBlackSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(PitchBlackEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OrePitchBlackEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(PitchBlackEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OrePitchBlackEggStack));
     ItemStack OreLurkingTerrorEggStack = new ItemStack(MyLurkingTerrorSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(LurkingTerrorEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreLurkingTerrorEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(LurkingTerrorEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreLurkingTerrorEggStack));
     ItemStack OreEnderKnightEggStack = new ItemStack(MyEnderKnightSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(EnderKnightEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreEnderKnightEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(EnderKnightEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreEnderKnightEggStack));
     ItemStack OreEnderReaperEggStack = new ItemStack(MyEnderReaperSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(EnderReaperEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreEnderReaperEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(EnderReaperEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreEnderReaperEggStack));
     ItemStack OreGodzillaPartEggStack = new ItemStack(MyGodzillaPartSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "godzilla_spawn"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyGodzillaSpawnBlock), Ingredient.fromStacks(OreGodzillaPartEggStack), Ingredient.fromStacks(OreGodzillaPartEggStack), Ingredient.fromStacks(OreGodzillaPartEggStack), Ingredient.fromStacks(OreGodzillaPartEggStack), Ingredient.fromStacks(OreGodzillaPartEggStack), Ingredient.fromStacks(OreGodzillaPartEggStack), Ingredient.fromStacks(OreGodzillaPartEggStack), Ingredient.fromStacks(OreGodzillaPartEggStack), Ingredient.fromStacks(OreGodzillaPartEggStack));
+    addShapelessRecipe(cpId("godzilla_spawn"), cpId("eggs"), new ItemStack(MyGodzillaSpawnBlock), Ingredient.of(OreGodzillaPartEggStack), Ingredient.of(OreGodzillaPartEggStack), Ingredient.of(OreGodzillaPartEggStack), Ingredient.of(OreGodzillaPartEggStack), Ingredient.of(OreGodzillaPartEggStack), Ingredient.of(OreGodzillaPartEggStack), Ingredient.of(OreGodzillaPartEggStack), Ingredient.of(OreGodzillaPartEggStack), Ingredient.of(OreGodzillaPartEggStack));
     ItemStack OreGodzillaEggStack = new ItemStack(MyGodzillaSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(GodzillaEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreGodzillaEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(GodzillaEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreGodzillaEggStack));
     ItemStack OreTheKingPartEggStack = new ItemStack(MyTheKingPartSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "the_king_spawn"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyTheKingSpawnBlock), Ingredient.fromStacks(OreTheKingPartEggStack), Ingredient.fromStacks(OreTheKingPartEggStack), Ingredient.fromStacks(OreTheKingPartEggStack), Ingredient.fromStacks(OreTheKingPartEggStack), Ingredient.fromStacks(OreTheKingPartEggStack), Ingredient.fromStacks(OreTheKingPartEggStack), Ingredient.fromStacks(OreTheKingPartEggStack), Ingredient.fromStacks(OreTheKingPartEggStack), Ingredient.fromStacks(OreTheKingPartEggStack));
+    addShapelessRecipe(cpId("the_king_spawn"), cpId("eggs"), new ItemStack(MyTheKingSpawnBlock), Ingredient.of(OreTheKingPartEggStack), Ingredient.of(OreTheKingPartEggStack), Ingredient.of(OreTheKingPartEggStack), Ingredient.of(OreTheKingPartEggStack), Ingredient.of(OreTheKingPartEggStack), Ingredient.of(OreTheKingPartEggStack), Ingredient.of(OreTheKingPartEggStack), Ingredient.of(OreTheKingPartEggStack), Ingredient.of(OreTheKingPartEggStack));
     ItemStack OreTheKingEggStack = new ItemStack(MyTheKingSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(TheKingEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreTheKingEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(TheKingEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreTheKingEggStack));
     ItemStack OreTheQueenPartEggStack = new ItemStack(MyTheQueenPartSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "the_queen_spawn"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyTheQueenSpawnBlock), Ingredient.fromStacks(OreTheQueenPartEggStack), Ingredient.fromStacks(OreTheQueenPartEggStack), Ingredient.fromStacks(OreTheQueenPartEggStack), Ingredient.fromStacks(OreTheQueenPartEggStack), Ingredient.fromStacks(OreTheQueenPartEggStack), Ingredient.fromStacks(OreTheQueenPartEggStack), Ingredient.fromStacks(OreTheQueenPartEggStack), Ingredient.fromStacks(OreTheQueenPartEggStack), Ingredient.fromStacks(OreTheQueenPartEggStack));
+    addShapelessRecipe(cpId("the_queen_spawn"), cpId("eggs"), new ItemStack(MyTheQueenSpawnBlock), Ingredient.of(OreTheQueenPartEggStack), Ingredient.of(OreTheQueenPartEggStack), Ingredient.of(OreTheQueenPartEggStack), Ingredient.of(OreTheQueenPartEggStack), Ingredient.of(OreTheQueenPartEggStack), Ingredient.of(OreTheQueenPartEggStack), Ingredient.of(OreTheQueenPartEggStack), Ingredient.of(OreTheQueenPartEggStack), Ingredient.of(OreTheQueenPartEggStack));
     ItemStack OreTheQueenEggStack = new ItemStack(MyTheQueenSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(TheQueenEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreTheQueenEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(TheQueenEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreTheQueenEggStack));
     ItemStack OreSmallWormEggStack = new ItemStack(MySmallWormSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(SmallWormEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSmallWormEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(SmallWormEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSmallWormEggStack));
     ItemStack OreMediumWormEggStack = new ItemStack(MyMediumWormSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MediumWormEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreMediumWormEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MediumWormEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreMediumWormEggStack));
     ItemStack OreLargeWormEggStack = new ItemStack(MyLargeWormSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(LargeWormEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreLargeWormEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(LargeWormEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreLargeWormEggStack));
     ItemStack OreCassowaryEggStack = new ItemStack(MyCassowarySpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CassowaryEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCassowaryEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CassowaryEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCassowaryEggStack));
     ItemStack OreCloudSharkEggStack = new ItemStack(MyCloudSharkSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CloudSharkEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCloudSharkEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CloudSharkEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCloudSharkEggStack));
     ItemStack OreGoldFishEggStack = new ItemStack(MyGoldFishSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(GoldFishEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreGoldFishEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(GoldFishEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreGoldFishEggStack));
     ItemStack OreLeafMonsterEggStack = new ItemStack(MyLeafMonsterSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(LeafMonsterEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreLeafMonsterEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(LeafMonsterEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreLeafMonsterEggStack));
     ItemStack OreTshirtEggStack = new ItemStack(MyTshirtSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(TshirtEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreTshirtEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(TshirtEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreTshirtEggStack));
     ItemStack OreBeaverEggStack = new ItemStack(MyBeaverSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(BeaverEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreBeaverEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(BeaverEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreBeaverEggStack));
     ItemStack OreUrchinEggStack = new ItemStack(MyUrchinSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(UrchinEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreUrchinEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(UrchinEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreUrchinEggStack));
     ItemStack OreFlounderEggStack = new ItemStack(MyFlounderSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(FlounderEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreFlounderEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(FlounderEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreFlounderEggStack));
     ItemStack OreSkateEggStack = new ItemStack(MySkateSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(SkateEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSkateEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(SkateEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSkateEggStack));
     ItemStack OreRotatorEggStack = new ItemStack(MyRotatorSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(RotatorEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreRotatorEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(RotatorEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreRotatorEggStack));
     ItemStack OrePeacockEggStack = new ItemStack(MyPeacockSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(PeacockEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OrePeacockEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(PeacockEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OrePeacockEggStack));
     ItemStack OreFairyEggStack = new ItemStack(MyFairySpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(FairyEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreFairyEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(FairyEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreFairyEggStack));
     ItemStack OreDungeonBeastEggStack = new ItemStack(MyDungeonBeastSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(DungeonBeastEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreDungeonBeastEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(DungeonBeastEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreDungeonBeastEggStack));
     ItemStack OreVortexEggStack = new ItemStack(MyVortexSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(VortexEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreVortexEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(VortexEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreVortexEggStack));
     ItemStack OreRatEggStack = new ItemStack(MyRatSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(RatEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreRatEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(RatEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreRatEggStack));
     ItemStack OreWhaleEggStack = new ItemStack(MyWhaleSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(WhaleEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreWhaleEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(WhaleEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreWhaleEggStack));
     ItemStack OreIrukandjiEggStack = new ItemStack(MyIrukandjiSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(IrukandjiEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreIrukandjiEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(IrukandjiEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreIrukandjiEggStack));
     ItemStack OreTRexEggStack = new ItemStack(MyTRexSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(TRexEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreTRexEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(TRexEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreTRexEggStack));
     ItemStack OreHerculesEggStack = new ItemStack(MyHerculesSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(HerculesEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreHerculesEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(HerculesEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreHerculesEggStack));
     ItemStack OreMantisEggStack = new ItemStack(MyMantisSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MantisEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreMantisEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MantisEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreMantisEggStack));
     ItemStack OreStinkyEggStack = new ItemStack(MyStinkySpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(StinkyEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreStinkyEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(StinkyEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreStinkyEggStack));
     ItemStack OreEasterBunnyEggStack = new ItemStack(MyEasterBunnySpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(EasterBunnyEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreEasterBunnyEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(EasterBunnyEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreEasterBunnyEggStack));
     ItemStack OreCriminalEggStack = new ItemStack(MyCriminalSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CriminalEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCriminalEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CriminalEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCriminalEggStack));
     ItemStack OreBrutalflyEggStack = new ItemStack(MyBrutalflySpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(BrutalflyEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreBrutalflyEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(BrutalflyEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreBrutalflyEggStack));
     ItemStack OreNastysaurusEggStack = new ItemStack(MyNastysaurusSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(NastysaurusEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreNastysaurusEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(NastysaurusEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreNastysaurusEggStack));
     ItemStack OrePointysaurusEggStack = new ItemStack(MyPointysaurusSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(PointysaurusEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OrePointysaurusEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(PointysaurusEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OrePointysaurusEggStack));
     ItemStack OreCricketEggStack = new ItemStack(MyCricketSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CricketEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCricketEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CricketEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCricketEggStack));
     ItemStack OreFrogEggStack = new ItemStack(MyFrogSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(FrogEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreFrogEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(FrogEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreFrogEggStack));
     ItemStack OreSpiderDriverEggStack = new ItemStack(MySpiderDriverSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(SpiderDriverEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSpiderDriverEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(SpiderDriverEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSpiderDriverEggStack));
     ItemStack OreCrabEggStack = new ItemStack(MyCrabSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CrabEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCrabEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CrabEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCrabEggStack));
     ItemStack OreCaterKillerEggStack = new ItemStack(MyCaterKillerSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CaterKillerEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreCaterKillerEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CaterKillerEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreCaterKillerEggStack));
     ItemStack OreMolenoidEggStack = new ItemStack(MyMolenoidSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MolenoidEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreMolenoidEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MolenoidEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreMolenoidEggStack));
     ItemStack OreSeaMonsterEggStack = new ItemStack(MySeaMonsterSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(SeaMonsterEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSeaMonsterEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(SeaMonsterEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSeaMonsterEggStack));
     ItemStack OreSeaViperEggStack = new ItemStack(MySeaViperSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(SeaViperEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreSeaViperEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(SeaViperEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSeaViperEggStack));
     ItemStack OreRubberDuckyEggStack = new ItemStack(MyRubberDuckySpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(RubberDuckyEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreRubberDuckyEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(RubberDuckyEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreRubberDuckyEggStack));
     ItemStack OreHammerheadEggStack = new ItemStack(MyHammerheadSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(HammerheadEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreHammerheadEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(HammerheadEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreHammerheadEggStack));
     ItemStack OreLeonEggStack = new ItemStack(MyLeonSpawnBlock);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(LeonEgg), Ingredient.fromStacks(new ItemStack(Items.WATER_BUCKET)), Ingredient.fromStacks(OreLeonEggStack));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(LeonEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreLeonEggStack));
 
     ItemStack OreUraniumStack = new ItemStack(MyOreUraniumBlock);
 
@@ -3257,16 +5413,16 @@ public class ChaosPersists
 
     ItemStack CrystalFurnaceStack = new ItemStack(CrystalFurnaceBlock);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CrystalPlanksBlock, 4), Ingredient.fromStacks(new ItemStack(MyCrystalTreeLog)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CrystalWorkbenchBlock), Ingredient.fromStacks(new ItemStack(CrystalPlanksBlock)), Ingredient.fromStacks(new ItemStack(CrystalPlanksBlock)), Ingredient.fromStacks(new ItemStack(CrystalPlanksBlock)), Ingredient.fromStacks(new ItemStack(CrystalPlanksBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CrystalPlanksBlock, 4), Ingredient.of(new ItemStack(MyCrystalTreeLog)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CrystalWorkbenchBlock), Ingredient.of(new ItemStack(CrystalPlanksBlock)), Ingredient.of(new ItemStack(CrystalPlanksBlock)), Ingredient.of(new ItemStack(CrystalPlanksBlock)), Ingredient.of(new ItemStack(CrystalPlanksBlock)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_furnace"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(CrystalFurnaceBlock), "FFF", "F F", "FFF", 'F', CrystalStone);
+    addShapedRecipe(cpId("crystal_furnace"), cpId("chaospersists"), new ItemStack(CrystalFurnaceBlock), "FFF", "F F", "FFF", 'F', CrystalStone);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_chest"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(Blocks.CHEST), "FFF", "F F", "FFF", 'F', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_chest"), cpId("chaospersists"), new ItemStack(Blocks.CHEST), "FFF", "F F", "FFF", 'F', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_door_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(Items.OAK_DOOR), "FF ", "FF ", "FF ", 'F', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_door_1"), cpId("chaospersists"), new ItemStack(Items.OAK_DOOR), "FF ", "FF ", "FF ", 'F', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_door_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(Items.OAK_DOOR), " FF", " FF", " FF", 'F', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_door_2"), cpId("chaospersists"), new ItemStack(Items.OAK_DOOR), " FF", " FF", " FF", 'F', CrystalPlanksBlock);
 
     GameRegistry.addSmelting(MyOreUraniumBlock, new ItemStack(UraniumNugget), 0.3F);
     GameRegistry.addSmelting(MyOreTitaniumBlock, new ItemStack(TitaniumNugget), 0.3F);
@@ -3282,701 +5438,667 @@ public class ChaosPersists
     GameRegistry.addSmelting(MyRawCrabMeat, new ItemStack(MyCrabMeat), 0.2F);
     // 1.7.10 behavior: CrystalCoal is furnace fuel (20000 burn time). Smelting recipe is not required.
 
-    GameRegistry.addSmelting(MyGreenFish, new ItemStack(Items.COOKED_FISH), 0.2F);
-    GameRegistry.addSmelting(MyBlueFish, new ItemStack(Items.COOKED_FISH), 0.2F);
-    GameRegistry.addSmelting(MyPinkFish, new ItemStack(Items.COOKED_FISH), 0.2F);
-    GameRegistry.addSmelting(MyRockFish, new ItemStack(Items.COOKED_FISH), 0.2F);
-    GameRegistry.addSmelting(MyWoodFish, new ItemStack(Items.COOKED_FISH), 0.2F);
-    GameRegistry.addSmelting(MyGreyFish, new ItemStack(Items.COOKED_FISH), 0.2F);
+    GameRegistry.addSmelting(MyGreenFish, new ItemStack(Items.COOKED_COD), 0.2F);
+    GameRegistry.addSmelting(MyBlueFish, new ItemStack(Items.COOKED_COD), 0.2F);
+    GameRegistry.addSmelting(MyPinkFish, new ItemStack(Items.COOKED_COD), 0.2F);
+    GameRegistry.addSmelting(MyRockFish, new ItemStack(Items.COOKED_COD), 0.2F);
+    GameRegistry.addSmelting(MyWoodFish, new ItemStack(Items.COOKED_COD), 0.2F);
+    GameRegistry.addSmelting(MyGreyFish, new ItemStack(Items.COOKED_COD), 0.2F);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "ultimate_sword_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyUltimateSword), " T ", " U ", " I ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("ultimate_sword_1"), cpId("chaospersists"), new ItemStack(MyUltimateSword), " T ", " U ", " I ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "ultimate_sword_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyUltimateSword), "T  ", "U  ", "I  ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("ultimate_sword_2"), cpId("chaospersists"), new ItemStack(MyUltimateSword), "T  ", "U  ", "I  ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "ultimate_sword_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyUltimateSword), "  T", "  U", "  I", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("ultimate_sword_3"), cpId("chaospersists"), new ItemStack(MyUltimateSword), "  T", "  U", "  I", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "ultimate_pickaxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyUltimatePickaxe), "TUT", " U ", " I ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("ultimate_pickaxe"), cpId("chaospersists"), new ItemStack(MyUltimatePickaxe), "TUT", " U ", " I ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "ultimate_shovel_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyUltimateShovel), " U ", " T ", " I ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("ultimate_shovel_1"), cpId("chaospersists"), new ItemStack(MyUltimateShovel), " U ", " T ", " I ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "ultimate_shovel_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyUltimateShovel), "U  ", "T  ", "I  ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("ultimate_shovel_2"), cpId("chaospersists"), new ItemStack(MyUltimateShovel), "U  ", "T  ", "I  ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "ultimate_shovel_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyUltimateShovel), "  U", "  T", "  I", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("ultimate_shovel_3"), cpId("chaospersists"), new ItemStack(MyUltimateShovel), "  U", "  T", "  I", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "ultimate_hoe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyUltimateHoe), "TU ", " I ", " I ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("ultimate_hoe"), cpId("chaospersists"), new ItemStack(MyUltimateHoe), "TU ", " I ", " I ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "ultimate_axe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyUltimateAxe), "TU ", "TI ", " I ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("ultimate_axe"), cpId("chaospersists"), new ItemStack(MyUltimateAxe), "TU ", "TI ", " I ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "ultimate_bow"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyUltimateBow), " TS", "I S", " US", 'S', Items.STRING, 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("ultimate_bow"), cpId("chaospersists"), new ItemStack(MyUltimateBow), " TS", "I S", " US", 'S', Items.STRING, 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "skate_bow"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MySkateBow), " TS", "T S", " TS", 'S', Items.STRING, 'T', CrystalSticks);
+    addShapedRecipe(cpId("skate_bow"), cpId("chaospersists"), new ItemStack(MySkateBow), " TS", "T S", " TS", 'S', Items.STRING, 'T', CrystalSticks);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "ultimate_fishing_rod"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyUltimateFishingRod), "  T", " US", "I S", 'S', Items.STRING, 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("ultimate_fishing_rod"), cpId("chaospersists"), new ItemStack(MyUltimateFishingRod), "  T", " US", "I S", 'S', Items.STRING, 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "nightmare_sword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyNightmareSword), "ODO", "RTR", "OIO", 'I', Items.IRON_INGOT, 'O', MyNightmareScale, 'D', Items.DIAMOND, 'R', Items.REDSTONE, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("nightmare_sword"), cpId("chaospersists"), new ItemStack(MyNightmareSword), "ODO", "RTR", "OIO", 'I', Items.IRON_INGOT, 'O', MyNightmareScale, 'D', Items.DIAMOND, 'R', Items.REDSTONE, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "emerald_sword_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyEmeraldSword), " E ", " E ", " I ", 'I', Items.STICK, 'E', Items.EMERALD);
+    addShapedRecipe(cpId("emerald_sword_1"), cpId("chaospersists"), new ItemStack(MyEmeraldSword), " E ", " E ", " I ", 'I', Items.STICK, 'E', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "emerald_sword_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyEmeraldSword), "E  ", "E  ", "I  ", 'I', Items.STICK, 'E', Items.EMERALD);
+    addShapedRecipe(cpId("emerald_sword_2"), cpId("chaospersists"), new ItemStack(MyEmeraldSword), "E  ", "E  ", "I  ", 'I', Items.STICK, 'E', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "emerald_sword_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyEmeraldSword), "  E", "  E", "  I", 'I', Items.STICK, 'E', Items.EMERALD);
+    addShapedRecipe(cpId("emerald_sword_3"), cpId("chaospersists"), new ItemStack(MyEmeraldSword), "  E", "  E", "  I", 'I', Items.STICK, 'E', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "rose_sword_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRoseSword), " E ", " E ", " I ", 'I', Items.STICK, 'E', Blocks.RED_FLOWER);
+    addShapedRecipe(cpId("rose_sword_1"), cpId("chaospersists"), new ItemStack(MyRoseSword), " E ", " E ", " I ", 'I', Items.STICK, 'E', Blocks.POPPY);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "rose_sword_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRoseSword), "E  ", "E  ", "I  ", 'I', Items.STICK, 'E', Blocks.RED_FLOWER);
+    addShapedRecipe(cpId("rose_sword_2"), cpId("chaospersists"), new ItemStack(MyRoseSword), "E  ", "E  ", "I  ", 'I', Items.STICK, 'E', Blocks.POPPY);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "rose_sword_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRoseSword), "  E", "  E", "  I", 'I', Items.STICK, 'E', Blocks.RED_FLOWER);
+    addShapedRecipe(cpId("rose_sword_3"), cpId("chaospersists"), new ItemStack(MyRoseSword), "  E", "  E", "  I", 'I', Items.STICK, 'E', Blocks.POPPY);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "emerald_pickaxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyEmeraldPickaxe), "EEE", " I ", " I ", 'I', Items.STICK, 'E', Items.EMERALD);
+    addShapedRecipe(cpId("emerald_pickaxe"), cpId("chaospersists"), new ItemStack(MyEmeraldPickaxe), "EEE", " I ", " I ", 'I', Items.STICK, 'E', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "emerald_shovel_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyEmeraldShovel), " E ", " I ", " I ", 'I', Items.STICK, 'E', Items.EMERALD);
+    addShapedRecipe(cpId("emerald_shovel_1"), cpId("chaospersists"), new ItemStack(MyEmeraldShovel), " E ", " I ", " I ", 'I', Items.STICK, 'E', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "emerald_shovel_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyEmeraldShovel), "E  ", "I  ", "I  ", 'I', Items.STICK, 'E', Items.EMERALD);
+    addShapedRecipe(cpId("emerald_shovel_2"), cpId("chaospersists"), new ItemStack(MyEmeraldShovel), "E  ", "I  ", "I  ", 'I', Items.STICK, 'E', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "emerald_shovel_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyEmeraldShovel), "  E", "  I", "  I", 'I', Items.STICK, 'E', Items.EMERALD);
+    addShapedRecipe(cpId("emerald_shovel_3"), cpId("chaospersists"), new ItemStack(MyEmeraldShovel), "  E", "  I", "  I", 'I', Items.STICK, 'E', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "emerald_hoe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyEmeraldHoe), "EE ", " I ", " I ", 'I', Items.STICK, 'E', Items.EMERALD);
+    addShapedRecipe(cpId("emerald_hoe"), cpId("chaospersists"), new ItemStack(MyEmeraldHoe), "EE ", " I ", " I ", 'I', Items.STICK, 'E', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "emerald_axe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyEmeraldAxe), "EE ", "EI ", " I ", 'I', Items.STICK, 'E', Items.EMERALD);
+    addShapedRecipe(cpId("emerald_axe"), cpId("chaospersists"), new ItemStack(MyEmeraldAxe), "EE ", "EI ", " I ", 'I', Items.STICK, 'E', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "experience_sword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyExperienceSword), "EEE", "EIE", "EEE", 'I', MyEmeraldSword, 'E', Items.EXPERIENCE_BOTTLE);
+    addShapedRecipe(cpId("experience_sword"), cpId("chaospersists"), new ItemStack(MyExperienceSword), "EEE", "EIE", "EEE", 'I', MyEmeraldSword, 'E', Items.EXPERIENCE_BOTTLE);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "poison_sword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyPoisonSword), "EEE", "EIE", "EEE", 'I', MyEmeraldSword, 'E', MyDeadStinkBug);
+    addShapedRecipe(cpId("poison_sword"), cpId("chaospersists"), new ItemStack(MyPoisonSword), "EEE", "EIE", "EEE", 'I', MyEmeraldSword, 'E', MyDeadStinkBug);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "rat_sword_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRatSword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', CrystalRat);
+    addShapedRecipe(cpId("rat_sword_1"), cpId("chaospersists"), new ItemStack(MyRatSword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', CrystalRat);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "rat_sword_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRatSword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', CrystalRat);
+    addShapedRecipe(cpId("rat_sword_2"), cpId("chaospersists"), new ItemStack(MyRatSword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', CrystalRat);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "rat_sword_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRatSword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', CrystalRat);
+    addShapedRecipe(cpId("rat_sword_3"), cpId("chaospersists"), new ItemStack(MyRatSword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', CrystalRat);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "fairy_sword_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyFairySword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', CrystalFairy);
+    addShapedRecipe(cpId("fairy_sword_1"), cpId("chaospersists"), new ItemStack(MyFairySword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', CrystalFairy);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "fairy_sword_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyFairySword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', CrystalFairy);
+    addShapedRecipe(cpId("fairy_sword_2"), cpId("chaospersists"), new ItemStack(MyFairySword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', CrystalFairy);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "fairy_sword_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyFairySword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', CrystalFairy);
+    addShapedRecipe(cpId("fairy_sword_3"), cpId("chaospersists"), new ItemStack(MyFairySword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', CrystalFairy);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_wood_sword_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalWoodSword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_wood_sword_1"), cpId("chaospersists"), new ItemStack(MyCrystalWoodSword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_wood_sword_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalWoodSword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_wood_sword_2"), cpId("chaospersists"), new ItemStack(MyCrystalWoodSword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_wood_sword_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalWoodSword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_wood_sword_3"), cpId("chaospersists"), new ItemStack(MyCrystalWoodSword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_wood_pickaxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalWoodPickaxe), "EEE", " I ", " I ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_wood_pickaxe"), cpId("chaospersists"), new ItemStack(MyCrystalWoodPickaxe), "EEE", " I ", " I ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_wood_shovel_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalWoodShovel), " E ", " I ", " I ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_wood_shovel_1"), cpId("chaospersists"), new ItemStack(MyCrystalWoodShovel), " E ", " I ", " I ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_wood_shovel_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalWoodShovel), "E  ", "I  ", "I  ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_wood_shovel_2"), cpId("chaospersists"), new ItemStack(MyCrystalWoodShovel), "E  ", "I  ", "I  ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_wood_shovel_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalWoodShovel), "  E", "  I", "  I", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_wood_shovel_3"), cpId("chaospersists"), new ItemStack(MyCrystalWoodShovel), "  E", "  I", "  I", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_wood_hoe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalWoodHoe), "EE ", " I ", " I ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_wood_hoe"), cpId("chaospersists"), new ItemStack(MyCrystalWoodHoe), "EE ", " I ", " I ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_wood_axe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalWoodAxe), "EE ", "EI ", " I ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_wood_axe"), cpId("chaospersists"), new ItemStack(MyCrystalWoodAxe), "EE ", "EI ", " I ", 'I', CrystalSticks, 'E', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_chest_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(Blocks.CHEST), "EEE", "E E", "EEE", 'E', CrystalPlanksBlock);
+    addShapedRecipe(cpId("crystal_chest_2"), cpId("chaospersists"), new ItemStack(Blocks.CHEST), "EEE", "E E", "EEE", 'E', CrystalPlanksBlock);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_pink_sword_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalPinkSword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("crystal_pink_sword_1"), cpId("chaospersists"), new ItemStack(MyCrystalPinkSword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_pink_sword_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalPinkSword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("crystal_pink_sword_2"), cpId("chaospersists"), new ItemStack(MyCrystalPinkSword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_pink_sword_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalPinkSword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("crystal_pink_sword_3"), cpId("chaospersists"), new ItemStack(MyCrystalPinkSword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_pink_pickaxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalPinkPickaxe), "EEE", " I ", " I ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("crystal_pink_pickaxe"), cpId("chaospersists"), new ItemStack(MyCrystalPinkPickaxe), "EEE", " I ", " I ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_pink_shovel_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalPinkShovel), " E ", " I ", " I ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("crystal_pink_shovel_1"), cpId("chaospersists"), new ItemStack(MyCrystalPinkShovel), " E ", " I ", " I ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_pink_shovel_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalPinkShovel), "E  ", "I  ", "I  ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("crystal_pink_shovel_2"), cpId("chaospersists"), new ItemStack(MyCrystalPinkShovel), "E  ", "I  ", "I  ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_pink_shovel_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalPinkShovel), "  E", "  I", "  I", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("crystal_pink_shovel_3"), cpId("chaospersists"), new ItemStack(MyCrystalPinkShovel), "  E", "  I", "  I", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_pink_hoe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalPinkHoe), "EE ", " I ", " I ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("crystal_pink_hoe"), cpId("chaospersists"), new ItemStack(MyCrystalPinkHoe), "EE ", " I ", " I ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_pink_axe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalPinkAxe), "EE ", "EI ", " I ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("crystal_pink_axe"), cpId("chaospersists"), new ItemStack(MyCrystalPinkAxe), "EE ", "EI ", " I ", 'I', CrystalSticks, 'E', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "crystal_bucket"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(Items.BUCKET), "   ", "I I", " I ", 'I', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("crystal_bucket"), cpId("chaospersists"), new ItemStack(Items.BUCKET), "   ", "I I", " I ", 'I', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyTigersEyeSword_1"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyTigersEyeSword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_MyTigersEyeSword_1"), cpId("chaospersists"), new ItemStack(MyTigersEyeSword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyTigersEyeSword_2"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyTigersEyeSword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_MyTigersEyeSword_2"), cpId("chaospersists"), new ItemStack(MyTigersEyeSword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyTigersEyeSword_3"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyTigersEyeSword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_MyTigersEyeSword_3"), cpId("chaospersists"), new ItemStack(MyTigersEyeSword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyTigersEyePickaxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyTigersEyePickaxe), "EEE", " I ", " I ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_MyTigersEyePickaxe"), cpId("chaospersists"), new ItemStack(MyTigersEyePickaxe), "EEE", " I ", " I ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyTigersEyeShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyTigersEyeShovel), " E ", " I ", " I ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_MyTigersEyeShovel"), cpId("chaospersists"), new ItemStack(MyTigersEyeShovel), " E ", " I ", " I ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyTigersEyeShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyTigersEyeShovel), "E  ", "I  ", "I  ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_MyTigersEyeShovel"), cpId("chaospersists"), new ItemStack(MyTigersEyeShovel), "E  ", "I  ", "I  ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyTigersEyeShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyTigersEyeShovel), "  E", "  I", "  I", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_MyTigersEyeShovel"), cpId("chaospersists"), new ItemStack(MyTigersEyeShovel), "  E", "  I", "  I", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyTigersEyeHoe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyTigersEyeHoe), "EE ", " I ", " I ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_MyTigersEyeHoe"), cpId("chaospersists"), new ItemStack(MyTigersEyeHoe), "EE ", " I ", " I ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyTigersEyeAxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyTigersEyeAxe), "EE ", "EI ", " I ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_MyTigersEyeAxe"), cpId("chaospersists"), new ItemStack(MyTigersEyeAxe), "EE ", "EI ", " I ", 'I', CrystalSticks, 'E', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyCrystalStoneSword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalStoneSword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', CrystalStone);
+    addShapedRecipe(cpId("recipe_MyCrystalStoneSword"), cpId("chaospersists"), new ItemStack(MyCrystalStoneSword), " E ", " E ", " I ", 'I', CrystalSticks, 'E', CrystalStone);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyCrystalStoneSword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalStoneSword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', CrystalStone);
+    addShapedRecipe(cpId("recipe_MyCrystalStoneSword"), cpId("chaospersists"), new ItemStack(MyCrystalStoneSword), "E  ", "E  ", "I  ", 'I', CrystalSticks, 'E', CrystalStone);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyCrystalStoneSword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalStoneSword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', CrystalStone);
+    addShapedRecipe(cpId("recipe_MyCrystalStoneSword"), cpId("chaospersists"), new ItemStack(MyCrystalStoneSword), "  E", "  E", "  I", 'I', CrystalSticks, 'E', CrystalStone);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyCrystalStonePickaxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalStonePickaxe), "EEE", " I ", " I ", 'I', CrystalSticks, 'E', CrystalStone);
+    addShapedRecipe(cpId("recipe_MyCrystalStonePickaxe"), cpId("chaospersists"), new ItemStack(MyCrystalStonePickaxe), "EEE", " I ", " I ", 'I', CrystalSticks, 'E', CrystalStone);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyCrystalStoneShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalStoneShovel), " E ", " I ", " I ", 'I', CrystalSticks, 'E', CrystalStone);
+    addShapedRecipe(cpId("recipe_MyCrystalStoneShovel"), cpId("chaospersists"), new ItemStack(MyCrystalStoneShovel), " E ", " I ", " I ", 'I', CrystalSticks, 'E', CrystalStone);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyCrystalStoneShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalStoneShovel), "E  ", "I  ", "I  ", 'I', CrystalSticks, 'E', CrystalStone);
+    addShapedRecipe(cpId("recipe_MyCrystalStoneShovel"), cpId("chaospersists"), new ItemStack(MyCrystalStoneShovel), "E  ", "I  ", "I  ", 'I', CrystalSticks, 'E', CrystalStone);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyCrystalStoneShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalStoneShovel), "  E", "  I", "  I", 'I', CrystalSticks, 'E', CrystalStone);
+    addShapedRecipe(cpId("recipe_MyCrystalStoneShovel"), cpId("chaospersists"), new ItemStack(MyCrystalStoneShovel), "  E", "  I", "  I", 'I', CrystalSticks, 'E', CrystalStone);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyCrystalStoneHoe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalStoneHoe), "EE ", " I ", " I ", 'I', CrystalSticks, 'E', CrystalStone);
+    addShapedRecipe(cpId("recipe_MyCrystalStoneHoe"), cpId("chaospersists"), new ItemStack(MyCrystalStoneHoe), "EE ", " I ", " I ", 'I', CrystalSticks, 'E', CrystalStone);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyCrystalStoneAxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalStoneAxe), "EE ", "EI ", " I ", 'I', CrystalSticks, 'E', CrystalStone);
+    addShapedRecipe(cpId("recipe_MyCrystalStoneAxe"), cpId("chaospersists"), new ItemStack(MyCrystalStoneAxe), "EE ", "EI ", " I ", 'I', CrystalSticks, 'E', CrystalStone);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyRubySword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRubySword), " E ", " E ", " I ", 'I', Items.STICK, 'E', MyRuby);
+    addShapedRecipe(cpId("recipe_MyRubySword"), cpId("chaospersists"), new ItemStack(MyRubySword), " E ", " E ", " I ", 'I', Items.STICK, 'E', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyRubySword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRubySword), "E  ", "E  ", "I  ", 'I', Items.STICK, 'E', MyRuby);
+    addShapedRecipe(cpId("recipe_MyRubySword"), cpId("chaospersists"), new ItemStack(MyRubySword), "E  ", "E  ", "I  ", 'I', Items.STICK, 'E', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyRubySword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRubySword), "  E", "  E", "  I", 'I', Items.STICK, 'E', MyRuby);
+    addShapedRecipe(cpId("recipe_MyRubySword"), cpId("chaospersists"), new ItemStack(MyRubySword), "  E", "  E", "  I", 'I', Items.STICK, 'E', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyRubyPickaxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRubyPickaxe), "EEE", " I ", " I ", 'I', Items.STICK, 'E', MyRuby);
+    addShapedRecipe(cpId("recipe_MyRubyPickaxe"), cpId("chaospersists"), new ItemStack(MyRubyPickaxe), "EEE", " I ", " I ", 'I', Items.STICK, 'E', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyRubyShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRubyShovel), " E ", " I ", " I ", 'I', Items.STICK, 'E', MyRuby);
+    addShapedRecipe(cpId("recipe_MyRubyShovel"), cpId("chaospersists"), new ItemStack(MyRubyShovel), " E ", " I ", " I ", 'I', Items.STICK, 'E', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyRubyShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRubyShovel), "E  ", "I  ", "I  ", 'I', Items.STICK, 'E', MyRuby);
+    addShapedRecipe(cpId("recipe_MyRubyShovel"), cpId("chaospersists"), new ItemStack(MyRubyShovel), "E  ", "I  ", "I  ", 'I', Items.STICK, 'E', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyRubyShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRubyShovel), "  E", "  I", "  I", 'I', Items.STICK, 'E', MyRuby);
+    addShapedRecipe(cpId("recipe_MyRubyShovel"), cpId("chaospersists"), new ItemStack(MyRubyShovel), "  E", "  I", "  I", 'I', Items.STICK, 'E', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyRubyHoe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRubyHoe), "EE ", " I ", " I ", 'I', Items.STICK, 'E', MyRuby);
+    addShapedRecipe(cpId("recipe_MyRubyHoe"), cpId("chaospersists"), new ItemStack(MyRubyHoe), "EE ", " I ", " I ", 'I', Items.STICK, 'E', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyRubyAxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyRubyAxe), "EE ", "EI ", " I ", 'I', Items.STICK, 'E', MyRuby);
+    addShapedRecipe(cpId("recipe_MyRubyAxe"), cpId("chaospersists"), new ItemStack(MyRubyAxe), "EE ", "EI ", " I ", 'I', Items.STICK, 'E', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyAmethystSword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyAmethystSword), " E ", " E ", " I ", 'I', Items.STICK, 'E', MyAmethyst);
+    addShapedRecipe(cpId("recipe_MyAmethystSword"), cpId("chaospersists"), new ItemStack(MyAmethystSword), " E ", " E ", " I ", 'I', Items.STICK, 'E', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyAmethystSword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyAmethystSword), "E  ", "E  ", "I  ", 'I', Items.STICK, 'E', MyAmethyst);
+    addShapedRecipe(cpId("recipe_MyAmethystSword"), cpId("chaospersists"), new ItemStack(MyAmethystSword), "E  ", "E  ", "I  ", 'I', Items.STICK, 'E', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyAmethystSword"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyAmethystSword), "  E", "  E", "  I", 'I', Items.STICK, 'E', MyAmethyst);
+    addShapedRecipe(cpId("recipe_MyAmethystSword"), cpId("chaospersists"), new ItemStack(MyAmethystSword), "  E", "  E", "  I", 'I', Items.STICK, 'E', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyAmethystPickaxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyAmethystPickaxe), "EEE", " I ", " I ", 'I', Items.STICK, 'E', MyAmethyst);
+    addShapedRecipe(cpId("recipe_MyAmethystPickaxe"), cpId("chaospersists"), new ItemStack(MyAmethystPickaxe), "EEE", " I ", " I ", 'I', Items.STICK, 'E', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyAmethystShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyAmethystShovel), " E ", " I ", " I ", 'I', Items.STICK, 'E', MyAmethyst);
+    addShapedRecipe(cpId("recipe_MyAmethystShovel"), cpId("chaospersists"), new ItemStack(MyAmethystShovel), " E ", " I ", " I ", 'I', Items.STICK, 'E', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyAmethystShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyAmethystShovel), "E  ", "I  ", "I  ", 'I', Items.STICK, 'E', MyAmethyst);
+    addShapedRecipe(cpId("recipe_MyAmethystShovel"), cpId("chaospersists"), new ItemStack(MyAmethystShovel), "E  ", "I  ", "I  ", 'I', Items.STICK, 'E', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyAmethystShovel"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyAmethystShovel), "  E", "  I", "  I", 'I', Items.STICK, 'E', MyAmethyst);
+    addShapedRecipe(cpId("recipe_MyAmethystShovel"), cpId("chaospersists"), new ItemStack(MyAmethystShovel), "  E", "  I", "  I", 'I', Items.STICK, 'E', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyAmethystHoe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyAmethystHoe), "EE ", " I ", " I ", 'I', Items.STICK, 'E', MyAmethyst);
+    addShapedRecipe(cpId("recipe_MyAmethystHoe"), cpId("chaospersists"), new ItemStack(MyAmethystHoe), "EE ", " I ", " I ", 'I', Items.STICK, 'E', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyAmethystAxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyAmethystAxe), "EE ", "EI ", " I ", 'I', Items.STICK, 'E', MyAmethyst);
+    addShapedRecipe(cpId("recipe_MyAmethystAxe"), cpId("chaospersists"), new ItemStack(MyAmethystAxe), "EE ", "EI ", " I ", 'I', Items.STICK, 'E', MyAmethyst);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyHammy), Ingredient.fromStacks(new ItemStack(MyUltimateSword)), Ingredient.fromStacks(new ItemStack(MyUltimateSword)), Ingredient.fromStacks(new ItemStack(MyBigHammer)), Ingredient.fromStacks(new ItemStack(GreenGoo)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyBattleAxe), Ingredient.fromStacks(new ItemStack(MyUltimateSword)), Ingredient.fromStacks(new ItemStack(MyUltimateAxe)), Ingredient.fromStacks(new ItemStack(GreenGoo)));
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyChainsaw"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyChainsaw), "EEE", "EIE", "EEE", 'I', MyUltimateAxe, 'E', Blocks.REDSTONE_BLOCK);
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyHammy), Ingredient.of(new ItemStack(MyUltimateSword)), Ingredient.of(new ItemStack(MyUltimateSword)), Ingredient.of(new ItemStack(MyBigHammer)), Ingredient.of(new ItemStack(GreenGoo)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyBattleAxe), Ingredient.of(new ItemStack(MyUltimateSword)), Ingredient.of(new ItemStack(MyUltimateAxe)), Ingredient.of(new ItemStack(GreenGoo)));
+    addShapedRecipe(cpId("recipe_MyChainsaw"), cpId("chaospersists"), new ItemStack(MyChainsaw), "EEE", "EIE", "EEE", 'I', MyUltimateAxe, 'E', Blocks.REDSTONE_BLOCK);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyQueenBattleAxe"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyQueenBattleAxe), "EIE", "EIE", " I ", 'I', Items.IRON_INGOT, 'E', MyQueenScale);
+    addShapedRecipe(cpId("recipe_MyQueenBattleAxe"), cpId("chaospersists"), new ItemStack(MyQueenBattleAxe), "EIE", "EIE", " I ", 'I', Items.IRON_INGOT, 'E', MyQueenScale);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyBertha), Ingredient.fromStacks(new ItemStack(BerthaHandle)), Ingredient.fromStacks(new ItemStack(BerthaGuard)), Ingredient.fromStacks(new ItemStack(BerthaBlade)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(BerthaHandle), Ingredient.fromStacks(new ItemStack(MyRayGun)), Ingredient.fromStacks(new ItemStack(MyBigHammer)), Ingredient.fromStacks(new ItemStack(MyMantisClaw)), Ingredient.fromStacks(new ItemStack(MyWaterDragonScale)), Ingredient.fromStacks(new ItemStack(GreenGoo)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(BerthaGuard), Ingredient.fromStacks(new ItemStack(MolenoidNose)), Ingredient.fromStacks(new ItemStack(SeaMonsterScale)), Ingredient.fromStacks(new ItemStack(MyMothScale)), Ingredient.fromStacks(new ItemStack(MyBasiliskScale)), Ingredient.fromStacks(new ItemStack(MyNightmareScale)), Ingredient.fromStacks(new ItemStack(MyEmperorScorpionScale)), Ingredient.fromStacks(new ItemStack(MyJumpyBugScale)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(BerthaBlade), Ingredient.fromStacks(new ItemStack(MyKrakenTooth)), Ingredient.fromStacks(new ItemStack(WormTooth)), Ingredient.fromStacks(new ItemStack(TRexTooth)), Ingredient.fromStacks(new ItemStack(MyUltimateSword)), Ingredient.fromStacks(new ItemStack(CaterKillerJaw)), Ingredient.fromStacks(new ItemStack(SeaViperTongue)), Ingredient.fromStacks(new ItemStack(VortexEye)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MySlice), Ingredient.fromStacks(new ItemStack(MyBertha)), Ingredient.fromStacks(new ItemStack(Items.IRON_INGOT)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyBertha), Ingredient.of(new ItemStack(BerthaHandle)), Ingredient.of(new ItemStack(BerthaGuard)), Ingredient.of(new ItemStack(BerthaBlade)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(BerthaHandle), Ingredient.of(new ItemStack(MyRayGun)), Ingredient.of(new ItemStack(MyBigHammer)), Ingredient.of(new ItemStack(MyMantisClaw)), Ingredient.of(new ItemStack(MyWaterDragonScale)), Ingredient.of(new ItemStack(GreenGoo)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(BerthaGuard), Ingredient.of(new ItemStack(MolenoidNose)), Ingredient.of(new ItemStack(SeaMonsterScale)), Ingredient.of(new ItemStack(MyMothScale)), Ingredient.of(new ItemStack(MyBasiliskScale)), Ingredient.of(new ItemStack(MyNightmareScale)), Ingredient.of(new ItemStack(MyEmperorScorpionScale)), Ingredient.of(new ItemStack(MyJumpyBugScale)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(BerthaBlade), Ingredient.of(new ItemStack(MyKrakenTooth)), Ingredient.of(new ItemStack(WormTooth)), Ingredient.of(new ItemStack(TRexTooth)), Ingredient.of(new ItemStack(MyUltimateSword)), Ingredient.of(new ItemStack(CaterKillerJaw)), Ingredient.of(new ItemStack(SeaViperTongue)), Ingredient.of(new ItemStack(VortexEye)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MySlice), Ingredient.of(new ItemStack(MyBertha)), Ingredient.of(new ItemStack(Items.IRON_INGOT)));
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyIrukandjiArrow), Ingredient.fromStacks(new ItemStack(MyPeacockFeather)), Ingredient.fromStacks(new ItemStack(MyIrukandji)), Ingredient.fromStacks(new ItemStack(CrystalSticks)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(Items.BED), Ingredient.fromStacks(new ItemStack(MyPeacockFeather)), Ingredient.fromStacks(new ItemStack(CrystalPlanksBlock)), Ingredient.fromStacks(new ItemStack(MyPeacockFeather)), Ingredient.fromStacks(new ItemStack(CrystalPlanksBlock)), Ingredient.fromStacks(new ItemStack(MyPeacockFeather)), Ingredient.fromStacks(new ItemStack(CrystalPlanksBlock)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MySquidZooka), Ingredient.fromStacks(new ItemStack(Items.IRON_INGOT)), Ingredient.fromStacks(new ItemStack(Items.IRON_INGOT)), Ingredient.fromStacks(new ItemStack(Items.IRON_INGOT)), Ingredient.fromStacks(new ItemStack(Items.DYE)), Ingredient.fromStacks(new ItemStack(Items.DYE)), Ingredient.fromStacks(new ItemStack(Items.DYE)), Ingredient.fromStacks(new ItemStack(Items.IRON_INGOT)), Ingredient.fromStacks(new ItemStack(Items.IRON_INGOT)), Ingredient.fromStacks(new ItemStack(Items.IRON_INGOT)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyIrukandjiArrow), Ingredient.of(new ItemStack(MyPeacockFeather)), Ingredient.of(new ItemStack(MyIrukandji)), Ingredient.of(new ItemStack(CrystalSticks)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(Items.RED_BED), Ingredient.of(new ItemStack(MyPeacockFeather)), Ingredient.of(new ItemStack(CrystalPlanksBlock)), Ingredient.of(new ItemStack(MyPeacockFeather)), Ingredient.of(new ItemStack(CrystalPlanksBlock)), Ingredient.of(new ItemStack(MyPeacockFeather)), Ingredient.of(new ItemStack(CrystalPlanksBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MySquidZooka), Ingredient.of(new ItemStack(Items.IRON_INGOT)), Ingredient.of(new ItemStack(Items.IRON_INGOT)), Ingredient.of(new ItemStack(Items.IRON_INGOT)), Ingredient.of(new ItemStack(Items.INK_SAC)), Ingredient.of(new ItemStack(Items.INK_SAC)), Ingredient.of(new ItemStack(Items.INK_SAC)), Ingredient.of(new ItemStack(Items.IRON_INGOT)), Ingredient.of(new ItemStack(Items.IRON_INGOT)), Ingredient.of(new ItemStack(Items.IRON_INGOT)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyIngotUranium"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyIngotUranium), "UUU", "UUU", "UUU", 'U', UraniumNugget);
+    addShapedRecipe(cpId("recipe_MyIngotUranium"), cpId("chaospersists"), new ItemStack(MyIngotUranium), "UUU", "UUU", "UUU", 'U', UraniumNugget);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(UraniumNugget, 9), Ingredient.fromStacks(new ItemStack(MyIngotUranium)));
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyIngotTitanium"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyIngotTitanium), "UUU", "UUU", "UUU", 'U', TitaniumNugget);
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(UraniumNugget, 9), Ingredient.of(new ItemStack(MyIngotUranium)));
+    addShapedRecipe(cpId("recipe_MyIngotTitanium"), cpId("chaospersists"), new ItemStack(MyIngotTitanium), "UUU", "UUU", "UUU", 'U', TitaniumNugget);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(TitaniumNugget, 9), Ingredient.fromStacks(new ItemStack(MyIngotTitanium)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(TitaniumNugget, 9), Ingredient.of(new ItemStack(MyIngotTitanium)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyBlockUraniumBlock"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyBlockUraniumBlock), "UUU", "UUU", "UUU", 'U', MyIngotUranium);
+    addShapedRecipe(cpId("recipe_MyBlockUraniumBlock"), cpId("chaospersists"), new ItemStack(MyBlockUraniumBlock), "UUU", "UUU", "UUU", 'U', MyIngotUranium);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyIngotUranium, 9), Ingredient.fromStacks(new ItemStack(MyBlockUraniumBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyIngotUranium, 9), Ingredient.of(new ItemStack(MyBlockUraniumBlock)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyBlockTitaniumBlock"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyBlockTitaniumBlock), "TTT", "TTT", "TTT", 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("recipe_MyBlockTitaniumBlock"), cpId("chaospersists"), new ItemStack(MyBlockTitaniumBlock), "TTT", "TTT", "TTT", 'T', MyIngotTitanium);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyIngotTitanium, 9), Ingredient.fromStacks(new ItemStack(MyBlockTitaniumBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyIngotTitanium, 9), Ingredient.of(new ItemStack(MyBlockTitaniumBlock)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyBlockMobzillaScaleBlock"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyBlockMobzillaScaleBlock), "TTT", "TTT", "TTT", 'T', MyGodzillaScale);
+    addShapedRecipe(cpId("recipe_MyBlockMobzillaScaleBlock"), cpId("chaospersists"), new ItemStack(MyBlockMobzillaScaleBlock), "TTT", "TTT", "TTT", 'T', MyGodzillaScale);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyGodzillaScale, 9), Ingredient.fromStacks(new ItemStack(MyBlockMobzillaScaleBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyGodzillaScale, 9), Ingredient.of(new ItemStack(MyBlockMobzillaScaleBlock)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyBlockRubyBlock"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyBlockRubyBlock), "TTT", "TTT", "TTT", 'T', MyRuby);
+    addShapedRecipe(cpId("recipe_MyBlockRubyBlock"), cpId("chaospersists"), new ItemStack(MyBlockRubyBlock), "TTT", "TTT", "TTT", 'T', MyRuby);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyRuby, 9), Ingredient.fromStacks(new ItemStack(MyBlockRubyBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyRuby, 9), Ingredient.of(new ItemStack(MyBlockRubyBlock)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyBlockAmethystBlock"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyBlockAmethystBlock), "TTT", "TTT", "TTT", 'T', MyAmethyst);
+    addShapedRecipe(cpId("recipe_MyBlockAmethystBlock"), cpId("chaospersists"), new ItemStack(MyBlockAmethystBlock), "TTT", "TTT", "TTT", 'T', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyCrystalPinkBlock"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyCrystalPinkBlock), "TTT", "TTT", "TTT", 'T', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("recipe_MyCrystalPinkBlock"), cpId("chaospersists"), new ItemStack(MyCrystalPinkBlock), "TTT", "TTT", "TTT", 'T', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyTigersEyeBlock"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyTigersEyeBlock), "TTT", "TTT", "TTT", 'T', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_MyTigersEyeBlock"), cpId("chaospersists"), new ItemStack(MyTigersEyeBlock), "TTT", "TTT", "TTT", 'T', MyTigersEyeIngot);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyAmethyst, 9), Ingredient.fromStacks(new ItemStack(MyBlockAmethystBlock)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyCrystalPinkIngot, 9), Ingredient.fromStacks(new ItemStack(MyCrystalPinkBlock)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyTigersEyeIngot, 9), Ingredient.fromStacks(new ItemStack(MyTigersEyeBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyAmethyst, 9), Ingredient.of(new ItemStack(MyBlockAmethystBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyCrystalPinkIngot, 9), Ingredient.of(new ItemStack(MyCrystalPinkBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyTigersEyeIngot, 9), Ingredient.of(new ItemStack(MyTigersEyeBlock)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyEnderPearlBlock"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyEnderPearlBlock), "TTT", "TTT", "TTT", 'T', Items.ENDER_PEARL);
+    addShapedRecipe(cpId("recipe_MyEnderPearlBlock"), cpId("chaospersists"), new ItemStack(MyEnderPearlBlock), "TTT", "TTT", "TTT", 'T', Items.ENDER_PEARL);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(Items.ENDER_PEARL, 9), Ingredient.fromStacks(new ItemStack(MyEnderPearlBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(Items.ENDER_PEARL, 9), Ingredient.of(new ItemStack(MyEnderPearlBlock)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyEyeOfEnderBlock"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyEyeOfEnderBlock), "TTT", "TTT", "TTT", 'T', Items.ENDER_EYE);
+    addShapedRecipe(cpId("recipe_MyEyeOfEnderBlock"), cpId("chaospersists"), new ItemStack(MyEyeOfEnderBlock), "TTT", "TTT", "TTT", 'T', Items.ENDER_EYE);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(Items.ENDER_EYE, 9), Ingredient.fromStacks(new ItemStack(MyEyeOfEnderBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(Items.ENDER_EYE, 9), Ingredient.of(new ItemStack(MyEyeOfEnderBlock)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyThunderStaff"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyThunderStaff), "DR ", "RR ", "  R", 'D', Items.DIAMOND, 'R', MyRuby);
+    addShapedRecipe(cpId("recipe_MyThunderStaff"), cpId("chaospersists"), new ItemStack(MyThunderStaff), "DR ", "RR ", "  R", 'D', Items.DIAMOND, 'R', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyWrench"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyWrench), "D D", " D ", " D ", 'D', Items.IRON_INGOT);
+    addShapedRecipe(cpId("recipe_MyWrench"), cpId("chaospersists"), new ItemStack(MyWrench), "D D", " D ", " D ", 'D', Items.IRON_INGOT);
 
     ItemStack MilkBucket = new ItemStack(Items.MILK_BUCKET);
     ItemStack SomePaper = new ItemStack(Items.PAPER);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyButter, 4), Ingredient.fromStacks(MilkBucket), Ingredient.fromStacks(MilkBucket));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyCheese, 2), Ingredient.fromStacks(MilkBucket), Ingredient.fromStacks(MilkBucket), Ingredient.fromStacks(MilkBucket), Ingredient.fromStacks(MilkBucket));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyButteredPopcorn), Ingredient.fromStacks(new ItemStack(MyPopcorn)), Ingredient.fromStacks(new ItemStack(MyButter)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyButteredSaltedPopcorn), Ingredient.fromStacks(new ItemStack(MyButteredPopcorn)), Ingredient.fromStacks(new ItemStack(MySalt)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyButteredSaltedPopcorn), Ingredient.fromStacks(new ItemStack(MyPopcorn)), Ingredient.fromStacks(new ItemStack(MySalt)), Ingredient.fromStacks(new ItemStack(MyButter)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyPopcornBag), Ingredient.fromStacks(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.fromStacks(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.fromStacks(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.fromStacks(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.fromStacks(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.fromStacks(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.fromStacks(SomePaper), Ingredient.fromStacks(SomePaper), Ingredient.fromStacks(SomePaper));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyButter, 4), Ingredient.of(MilkBucket), Ingredient.of(MilkBucket));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyCheese, 2), Ingredient.of(MilkBucket), Ingredient.of(MilkBucket), Ingredient.of(MilkBucket), Ingredient.of(MilkBucket));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyButteredPopcorn), Ingredient.of(new ItemStack(MyPopcorn)), Ingredient.of(new ItemStack(MyButter)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyButteredSaltedPopcorn), Ingredient.of(new ItemStack(MyButteredPopcorn)), Ingredient.of(new ItemStack(MySalt)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyButteredSaltedPopcorn), Ingredient.of(new ItemStack(MyPopcorn)), Ingredient.of(new ItemStack(MySalt)), Ingredient.of(new ItemStack(MyButter)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyPopcornBag), Ingredient.of(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.of(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.of(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.of(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.of(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.of(new ItemStack(MyButteredSaltedPopcorn)), Ingredient.of(SomePaper), Ingredient.of(SomePaper), Ingredient.of(SomePaper));
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyRawCornDog, 4), Ingredient.fromStacks(new ItemStack(MyCornCob)), Ingredient.fromStacks(new ItemStack(Items.CHICKEN)), Ingredient.fromStacks(new ItemStack(Items.PORKCHOP)), Ingredient.fromStacks(new ItemStack(Items.STICK)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyRawBacon, 2), Ingredient.fromStacks(new ItemStack(MySalt)), Ingredient.fromStacks(new ItemStack(Items.PORKCHOP)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyButterCandy, 4), Ingredient.fromStacks(new ItemStack(MyButter)), Ingredient.fromStacks(new ItemStack(Items.SUGAR)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyRawCornDog, 4), Ingredient.of(new ItemStack(MyCornCob)), Ingredient.of(new ItemStack(Items.CHICKEN)), Ingredient.of(new ItemStack(Items.PORKCHOP)), Ingredient.of(new ItemStack(Items.STICK)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyRawBacon, 2), Ingredient.of(new ItemStack(MySalt)), Ingredient.of(new ItemStack(Items.PORKCHOP)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyButterCandy, 4), Ingredient.of(new ItemStack(MyButter)), Ingredient.of(new ItemStack(Items.SUGAR)));
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MySalad, 1), Ingredient.fromStacks(new ItemStack(MyLettuce)), Ingredient.fromStacks(new ItemStack(MyTomato)), Ingredient.fromStacks(new ItemStack(MyRadish)), Ingredient.fromStacks(new ItemStack(Items.CARROT)), Ingredient.fromStacks(new ItemStack(Items.BOWL)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyBLT, 1), Ingredient.fromStacks(new ItemStack(MyBacon)), Ingredient.fromStacks(new ItemStack(MyLettuce)), Ingredient.fromStacks(new ItemStack(MyTomato)), Ingredient.fromStacks(new ItemStack(MyButter)), Ingredient.fromStacks(new ItemStack(Items.BREAD)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyPizzaItem, 1), Ingredient.fromStacks(new ItemStack(MyTomato)), Ingredient.fromStacks(new ItemStack(MyCheese)), Ingredient.fromStacks(new ItemStack(MyBacon)), Ingredient.fromStacks(new ItemStack(Items.BREAD)));
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyDuctTapeItem"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyDuctTapeItem), "   ", "AAA", "RRR", 'R', Items.STRING, 'A', Items.SLIME_BALL);
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MySalad, 1), Ingredient.of(new ItemStack(MyLettuce)), Ingredient.of(new ItemStack(MyTomato)), Ingredient.of(new ItemStack(MyRadish)), Ingredient.of(new ItemStack(Items.CARROT)), Ingredient.of(new ItemStack(Items.BOWL)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyBLT, 1), Ingredient.of(new ItemStack(MyBacon)), Ingredient.of(new ItemStack(MyLettuce)), Ingredient.of(new ItemStack(MyTomato)), Ingredient.of(new ItemStack(MyButter)), Ingredient.of(new ItemStack(Items.BREAD)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyPizzaItem, 1), Ingredient.of(new ItemStack(MyTomato)), Ingredient.of(new ItemStack(MyCheese)), Ingredient.of(new ItemStack(MyBacon)), Ingredient.of(new ItemStack(Items.BREAD)));
+    addShapedRecipe(cpId("recipe_MyDuctTapeItem"), cpId("chaospersists"), new ItemStack(MyDuctTapeItem), "   ", "AAA", "RRR", 'R', Items.STRING, 'A', Items.SLIME_BALL);
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyCrabbyPatty, 1), Ingredient.fromStacks(new ItemStack(MyCrabMeat)), Ingredient.fromStacks(new ItemStack(MyLettuce)), Ingredient.fromStacks(new ItemStack(MyTomato)), Ingredient.fromStacks(new ItemStack(Items.BREAD)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyCrabbyPatty, 1), Ingredient.of(new ItemStack(MyCrabMeat)), Ingredient.of(new ItemStack(MyLettuce)), Ingredient.of(new ItemStack(MyTomato)), Ingredient.of(new ItemStack(Items.BREAD)));
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(ZooCage2), Ingredient.fromStacks(new ItemStack(Blocks.IRON_BLOCK)), Ingredient.fromStacks(new ItemStack(Blocks.GLASS)), Ingredient.fromStacks(new ItemStack(Blocks.QUARTZ_BLOCK)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(ZooCage4), Ingredient.fromStacks(new ItemStack(ZooCage2)), Ingredient.fromStacks(new ItemStack(Blocks.IRON_BLOCK)), Ingredient.fromStacks(new ItemStack(Blocks.GLASS)), Ingredient.fromStacks(new ItemStack(Blocks.QUARTZ_BLOCK)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(ZooCage6), Ingredient.fromStacks(new ItemStack(ZooCage4)), Ingredient.fromStacks(new ItemStack(Blocks.IRON_BLOCK)), Ingredient.fromStacks(new ItemStack(Blocks.GLASS)), Ingredient.fromStacks(new ItemStack(Blocks.QUARTZ_BLOCK)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(ZooCage8), Ingredient.fromStacks(new ItemStack(ZooCage6)), Ingredient.fromStacks(new ItemStack(Blocks.IRON_BLOCK)), Ingredient.fromStacks(new ItemStack(Blocks.GLASS)), Ingredient.fromStacks(new ItemStack(Blocks.QUARTZ_BLOCK)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(ZooCage10), Ingredient.fromStacks(new ItemStack(ZooCage8)), Ingredient.fromStacks(new ItemStack(Blocks.IRON_BLOCK)), Ingredient.fromStacks(new ItemStack(Blocks.GLASS)), Ingredient.fromStacks(new ItemStack(Blocks.QUARTZ_BLOCK)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(InstantShelter), Ingredient.fromStacks(new ItemStack(Blocks.REDSTONE_BLOCK)), Ingredient.fromStacks(new ItemStack(Items.STICK)), Ingredient.fromStacks(new ItemStack(Blocks.COBBLESTONE)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(InstantGarden), Ingredient.fromStacks(new ItemStack(Blocks.REDSTONE_BLOCK)), Ingredient.fromStacks(new ItemStack(Items.WHEAT)), Ingredient.fromStacks(new ItemStack(Items.GUNPOWDER)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(ZooCage2), Ingredient.of(new ItemStack(Blocks.IRON_BLOCK)), Ingredient.of(new ItemStack(Blocks.GLASS)), Ingredient.of(new ItemStack(Blocks.QUARTZ_BLOCK)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(ZooCage4), Ingredient.of(new ItemStack(ZooCage2)), Ingredient.of(new ItemStack(Blocks.IRON_BLOCK)), Ingredient.of(new ItemStack(Blocks.GLASS)), Ingredient.of(new ItemStack(Blocks.QUARTZ_BLOCK)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(ZooCage6), Ingredient.of(new ItemStack(ZooCage4)), Ingredient.of(new ItemStack(Blocks.IRON_BLOCK)), Ingredient.of(new ItemStack(Blocks.GLASS)), Ingredient.of(new ItemStack(Blocks.QUARTZ_BLOCK)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(ZooCage8), Ingredient.of(new ItemStack(ZooCage6)), Ingredient.of(new ItemStack(Blocks.IRON_BLOCK)), Ingredient.of(new ItemStack(Blocks.GLASS)), Ingredient.of(new ItemStack(Blocks.QUARTZ_BLOCK)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(ZooCage10), Ingredient.of(new ItemStack(ZooCage8)), Ingredient.of(new ItemStack(Blocks.IRON_BLOCK)), Ingredient.of(new ItemStack(Blocks.GLASS)), Ingredient.of(new ItemStack(Blocks.QUARTZ_BLOCK)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(InstantShelter), Ingredient.of(new ItemStack(Blocks.REDSTONE_BLOCK)), Ingredient.of(new ItemStack(Items.STICK)), Ingredient.of(new ItemStack(Blocks.COBBLESTONE)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(InstantGarden), Ingredient.of(new ItemStack(Blocks.REDSTONE_BLOCK)), Ingredient.of(new ItemStack(Items.WHEAT)), Ingredient.of(new ItemStack(Items.GUNPOWDER)));
 
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CreeperLauncher, 4), Ingredient.fromStacks(new ItemStack(Items.PAPER)), Ingredient.fromStacks(new ItemStack(Items.REDSTONE)), Ingredient.fromStacks(new ItemStack(Items.STICK)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(NetherLost, 1), Ingredient.fromStacks(new ItemStack(Items.NETHER_STAR)), Ingredient.fromStacks(new ItemStack(Blocks.NETHERRACK)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CreeperLauncher, 4), Ingredient.of(new ItemStack(Items.PAPER)), Ingredient.of(new ItemStack(Items.REDSTONE)), Ingredient.of(new ItemStack(Items.STICK)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(NetherLost, 1), Ingredient.of(new ItemStack(Items.NETHER_STAR)), Ingredient.of(new ItemStack(Blocks.NETHERRACK)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_Sifter"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(Sifter), "RRR", "RAR", "RRR", 'R', Items.STICK, 'A', Items.STRING);
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MagicApple"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MagicApple), "RRR", "RAR", "RRR", 'R', Blocks.REDSTONE_BLOCK, 'A', Items.APPLE);
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_RandomDungeon"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(RandomDungeon), "RRR", "RAR", "RRR", 'R', Blocks.REDSTONE_BLOCK, 'A', Items.COAL);
+    addShapedRecipe(cpId("recipe_Sifter"), cpId("chaospersists"), new ItemStack(Sifter), "RRR", "RAR", "RRR", 'R', Items.STICK, 'A', Items.STRING);
+    addShapedRecipe(cpId("recipe_MagicApple"), cpId("chaospersists"), new ItemStack(MagicApple), "RRR", "RAR", "RRR", 'R', Blocks.REDSTONE_BLOCK, 'A', Items.APPLE);
+    addShapedRecipe(cpId("recipe_RandomDungeon"), cpId("chaospersists"), new ItemStack(RandomDungeon), "RRR", "RAR", "RRR", 'R', Blocks.REDSTONE_BLOCK, 'A', Items.COAL);
 
     if (MinersDreamExpensive == 0)
     {
-      addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MinersDream"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MinersDream), "CCC", "RRR", "GGG", 'R', Blocks.REDSTONE_BLOCK, 'C', Blocks.CACTUS, 'G', Items.GUNPOWDER);
+      addShapedRecipe(cpId("recipe_MinersDream"), cpId("chaospersists"), new ItemStack(MinersDream), "CCC", "RRR", "GGG", 'R', Blocks.REDSTONE_BLOCK, 'C', Blocks.CACTUS, 'G', Items.GUNPOWDER);
     }
     else
     {
-      addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MinersDream"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MinersDream), "CCC", "RRR", "GGG", 'R', Blocks.REDSTONE_BLOCK, 'C', Blocks.CACTUS, 'G', Blocks.TNT);
+      addShapedRecipe(cpId("recipe_MinersDream"), cpId("chaospersists"), new ItemStack(MinersDream), "CCC", "RRR", "GGG", 'R', Blocks.REDSTONE_BLOCK, 'C', Blocks.CACTUS, 'G', Blocks.TNT);
     }
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_stepup"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyStepUp, 8), "GC ", " C ", " C ", 'C', Blocks.COBBLESTONE, 'G', Items.GUNPOWDER);
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_stepdown"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyStepDown, 8), " C ", " C ", "GC ", 'C', Blocks.COBBLESTONE, 'G', Items.GUNPOWDER);
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_stepaccross"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyStepAccross, 8), " C ", "GC ", " C ", 'C', Blocks.COBBLESTONE, 'G', Items.GUNPOWDER);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(ExtremeTorch, 4), Ingredient.fromStacks(new ItemStack(Items.REDSTONE)), Ingredient.fromStacks(new ItemStack(Items.STICK)), Ingredient.fromStacks(new ItemStack(Items.COAL)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(ExtremeTorch, 1), Ingredient.fromStacks(new ItemStack(Items.REDSTONE)), Ingredient.fromStacks(new ItemStack(Blocks.TORCH)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CrystalSticks, 6), Ingredient.fromStacks(new ItemStack(CrystalPlanksBlock)), Ingredient.fromStacks(new ItemStack(CrystalPlanksBlock)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(CrystalTorch, 6), Ingredient.fromStacks(new ItemStack(CrystalCoal)), Ingredient.fromStacks(new ItemStack(CrystalSticks)));
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_krakenrepellent"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(KrakenRepellent, 1), "D D", "STS", "D D", 'D', MyDeadStinkBug, 'T', ExtremeTorch, 'S', Items.STRING);
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_creeperrepellent"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(CreeperRepellent, 1), "D D", "STS", "D D", 'D', GreenGoo, 'T', ExtremeTorch, 'S', Items.STRING);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyAppleSeed, 6), Ingredient.fromStacks(new ItemStack(Items.APPLE)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyCherrySeed, 1), Ingredient.fromStacks(new ItemStack(MyCherry)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyPeachSeed, 1), Ingredient.fromStacks(new ItemStack(MyPeach)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "egg_mob"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyExperienceCatcher, 1), Ingredient.fromStacks(new ItemStack(Items.GLASS_BOTTLE)), Ingredient.fromStacks(new ItemStack(Items.STICK)), Ingredient.fromStacks(new ItemStack(Items.STRING)));
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_experiencetreeseed"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyExperienceTreeSeed, 1), "EEE", "EAE", "EEE", 'A', MyAppleSeed, 'E', Items.EXPERIENCE_BOTTLE);
+    addShapedRecipe(cpId("recipe_stepup"), cpId("chaospersists"), new ItemStack(MyStepUp, 8), "GC ", " C ", " C ", 'C', Blocks.COBBLESTONE, 'G', Items.GUNPOWDER);
+    addShapedRecipe(cpId("recipe_stepdown"), cpId("chaospersists"), new ItemStack(MyStepDown, 8), " C ", " C ", "GC ", 'C', Blocks.COBBLESTONE, 'G', Items.GUNPOWDER);
+    addShapedRecipe(cpId("recipe_stepaccross"), cpId("chaospersists"), new ItemStack(MyStepAccross, 8), " C ", "GC ", " C ", 'C', Blocks.COBBLESTONE, 'G', Items.GUNPOWDER);
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(ExtremeTorch, 4), Ingredient.of(new ItemStack(Items.REDSTONE)), Ingredient.of(new ItemStack(Items.STICK)), Ingredient.of(new ItemStack(Items.COAL)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(ExtremeTorch, 1), Ingredient.of(new ItemStack(Items.REDSTONE)), Ingredient.of(new ItemStack(Blocks.TORCH)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CrystalSticks, 6), Ingredient.of(new ItemStack(CrystalPlanksBlock)), Ingredient.of(new ItemStack(CrystalPlanksBlock)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(CrystalTorch, 6), Ingredient.of(new ItemStack(CrystalCoal)), Ingredient.of(new ItemStack(CrystalSticks)));
+    addShapedRecipe(cpId("recipe_krakenrepellent"), cpId("chaospersists"), new ItemStack(KrakenRepellent, 1), "D D", "STS", "D D", 'D', MyDeadStinkBug, 'T', ExtremeTorch, 'S', Items.STRING);
+    addShapedRecipe(cpId("recipe_creeperrepellent"), cpId("chaospersists"), new ItemStack(CreeperRepellent, 1), "D D", "STS", "D D", 'D', GreenGoo, 'T', ExtremeTorch, 'S', Items.STRING);
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyAppleSeed, 6), Ingredient.of(new ItemStack(Items.APPLE)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyCherrySeed, 1), Ingredient.of(new ItemStack(MyCherry)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyPeachSeed, 1), Ingredient.of(new ItemStack(MyPeach)));
+    addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(MyExperienceCatcher, 1), Ingredient.of(new ItemStack(Items.GLASS_BOTTLE)), Ingredient.of(new ItemStack(Items.STICK)), Ingredient.of(new ItemStack(Items.STRING)));
+    addShapedRecipe(cpId("recipe_experiencetreeseed"), cpId("chaospersists"), new ItemStack(MyExperienceTreeSeed, 1), "EEE", "EAE", "EEE", 'A', MyAppleSeed, 'E', Items.EXPERIENCE_BOTTLE);
 
-    int nextEntityId = 0;
-    int hookid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "ultimate_fish_hook"), UltimateFishHook.class, "UltimateFishHook", hookid, this, 64, 1, true);
-
-    int urchinid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "sunspot_urchin"), SunspotUrchin.class, "SunspotUrchin", urchinid, this, 64, 1, true);
-
-    int waterballid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "water_ball"), WaterBall.class, "WaterBall", waterballid, this, 64, 1, true);
-
-    int inksackid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "ink_sack"), InkSack.class, "InkSack", inksackid, this, 64, 1, true);
-
-    int laserballid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "laser_ball"), LaserBall.class, "LaserBall", laserballid, this, 64, 1, true);
-
-    int iceballid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "ice_ball"), IceBall.class, "IceBall", iceballid, this, 64, 1, true);
-
-    int acidid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "acid"), Acid.class, "Acid", acidid, this, 64, 1, true);
-
-    int Irukandjiid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "dead_irukandji"), DeadIrukandji.class, "DeadIrukandji", Irukandjiid, this, 64, 1, true);
-
-    int berthahitid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "bertha_hit"), BerthaHit.class, "BerthaHit", berthahitid, this, 64, 1, true);
-
-    int purplepowerid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "purple_power"), PurplePower.class, "PurplePower", purplepowerid, this, 64, 1, true);
-
-    int rockid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "thrown_rock"), EntityThrownRock.class, "EntityThrownRock", rockid, this, 64, 1, true);
-
-    int thunderboltid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "thunder_bolt"), com.astryxion.chaospersists.item.ThunderBolt.class, "ThunderBolt", thunderboltid, this, 64, 1, true);
+    /* entity types registered via ENTITY_TYPES DeferredRegister (see class fields) */
 
     ItemStack RayStack = new ItemStack(MyRayGun);
-    RayStack.setItemDamage(32767);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "repair_raygun"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MyRayGun), Ingredient.fromStacks(new ItemStack(Blocks.REDSTONE_BLOCK)), Ingredient.fromStacks(RayStack));
+    RayStack.setDamageValue(32767);
+    addShapelessRecipe(cpId("repair_raygun"), cpId("eggs"), new ItemStack(MyRayGun), Ingredient.of(new ItemStack(Blocks.REDSTONE_BLOCK)), Ingredient.of(RayStack));
 
     ItemStack SquidStack = new ItemStack(MySquidZooka);
-    SquidStack.setItemDamage(32767);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "repair_squidzooka"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(MySquidZooka), Ingredient.fromStacks(new ItemStack(Items.DYE)), Ingredient.fromStacks(SquidStack));
+    SquidStack.setDamageValue(32767);
+    addShapelessRecipe(cpId("repair_squidzooka"), cpId("eggs"), new ItemStack(MySquidZooka), Ingredient.of(new ItemStack(Items.INK_SAC)), Ingredient.of(SquidStack));
 
+    int nextEntityId = 0;
     GirlfriendID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "girlfriend"), Girlfriend.class, "Girlfriend", GirlfriendID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("girlfriend"), Girlfriend.class, "Girlfriend", GirlfriendID, this, 64, 1, false);
 
     RedCowID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "apple_cow"), RedCow.class, "Apple Cow", RedCowID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("apple_cow"), RedCow.class, "Apple Cow", RedCowID, this, 64, 1, false);
 
     GoldCowID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "golden_apple_cow"), GoldCow.class, "Golden Apple Cow", GoldCowID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("golden_apple_cow"), GoldCow.class, "Golden Apple Cow", GoldCowID, this, 64, 1, false);
 
     EnchantedCowID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "enchanted_golden_apple_cow"), EnchantedCow.class, "Enchanted Golden Apple Cow", EnchantedCowID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("enchanted_golden_apple_cow"), EnchantedCow.class, "Enchanted Golden Apple Cow", EnchantedCowID, this, 64, 1, false);
 
     ButterflyID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "butterfly"), EntityButterfly.class, "Butterfly", ButterflyID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("butterfly"), EntityButterfly.class, "Butterfly", ButterflyID, this, 32, 1, false);
 
     LunaMothID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "moth"), EntityLunaMoth.class, "Moth", LunaMothID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("moth"), EntityLunaMoth.class, "Moth", LunaMothID, this, 32, 1, false);
 
     MosquitoID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "mosquito"), EntityMosquito.class, "Mosquito", MosquitoID, this, 16, 1, false);
+    EntityRegistry.registerModEntity(cpId("mosquito"), EntityMosquito.class, "Mosquito", MosquitoID, this, 16, 1, false);
 
     FireflyID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "firefly"), Firefly.class, "Firefly", FireflyID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("firefly"), Firefly.class, "Firefly", FireflyID, this, 64, 1, false);
 
     BeeID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "bee"), Bee.class, "Bee", BeeID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("bee"), Bee.class, "Bee", BeeID, this, 64, 1, false);
 
     MothraID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "mothra"), Mothra.class, "Mothra", MothraID, this, 128, 1, false);
+    EntityRegistry.registerModEntity(cpId("mothra"), Mothra.class, "Mothra", MothraID, this, 128, 1, false);
 
     AntID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "ant"), EntityAnt.class, "Ant", AntID, this, 16, 1, false);
+    EntityRegistry.registerModEntity(cpId("ant"), EntityAnt.class, "Ant", AntID, this, 16, 1, false);
     RedAntID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "red_ant"), EntityRedAnt.class, "Red Ant", RedAntID, this, 16, 1, false);
+    EntityRegistry.registerModEntity(cpId("red_ant"), EntityRedAnt.class, "Red Ant", RedAntID, this, 16, 1, false);
     RainbowAntID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "rainbow_ant"), EntityRainbowAnt.class, "Rainbow Ant", RainbowAntID, this, 16, 1, false);
+    EntityRegistry.registerModEntity(cpId("rainbow_ant"), EntityRainbowAnt.class, "Rainbow Ant", RainbowAntID, this, 16, 1, false);
     UnstableAntID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "unstable_ant"), EntityUnstableAnt.class, "Unstable Ant", UnstableAntID, this, 16, 1, false);
+    EntityRegistry.registerModEntity(cpId("unstable_ant"), EntityUnstableAnt.class, "Unstable Ant", UnstableAntID, this, 16, 1, false);
 
     Robot1ID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "bomb_omb"), Robot1.class, "Bomb-Omb", Robot1ID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("bomb_omb"), Robot1.class, "Bomb-Omb", Robot1ID, this, 32, 1, false);
     Robot2ID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "robo_pounder"), Robot2.class, "Robo-Pounder", Robot2ID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("robo_pounder"), Robot2.class, "Robo-Pounder", Robot2ID, this, 64, 1, false);
     Robot3ID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "robo_gunner"), Robot3.class, "Robo-Gunner", Robot3ID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("robo_gunner"), Robot3.class, "Robo-Gunner", Robot3ID, this, 64, 1, false);
     Robot4ID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "robo_warrior"), Robot4.class, "Robo-Warrior", Robot4ID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("robo_warrior"), Robot4.class, "Robo-Warrior", Robot4ID, this, 64, 1, false);
     Robot5ID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "robo_sniper"), Robot5.class, "Robo-Sniper", Robot5ID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("robo_sniper"), Robot5.class, "Robo-Sniper", Robot5ID, this, 64, 1, false);
 
     AlosaurusID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "alosaurus"), Alosaurus.class, "Alosaurus", AlosaurusID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("alosaurus"), Alosaurus.class, "Alosaurus", AlosaurusID, this, 64, 1, false);
     CryolophosaurusID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "cryolophosaurus"), Cryolophosaurus.class, "Cryolophosaurus", CryolophosaurusID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("cryolophosaurus"), Cryolophosaurus.class, "Cryolophosaurus", CryolophosaurusID, this, 64, 1, false);
     BasiliskID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "basilisk"), Basilisk.class, "Basilisk", BasiliskID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("basilisk"), Basilisk.class, "Basilisk", BasiliskID, this, 64, 1, false);
     CamarasaurusID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "camarasaurus"), Camarasaurus.class, "Camarasaurus", CamarasaurusID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("camarasaurus"), Camarasaurus.class, "Camarasaurus", CamarasaurusID, this, 64, 1, false);
     HydroliscID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "hydrolisc"), Hydrolisc.class, "Hydrolisc", HydroliscID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("hydrolisc"), Hydrolisc.class, "Hydrolisc", HydroliscID, this, 64, 1, false);
     VelocityRaptorID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "velocity_raptor"), VelocityRaptor.class, "Velocity Raptor", VelocityRaptorID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("velocity_raptor"), VelocityRaptor.class, "Velocity Raptor", VelocityRaptorID, this, 64, 1, false);
 
     DragonflyID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "dragonfly"), Dragonfly.class, "Dragonfly", DragonflyID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("dragonfly"), Dragonfly.class, "Dragonfly", DragonflyID, this, 64, 1, false);
 
     EmperorScorpionID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "emperor_scorpion"), EmperorScorpion.class, "Emperor Scorpion", EmperorScorpionID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("emperor_scorpion"), EmperorScorpion.class, "Emperor Scorpion", EmperorScorpionID, this, 64, 1, false);
 
     ScorpionID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "scorpion"), Scorpion.class, "Scorpion", ScorpionID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("scorpion"), Scorpion.class, "Scorpion", ScorpionID, this, 32, 1, false);
 
     CaveFisherID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "cave_fisher"), CaveFisher.class, "CaveFisher", CaveFisherID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("cave_fisher"), CaveFisher.class, "CaveFisher", CaveFisherID, this, 32, 1, false);
 
     SpyroID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "baby_dragon"), Spyro.class, "Baby Dragon", SpyroID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("baby_dragon"), Spyro.class, "Baby Dragon", SpyroID, this, 64, 1, false);
 
     BaryonyxID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "baryonyx"), Baryonyx.class, "Baryonyx", BaryonyxID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("baryonyx"), Baryonyx.class, "Baryonyx", BaryonyxID, this, 64, 1, false);
 
     GammaMetroidID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "gamma_metroid"), GammaMetroid.class, "WTF?", GammaMetroidID, this, 64, 1, false);
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "wtf"), GammaMetroid.class, "WTF? Legacy", nextEntityId++, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("gamma_metroid"), GammaMetroid.class, "WTF?", GammaMetroidID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("wtf"), GammaMetroid.class, "WTF? Legacy", nextEntityId++, this, 64, 1, false);
 
     CockateilID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "bird"), Cockateil.class, "Bird", CockateilID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("bird"), Cockateil.class, "Bird", CockateilID, this, 32, 1, false);
 
     RubyBirdID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "ruby_bird"), RubyBird.class, "Ruby Bird", RubyBirdID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("ruby_bird"), RubyBird.class, "Ruby Bird", RubyBirdID, this, 32, 1, false);
 
     KyuubiID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "kyuubi"), Kyuubi.class, "Kyuubi", KyuubiID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("kyuubi"), Kyuubi.class, "Kyuubi", KyuubiID, this, 64, 1, false);
 
     WaterDragonID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "water_dragon"), WaterDragon.class, "Water Dragon", WaterDragonID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("water_dragon"), WaterDragon.class, "Water Dragon", WaterDragonID, this, 64, 1, false);
 
     AttackSquidID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "attack_squid"), AttackSquid.class, "Attack Squid", AttackSquidID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("attack_squid"), AttackSquid.class, "Attack Squid", AttackSquidID, this, 32, 1, false);
 
     AlienID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "alien"), Alien.class, "Alien", AlienID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("alien"), Alien.class, "Alien", AlienID, this, 64, 1, false);
 
     ElevatorID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "hoverboard"), Elevator.class, "Hoverboard", ElevatorID, this, 128, 1, true);
+    EntityRegistry.registerModEntity(cpId("hoverboard"), Elevator.class, "Hoverboard", ElevatorID, this, 128, 1, true);
 
     KrakenID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "the_kraken"), Kraken.class, "The Kraken", KrakenID, this, 128, 1, false);
+    EntityRegistry.registerModEntity(cpId("the_kraken"), Kraken.class, "The Kraken", KrakenID, this, 128, 1, false);
 
     LizardID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "lizard"), Lizard.class, "Lizard", LizardID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("lizard"), Lizard.class, "Lizard", LizardID, this, 64, 1, false);
 
     CephadromeID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "cephadrome"), Cephadrome.class, "Cephadrome", CephadromeID, this, 128, 1, true);
+    EntityRegistry.registerModEntity(cpId("cephadrome"), Cephadrome.class, "Cephadrome", CephadromeID, this, 128, 1, true);
 
     DragonID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "dragon"), Dragon.class, "Dragon", DragonID, this, 128, 1, true);
+    EntityRegistry.registerModEntity(cpId("dragon"), Dragon.class, "Dragon", DragonID, this, 128, 1, true);
 
     ChipmunkID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "chipmunk"), Chipmunk.class, "Chipmunk", ChipmunkID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("chipmunk"), Chipmunk.class, "Chipmunk", ChipmunkID, this, 32, 1, false);
 
     GazelleID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "gazelle"), Gazelle.class, "Gazelle", GazelleID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("gazelle"), Gazelle.class, "Gazelle", GazelleID, this, 64, 1, false);
 
     OstrichID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "ostrich"), Ostrich.class, "Ostrich", OstrichID, this, 64, 1, true);
+    EntityRegistry.registerModEntity(cpId("ostrich"), Ostrich.class, "Ostrich", OstrichID, this, 64, 1, true);
 
     TrooperBugID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "jumpy_bug"), TrooperBug.class, "Jumpy Bug", TrooperBugID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("jumpy_bug"), TrooperBug.class, "Jumpy Bug", TrooperBugID, this, 64, 1, false);
 
     SpitBugID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "spit_bug"), SpitBug.class, "Spit Bug", SpitBugID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("spit_bug"), SpitBug.class, "Spit Bug", SpitBugID, this, 64, 1, false);
 
     StinkBugID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "stink_bug"), StinkBug.class, "Stink Bug", StinkBugID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("stink_bug"), StinkBug.class, "Stink Bug", StinkBugID, this, 32, 1, false);
 
     TshirtID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "tshirt"), Tshirt.class, "T-Shirt", TshirtID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("tshirt"), Tshirt.class, "T-Shirt", TshirtID, this, 32, 1, false);
 
     IslandID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "island"), Island.class, "Island", IslandID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("island"), Island.class, "Island", IslandID, this, 64, 1, false);
 
     IslandTooID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "island_too"), IslandToo.class, "IslandToo", IslandTooID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("island_too"), IslandToo.class, "IslandToo", IslandTooID, this, 64, 1, false);
 
     CreepingHorrorID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "creeping_horror"), CreepingHorror.class, "Creeping Horror", CreepingHorrorID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("creeping_horror"), CreepingHorror.class, "Creeping Horror", CreepingHorrorID, this, 64, 1, false);
 
     TerribleTerrorID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "terrible_terror"), TerribleTerror.class, "Terrible Terror", TerribleTerrorID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("terrible_terror"), TerribleTerror.class, "Terrible Terror", TerribleTerrorID, this, 64, 1, false);
 
     CliffRacerID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "cliff_racer"), CliffRacer.class, "Cliff Racer", CliffRacerID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("cliff_racer"), CliffRacer.class, "Cliff Racer", CliffRacerID, this, 32, 1, false);
 
     TriffidID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "triffid"), Triffid.class, "Triffid", TriffidID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("triffid"), Triffid.class, "Triffid", TriffidID, this, 64, 1, false);
 
     PitchBlackID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "nightmare"), PitchBlack.class, "Nightmare", PitchBlackID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("nightmare"), PitchBlack.class, "Nightmare", PitchBlackID, this, 64, 1, false);
 
     LurkingTerrorID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "lurking_terror"), LurkingTerror.class, "Lurking Terror", LurkingTerrorID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("lurking_terror"), LurkingTerror.class, "Lurking Terror", LurkingTerrorID, this, 64, 1, false);
 
     GodzillaID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "mobzilla"), Godzilla.class, "Mobzilla", GodzillaID, this, 128, 1, false);
+    EntityRegistry.registerModEntity(cpId("mobzilla"), Godzilla.class, "Mobzilla", GodzillaID, this, 128, 1, false);
 
     GhostID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "ghost"), Ghost.class, "Ghost", GhostID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("ghost"), Ghost.class, "Ghost", GhostID, this, 32, 1, false);
 
     GhostSkellyID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "ghost_pumpkin_skelly"), GhostSkelly.class, "Ghost Pumpkin Skelly", GhostSkellyID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("ghost_pumpkin_skelly"), GhostSkelly.class, "Ghost Pumpkin Skelly", GhostSkellyID, this, 64, 1, false);
 
     WormSmallID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "small_worm"), WormSmall.class, "Small Worm", WormSmallID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("small_worm"), WormSmall.class, "Small Worm", WormSmallID, this, 32, 1, false);
 
     WormMediumID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "medium_worm"), WormMedium.class, "Medium Worm", WormMediumID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("medium_worm"), WormMedium.class, "Medium Worm", WormMediumID, this, 64, 1, false);
 
     WormLargeID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "large_worm"), WormLarge.class, "Large Worm", WormLargeID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("large_worm"), WormLarge.class, "Large Worm", WormLargeID, this, 64, 1, false);
 
     CassowaryID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "cassowary"), Cassowary.class, "Cassowary", CassowaryID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("cassowary"), Cassowary.class, "Cassowary", CassowaryID, this, 64, 1, false);
 
     CloudSharkID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "cloud_shark"), CloudShark.class, "Cloud Shark", CloudSharkID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("cloud_shark"), CloudShark.class, "Cloud Shark", CloudSharkID, this, 64, 1, false);
 
     GoldFishID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "gold_fish"), GoldFish.class, "Gold Fish", GoldFishID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("gold_fish"), GoldFish.class, "Gold Fish", GoldFishID, this, 32, 1, false);
 
     LeafMonsterID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "leaf_monster"), LeafMonster.class, "Leaf Monster", LeafMonsterID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("leaf_monster"), LeafMonster.class, "Leaf Monster", LeafMonsterID, this, 64, 1, false);
 
     GodzillaHeadID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "mobzilla_head"), GodzillaHead.class, "MobzillaHead", GodzillaHeadID, this, 128, 10, true);
+    EntityRegistry.registerModEntity(cpId("mobzilla_head"), GodzillaHead.class, "MobzillaHead", GodzillaHeadID, this, 128, 10, true);
 
     EnderKnightID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "ender_knight"), EnderKnight.class, "Ender Knight", EnderKnightID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("ender_knight"), EnderKnight.class, "Ender Knight", EnderKnightID, this, 64, 1, false);
 
     EnderReaperID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "ender_reaper"), EnderReaper.class, "Ender Reaper", EnderReaperID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("ender_reaper"), EnderReaper.class, "Ender Reaper", EnderReaperID, this, 64, 1, false);
 
     BeaverID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "beaver"), Beaver.class, "Beaver", BeaverID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("beaver"), Beaver.class, "Beaver", BeaverID, this, 64, 1, false);
 
     TermiteID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "termite"), Termite.class, "Termite", TermiteID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("termite"), Termite.class, "Termite", TermiteID, this, 32, 1, false);
 
     FairyID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "fairy"), Fairy.class, "Fairy", FairyID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("fairy"), Fairy.class, "Fairy", FairyID, this, 32, 1, false);
 
     PeacockID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "peacock"), Peacock.class, "Peacock", PeacockID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("peacock"), Peacock.class, "Peacock", PeacockID, this, 64, 1, false);
 
     RotatorID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "rotator"), Rotator.class, "Rotator", RotatorID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("rotator"), Rotator.class, "Rotator", RotatorID, this, 64, 1, false);
 
     VortexID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "vortex"), Vortex.class, "Vortex", VortexID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("vortex"), Vortex.class, "Vortex", VortexID, this, 64, 1, false);
 
     DungeonBeastID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "dungeon_beast"), DungeonBeast.class, "Dungeon Beast", DungeonBeastID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("dungeon_beast"), DungeonBeast.class, "Dungeon Beast", DungeonBeastID, this, 64, 1, false);
 
     RatID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "rat"), Rat.class, "Rat", RatID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("rat"), Rat.class, "Rat", RatID, this, 32, 1, false);
 
     FlounderID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "flounder"), Flounder.class, "Flounder", FlounderID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("flounder"), Flounder.class, "Flounder", FlounderID, this, 32, 1, false);
 
     WhaleID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "whale"), Whale.class, "Whale", WhaleID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("whale"), Whale.class, "Whale", WhaleID, this, 64, 1, false);
 
     IrukandjiID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "irukandji"), Irukandji.class, "Irukandji", IrukandjiID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("irukandji"), Irukandji.class, "Irukandji", IrukandjiID, this, 32, 1, false);
 
     SkateID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "skate"), Skate.class, "Skate", SkateID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("skate"), Skate.class, "Skate", SkateID, this, 32, 1, false);
 
     UrchinID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "crystal_urchin"), Urchin.class, "Crystal Urchin", UrchinID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("crystal_urchin"), Urchin.class, "Crystal Urchin", UrchinID, this, 64, 1, false);
 
     MantisID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "mantis"), Mantis.class, "Mantis", MantisID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("mantis"), Mantis.class, "Mantis", MantisID, this, 64, 1, false);
 
     HerculesBeetleID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "hercules_beetle"), HerculesBeetle.class, "Hercules Beetle", HerculesBeetleID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("hercules_beetle"), HerculesBeetle.class, "Hercules Beetle", HerculesBeetleID, this, 64, 1, false);
 
     TRexID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "trex"), TRex.class, "T. Rex", TRexID, this, 64, 1, false);
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "t._rex"), TRex.class, "T. Rex Legacy", nextEntityId++, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("trex"), TRex.class, "T. Rex", TRexID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("t._rex"), TRex.class, "T. Rex Legacy", nextEntityId++, this, 64, 1, false);
 
     StinkyID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "stinky"), Stinky.class, "Stinky", StinkyID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("stinky"), Stinky.class, "Stinky", StinkyID, this, 64, 1, false);
 
     CoinID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "coin"), Coin.class, "Coin", CoinID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("coin"), Coin.class, "Coin", CoinID, this, 64, 1, false);
 
     TheKingID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "the_king"), TheKing.class, "The King", TheKingID, this, 128, 1, false);
+    EntityRegistry.registerModEntity(cpId("the_king"), TheKing.class, "The King", TheKingID, this, 128, 1, false);
 
     KingHeadID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "king_head"), KingHead.class, "KingHead", KingHeadID, this, 128, 10, true);
+    EntityRegistry.registerModEntity(cpId("king_head"), KingHead.class, "KingHead", KingHeadID, this, 128, 10, true);
 
     TheQueenID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "the_queen"), TheQueen.class, "The Queen", TheQueenID, this, 128, 1, false);
+    EntityRegistry.registerModEntity(cpId("the_queen"), TheQueen.class, "The Queen", TheQueenID, this, 128, 1, false);
 
     QueenHeadID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "queen_head"), QueenHead.class, "QueenHead", QueenHeadID, this, 128, 10, true);
+    EntityRegistry.registerModEntity(cpId("queen_head"), QueenHead.class, "QueenHead", QueenHeadID, this, 128, 10, true);
 
     BoyfriendID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "boyfriend"), Boyfriend.class, "Boyfriend", BoyfriendID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("boyfriend"), Boyfriend.class, "Boyfriend", BoyfriendID, this, 64, 1, false);
 
     ThePrinceID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "the_prince"), ThePrince.class, "The Prince", ThePrinceID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("the_prince"), ThePrince.class, "The Prince", ThePrinceID, this, 64, 1, false);
 
     MolenoidID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "molenoid"), Molenoid.class, "Molenoid", MolenoidID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("molenoid"), Molenoid.class, "Molenoid", MolenoidID, this, 64, 1, false);
 
     SeaMonsterID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "sea_monster"), SeaMonster.class, "Sea Monster", SeaMonsterID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("sea_monster"), SeaMonster.class, "Sea Monster", SeaMonsterID, this, 64, 1, false);
 
     SeaViperID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "sea_viper"), SeaViper.class, "Sea Viper", SeaViperID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("sea_viper"), SeaViper.class, "Sea Viper", SeaViperID, this, 64, 1, false);
 
     EasterBunnyID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "easter_bunny"), EasterBunny.class, "Easter Bunny", EasterBunnyID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("easter_bunny"), EasterBunny.class, "Easter Bunny", EasterBunnyID, this, 64, 1, false);
 
     CaterKillerID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "caterkiller"), CaterKiller.class, "CaterKiller", CaterKillerID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("caterkiller"), CaterKiller.class, "CaterKiller", CaterKillerID, this, 64, 1, false);
 
     CrystalCowID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "crystal_apple_cow"), CrystalCow.class, "Crystal Apple Cow", CrystalCowID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("crystal_apple_cow"), CrystalCow.class, "Crystal Apple Cow", CrystalCowID, this, 64, 1, false);
 
     LeonID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "leonopteryx"), Leon.class, "Leonopteryx", LeonID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("leonopteryx"), Leon.class, "Leonopteryx", LeonID, this, 64, 1, false);
 
     HammerheadID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "hammerhead"), Hammerhead.class, "Hammerhead", HammerheadID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("hammerhead"), Hammerhead.class, "Hammerhead", HammerheadID, this, 64, 1, false);
 
     RubberDuckyID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "rubber_ducky"), RubberDucky.class, "Rubber Ducky", RubberDuckyID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("rubber_ducky"), RubberDucky.class, "Rubber Ducky", RubberDuckyID, this, 64, 1, false);
 
     ThePrinceTeenID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "the_young_prince"), ThePrinceTeen.class, "The Young Prince", ThePrinceTeenID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("the_young_prince"), ThePrinceTeen.class, "The Young Prince", ThePrinceTeenID, this, 64, 1, false);
 
     BandPID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "criminal"), BandP.class, "Criminal", BandPID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("criminal"), BandP.class, "Criminal", BandPID, this, 64, 1, false);
 
     RockBaseID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "rock"), RockBase.class, "Rock", RockBaseID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("rock"), RockBase.class, "Rock", RockBaseID, this, 32, 1, false);
 
     BrutalflyID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "brutalfly"), Brutalfly.class, "Brutalfly", BrutalflyID, this, 128, 1, false);
+    EntityRegistry.registerModEntity(cpId("brutalfly"), Brutalfly.class, "Brutalfly", BrutalflyID, this, 128, 1, false);
 
     NastysaurusID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "nastysaurus"), Nastysaurus.class, "Nastysaurus", NastysaurusID, this, 128, 1, false);
+    EntityRegistry.registerModEntity(cpId("nastysaurus"), Nastysaurus.class, "Nastysaurus", NastysaurusID, this, 128, 1, false);
 
     PointysaurusID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "pointysaurus"), Pointysaurus.class, "Pointysaurus", PointysaurusID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("pointysaurus"), Pointysaurus.class, "Pointysaurus", PointysaurusID, this, 64, 1, false);
 
     CricketID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "cricket"), Cricket.class, "Cricket", CricketID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("cricket"), Cricket.class, "Cricket", CricketID, this, 32, 1, false);
 
     ThePrincessID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "the_princess"), ThePrincess.class, "The Princess", ThePrincessID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("the_princess"), ThePrincess.class, "The Princess", ThePrincessID, this, 64, 1, false);
 
     FrogID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "frog"), Frog.class, "Frog", FrogID, this, 32, 1, false);
+    EntityRegistry.registerModEntity(cpId("frog"), Frog.class, "Frog", FrogID, this, 32, 1, false);
 
     ThePrinceAdultID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "the_young_adult_prince"), ThePrinceAdult.class, "The Young Adult Prince", ThePrinceAdultID, this, 128, 1, false);
+    EntityRegistry.registerModEntity(cpId("the_young_adult_prince"), ThePrinceAdult.class, "The Young Adult Prince", ThePrinceAdultID, this, 128, 1, false);
 
     SpiderRobotID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "robot_spider"), SpiderRobot.class, "Robot Spider", SpiderRobotID, this, 128, 1, false);
+    EntityRegistry.registerModEntity(cpId("robot_spider"), SpiderRobot.class, "Robot Spider", SpiderRobotID, this, 128, 1, false);
 
     SpiderDriverID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "spider_driver"), SpiderDriver.class, "Spider Driver", SpiderDriverID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("spider_driver"), SpiderDriver.class, "Spider Driver", SpiderDriverID, this, 64, 1, false);
 
     JefferyID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "jeffery"), GiantRobot.class, "Jeffery", JefferyID, this, 128, 1, false);
+    EntityRegistry.registerModEntity(cpId("jeffery"), GiantRobot.class, "Jeffery", JefferyID, this, 128, 1, false);
 
     AntRobotID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "robot_red_ant"), AntRobot.class, "Robot Red Ant", AntRobotID, this, 128, 1, false);
+    EntityRegistry.registerModEntity(cpId("robot_red_ant"), AntRobot.class, "Robot Red Ant", AntRobotID, this, 128, 1, false);
 
     CrabID = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "crab"), Crab.class, "Crab", CrabID, this, 64, 1, false);
+    EntityRegistry.registerModEntity(cpId("crab"), Crab.class, "Crab", CrabID, this, 64, 1, false);
 
     GregorianCalendar gcalendar = new GregorianCalendar();
 
@@ -3984,51 +6106,51 @@ public class ChaosPersists
     int nowday = gcalendar.get(5);
 
     if ((nowmonth == 9) && (nowday == 31)) {
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BEACH });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_EDGE });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.DESERT });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA_ROCK });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA_CLEAR_ROCK });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.COLD_TAIGA_HILLS });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.COLD_TAIGA });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BEACH });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_EDGE });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.DESERT });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA_ROCK });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA_CLEAR_ROCK });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.COLD_TAIGA_HILLS });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.COLD_TAIGA });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
 
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BEACH });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_EDGE });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.DESERT });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA_ROCK });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA_CLEAR_ROCK });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.COLD_TAIGA_HILLS });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.COLD_TAIGA });
-      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BEACH });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_EDGE });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.DESERT });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA_ROCK });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA_CLEAR_ROCK });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.COLD_TAIGA_HILLS });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.COLD_TAIGA });
+      EntityRegistry.addSpawn(Ghost.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
     }
 
     if ((nowmonth == 1) && (nowday == 14)) {
@@ -4040,604 +6162,604 @@ public class ChaosPersists
     }
 
     if (GirlfriendEnable != 0) {
-      EntityRegistry.addSpawn(Girlfriend.class, 30, 8, 15, EnumCreatureType.CREATURE, new Biome[] { Biomes.BEACH });
-      EntityRegistry.addSpawn(Girlfriend.class, 10, 3, 6, EnumCreatureType.CREATURE, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(Girlfriend.class, 8, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(Girlfriend.class, 5, 2, 3, EnumCreatureType.CREATURE, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(Girlfriend.class, 10, 3, 6, EnumCreatureType.CREATURE, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(Girlfriend.class, 10, 3, 6, EnumCreatureType.CREATURE, new Biome[] { Biomes.STONE_BEACH });
-      EntityRegistry.addSpawn(Girlfriend.class, 5, 2, 4, EnumCreatureType.CREATURE, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Girlfriend.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(Girlfriend.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(Girlfriend.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(Girlfriend.class, 2, 1, 3, EnumCreatureType.CREATURE, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(Girlfriend.class, 2, 1, 3, EnumCreatureType.CREATURE, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Girlfriend.class, 30, 8, 15, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BEACH });
+      EntityRegistry.addSpawn(Girlfriend.class, 10, 3, 6, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(Girlfriend.class, 8, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(Girlfriend.class, 5, 2, 3, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(Girlfriend.class, 10, 3, 6, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(Girlfriend.class, 10, 3, 6, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.STONE_BEACH });
+      EntityRegistry.addSpawn(Girlfriend.class, 5, 2, 4, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Girlfriend.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(Girlfriend.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Girlfriend.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(Girlfriend.class, 2, 1, 3, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(Girlfriend.class, 2, 1, 3, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if (BoyfriendEnable != 0) {
-      EntityRegistry.addSpawn(Boyfriend.class, 30, 8, 15, EnumCreatureType.CREATURE, new Biome[] { Biomes.BEACH });
-      EntityRegistry.addSpawn(Boyfriend.class, 10, 3, 6, EnumCreatureType.CREATURE, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(Boyfriend.class, 8, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(Boyfriend.class, 5, 2, 3, EnumCreatureType.CREATURE, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(Boyfriend.class, 10, 3, 6, EnumCreatureType.CREATURE, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(Boyfriend.class, 10, 3, 6, EnumCreatureType.CREATURE, new Biome[] { Biomes.STONE_BEACH });
-      EntityRegistry.addSpawn(Boyfriend.class, 5, 2, 4, EnumCreatureType.CREATURE, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Boyfriend.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(Boyfriend.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(Boyfriend.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(Boyfriend.class, 2, 1, 3, EnumCreatureType.CREATURE, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(Boyfriend.class, 2, 1, 3, EnumCreatureType.CREATURE, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Boyfriend.class, 30, 8, 15, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BEACH });
+      EntityRegistry.addSpawn(Boyfriend.class, 10, 3, 6, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(Boyfriend.class, 8, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(Boyfriend.class, 5, 2, 3, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(Boyfriend.class, 10, 3, 6, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(Boyfriend.class, 10, 3, 6, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.STONE_BEACH });
+      EntityRegistry.addSpawn(Boyfriend.class, 5, 2, 4, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Boyfriend.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(Boyfriend.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Boyfriend.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(Boyfriend.class, 2, 1, 3, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(Boyfriend.class, 2, 1, 3, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if (BeaverEnable != 0) {
-      EntityRegistry.addSpawn(Beaver.class, 10, 2, 4, EnumCreatureType.CREATURE, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(Beaver.class, 3, 2, 4, EnumCreatureType.CREATURE, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(Beaver.class, 2, 2, 4, EnumCreatureType.CREATURE, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Beaver.class, 2, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(Beaver.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(Beaver.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(Beaver.class, 10, 2, 4, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(Beaver.class, 3, 2, 4, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(Beaver.class, 2, 2, 4, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Beaver.class, 2, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(Beaver.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Beaver.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
     }
 
     if (CowEnable != 0)
     {
-      EntityRegistry.addSpawn(RedCow.class, 8, 4, 8, EnumCreatureType.CREATURE, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(RedCow.class, 8, 4, 8, EnumCreatureType.CREATURE, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(RedCow.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(RedCow.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(RedCow.class, 8, 1, 3, EnumCreatureType.CREATURE, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(RedCow.class, 2, 1, 3, EnumCreatureType.CREATURE, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(RedCow.class, 8, 4, 8, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(RedCow.class, 8, 4, 8, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(RedCow.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(RedCow.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(RedCow.class, 8, 1, 3, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(RedCow.class, 2, 1, 3, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
 
-      EntityRegistry.addSpawn(GoldCow.class, 5, 2, 6, EnumCreatureType.CREATURE, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(GoldCow.class, 5, 2, 6, EnumCreatureType.CREATURE, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(GoldCow.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(GoldCow.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(GoldCow.class, 5, 2, 6, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(GoldCow.class, 5, 2, 6, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(GoldCow.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(GoldCow.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
 
-      EntityRegistry.addSpawn(EnchantedCow.class, 3, 2, 4, EnumCreatureType.CREATURE, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(EnchantedCow.class, 3, 2, 4, EnumCreatureType.CREATURE, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(EnchantedCow.class, 5, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(EnchantedCow.class, 15, 3, 6, EnumCreatureType.CREATURE, new Biome[] { Biomes.MUSHROOM_ISLAND });
+      EntityRegistry.addSpawn(EnchantedCow.class, 3, 2, 4, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(EnchantedCow.class, 3, 2, 4, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(EnchantedCow.class, 5, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(EnchantedCow.class, 15, 3, 6, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MUSHROOM_ISLAND });
     }
 
     if (CriminalEnable != 0) {
-      EntityRegistry.addSpawn(BandP.class, 20, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(BandP.class, 20, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.DESERT });
-      EntityRegistry.addSpawn(BandP.class, 20, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(BandP.class, 20, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(BandP.class, 20, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.DESERT });
+      EntityRegistry.addSpawn(BandP.class, 20, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
     }
 
     if (WormEnable != 0) {
-      EntityRegistry.addSpawn(WormLarge.class, 25, 1, 1, EnumCreatureType.CREATURE, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(WormLarge.class, 15, 1, 1, EnumCreatureType.CREATURE, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(WormLarge.class, 10, 1, 1, EnumCreatureType.CREATURE, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(WormLarge.class, 25, 1, 1, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(WormLarge.class, 15, 1, 1, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(WormLarge.class, 10, 1, 1, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if (ButterflyEnable != 0) {
-      EntityRegistry.addSpawn(EntityButterfly.class, 8, 5, 15, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BEACH });
-      EntityRegistry.addSpawn(EntityButterfly.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS });
-      EntityRegistry.addSpawn(EntityButterfly.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_EDGE });
-      EntityRegistry.addSpawn(EntityButterfly.class, 30, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(EntityButterfly.class, 20, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(EntityButterfly.class, 20, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(EntityButterfly.class, 10, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(EntityButterfly.class, 20, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(EntityButterfly.class, 20, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(EntityButterfly.class, 20, 4, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(EntityButterfly.class, 15, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(EntityButterfly.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(EntityButterfly.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(EntityButterfly.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(EntityButterfly.class, 10, 1, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(EntityButterfly.class, 10, 1, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(EntityButterfly.class, 8, 5, 15, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BEACH });
+      EntityRegistry.addSpawn(EntityButterfly.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS });
+      EntityRegistry.addSpawn(EntityButterfly.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_EDGE });
+      EntityRegistry.addSpawn(EntityButterfly.class, 30, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(EntityButterfly.class, 20, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(EntityButterfly.class, 20, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(EntityButterfly.class, 10, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(EntityButterfly.class, 20, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(EntityButterfly.class, 20, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(EntityButterfly.class, 20, 4, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(EntityButterfly.class, 15, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(EntityButterfly.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(EntityButterfly.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(EntityButterfly.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(EntityButterfly.class, 10, 1, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(EntityButterfly.class, 10, 1, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if (MothEnable != 0) {
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 8, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 8, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_EDGE });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 10, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 20, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 20, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 10, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 20, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 10, 1, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 15, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 10, 1, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(EntityLunaMoth.class, 10, 1, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 8, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 8, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_EDGE });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 10, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 20, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 20, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 10, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 20, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 10, 1, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 15, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 10, 1, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(EntityLunaMoth.class, 10, 1, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if (CassowaryEnable != 0) {
-      EntityRegistry.addSpawn(Cassowary.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS });
-      EntityRegistry.addSpawn(Cassowary.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_EDGE });
-      EntityRegistry.addSpawn(Cassowary.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_WITH_TREES });
-      EntityRegistry.addSpawn(Cassowary.class, 5, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Cassowary.class, 5, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(Cassowary.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(Cassowary.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA_HILLS });
-      EntityRegistry.addSpawn(Cassowary.class, 3, 1, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(Cassowary.class, 10, 1, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Cassowary.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS });
+      EntityRegistry.addSpawn(Cassowary.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_EDGE });
+      EntityRegistry.addSpawn(Cassowary.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_WITH_TREES });
+      EntityRegistry.addSpawn(Cassowary.class, 5, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Cassowary.class, 5, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(Cassowary.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Cassowary.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA_HILLS });
+      EntityRegistry.addSpawn(Cassowary.class, 3, 1, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(Cassowary.class, 10, 1, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if ((EasterBunnyEnable != 0) && (easter_day != 0)) {
-      EntityRegistry.addSpawn(EasterBunny.class, 10, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(EasterBunny.class, 10, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(EasterBunny.class, 10, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(EasterBunny.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(EasterBunny.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(EasterBunny.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(EasterBunny.class, 8, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(EasterBunny.class, 10, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(EasterBunny.class, 10, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(EasterBunny.class, 10, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(EasterBunny.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(EasterBunny.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(EasterBunny.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(EasterBunny.class, 8, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
     }
 
     if (FireflyEnable != 0) {
-      EntityRegistry.addSpawn(Firefly.class, 15, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(Firefly.class, 15, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(Firefly.class, 10, 4, 8, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(Firefly.class, 15, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Firefly.class, 15, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(Firefly.class, 10, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.STONE_BEACH });
-      EntityRegistry.addSpawn(Firefly.class, 15, 3, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Firefly.class, 15, 3, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(Firefly.class, 15, 2, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(Firefly.class, 15, 2, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(Firefly.class, 15, 2, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA_HILLS });
-      EntityRegistry.addSpawn(Firefly.class, 10, 2, 8, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(Firefly.class, 10, 2, 8, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Firefly.class, 15, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(Firefly.class, 15, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(Firefly.class, 10, 4, 8, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(Firefly.class, 15, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Firefly.class, 15, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(Firefly.class, 10, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.STONE_BEACH });
+      EntityRegistry.addSpawn(Firefly.class, 15, 3, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Firefly.class, 15, 3, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(Firefly.class, 15, 2, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Firefly.class, 15, 2, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(Firefly.class, 15, 2, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA_HILLS });
+      EntityRegistry.addSpawn(Firefly.class, 10, 2, 8, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(Firefly.class, 10, 2, 8, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if (WhaleEnable != 0) {
-      EntityRegistry.addSpawn(Whale.class, 1, 1, 2, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.DEEP_OCEAN });
+      EntityRegistry.addSpawn(Whale.class, 1, 1, 2, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.DEEP_OCEAN });
     }
 
     if (BeeEnable != 0) {
-      EntityRegistry.addSpawn(Bee.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(Bee.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(Bee.class, 5, 3, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Bee.class, 5, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(Bee.class, 3, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Bee.class, 3, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(Bee.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(Bee.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(Bee.class, 3, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(Bee.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Bee.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(Bee.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(Bee.class, 5, 3, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Bee.class, 5, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(Bee.class, 3, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Bee.class, 3, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(Bee.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Bee.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(Bee.class, 3, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(Bee.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if (MantisEnable != 0) {
-      EntityRegistry.addSpawn(Mantis.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(Mantis.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(Mantis.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Mantis.class, 1, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(Mantis.class, 1, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(Mantis.class, 1, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Mantis.class, 1, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(Mantis.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(Mantis.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Mantis.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(Mantis.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(Mantis.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Mantis.class, 1, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(Mantis.class, 1, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(Mantis.class, 1, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Mantis.class, 1, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Mantis.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(Mantis.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if (HerculesBeetleEnable != 0) {
-      EntityRegistry.addSpawn(HerculesBeetle.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(HerculesBeetle.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(HerculesBeetle.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_EDGE });
-      EntityRegistry.addSpawn(HerculesBeetle.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA_HILLS });
-      EntityRegistry.addSpawn(HerculesBeetle.class, 5, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(HerculesBeetle.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.COLD_TAIGA_HILLS });
-      EntityRegistry.addSpawn(HerculesBeetle.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA_HILLS });
+      EntityRegistry.addSpawn(HerculesBeetle.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(HerculesBeetle.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(HerculesBeetle.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_EDGE });
+      EntityRegistry.addSpawn(HerculesBeetle.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA_HILLS });
+      EntityRegistry.addSpawn(HerculesBeetle.class, 5, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(HerculesBeetle.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.COLD_TAIGA_HILLS });
+      EntityRegistry.addSpawn(HerculesBeetle.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA_HILLS });
     }
 
     if (MolenoidEnable != 0) {
-      EntityRegistry.addSpawn(Molenoid.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(Molenoid.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(Molenoid.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Molenoid.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(Molenoid.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(Molenoid.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if (CaterKillerEnable != 0) {
-      EntityRegistry.addSpawn(CaterKiller.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(CaterKiller.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(CaterKiller.class, 4, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(CaterKiller.class, 4, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(CaterKiller.class, 6, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(CaterKiller.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(CaterKiller.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(CaterKiller.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(CaterKiller.class, 10, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(CaterKiller.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(CaterKiller.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(CaterKiller.class, 4, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(CaterKiller.class, 4, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(CaterKiller.class, 6, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(CaterKiller.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(CaterKiller.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(CaterKiller.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(CaterKiller.class, 10, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
     }
 
     if (ChipmunkEnable != 0) {
-      EntityRegistry.addSpawn(Chipmunk.class, 8, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(Chipmunk.class, 5, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(Chipmunk.class, 4, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Chipmunk.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(Chipmunk.class, 5, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Chipmunk.class, 4, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(Chipmunk.class, 10, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
-      EntityRegistry.addSpawn(Chipmunk.class, 2, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(Chipmunk.class, 6, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(Chipmunk.class, 8, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(Chipmunk.class, 5, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(Chipmunk.class, 4, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Chipmunk.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(Chipmunk.class, 5, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Chipmunk.class, 4, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(Chipmunk.class, 10, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(Chipmunk.class, 2, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Chipmunk.class, 6, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
     }
 
     if (OstrichEnable != 0) {
-      EntityRegistry.addSpawn(Ostrich.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.DESERT });
-      EntityRegistry.addSpawn(Ostrich.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.STONE_BEACH });
-      EntityRegistry.addSpawn(Ostrich.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(Ostrich.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Ostrich.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.DESERT });
+      EntityRegistry.addSpawn(Ostrich.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.STONE_BEACH });
+      EntityRegistry.addSpawn(Ostrich.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(Ostrich.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if (CephadromeEnable != 0) {
-      EntityRegistry.addSpawn(Cephadrome.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ICE_PLAINS });
-      EntityRegistry.addSpawn(Cephadrome.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.COLD_TAIGA });
+      EntityRegistry.addSpawn(Cephadrome.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ICE_PLAINS });
+      EntityRegistry.addSpawn(Cephadrome.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.COLD_TAIGA });
     }
 
     if (MosquitoEnable != 0) {
-      EntityRegistry.addSpawn(EntityMosquito.class, 30, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(EntityMosquito.class, 20, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(EntityMosquito.class, 20, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(EntityMosquito.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(EntityMosquito.class, 30, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(EntityMosquito.class, 20, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(EntityMosquito.class, 20, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(EntityMosquito.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
     }
 
     if (GhostEnable != 0) {
-      EntityRegistry.addSpawn(Ghost.class, 15, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.COLD_TAIGA });
-      EntityRegistry.addSpawn(Ghost.class, 10, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA_HILLS });
-      EntityRegistry.addSpawn(Ghost.class, 6, 4, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FROZEN_RIVER });
-      EntityRegistry.addSpawn(Ghost.class, 2, 1, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Ghost.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(Ghost.class, 15, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.COLD_TAIGA });
+      EntityRegistry.addSpawn(Ghost.class, 10, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA_HILLS });
+      EntityRegistry.addSpawn(Ghost.class, 6, 4, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FROZEN_RIVER });
+      EntityRegistry.addSpawn(Ghost.class, 2, 1, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Ghost.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
     }
 
     if (GhostSkellyEnable != 0) {
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.COLD_TAIGA });
-      EntityRegistry.addSpawn(GhostSkelly.class, 10, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA_HILLS });
-      EntityRegistry.addSpawn(GhostSkelly.class, 6, 4, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FROZEN_RIVER });
-      EntityRegistry.addSpawn(GhostSkelly.class, 2, 1, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(GhostSkelly.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.COLD_TAIGA });
+      EntityRegistry.addSpawn(GhostSkelly.class, 10, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA_HILLS });
+      EntityRegistry.addSpawn(GhostSkelly.class, 6, 4, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FROZEN_RIVER });
+      EntityRegistry.addSpawn(GhostSkelly.class, 2, 1, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(GhostSkelly.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
     }
 
     if (DragonflyEnable != 0) {
-      EntityRegistry.addSpawn(Dragonfly.class, 5, 3, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(Dragonfly.class, 4, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(Dragonfly.class, 5, 3, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(Dragonfly.class, 4, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
     }
 
     if (KyuubiEnable != 0) {
-      EntityRegistry.addSpawn(Kyuubi.class, 10, 1, 1, EnumCreatureType.MONSTER, new Biome[] { Biomes.HELL });
+      EntityRegistry.addSpawn(Kyuubi.class, 10, 1, 1, MobCategory.MONSTER, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.HELL });
     }
 
     if (StinkyEnable != 0) {
-      EntityRegistry.addSpawn(Stinky.class, 2, 1, 1, EnumCreatureType.MONSTER, new Biome[] { Biomes.HELL });
-      EntityRegistry.addSpawn(Stinky.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA });
-      EntityRegistry.addSpawn(Stinky.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA_CLEAR_ROCK });
-      EntityRegistry.addSpawn(Stinky.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA_ROCK });
+      EntityRegistry.addSpawn(Stinky.class, 2, 1, 1, MobCategory.MONSTER, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.HELL });
+      EntityRegistry.addSpawn(Stinky.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA });
+      EntityRegistry.addSpawn(Stinky.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA_CLEAR_ROCK });
+      EntityRegistry.addSpawn(Stinky.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA_ROCK });
     }
 
     if (CockateilEnable != 0) {
-      EntityRegistry.addSpawn(Cockateil.class, 10, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BEACH });
-      EntityRegistry.addSpawn(Cockateil.class, 10, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS });
-      EntityRegistry.addSpawn(Cockateil.class, 10, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_EDGE });
-      EntityRegistry.addSpawn(Cockateil.class, 25, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(Cockateil.class, 20, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(Cockateil.class, 35, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Cockateil.class, 25, 5, 10, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(Cockateil.class, 10, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(Cockateil.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(Cockateil.class, 5, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.STONE_BEACH });
-      EntityRegistry.addSpawn(Cockateil.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Cockateil.class, 5, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(Cockateil.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(Cockateil.class, 15, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(Cockateil.class, 11, 1, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(Cockateil.class, 11, 1, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Cockateil.class, 10, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BEACH });
+      EntityRegistry.addSpawn(Cockateil.class, 10, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS });
+      EntityRegistry.addSpawn(Cockateil.class, 10, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_EDGE });
+      EntityRegistry.addSpawn(Cockateil.class, 25, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(Cockateil.class, 20, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(Cockateil.class, 35, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Cockateil.class, 25, 5, 10, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(Cockateil.class, 10, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(Cockateil.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(Cockateil.class, 5, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.STONE_BEACH });
+      EntityRegistry.addSpawn(Cockateil.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Cockateil.class, 5, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(Cockateil.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Cockateil.class, 15, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(Cockateil.class, 11, 1, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(Cockateil.class, 11, 1, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
 
     if (HydroliscEnable != 0) {
-      EntityRegistry.addSpawn(Hydrolisc.class, 25, 3, 6, EnumCreatureType.CREATURE, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(Hydrolisc.class, 15, 2, 5, EnumCreatureType.CREATURE, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Hydrolisc.class, 10, 1, 3, EnumCreatureType.CREATURE, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(Hydrolisc.class, 5, 3, 6, EnumCreatureType.CREATURE, new Biome[] { Biomes.STONE_BEACH });
+      EntityRegistry.addSpawn(Hydrolisc.class, 25, 3, 6, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(Hydrolisc.class, 15, 2, 5, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Hydrolisc.class, 10, 1, 3, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(Hydrolisc.class, 5, 3, 6, MobCategory.CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.STONE_BEACH });
     }
 
     if (MothraEnable != 0) {
-      EntityRegistry.addSpawn(Mothra.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS });
-      EntityRegistry.addSpawn(Mothra.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_WITH_TREES });
+      EntityRegistry.addSpawn(Mothra.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS });
+      EntityRegistry.addSpawn(Mothra.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_WITH_TREES });
     }
     if (BrutalflyEnable != 0) {
-      EntityRegistry.addSpawn(Brutalfly.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA_HILLS });
-      EntityRegistry.addSpawn(Brutalfly.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_WITH_TREES });
-      EntityRegistry.addSpawn(Brutalfly.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA_CLEAR_ROCK });
+      EntityRegistry.addSpawn(Brutalfly.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA_HILLS });
+      EntityRegistry.addSpawn(Brutalfly.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_WITH_TREES });
+      EntityRegistry.addSpawn(Brutalfly.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA_CLEAR_ROCK });
     }
     if (WaterDragonEnable != 0) {
-      EntityRegistry.addSpawn(WaterDragon.class, 5, 1, 1, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(WaterDragon.class, 3, 1, 1, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(WaterDragon.class, 2, 1, 1, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.OCEAN });
-      EntityRegistry.addSpawn(WaterDragon.class, 2, 1, 1, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.STONE_BEACH });
+      EntityRegistry.addSpawn(WaterDragon.class, 5, 1, 1, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(WaterDragon.class, 3, 1, 1, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(WaterDragon.class, 2, 1, 1, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.OCEAN });
+      EntityRegistry.addSpawn(WaterDragon.class, 2, 1, 1, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.STONE_BEACH });
     }
     if (SeaMonsterEnable != 0) {
-      EntityRegistry.addSpawn(SeaMonster.class, 4, 1, 1, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.OCEAN });
-      EntityRegistry.addSpawn(SeaMonster.class, 2, 1, 1, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(SeaMonster.class, 4, 1, 1, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.OCEAN });
+      EntityRegistry.addSpawn(SeaMonster.class, 2, 1, 1, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
     }
     if (SeaViperEnable != 0) {
-      EntityRegistry.addSpawn(SeaViper.class, 3, 1, 1, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.OCEAN });
-      EntityRegistry.addSpawn(SeaViper.class, 2, 1, 1, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.STONE_BEACH });
+      EntityRegistry.addSpawn(SeaViper.class, 3, 1, 1, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.OCEAN });
+      EntityRegistry.addSpawn(SeaViper.class, 2, 1, 1, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.STONE_BEACH });
     }
     if (CrabEnable != 0) {
-      EntityRegistry.addSpawn(Crab.class, 2, 3, 6, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.OCEAN });
-      EntityRegistry.addSpawn(Crab.class, 1, 3, 6, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(Crab.class, 1, 2, 4, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.STONE_BEACH });
+      EntityRegistry.addSpawn(Crab.class, 2, 3, 6, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.OCEAN });
+      EntityRegistry.addSpawn(Crab.class, 1, 3, 6, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(Crab.class, 1, 2, 4, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.STONE_BEACH });
     }
     if (AttackSquidEnable != 0) {
-      EntityRegistry.addSpawn(AttackSquid.class, 12, 6, 10, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(AttackSquid.class, 10, 5, 9, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(AttackSquid.class, 7, 4, 8, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.OCEAN });
+      EntityRegistry.addSpawn(AttackSquid.class, 12, 6, 10, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(AttackSquid.class, 10, 5, 9, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(AttackSquid.class, 7, 4, 8, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.OCEAN });
     }
     if (LizardEnable != 0) {
-      EntityRegistry.addSpawn(Lizard.class, 5, 2, 4, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(Lizard.class, 4, 2, 4, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(Lizard.class, 2, 2, 4, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.OCEAN });
+      EntityRegistry.addSpawn(Lizard.class, 5, 2, 4, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(Lizard.class, 4, 2, 4, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(Lizard.class, 2, 2, 4, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.OCEAN });
     }
     if (RubberDuckyEnable != 0) {
-      EntityRegistry.addSpawn(RubberDucky.class, 10, 10, 20, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(RubberDucky.class, 4, 4, 6, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.STONE_BEACH });
+      EntityRegistry.addSpawn(RubberDucky.class, 10, 10, 20, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(RubberDucky.class, 4, 4, 6, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.STONE_BEACH });
     }
     if (BasiliskEnable != 0) {
-      EntityRegistry.addSpawn(Basilisk.class, 3, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Basilisk.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(Basilisk.class, 4, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(Basilisk.class, 15, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(Basilisk.class, 3, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Basilisk.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(Basilisk.class, 4, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(Basilisk.class, 15, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
     }
     if (EmperorScorpionEnable != 0) {
-      EntityRegistry.addSpawn(EmperorScorpion.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.DESERT });
-      EntityRegistry.addSpawn(EmperorScorpion.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(EmperorScorpion.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.DESERT });
+      EntityRegistry.addSpawn(EmperorScorpion.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
     }
     if (TrooperBugEnable != 0) {
-      EntityRegistry.addSpawn(TrooperBug.class, 3, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(TrooperBug.class, 1, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA });
+      EntityRegistry.addSpawn(TrooperBug.class, 3, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(TrooperBug.class, 1, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA });
     }
     if (SpitBugEnable != 0) {
-      EntityRegistry.addSpawn(SpitBug.class, 6, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(SpitBug.class, 6, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
     }
     if (StinkBugEnable != 0) {
-      EntityRegistry.addSpawn(StinkBug.class, 10, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(StinkBug.class, 8, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(StinkBug.class, 6, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(StinkBug.class, 4, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(StinkBug.class, 8, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(StinkBug.class, 10, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(StinkBug.class, 8, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(StinkBug.class, 6, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(StinkBug.class, 4, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(StinkBug.class, 8, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
     }
     if (ScorpionEnable != 0) {
-      EntityRegistry.addSpawn(Scorpion.class, 15, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.DESERT });
-      EntityRegistry.addSpawn(Scorpion.class, 28, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
-      EntityRegistry.addSpawn(Scorpion.class, 15, 3, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA });
-      EntityRegistry.addSpawn(Scorpion.class, 15, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
-      EntityRegistry.addSpawn(Scorpion.class, 6, 1, 3, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA });
-      EntityRegistry.addSpawn(Scorpion.class, 4, 1, 3, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA_CLEAR_ROCK });
-      EntityRegistry.addSpawn(Scorpion.class, 5, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA_ROCK });
+      EntityRegistry.addSpawn(Scorpion.class, 15, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.DESERT });
+      EntityRegistry.addSpawn(Scorpion.class, 28, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(Scorpion.class, 15, 3, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA });
+      EntityRegistry.addSpawn(Scorpion.class, 15, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Scorpion.class, 6, 1, 3, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA });
+      EntityRegistry.addSpawn(Scorpion.class, 4, 1, 3, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA_CLEAR_ROCK });
+      EntityRegistry.addSpawn(Scorpion.class, 5, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA_ROCK });
     }
 
     if (LeafMonsterEnable != 0) {
-      EntityRegistry.addSpawn(LeafMonster.class, 5, 2, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(LeafMonster.class, 5, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(LeafMonster.class, 3, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(LeafMonster.class, 3, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(LeafMonster.class, 3, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(LeafMonster.class, 2, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(LeafMonster.class, 2, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(LeafMonster.class, 2, 2, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(LeafMonster.class, 5, 2, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(LeafMonster.class, 5, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(LeafMonster.class, 3, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(LeafMonster.class, 3, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(LeafMonster.class, 3, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(LeafMonster.class, 2, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(LeafMonster.class, 2, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(LeafMonster.class, 2, 2, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
     }
 
     if (EnderKnightEnable != 0) {
-      EntityRegistry.addSpawn(EnderKnight.class, 4, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS });
-      EntityRegistry.addSpawn(EnderKnight.class, 4, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_EDGE });
-      EntityRegistry.addSpawn(EnderKnight.class, 4, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(EnderKnight.class, 4, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(EnderKnight.class, 4, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(EnderKnight.class, 2, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(EnderKnight.class, 2, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(EnderKnight.class, 2, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.DESERT });
-      EntityRegistry.addSpawn(EnderKnight.class, 20, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(EnderKnight.class, 4, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS });
+      EntityRegistry.addSpawn(EnderKnight.class, 4, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_EDGE });
+      EntityRegistry.addSpawn(EnderKnight.class, 4, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(EnderKnight.class, 4, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(EnderKnight.class, 4, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(EnderKnight.class, 2, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(EnderKnight.class, 2, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(EnderKnight.class, 2, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.DESERT });
+      EntityRegistry.addSpawn(EnderKnight.class, 20, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
     }
     if (EnderReaperEnable != 0) {
-      EntityRegistry.addSpawn(EnderReaper.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS });
-      EntityRegistry.addSpawn(EnderReaper.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.EXTREME_HILLS_EDGE });
-      EntityRegistry.addSpawn(EnderReaper.class, 1, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(EnderReaper.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(EnderReaper.class, 2, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(EnderReaper.class, 1, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(EnderReaper.class, 1, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(EnderReaper.class, 1, 1, 2, EnumCreatureType.AMBIENT, new Biome[] { Biomes.DESERT });
-      EntityRegistry.addSpawn(EnderReaper.class, 38, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(EnderReaper.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS });
+      EntityRegistry.addSpawn(EnderReaper.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.EXTREME_HILLS_EDGE });
+      EntityRegistry.addSpawn(EnderReaper.class, 1, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(EnderReaper.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(EnderReaper.class, 2, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(EnderReaper.class, 1, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(EnderReaper.class, 1, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(EnderReaper.class, 1, 1, 2, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.DESERT });
+      EntityRegistry.addSpawn(EnderReaper.class, 38, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
     }
 
     if (CoinEnable != 0) {
-      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.COLD_TAIGA });
-      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.COLD_TAIGA });
+      EntityRegistry.addSpawn(Coin.class, 2, 1, 1, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
     }
 
     if (CricketEnable != 0) {
-      EntityRegistry.addSpawn(Cricket.class, 3, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST });
-      EntityRegistry.addSpawn(Cricket.class, 2, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.FOREST_HILLS });
-      EntityRegistry.addSpawn(Cricket.class, 3, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Cricket.class, 2, 3, 5, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE_HILLS });
-      EntityRegistry.addSpawn(Cricket.class, 3, 4, 8, EnumCreatureType.AMBIENT, new Biome[] { Biomes.PLAINS });
-      EntityRegistry.addSpawn(Cricket.class, 2, 2, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST });
-      EntityRegistry.addSpawn(Cricket.class, 2, 2, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.BIRCH_FOREST_HILLS });
-      EntityRegistry.addSpawn(Cricket.class, 3, 1, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
-      EntityRegistry.addSpawn(Cricket.class, 2, 1, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.REDWOOD_TAIGA });
-      EntityRegistry.addSpawn(Cricket.class, 2, 1, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
-      EntityRegistry.addSpawn(Cricket.class, 1, 1, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SAVANNA_PLATEAU });
+      EntityRegistry.addSpawn(Cricket.class, 3, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST });
+      EntityRegistry.addSpawn(Cricket.class, 2, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.FOREST_HILLS });
+      EntityRegistry.addSpawn(Cricket.class, 3, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Cricket.class, 2, 3, 5, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE_HILLS });
+      EntityRegistry.addSpawn(Cricket.class, 3, 4, 8, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.PLAINS });
+      EntityRegistry.addSpawn(Cricket.class, 2, 2, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST });
+      EntityRegistry.addSpawn(Cricket.class, 2, 2, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.BIRCH_FOREST_HILLS });
+      EntityRegistry.addSpawn(Cricket.class, 3, 1, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(Cricket.class, 2, 1, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.REDWOOD_TAIGA });
+      EntityRegistry.addSpawn(Cricket.class, 2, 1, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(Cricket.class, 1, 1, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SAVANNA_PLATEAU });
     }
     if (FrogEnable != 0) {
-      EntityRegistry.addSpawn(Frog.class, 20, 3, 6, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(Frog.class, 3, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.RIVER });
-      EntityRegistry.addSpawn(Frog.class, 3, 3, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.JUNGLE });
-      EntityRegistry.addSpawn(Frog.class, 20, 2, 6, EnumCreatureType.WATER_CREATURE, new Biome[] { Biomes.SWAMPLAND });
-      EntityRegistry.addSpawn(Frog.class, 2, 2, 6, EnumCreatureType.AMBIENT, new Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(Frog.class, 20, 3, 6, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(Frog.class, 3, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.RIVER });
+      EntityRegistry.addSpawn(Frog.class, 3, 3, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.JUNGLE });
+      EntityRegistry.addSpawn(Frog.class, 20, 2, 6, MobCategory.WATER_CREATURE, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
+      EntityRegistry.addSpawn(Frog.class, 2, 2, 6, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.SWAMPLAND });
     }
 
     if (PeacockEnable != 0) {
-      EntityRegistry.addSpawn(Peacock.class, 1, 1, 3, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA });
-      EntityRegistry.addSpawn(Peacock.class, 1, 1, 3, EnumCreatureType.AMBIENT, new Biome[] { Biomes.MESA_CLEAR_ROCK });
+      EntityRegistry.addSpawn(Peacock.class, 1, 1, 3, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA });
+      EntityRegistry.addSpawn(Peacock.class, 1, 1, 3, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.MESA_CLEAR_ROCK });
     }
 
     if (FairyEnable != 0) {
-      EntityRegistry.addSpawn(Fairy.class, 25, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(Fairy.class, 25, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
     }
     if (RatEnable != 0) {
-      EntityRegistry.addSpawn(Rat.class, 35, 10, 20, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
-      EntityRegistry.addSpawn(Rat.class, 25, 2, 8, EnumCreatureType.AMBIENT, new Biome[] { Biomes.TAIGA });
+      EntityRegistry.addSpawn(Rat.class, 35, 10, 20, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(Rat.class, 25, 2, 8, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.TAIGA });
     }
     if (DungeonBeastEnable != 0) {
-      EntityRegistry.addSpawn(DungeonBeast.class, 20, 2, 4, EnumCreatureType.AMBIENT, new Biome[] { Biomes.ROOFED_FOREST });
+      EntityRegistry.addSpawn(DungeonBeast.class, 20, 2, 4, MobCategory.AMBIENT, new com.astryxion.chaospersists.compat.minecraft.world.biome.Biome[] { Biomes.ROOFED_FOREST });
     }
 
     int shoeid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "shoes"), Shoes.class, "Shoes", shoeid, this, 64, 1, true);
+    EntityRegistry.registerModEntity(cpId("shoes"), Shoes.class, "Shoes", shoeid, this, 64, 1, true);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_UltimateHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(UltimateHelmet), "   ", "TIT", "U U", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("recipe_UltimateHelmet"), cpId("chaospersists"), new ItemStack(UltimateHelmet), "   ", "TIT", "U U", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_UltimateHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(UltimateHelmet), "TIT", "U U", "   ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("recipe_UltimateHelmet"), cpId("chaospersists"), new ItemStack(UltimateHelmet), "TIT", "U U", "   ", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_UltimateBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(UltimateBody), "I I", "TTT", "UUU", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("recipe_UltimateBody"), cpId("chaospersists"), new ItemStack(UltimateBody), "I I", "TTT", "UUU", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_UltimateLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(UltimateLegs), "III", "T T", "U U", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("recipe_UltimateLegs"), cpId("chaospersists"), new ItemStack(UltimateLegs), "III", "T T", "U U", 'I', Items.IRON_INGOT, 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_UltimateBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(UltimateBoots), "   ", "T T", "U U", 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("recipe_UltimateBoots"), cpId("chaospersists"), new ItemStack(UltimateBoots), "   ", "T T", "U U", 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_UltimateBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(UltimateBoots), "T T", "U U", "   ", 'U', MyIngotUranium, 'T', MyIngotTitanium);
+    addShapedRecipe(cpId("recipe_UltimateBoots"), cpId("chaospersists"), new ItemStack(UltimateBoots), "T T", "U U", "   ", 'U', MyIngotUranium, 'T', MyIngotTitanium);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_LavaEelHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(LavaEelHelmet), "   ", "***", "* *", '*', MyLavaEel);
+    addShapedRecipe(cpId("recipe_LavaEelHelmet"), cpId("chaospersists"), new ItemStack(LavaEelHelmet), "   ", "***", "* *", '*', MyLavaEel);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_LavaEelHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(LavaEelHelmet), "***", "* *", "   ", '*', MyLavaEel);
+    addShapedRecipe(cpId("recipe_LavaEelHelmet"), cpId("chaospersists"), new ItemStack(LavaEelHelmet), "***", "* *", "   ", '*', MyLavaEel);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_LavaEelBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(LavaEelBody), "* *", "***", "***", '*', MyLavaEel);
+    addShapedRecipe(cpId("recipe_LavaEelBody"), cpId("chaospersists"), new ItemStack(LavaEelBody), "* *", "***", "***", '*', MyLavaEel);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_LavaEelLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(LavaEelLegs), "***", "* *", "* *", '*', MyLavaEel);
+    addShapedRecipe(cpId("recipe_LavaEelLegs"), cpId("chaospersists"), new ItemStack(LavaEelLegs), "***", "* *", "* *", '*', MyLavaEel);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_LavaEelBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(LavaEelBoots), "   ", "* *", "* *", '*', MyLavaEel);
+    addShapedRecipe(cpId("recipe_LavaEelBoots"), cpId("chaospersists"), new ItemStack(LavaEelBoots), "   ", "* *", "* *", '*', MyLavaEel);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MothScaleHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MothScaleHelmet), "   ", "***", "* *", '*', MyMothScale);
+    addShapedRecipe(cpId("recipe_MothScaleHelmet"), cpId("chaospersists"), new ItemStack(MothScaleHelmet), "   ", "***", "* *", '*', MyMothScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MothScaleHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MothScaleHelmet), "***", "* *", "   ", '*', MyMothScale);
+    addShapedRecipe(cpId("recipe_MothScaleHelmet"), cpId("chaospersists"), new ItemStack(MothScaleHelmet), "***", "* *", "   ", '*', MyMothScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MothScaleBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MothScaleBody), "* *", "***", "***", '*', MyMothScale);
+    addShapedRecipe(cpId("recipe_MothScaleBody"), cpId("chaospersists"), new ItemStack(MothScaleBody), "* *", "***", "***", '*', MyMothScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MothScaleLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MothScaleLegs), "***", "* *", "* *", '*', MyMothScale);
+    addShapedRecipe(cpId("recipe_MothScaleLegs"), cpId("chaospersists"), new ItemStack(MothScaleLegs), "***", "* *", "* *", '*', MyMothScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MothScaleBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MothScaleBoots), "   ", "* *", "* *", '*', MyMothScale);
+    addShapedRecipe(cpId("recipe_MothScaleBoots"), cpId("chaospersists"), new ItemStack(MothScaleBoots), "   ", "* *", "* *", '*', MyMothScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_EmeraldHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(EmeraldHelmet), "   ", "***", "* *", '*', Items.EMERALD);
+    addShapedRecipe(cpId("recipe_EmeraldHelmet"), cpId("chaospersists"), new ItemStack(EmeraldHelmet), "   ", "***", "* *", '*', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_EmeraldHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(EmeraldHelmet), "***", "* *", "   ", '*', Items.EMERALD);
+    addShapedRecipe(cpId("recipe_EmeraldHelmet"), cpId("chaospersists"), new ItemStack(EmeraldHelmet), "***", "* *", "   ", '*', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_EmeraldBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(EmeraldBody), "* *", "***", "***", '*', Items.EMERALD);
+    addShapedRecipe(cpId("recipe_EmeraldBody"), cpId("chaospersists"), new ItemStack(EmeraldBody), "* *", "***", "***", '*', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_EmeraldLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(EmeraldLegs), "***", "* *", "* *", '*', Items.EMERALD);
+    addShapedRecipe(cpId("recipe_EmeraldLegs"), cpId("chaospersists"), new ItemStack(EmeraldLegs), "***", "* *", "* *", '*', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_EmeraldBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(EmeraldBoots), "   ", "* *", "* *", '*', Items.EMERALD);
+    addShapedRecipe(cpId("recipe_EmeraldBoots"), cpId("chaospersists"), new ItemStack(EmeraldBoots), "   ", "* *", "* *", '*', Items.EMERALD);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_RubyHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(RubyHelmet), "   ", "***", "* *", '*', MyRuby);
+    addShapedRecipe(cpId("recipe_RubyHelmet"), cpId("chaospersists"), new ItemStack(RubyHelmet), "   ", "***", "* *", '*', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_RubyHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(RubyHelmet), "***", "* *", "   ", '*', MyRuby);
+    addShapedRecipe(cpId("recipe_RubyHelmet"), cpId("chaospersists"), new ItemStack(RubyHelmet), "***", "* *", "   ", '*', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_RubyBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(RubyBody), "* *", "***", "***", '*', MyRuby);
+    addShapedRecipe(cpId("recipe_RubyBody"), cpId("chaospersists"), new ItemStack(RubyBody), "* *", "***", "***", '*', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_RubyLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(RubyLegs), "***", "* *", "* *", '*', MyRuby);
+    addShapedRecipe(cpId("recipe_RubyLegs"), cpId("chaospersists"), new ItemStack(RubyLegs), "***", "* *", "* *", '*', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_RubyBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(RubyBoots), "   ", "* *", "* *", '*', MyRuby);
+    addShapedRecipe(cpId("recipe_RubyBoots"), cpId("chaospersists"), new ItemStack(RubyBoots), "   ", "* *", "* *", '*', MyRuby);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_AmethystHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(AmethystHelmet), "   ", "***", "* *", '*', MyAmethyst);
+    addShapedRecipe(cpId("recipe_AmethystHelmet"), cpId("chaospersists"), new ItemStack(AmethystHelmet), "   ", "***", "* *", '*', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_AmethystHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(AmethystHelmet), "***", "* *", "   ", '*', MyAmethyst);
+    addShapedRecipe(cpId("recipe_AmethystHelmet"), cpId("chaospersists"), new ItemStack(AmethystHelmet), "***", "* *", "   ", '*', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_AmethystBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(AmethystBody), "* *", "***", "***", '*', MyAmethyst);
+    addShapedRecipe(cpId("recipe_AmethystBody"), cpId("chaospersists"), new ItemStack(AmethystBody), "* *", "***", "***", '*', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_AmethystLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(AmethystLegs), "***", "* *", "* *", '*', MyAmethyst);
+    addShapedRecipe(cpId("recipe_AmethystLegs"), cpId("chaospersists"), new ItemStack(AmethystLegs), "***", "* *", "* *", '*', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_AmethystBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(AmethystBoots), "   ", "* *", "* *", '*', MyAmethyst);
+    addShapedRecipe(cpId("recipe_AmethystBoots"), cpId("chaospersists"), new ItemStack(AmethystBoots), "   ", "* *", "* *", '*', MyAmethyst);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_CrystalPinkHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(CrystalPinkHelmet), "   ", "***", "* *", '*', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("recipe_CrystalPinkHelmet"), cpId("chaospersists"), new ItemStack(CrystalPinkHelmet), "   ", "***", "* *", '*', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_CrystalPinkHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(CrystalPinkHelmet), "***", "* *", "   ", '*', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("recipe_CrystalPinkHelmet"), cpId("chaospersists"), new ItemStack(CrystalPinkHelmet), "***", "* *", "   ", '*', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_CrystalPinkBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(CrystalPinkBody), "* *", "***", "***", '*', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("recipe_CrystalPinkBody"), cpId("chaospersists"), new ItemStack(CrystalPinkBody), "* *", "***", "***", '*', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_CrystalPinkLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(CrystalPinkLegs), "***", "* *", "* *", '*', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("recipe_CrystalPinkLegs"), cpId("chaospersists"), new ItemStack(CrystalPinkLegs), "***", "* *", "* *", '*', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_CrystalPinkBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(CrystalPinkBoots), "   ", "* *", "* *", '*', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("recipe_CrystalPinkBoots"), cpId("chaospersists"), new ItemStack(CrystalPinkBoots), "   ", "* *", "* *", '*', MyCrystalPinkIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MobzillaHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MobzillaHelmet), "   ", "***", "* *", '*', MyGodzillaScale);
+    addShapedRecipe(cpId("recipe_MobzillaHelmet"), cpId("chaospersists"), new ItemStack(MobzillaHelmet), "   ", "***", "* *", '*', MyGodzillaScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MobzillaHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MobzillaHelmet), "***", "* *", "   ", '*', MyGodzillaScale);
+    addShapedRecipe(cpId("recipe_MobzillaHelmet"), cpId("chaospersists"), new ItemStack(MobzillaHelmet), "***", "* *", "   ", '*', MyGodzillaScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MobzillaBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MobzillaBody), "* *", "***", "***", '*', MyGodzillaScale);
+    addShapedRecipe(cpId("recipe_MobzillaBody"), cpId("chaospersists"), new ItemStack(MobzillaBody), "* *", "***", "***", '*', MyGodzillaScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MobzillaLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MobzillaLegs), "***", "* *", "* *", '*', MyGodzillaScale);
+    addShapedRecipe(cpId("recipe_MobzillaLegs"), cpId("chaospersists"), new ItemStack(MobzillaLegs), "***", "* *", "* *", '*', MyGodzillaScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MobzillaBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MobzillaBoots), "   ", "* *", "* *", '*', MyGodzillaScale);
+    addShapedRecipe(cpId("recipe_MobzillaBoots"), cpId("chaospersists"), new ItemStack(MobzillaBoots), "   ", "* *", "* *", '*', MyGodzillaScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_LapisHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(LapisHelmet), "   ", "***", "* *", '*', Blocks.LAPIS_BLOCK);
+    addShapedRecipe(cpId("recipe_LapisHelmet"), cpId("chaospersists"), new ItemStack(LapisHelmet), "   ", "***", "* *", '*', Blocks.LAPIS_BLOCK);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_LapisHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(LapisHelmet), "***", "* *", "   ", '*', Blocks.LAPIS_BLOCK);
+    addShapedRecipe(cpId("recipe_LapisHelmet"), cpId("chaospersists"), new ItemStack(LapisHelmet), "***", "* *", "   ", '*', Blocks.LAPIS_BLOCK);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_LapisBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(LapisBody), "* *", "***", "***", '*', Blocks.LAPIS_BLOCK);
+    addShapedRecipe(cpId("recipe_LapisBody"), cpId("chaospersists"), new ItemStack(LapisBody), "* *", "***", "***", '*', Blocks.LAPIS_BLOCK);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_LapisLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(LapisLegs), "***", "* *", "* *", '*', Blocks.LAPIS_BLOCK);
+    addShapedRecipe(cpId("recipe_LapisLegs"), cpId("chaospersists"), new ItemStack(LapisLegs), "***", "* *", "* *", '*', Blocks.LAPIS_BLOCK);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_LapisBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(LapisBoots), "   ", "* *", "* *", '*', Blocks.LAPIS_BLOCK);
+    addShapedRecipe(cpId("recipe_LapisBoots"), cpId("chaospersists"), new ItemStack(LapisBoots), "   ", "* *", "* *", '*', Blocks.LAPIS_BLOCK);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_QueenHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(QueenHelmet), "   ", "***", "* *", '*', MyQueenScale);
+    addShapedRecipe(cpId("recipe_QueenHelmet"), cpId("chaospersists"), new ItemStack(QueenHelmet), "   ", "***", "* *", '*', MyQueenScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_QueenHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(QueenHelmet), "***", "* *", "   ", '*', MyQueenScale);
+    addShapedRecipe(cpId("recipe_QueenHelmet"), cpId("chaospersists"), new ItemStack(QueenHelmet), "***", "* *", "   ", '*', MyQueenScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_QueenBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(QueenBody), "* *", "***", "***", '*', MyQueenScale);
+    addShapedRecipe(cpId("recipe_QueenBody"), cpId("chaospersists"), new ItemStack(QueenBody), "* *", "***", "***", '*', MyQueenScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_QueenLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(QueenLegs), "***", "* *", "* *", '*', MyQueenScale);
+    addShapedRecipe(cpId("recipe_QueenLegs"), cpId("chaospersists"), new ItemStack(QueenLegs), "***", "* *", "* *", '*', MyQueenScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_QueenBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(QueenBoots), "   ", "* *", "* *", '*', MyQueenScale);
+    addShapedRecipe(cpId("recipe_QueenBoots"), cpId("chaospersists"), new ItemStack(QueenBoots), "   ", "* *", "* *", '*', MyQueenScale);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_PeacockFeatherHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(PeacockFeatherHelmet), "   ", "***", "* *", '*', MyPeacockFeather);
+    addShapedRecipe(cpId("recipe_PeacockFeatherHelmet"), cpId("chaospersists"), new ItemStack(PeacockFeatherHelmet), "   ", "***", "* *", '*', MyPeacockFeather);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_PeacockFeatherHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(PeacockFeatherHelmet), "***", "* *", "   ", '*', MyPeacockFeather);
+    addShapedRecipe(cpId("recipe_PeacockFeatherHelmet"), cpId("chaospersists"), new ItemStack(PeacockFeatherHelmet), "***", "* *", "   ", '*', MyPeacockFeather);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_PeacockFeatherBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(PeacockFeatherBody), "* *", "***", "***", '*', MyPeacockFeather);
+    addShapedRecipe(cpId("recipe_PeacockFeatherBody"), cpId("chaospersists"), new ItemStack(PeacockFeatherBody), "* *", "***", "***", '*', MyPeacockFeather);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_PeacockFeatherLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(PeacockFeatherLegs), "***", "* *", "* *", '*', MyPeacockFeather);
+    addShapedRecipe(cpId("recipe_PeacockFeatherLegs"), cpId("chaospersists"), new ItemStack(PeacockFeatherLegs), "***", "* *", "* *", '*', MyPeacockFeather);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_PeacockFeatherBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(PeacockFeatherBoots), "   ", "* *", "* *", '*', MyPeacockFeather);
+    addShapedRecipe(cpId("recipe_PeacockFeatherBoots"), cpId("chaospersists"), new ItemStack(PeacockFeatherBoots), "   ", "* *", "* *", '*', MyPeacockFeather);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_TigersEyeHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(TigersEyeHelmet), "   ", "***", "* *", '*', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_TigersEyeHelmet"), cpId("chaospersists"), new ItemStack(TigersEyeHelmet), "   ", "***", "* *", '*', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_TigersEyeHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(TigersEyeHelmet), "***", "* *", "   ", '*', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_TigersEyeHelmet"), cpId("chaospersists"), new ItemStack(TigersEyeHelmet), "***", "* *", "   ", '*', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_TigersEyeBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(TigersEyeBody), "* *", "***", "***", '*', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_TigersEyeBody"), cpId("chaospersists"), new ItemStack(TigersEyeBody), "* *", "***", "***", '*', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_TigersEyeLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(TigersEyeLegs), "***", "* *", "* *", '*', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_TigersEyeLegs"), cpId("chaospersists"), new ItemStack(TigersEyeLegs), "***", "* *", "* *", '*', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_TigersEyeBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(TigersEyeBoots), "   ", "* *", "* *", '*', MyTigersEyeIngot);
+    addShapedRecipe(cpId("recipe_TigersEyeBoots"), cpId("chaospersists"), new ItemStack(TigersEyeBoots), "   ", "* *", "* *", '*', MyTigersEyeIngot);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_ExperienceHelmet"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(ExperienceHelmet), "EEE", "EAE", "EEE", 'A', EmeraldHelmet, 'E', Items.EXPERIENCE_BOTTLE);
+    addShapedRecipe(cpId("recipe_ExperienceHelmet"), cpId("chaospersists"), new ItemStack(ExperienceHelmet), "EEE", "EAE", "EEE", 'A', EmeraldHelmet, 'E', Items.EXPERIENCE_BOTTLE);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_ExperienceBody"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(ExperienceBody), "EEE", "EAE", "EEE", 'A', EmeraldBody, 'E', Items.EXPERIENCE_BOTTLE);
+    addShapedRecipe(cpId("recipe_ExperienceBody"), cpId("chaospersists"), new ItemStack(ExperienceBody), "EEE", "EAE", "EEE", 'A', EmeraldBody, 'E', Items.EXPERIENCE_BOTTLE);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_ExperienceLegs"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(ExperienceLegs), "EEE", "EAE", "EEE", 'A', EmeraldLegs, 'E', Items.EXPERIENCE_BOTTLE);
+    addShapedRecipe(cpId("recipe_ExperienceLegs"), cpId("chaospersists"), new ItemStack(ExperienceLegs), "EEE", "EAE", "EEE", 'A', EmeraldLegs, 'E', Items.EXPERIENCE_BOTTLE);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_ExperienceBoots"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(ExperienceBoots), "EEE", "EAE", "EEE", 'A', EmeraldBoots, 'E', Items.EXPERIENCE_BOTTLE);
+    addShapedRecipe(cpId("recipe_ExperienceBoots"), cpId("chaospersists"), new ItemStack(ExperienceBoots), "EEE", "EAE", "EEE", 'A', EmeraldBoots, 'E', Items.EXPERIENCE_BOTTLE);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_Blocks.WEB"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(Blocks.WEB), "***", "* *", "***", '*', Items.STRING);
+    addShapedRecipe(cpId("recipe_Blocks.WEB"), cpId("chaospersists"), new ItemStack(Blocks.COBWEB), "***", "* *", "***", '*', Items.STRING);
 
     int cageid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "entity_cage"), EntityCage.class, "EntityCage", cageid, this, 64, 1, true);
+    EntityRegistry.registerModEntity(cpId("entity_cage"), EntityCage.class, "EntityCage", cageid, this, 64, 1, true);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_cageempty_iron"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(CageEmpty, 2), "IWI", "W W", "IWI", 'W', Items.STICK, 'I', Items.IRON_INGOT);
+    addShapedRecipe(cpId("recipe_cageempty_iron"), cpId("chaospersists"), new ItemStack(CageEmpty, 2), "IWI", "W W", "IWI", 'W', Items.STICK, 'I', Items.IRON_INGOT);
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_cageempty_crystal"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(CageEmpty, 2), "IWI", "W W", "IWI", 'W', CrystalSticks, 'I', MyCrystalPinkIngot);
+    addShapedRecipe(cpId("recipe_cageempty_crystal"), cpId("chaospersists"), new ItemStack(CageEmpty, 2), "IWI", "W W", "IWI", 'W', CrystalSticks, 'I', MyCrystalPinkIngot);
 
     int arrowid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "ultimate_arrow"), UltimateArrow.class, "UltimateArrow", arrowid, this, 64, 1, true);
+    EntityRegistry.registerModEntity(cpId("ultimate_arrow"), UltimateArrow.class, "UltimateArrow", arrowid, this, 64, 1, true);
 
     int irukandiarrowid = nextEntityId++;
-    EntityRegistry.registerModEntity(new ResourceLocation("chaospersists", "irukandji_arrow"), IrukandjiArrow.class, "IrukandjiArrow", irukandiarrowid, this, 64, 1, true);
-    addShapelessRecipe(new ResourceLocation("chaospersists", "planks_skytree"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(Blocks.PLANKS, 4), Ingredient.fromStacks(new ItemStack(MySkyTreeLog)));
-    addShapelessRecipe(new ResourceLocation("chaospersists", "planks_duplicator"), new ResourceLocation("chaospersists", "eggs"), new ItemStack(Blocks.PLANKS, 4), Ingredient.fromStacks(new ItemStack(MyDT)));
+    EntityRegistry.registerModEntity(cpId("irukandji_arrow"), IrukandjiArrow.class, "IrukandjiArrow", irukandiarrowid, this, 64, 1, true);
+    addShapelessRecipe(cpId("planks_skytree"), cpId("eggs"), new ItemStack(Blocks.OAK_PLANKS, 4), Ingredient.of(new ItemStack(MySkyTreeLog)));
+    addShapelessRecipe(cpId("planks_duplicator"), cpId("eggs"), new ItemStack(Blocks.OAK_PLANKS, 4), Ingredient.of(new ItemStack(MyDT)));
 
-    addShapedRecipe(new ResourceLocation("chaospersists", "recipe_MyElevator"), new ResourceLocation("chaospersists", "chaospersists"), new ItemStack(MyElevator), "   ", "WWW", "DRD", 'W', Blocks.PLANKS, 'R', Items.REDSTONE, 'D', Items.DIAMOND);
+    addShapedRecipe(cpId("recipe_MyElevator"), cpId("chaospersists"), new ItemStack(MyElevator), "   ", "WWW", "DRD", 'W', Blocks.OAK_PLANKS, 'R', Items.REDSTONE, 'D', Items.DIAMOND);
 
     GameRegistry.registerWorldGenerator(this.chaospersistsGen, 10);
 
@@ -4647,55 +6769,9 @@ public class ChaosPersists
 
     proxy.registerNetworkStuff();
 
-    DimensionType chaospersistsType = DimensionType.register("chaospersists", "_chaospersists", DimensionID, WorldProviderChaos.class, true);
-    DimensionManager.registerDimension(DimensionID, chaospersistsType);
-
-    DimensionType chaospersistsType2 = DimensionType.register("chaospersists2", "_chaospersists2", DimensionID2, WorldProviderChaos2.class, true);
-    DimensionManager.registerDimension(DimensionID2, chaospersistsType2);
-
-    DimensionType chaospersistsType3 = DimensionType.register("chaospersists3", "_chaospersists3", DimensionID3, WorldProviderChaos3.class, true);
-    DimensionManager.registerDimension(DimensionID3, chaospersistsType3);
-
-    DimensionType chaospersistsType4 = DimensionType.register("chaospersists4", "_chaospersists4", DimensionID4, WorldProviderChaos4.class, true);
-    DimensionManager.registerDimension(DimensionID4, chaospersistsType4);
-
-    DimensionType chaospersistsType5 = DimensionType.register("chaospersists5", "_chaospersists5", DimensionID5, WorldProviderChaos5.class, true);
-    DimensionManager.registerDimension(DimensionID5, chaospersistsType5);
-
-    DimensionType chaospersistsType6 = DimensionType.register("chaospersists6", "_chaospersists6", DimensionID6, WorldProviderChaos6.class, true);
-    DimensionManager.registerDimension(DimensionID6, chaospersistsType6);
-
-    GameRegistry.registerTileEntity(TileEntityCrystalFurnace.class, new ResourceLocation("chaospersists", "crystalfurnace"));
     NetworkRegistry.INSTANCE.registerGuiHandler(this, new ChaosGUIHandler());
 
     DoDispenserRegistrations();
-  }
-
-  @SubscribeEvent
-  public void onRegisterBiomes(RegistryEvent.Register<Biome> event) {
-    UTOPIA_BIOME = new BiomeGenUtopianPlains(BiomeUtopiaID);
-    UTOPIA_BIOME.setRegistryName(new ResourceLocation("chaospersists", "utopia"));
-    event.getRegistry().register(UTOPIA_BIOME);
-
-    VILLAGE_BIOME = new BiomeVillagePlains();
-    VILLAGE_BIOME.setRegistryName(new ResourceLocation("chaospersists", "village_dimension"));
-    event.getRegistry().register(VILLAGE_BIOME);
-
-    DANGER_BIOME = new BiomeDangerPlains();
-    DANGER_BIOME.setRegistryName(new ResourceLocation("chaospersists", "danger_dimension"));
-    event.getRegistry().register(DANGER_BIOME);
-
-    CRYSTAL_BIOME = new BiomeCrystalPlains();
-    CRYSTAL_BIOME.setRegistryName(new ResourceLocation("chaospersists", "crystal_dimension"));
-    event.getRegistry().register(CRYSTAL_BIOME);
-
-    CHAOS_BIOME = new BiomeChaosPlains();
-    CHAOS_BIOME.setRegistryName(new ResourceLocation("chaospersists", "chaos_dimension"));
-    event.getRegistry().register(CHAOS_BIOME);
-
-    MINING_BIOME = new BiomeMiningDimension();
-    MINING_BIOME.setRegistryName(new ResourceLocation("chaospersists", "mining_dimension"));
-    event.getRegistry().register(MINING_BIOME);
   }
 
   @SubscribeEvent
@@ -4728,16 +6804,25 @@ public class ChaosPersists
     if (pool == null || item == null) {
       return;
     }
-    LootFunction[] functions = new LootFunction[]{
-        new SetCount(new LootCondition[0], new RandomValueRange(minCount, maxCount))
-    };
-    pool.addEntry(new LootEntryItem(item, weight, 0, functions, new LootCondition[0], entryName));
+    net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer entry =
+        LootItem.lootTableItem(item)
+            .setWeight(weight)
+            .setQuality(0)
+            .apply(
+                SetItemCountFunction.setCount(
+                    UniformGenerator.between((float) minCount, (float) maxCount)))
+            .build();
+    LootPoolEntryContainer[] entries =
+        ObfuscationReflectionHelper.getPrivateValue(LootPool.class, pool, "entries");
+    LootPoolEntryContainer[] merged = java.util.Arrays.copyOf(entries, entries.length + 1);
+    merged[entries.length] = entry;
+    ObfuscationReflectionHelper.setPrivateValue(LootPool.class, pool, merged, "entries");
   }
 
   @SubscribeEvent
   public void onFurnaceFuelBurnTime(FurnaceFuelBurnTimeEvent event) {
     if (event.getItemStack().isEmpty()) return;
-    if (event.getItemStack().getItem() == Item.getItemFromBlock(CrystalCoal)) {
+    if (event.getItemStack().getItem() == Item.byBlock(CrystalCoal)) {
       event.setBurnTime(20000);
     }
   }
@@ -4745,42 +6830,44 @@ public class ChaosPersists
   /** Tamed Girlfriends and Boyfriends assist in combat like wolves when their owner damages a mob. */
   @SubscribeEvent
   public void onLivingHurtOwnerAssistGirlfriends(LivingHurtEvent event) {
-    if (event == null || event.getEntityLiving() == null) {
+    if (event == null || event.getEntity() == null) {
       return;
     }
-    EntityLivingBase victim = event.getEntityLiving();
-    net.minecraft.util.DamageSource src = event.getSource();
+    LivingEntity victim = event.getEntity();
+    DamageSource src = event.getSource();
     if (src == null) {
       return;
     }
-    Entity attacker = src.getTrueSource();
-    if (!(attacker instanceof EntityPlayer)) {
+    Entity attacker = src.getEntity();
+    if (!(attacker instanceof Player)) {
       return;
     }
-    EntityPlayer player = (EntityPlayer) attacker;
+    Player player = (Player) attacker;
     if (victim == player) {
       return;
     }
-    if (victim.world == null || victim.world.isRemote) {
+    if (victim.level() == null || victim.level().isClientSide()) {
       return;
     }
-    if (victim instanceof EntityTameable) {
-      EntityTameable te = (EntityTameable) victim;
-      if (te.isTamed() && player.getUniqueID().equals(te.getOwnerId())) {
+    if (victim instanceof TamableAnimal) {
+      TamableAnimal te = (TamableAnimal) victim;
+      if (te.isTame() && player.getUUID().equals(te.getOwnerUUID())) {
         return;
       }
     }
-    for (Girlfriend g : victim.world.getEntitiesWithinAABB(Girlfriend.class, player.getEntityBoundingBox().grow(16.0D))) {
-      if (!g.isTamed() || g.isSitting() || !g.isOwner(player)) {
+    for (Girlfriend g :
+        victim.level().getEntitiesOfClass(Girlfriend.class, player.getBoundingBox().inflate(16.0D))) {
+      if (!g.isTame() || g.isOrderedToSit() || !g.isOwnedBy(player)) {
         continue;
       }
-      g.setAttackTarget(victim);
+      g.setTarget(victim);
     }
-    for (Boyfriend b : victim.world.getEntitiesWithinAABB(Boyfriend.class, player.getEntityBoundingBox().grow(16.0D))) {
-      if (!b.isTamed() || b.isSitting() || !b.isOwner(player)) {
+    for (Boyfriend b :
+        victim.level().getEntitiesOfClass(Boyfriend.class, player.getBoundingBox().inflate(16.0D))) {
+      if (!b.isTame() || b.isOrderedToSit() || !b.isOwnedBy(player)) {
         continue;
       }
-      b.setAttackTarget(victim);
+      b.setTarget(victim);
     }
   }
 
@@ -4794,19 +6881,19 @@ public class ChaosPersists
    */
   @SubscribeEvent
   public void onLivingHurtLegacyArmorParity(LivingHurtEvent event) {
-    if (event == null || event.getEntityLiving() == null) {
+    if (event == null || event.getEntity() == null) {
       return;
     }
-    EntityLivingBase living = event.getEntityLiving();
-    if (living.world == null || living.world.isRemote) {
+    LivingEntity living = event.getEntity();
+    if (living.level() == null || living.level().isClientSide()) {
       return;
     }
-    ResourceLocation id = EntityList.getKey(living);
+    ResourceLocation id = EntityType.getKey(living.getType());
     if (id == null || !"chaospersists".equals(id.getNamespace())) {
       return;
     }
     DamageSource source = event.getSource();
-    if (source == null || source.isUnblockable()) {
+    if (source == null || source.is(DamageTypeTags.BYPASSES_ARMOR)) {
       return;
     }
     float incoming = event.getAmount();
@@ -4814,7 +6901,7 @@ public class ChaosPersists
       return;
     }
 
-    int armor = Math.max(0, Math.min(20, living.getTotalArmorValue()));
+    int armor = Math.max(0, Math.min(20, living.getArmorValue()));
     if (armor <= 0) {
       return;
     }
@@ -4823,12 +6910,12 @@ public class ChaosPersists
     float legacyFinal = incoming * (25.0f - (float)armor) / 25.0f;
 
     float toughness = 0.0f;
-    IAttributeInstance toughAttr = living.getEntityAttribute(SharedMonsterAttributes.ARMOR_TOUGHNESS);
+    AttributeInstance toughAttr = living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS);
     if (toughAttr != null) {
-      toughness = (float)toughAttr.getAttributeValue();
+      toughness = (float)toughAttr.getValue();
     }
 
-    float vanillaFinalAtIncoming = net.minecraft.util.CombatRules.getDamageAfterAbsorb(incoming, (float)armor, toughness);
+    float vanillaFinalAtIncoming = net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(incoming, (float)armor, toughness);
     if (vanillaFinalAtIncoming <= legacyFinal + 1.0e-4f) {
       return;
     }
@@ -4837,7 +6924,7 @@ public class ChaosPersists
     float low = 0.0f;
     float high = incoming;
     float cappedHigh = incoming * 8.0f + 40.0f;
-    while (net.minecraft.util.CombatRules.getDamageAfterAbsorb(high, (float)armor, toughness) < legacyFinal && high < cappedHigh) {
+    while (net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(high, (float)armor, toughness) < legacyFinal && high < cappedHigh) {
       high *= 2.0f;
     }
     if (high > cappedHigh) {
@@ -4845,7 +6932,7 @@ public class ChaosPersists
     }
     for (int i = 0; i < 14; ++i) {
       float mid = (low + high) * 0.5f;
-      float out = net.minecraft.util.CombatRules.getDamageAfterAbsorb(mid, (float)armor, toughness);
+      float out = net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(mid, (float)armor, toughness);
       if (out < legacyFinal) {
         low = mid;
       } else {
@@ -4856,38 +6943,44 @@ public class ChaosPersists
     event.setAmount(high);
   }
 
-  private ResourceLocation getSpawnerEntityId(TileEntityMobSpawner spawner) {
+  private ResourceLocation getSpawnerEntityId(SpawnerBlockEntity spawner) {
     if (spawner == null) {
       return null;
     }
-    return SpawnerFixHelper.getMobSpawnerEntityId(spawner.getSpawnerBaseLogic());
+    return SpawnerFixHelper.getMobSpawnerEntityId(spawner.getSpawner());
   }
 
-  private void normalizeSpawnerId(TileEntityMobSpawner spawner) {
+  private void normalizeSpawnerId(SpawnerBlockEntity spawner) {
     if (spawner == null) {
       return;
     }
-    ResourceLocation current = SpawnerFixHelper.getMobSpawnerEntityId(spawner.getSpawnerBaseLogic());
+    ResourceLocation current = SpawnerFixHelper.getMobSpawnerEntityId(spawner.getSpawner());
     ResourceLocation normalized = SpawnerFixHelper.normalizeSpawnerEntityId(current);
     if (normalized != null && (current == null || !normalized.equals(current))) {
-      spawner.getSpawnerBaseLogic().setEntityId(normalized);
-      spawner.markDirty();
+      SpawnerFixHelper.setMobSpawnerEntityId(spawner.getSpawner(), normalized);
+      spawner.setChanged();
     }
   }
 
-  private boolean isEntityClassInBiomeSpawnListsForDebug(Biome biome, Class<?> entityClass) {
-    return this.isEntityClassInBiomeSpawnListForDebug(biome.getSpawnableList(EnumCreatureType.MONSTER), entityClass)
-            || this.isEntityClassInBiomeSpawnListForDebug(biome.getSpawnableList(EnumCreatureType.CREATURE), entityClass)
-            || this.isEntityClassInBiomeSpawnListForDebug(biome.getSpawnableList(EnumCreatureType.AMBIENT), entityClass)
-            || this.isEntityClassInBiomeSpawnListForDebug(biome.getSpawnableList(EnumCreatureType.WATER_CREATURE), entityClass);
+  private boolean isEntityTypeInBiomeSpawnListsForDebug(Biome biome, EntityType<?> entityType) {
+    return this.isEntityTypeInBiomeSpawnListForDebug(
+            biome.getMobSettings().getMobs(MobCategory.MONSTER), entityType)
+        || this.isEntityTypeInBiomeSpawnListForDebug(
+            biome.getMobSettings().getMobs(MobCategory.CREATURE), entityType)
+        || this.isEntityTypeInBiomeSpawnListForDebug(
+            biome.getMobSettings().getMobs(MobCategory.AMBIENT), entityType)
+        || this.isEntityTypeInBiomeSpawnListForDebug(
+            biome.getMobSettings().getMobs(MobCategory.WATER_CREATURE), entityType);
   }
 
-  private boolean isEntityClassInBiomeSpawnListForDebug(List<Biome.SpawnListEntry> entries, Class<?> entityClass) {
-    if (entries == null || entries.isEmpty() || entityClass == null) {
+  private boolean isEntityTypeInBiomeSpawnListForDebug(
+      net.minecraft.util.random.WeightedRandomList<MobSpawnSettings.SpawnerData> entries,
+      EntityType<?> entityType) {
+    if (entries == null || entries.isEmpty() || entityType == null) {
       return false;
     }
-    for (Biome.SpawnListEntry entry : entries) {
-      if (entry != null && entry.entityClass != null && entry.entityClass.isAssignableFrom(entityClass)) {
+    for (MobSpawnSettings.SpawnerData entry : entries.unwrap()) {
+      if (entry != null && entry.type == entityType) {
         return true;
       }
     }
@@ -4895,95 +6988,51 @@ public class ChaosPersists
   }
 
   @SubscribeEvent
-  public void onLivingSpawnCheckDebug(LivingSpawnEvent.CheckSpawn event) {
-    if (event == null || event.getWorld() == null || event.getWorld().isRemote || event.getEntityLiving() == null) {
-      return;
-    }
-    if (event.getWorld().provider == null || event.getWorld().provider.getDimension() != getDimension()) {
-      return;
-    }
-    EntityLivingBase entity = event.getEntityLiving();
-    ResourceLocation id = EntityList.getKey(entity);
-    if (id == null || !"chaospersists".equals(id.getNamespace())) {
-      return;
-    }
-    Biome biome = event.getWorld().getBiome(entity.getPosition());
-    boolean listed = biome != null && this.isEntityClassInBiomeSpawnListsForDebug(biome, entity.getClass());
-    String biomeName = biome == null ? "null" : String.valueOf(biome.getRegistryName());
-    FMLLog.log.info(
-            "ChaosPersists DEBUG spawn-check dim={} id={} class={} biome={} listed={} fromSpawner={} result={} pos=({}, {}, {})",
-            event.getWorld().provider.getDimension(),
-            id,
-            entity.getClass().getSimpleName(),
-            biomeName,
-            listed,
-            event.isSpawner(),
-            event.getResult(),
-            (int) entity.posX,
-            (int) entity.posY,
-            (int) entity.posZ
-    );
+  public void onLivingSpawnCheckDebug(MobSpawnEvent.SpawnPlacementCheck event) {
+    // Port-time debug hook; keep subscribed but inert (logging here stalls worldgen).
   }
 
   @SubscribeEvent
   public void onChunkLoadNormalizeSpawners(ChunkEvent.Load event) {
-    if (event == null || event.getWorld() == null || event.getWorld().isRemote || event.getChunk() == null) {
+    if (event == null || event.getLevel() == null || event.getLevel().isClientSide() || event.getChunk() == null) {
       return;
     }
-    java.util.Map<BlockPos, TileEntity> map = event.getChunk().getTileEntityMap();
-    if (map == null || map.isEmpty()) {
+    if (event.isNewChunk()) {
       return;
     }
-    for (TileEntity te : map.values()) {
-      if (te instanceof TileEntityMobSpawner) {
-        this.normalizeSpawnerId((TileEntityMobSpawner) te);
+    if (!(event.getChunk() instanceof LevelChunk levelChunk)) {
+      return;
+    }
+    for (BlockEntity te : levelChunk.getBlockEntities().values()) {
+      if (te instanceof SpawnerBlockEntity spawner) {
+        this.normalizeSpawnerId(spawner);
       }
     }
   }
 
   @SubscribeEvent
-  public void onEntityJoinWorld(EntityJoinWorldEvent event) {
-    if (event == null || event.getWorld() == null || event.getWorld().isRemote) {
+  public void onEntityJoinWorld(EntityJoinLevelEvent event) {
+    if (event == null || event.getLevel() == null || event.getLevel().isClientSide()) {
       return;
     }
-    if (event.getWorld().provider != null && event.getWorld().provider.getDimension() == getDimension()
-            && event.getEntity() instanceof EntityLivingBase) {
-      EntityLivingBase living = (EntityLivingBase) event.getEntity();
-      ResourceLocation id = EntityList.getKey(living);
-      if (id != null && "chaospersists".equals(id.getNamespace())) {
-        Biome biome = event.getWorld().getBiome(living.getPosition());
-        String biomeName = biome == null ? "null" : String.valueOf(biome.getRegistryName());
-        FMLLog.log.info(
-                "ChaosPersists DEBUG entity-join dim={} id={} class={} biome={} pos=({}, {}, {})",
-                event.getWorld().provider.getDimension(),
-                id,
-                living.getClass().getSimpleName(),
-                biomeName,
-                (int) living.posX,
-                (int) living.posY,
-                (int) living.posZ
-        );
-      }
-    }
-    if (!(event.getEntity() instanceof PitchBlack)) {
+    if (!(event.getEntity() instanceof PitchBlack nightmare)) {
       return;
     }
 
-    PitchBlack nightmare = (PitchBlack) event.getEntity();
-    BlockPos base = new BlockPos(nightmare.posX, nightmare.posY, nightmare.posZ);
+    BlockPos base = nightmare.blockPosition();
 
     for (int dx = -8; dx <= 8; ++dx) {
       for (int dy = -4; dy <= 8; ++dy) {
         for (int dz = -8; dz <= 8; ++dz) {
-          TileEntity te = event.getWorld().getTileEntity(base.add(dx, dy, dz));
-          if (!(te instanceof TileEntityMobSpawner)) {
+          BlockEntity te = event.getLevel().getBlockEntity(base.offset(dx, dy, dz));
+          if (!(te instanceof SpawnerBlockEntity spawner)) {
             continue;
           }
 
           String path = null;
-          ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityId(((TileEntityMobSpawner) te).getSpawnerBaseLogic());
-          if (id != null) {
-            path = SpawnerFixHelper.normalizeSpawnerEntityId(id).getPath();
+          ResourceLocation spawnerId = SpawnerFixHelper.getMobSpawnerEntityId(spawner.getSpawner());
+          if (spawnerId != null) {
+            path = SpawnerFixHelper.normalizeSpawnerEntityId(spawnerId).getPath();
           }
 
           if (path != null && "nightmare".equalsIgnoreCase(path)) {
@@ -4996,46 +7045,44 @@ public class ChaosPersists
   }
 
   @SubscribeEvent
-  public void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
-    if (event == null || event.getEntityLiving() == null) {
+  public void onLivingUpdate(LivingEvent.LivingTickEvent event) {
+    if (event == null || event.getEntity() == null) {
       return;
     }
-    EntityLivingBase base = event.getEntityLiving();
-    if (base.world == null || base.world.isRemote) {
+    LivingEntity base = event.getEntity();
+    if (base.level() == null || base.level().isClientSide()) {
       return;
     }
-    if (!(base instanceof EntityLiving)) {
+    if (!(base instanceof Mob mob)) {
       return;
     }
-    ResourceLocation key = EntityList.getKey(base);
-    boolean chaosHostileMob = key != null
-            && "chaospersists".equals(key.getNamespace())
-            && base instanceof IMob;
+    ResourceLocation key = EntityType.getKey(base.getType());
+    boolean chaosHostileMob =
+        key != null && MODID.equals(key.getNamespace()) && base instanceof Enemy;
     if (!this.isAlwaysHostileInLegacy(base.getClass()) && !chaosHostileMob) {
       return;
     }
-    if (PlayNicely != 0 || base.world.getDifficulty() == net.minecraft.world.EnumDifficulty.PEACEFUL) {
+    if (PlayNicely != 0 || base.level().getDifficulty() == Difficulty.PEACEFUL) {
       return;
     }
 
-    EntityLiving mob = (EntityLiving) base;
-    if (mob.ticksExisted % 5 != 0) {
+    if (mob.tickCount % 5 != 0) {
       return;
     }
-    EntityLivingBase current = mob.getAttackTarget();
-    if (current != null && current.isEntityAlive()) {
+    LivingEntity current = mob.getTarget();
+    if (current != null && current.isAlive()) {
       return;
     }
 
-    EntityPlayer target = base.world.getClosestPlayer(base.posX, base.posY, base.posZ, 24.0, false);
+    Player target = base.level().getNearestPlayer(base.getX(), base.getY(), base.getZ(), 24.0, false);
     if (target == null || target.isCreative() || target.isSpectator()) {
       return;
     }
 
-    mob.setAttackTarget(target);
-    mob.setRevengeTarget(target);
-    if (mob instanceof Bee) {
-      ((Bee) mob).forceAttackTarget(target);
+    mob.setTarget(target);
+    mob.setLastHurtByMob(target);
+    if (mob instanceof Bee bee) {
+      bee.forceAttackTarget(target);
     }
   }
 
@@ -5056,235 +7103,235 @@ public class ChaosPersists
 
   public void initializeCagesAndEggs()
   {
-    CageEmpty = new CritterCage(0, 160).setTranslationKey("cageempty").setRegistryName("chaospersists", "cageempty");
-    CagedSpider = new CritterCage(0, 161).setTranslationKey("cagespider").setRegistryName("chaospersists", "cagespider");
-    CagedBat = new CritterCage(0, 162).setTranslationKey("cagebat").setRegistryName("chaospersists", "cagebat");
-    CagedCow = new CritterCage(0, 163).setTranslationKey("cagecow").setRegistryName("chaospersists", "cagecow");
-    CagedPig = new CritterCage(0, 164).setTranslationKey("cagepig").setRegistryName("chaospersists", "cagepig");
-    CagedSquid = new CritterCage(0, 165).setTranslationKey("cagesquid").setRegistryName("chaospersists", "cagesquid");
-    CagedChicken = new CritterCage(0, 166).setTranslationKey("cagechicken").setRegistryName("chaospersists", "cagechicken");
-    CagedCreeper = new CritterCage(0, 167).setTranslationKey("cagecreeper").setRegistryName("chaospersists", "cagecreeper");
-    CagedSkeleton = new CritterCage(0, 168).setTranslationKey("cageskeleton").setRegistryName("chaospersists", "cageskeleton");
-    CagedZombie = new CritterCage(0, 169).setTranslationKey("cagezombie").setRegistryName("chaospersists", "cagezombie");
-    CagedSlime = new CritterCage(0, 170).setTranslationKey("cageslime").setRegistryName("chaospersists", "cageslime");
-    CagedGhast = new CritterCage(0, 171).setTranslationKey("cageghast").setRegistryName("chaospersists", "cageghast");
-    CagedZombiePigman = new CritterCage(0, 172).setTranslationKey("cagezombiepigman").setRegistryName("chaospersists", "cagezombiepigman");
-    CagedEnderman = new CritterCage(0, 173).setTranslationKey("cageenderman").setRegistryName("chaospersists", "cageenderman");
-    CagedCaveSpider = new CritterCage(0, 174).setTranslationKey("cagecavespider").setRegistryName("chaospersists", "cagecavespider");
-    CagedSilverfish = new CritterCage(0, 175).setTranslationKey("cagesilverfish").setRegistryName("chaospersists", "cagesilverfish");
-    CagedMagmaCube = new CritterCage(0, 176).setTranslationKey("cagemagmacube").setRegistryName("chaospersists", "cagemagmacube");
-    CagedWitch = new CritterCage(0, 177).setTranslationKey("cagewitch").setRegistryName("chaospersists", "cagewitch");
-    CagedSheep = new CritterCage(0, 178).setTranslationKey("cagesheep").setRegistryName("chaospersists", "cagesheep");
-    CagedWolf = new CritterCage(0, 179).setTranslationKey("cagewolf").setRegistryName("chaospersists", "cagewolf");
-    CagedMooshroom = new CritterCage(0, 180).setTranslationKey("cagemooshroom").setRegistryName("chaospersists", "cagemooshroom");
-    CagedOcelot = new CritterCage(0, 181).setTranslationKey("cageocelot").setRegistryName("chaospersists", "cageocelot");
-    CagedBlaze = new CritterCage(0, 182).setTranslationKey("cageblaze").setRegistryName("chaospersists", "cageblaze");
-    CagedGirlfriend = new CritterCage(0, 183).setTranslationKey("cagegirlfriend").setRegistryName("chaospersists", "cagegirlfriend");
-    CagedBoyfriend = new CritterCage(0, 215).setTranslationKey("cageboyfriend").setRegistryName("chaospersists", "cageboyfriend");
-    CagedWitherSkeleton = new CritterCage(0, 188).setTranslationKey("cagewitherskeleton").setRegistryName("chaospersists", "cagewitherskeleton");
-    CagedEnderDragon = new CritterCage(0, 184).setTranslationKey("cageenderdragon").setRegistryName("chaospersists", "cageenderdragon");
-    CagedSnowGolem = new CritterCage(0, 185).setTranslationKey("cagesnowgolem").setRegistryName("chaospersists", "cagesnowgolem");
-    CagedIronGolem = new CritterCage(0, 186).setTranslationKey("cageirongolem").setRegistryName("chaospersists", "cageirongolem");
-    CagedWitherBoss = new CritterCage(0, 187).setTranslationKey("cagewitherboss").setRegistryName("chaospersists", "cagewitherboss");
-    CagedRedCow = new CritterCage(0, 189).setTranslationKey("cageredcow").setRegistryName("chaospersists", "cageredcow");
-    CagedGoldCow = new CritterCage(0, 190).setTranslationKey("cagegoldcow").setRegistryName("chaospersists", "cagegoldcow");
-    CagedEnchantedCow = new CritterCage(0, 191).setTranslationKey("cageenchantedcow").setRegistryName("chaospersists", "cageenchantedcow");
-    CagedMOTHRA = new CritterCage(0, 208).setTranslationKey("cagemothra").setRegistryName("chaospersists", "cagemothra");
-    CagedAlo = new CritterCage(0, 209).setTranslationKey("cagealosaurus").setRegistryName("chaospersists", "cagealosaurus");
-    CagedCryo = new CritterCage(0, 210).setTranslationKey("cagecryolophosaurus").setRegistryName("chaospersists", "cagecryolophosaurus");
-    CagedCama = new CritterCage(0, 211).setTranslationKey("cagecamarasaurus").setRegistryName("chaospersists", "cagecamarasaurus");
-    CagedVelo = new CritterCage(0, 212).setTranslationKey("cagevelocityraptor").setRegistryName("chaospersists", "cagevelocityraptor");
-    CagedHydro = new CritterCage(0, 213).setTranslationKey("cagehydrolisc").setRegistryName("chaospersists", "cagehydrolisc");
-    CagedBasil = new CritterCage(0, 214).setTranslationKey("cagebasilisc").setRegistryName("chaospersists", "cagebasilisc");
-    CagedDragonfly = new CritterCage(0, 220).setTranslationKey("cagedragonfly").setRegistryName("chaospersists", "cagedragonfly");
-    CagedEmperorScorpion = new CritterCage(0, 222).setTranslationKey("cageemperorscorpion").setRegistryName("chaospersists", "cageemperorscorpion");
-    CagedScorpion = new CritterCage(0, 224).setTranslationKey("cagescorpion").setRegistryName("chaospersists", "cagescorpion");
-    CagedCaveFisher = new CritterCage(0, 226).setTranslationKey("cagecavefisher").setRegistryName("chaospersists", "cagecavefisher");
-    CagedSpyro = new CritterCage(0, 228).setTranslationKey("cagespyro").setRegistryName("chaospersists", "cagespyro");
-    CagedBaryonyx = new CritterCage(0, 230).setTranslationKey("cagebaryonyx").setRegistryName("chaospersists", "cagebaryonyx");
-    CagedGammaMetroid = new CritterCage(0, 232).setTranslationKey("cagegammametroid").setRegistryName("chaospersists", "cagegammametroid");
-    CagedCockateil = new CritterCage(0, 234).setTranslationKey("cagecockateil").setRegistryName("chaospersists", "cagecockateil");
-    CagedKyuubi = new CritterCage(0, 236).setTranslationKey("cagekyuubi").setRegistryName("chaospersists", "cagekyuubi");
-    CagedAlien = new CritterCage(0, 238).setTranslationKey("cagealien").setRegistryName("chaospersists", "cagealien");
-    CagedAttackSquid = new CritterCage(0, 240).setTranslationKey("cageattacksquid").setRegistryName("chaospersists", "cageattacksquid");
-    CagedWaterDragon = new CritterCage(0, 242).setTranslationKey("cagewaterdragon").setRegistryName("chaospersists", "cagewaterdragon");
-    CagedCephadrome = new CritterCage(0, 248).setTranslationKey("cagecephadrome").setRegistryName("chaospersists", "cagecephadrome");
-    CagedKraken = new CritterCage(0, 244).setTranslationKey("cagekraken").setRegistryName("chaospersists", "cagekraken");
-    CagedLizard = new CritterCage(0, 246).setTranslationKey("cagelizard").setRegistryName("chaospersists", "cagelizard");
-    CagedDragon = new CritterCage(0, 250).setTranslationKey("cagedragon").setRegistryName("chaospersists", "cagedragon");
-    CagedBee = new CritterCage(0, 252).setTranslationKey("cagebee").setRegistryName("chaospersists", "cagebee");
-    CagedHorse = new CritterCage(0, 253).setTranslationKey("cagehorse").setRegistryName("chaospersists", "cagehorse");
-    CagedFirefly = new CritterCage(0, 255).setTranslationKey("cagefirefly").setRegistryName("chaospersists", "cagefirefly");
-    CagedChipmunk = new CritterCage(0, 256).setTranslationKey("cagechipmunk").setRegistryName("chaospersists", "cagechipmunk");
-    CagedGazelle = new CritterCage(0, 257).setTranslationKey("cagegazelle").setRegistryName("chaospersists", "cagegazelle");
-    CagedOstrich = new CritterCage(0, 258).setTranslationKey("cageostrich").setRegistryName("chaospersists", "cageostrich");
-    CagedTrooper = new CritterCage(0, 259).setTranslationKey("cagetrooper").setRegistryName("chaospersists", "cagetrooper");
-    CagedSpit = new CritterCage(0, 260).setTranslationKey("cagespit").setRegistryName("chaospersists", "cagespit");
-    CagedStink = new CritterCage(0, 261).setTranslationKey("cagestink").setRegistryName("chaospersists", "cagestink");
-    CagedCreepingHorror = new CritterCage(0, 268).setTranslationKey("cagecreepinghorror").setRegistryName("chaospersists", "cagecreepinghorror");
-    CagedTerribleTerror = new CritterCage(0, 269).setTranslationKey("cageterribleterror").setRegistryName("chaospersists", "cageterribleterror");
-    CagedCliffRacer = new CritterCage(0, 270).setTranslationKey("cagecliffracer").setRegistryName("chaospersists", "cagecliffracer");
-    CagedTriffid = new CritterCage(0, 271).setTranslationKey("cagetriffid").setRegistryName("chaospersists", "cagetriffid");
-    CagedPitchBlack = new CritterCage(0, 272).setTranslationKey("cagenightmare").setRegistryName("chaospersists", "cagenightmare");
-    CagedLurkingTerror = new CritterCage(0, 273).setTranslationKey("cagelurkingterror").setRegistryName("chaospersists", "cagelurkingterror");
-    CagedSmallWorm = new CritterCage(0, 281).setTranslationKey("cagesmallworm").setRegistryName("chaospersists", "cagesmallworm");
-    CagedMediumWorm = new CritterCage(0, 282).setTranslationKey("cagemediumworm").setRegistryName("chaospersists", "cagemediumworm");
-    CagedLargeWorm = new CritterCage(0, 283).setTranslationKey("cagelargeworm").setRegistryName("chaospersists", "cagelargeworm");
-    CagedCassowary = new CritterCage(0, 284).setTranslationKey("cagecassowary").setRegistryName("chaospersists", "cagecassowary");
-    CagedCloudShark = new CritterCage(0, 285).setTranslationKey("cagecloudshark").setRegistryName("chaospersists", "cagecloudshark");
-    CagedGoldFish = new CritterCage(0, 286).setTranslationKey("cagegoldfish").setRegistryName("chaospersists", "cagegoldfish");
-    CagedLeafMonster = new CritterCage(0, 287).setTranslationKey("cageleafmonster").setRegistryName("chaospersists", "cageleafmonster");
-    CagedEnderKnight = new CritterCage(0, 296).setTranslationKey("cageenderknight").setRegistryName("chaospersists", "cageenderknight");
-    CagedEnderReaper = new CritterCage(0, 297).setTranslationKey("cageenderreaper").setRegistryName("chaospersists", "cageenderreaper");
-    CagedBeaver = new CritterCage(0, 300).setTranslationKey("cagebeaver").setRegistryName("chaospersists", "cagebeaver");
-    CagedUrchin = new CritterCage(0, 323).setTranslationKey("cageurchin").setRegistryName("chaospersists", "cageurchin");
-    CagedFlounder = new CritterCage(0, 319).setTranslationKey("cageflounder").setRegistryName("chaospersists", "cageflounder");
-    CagedSkate = new CritterCage(0, 322).setTranslationKey("cageskate").setRegistryName("chaospersists", "cageskate");
-    CagedRotator = new CritterCage(0, 313).setTranslationKey("cagerotator").setRegistryName("chaospersists", "cagerotator");
-    CagedPeacock = new CritterCage(0, 315).setTranslationKey("cagepeacock").setRegistryName("chaospersists", "cagepeacock");
-    CagedFairy = new CritterCage(0, 316).setTranslationKey("cagefairy").setRegistryName("chaospersists", "cagefairy");
-    CagedDungeonBeast = new CritterCage(0, 317).setTranslationKey("cagedungeonbeast").setRegistryName("chaospersists", "cagedungeonbeast");
-    CagedVortex = new CritterCage(0, 314).setTranslationKey("cagevortex").setRegistryName("chaospersists", "cagevortex");
-    CagedRat = new CritterCage(0, 318).setTranslationKey("cagerat").setRegistryName("chaospersists", "cagerat");
-    CagedWhale = new CritterCage(0, 320).setTranslationKey("cagewhale").setRegistryName("chaospersists", "cagewhale");
-    CagedIrukandji = new CritterCage(0, 321).setTranslationKey("cageirukandji").setRegistryName("chaospersists", "cageirukandji");
-    CagedTRex = new CritterCage(0, 345).setTranslationKey("cagetrex").setRegistryName("chaospersists", "cagetrex");
-    CagedHercules = new CritterCage(0, 346).setTranslationKey("cagehercules").setRegistryName("chaospersists", "cagehercules");
-    CagedMantis = new CritterCage(0, 347).setTranslationKey("cagemantis").setRegistryName("chaospersists", "cagemantis");
-    CagedStinky = new CritterCage(0, 348).setTranslationKey("cagestinky").setRegistryName("chaospersists", "cagestinky");
-    CagedEasterBunny = new CritterCage(0, 150).setTranslationKey("cageeasterbunny").setRegistryName("chaospersists", "cageeasterbunny");
-    CagedCaterKiller = new CritterCage(0, 151).setTranslationKey("cagecaterkiller").setRegistryName("chaospersists", "cagecaterkiller");
-    CagedMolenoid = new CritterCage(0, 152).setTranslationKey("cagemolenoid").setRegistryName("chaospersists", "cagemolenoid");
-    CagedSeaMonster = new CritterCage(0, 153).setTranslationKey("cageseamonster").setRegistryName("chaospersists", "cageseamonster");
-    CagedSeaViper = new CritterCage(0, 154).setTranslationKey("cageseaviper").setRegistryName("chaospersists", "cageseaviper");
-    CagedLeon = new CritterCage(0, 357).setTranslationKey("cageleon").setRegistryName("chaospersists", "cageleon");
-    CagedHammerhead = new CritterCage(0, 359).setTranslationKey("cagehammerhead").setRegistryName("chaospersists", "cagehammerhead");
-    CagedRubberDucky = new CritterCage(0, 361).setTranslationKey("cagerubberducky").setRegistryName("chaospersists", "cagerubberducky");
-    CagedCrystalCow = new CritterCage(0, 216).setTranslationKey("cagecrystalcow").setRegistryName("chaospersists", "cagecrystalcow");
-    CagedVillager = new CritterCage(0, 217).setTranslationKey("cagevillager").setRegistryName("chaospersists", "cagevillager");
-    CagedCriminal = new CritterCage(0, 218).setTranslationKey("cagecriminal").setRegistryName("chaospersists", "cagecriminal");
-    CagedBrutalfly = new CritterCage(0, 373).setTranslationKey("cagebrutalfly").setRegistryName("chaospersists", "cagebrutalfly");
-    CagedNastysaurus = new CritterCage(0, 374).setTranslationKey("cagenastysaurus").setRegistryName("chaospersists", "cagenastysaurus");
-    CagedPointysaurus = new CritterCage(0, 375).setTranslationKey("cagepointysaurus").setRegistryName("chaospersists", "cagepointysaurus");
-    CagedCricket = new CritterCage(0, 376).setTranslationKey("cagecricket").setRegistryName("chaospersists", "cagecricket");
-    CagedFrog = new CritterCage(0, 377).setTranslationKey("cagefrog").setRegistryName("chaospersists", "cagefrog");
-    CagedSpiderDriver = new CritterCage(0, 382).setTranslationKey("cagespiderdriver").setRegistryName("chaospersists", "cagespiderdriver");
-    CagedCrab = new CritterCage(0, 384).setTranslationKey("cagecrab").setRegistryName("chaospersists", "cagecrab");
+    CageEmpty = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageempty"));
+    CagedSpider = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagespider"));
+    CagedBat = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagebat"));
+    CagedCow = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecow"));
+    CagedPig = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagepig"));
+    CagedSquid = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagesquid"));
+    CagedChicken = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagechicken"));
+    CagedCreeper = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecreeper"));
+    CagedSkeleton = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageskeleton"));
+    CagedZombie = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagezombie"));
+    CagedSlime = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageslime"));
+    CagedGhast = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageghast"));
+    CagedZombiePigman = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagezombiepigman"));
+    CagedEnderman = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageenderman"));
+    CagedCaveSpider = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecavespider"));
+    CagedSilverfish = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagesilverfish"));
+    CagedMagmaCube = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagemagmacube"));
+    CagedWitch = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagewitch"));
+    CagedSheep = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagesheep"));
+    CagedWolf = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagewolf"));
+    CagedMooshroom = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagemooshroom"));
+    CagedOcelot = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageocelot"));
+    CagedBlaze = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageblaze"));
+    CagedGirlfriend = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagegirlfriend"));
+    CagedBoyfriend = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageboyfriend"));
+    CagedWitherSkeleton = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagewitherskeleton"));
+    CagedEnderDragon = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageenderdragon"));
+    CagedSnowGolem = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagesnowgolem"));
+    CagedIronGolem = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageirongolem"));
+    CagedWitherBoss = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagewitherboss"));
+    CagedRedCow = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageredcow"));
+    CagedGoldCow = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagegoldcow"));
+    CagedEnchantedCow = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageenchantedcow"));
+    CagedMOTHRA = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagemothra"));
+    CagedAlo = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagealosaurus"));
+    CagedCryo = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecryolophosaurus"));
+    CagedCama = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecamarasaurus"));
+    CagedVelo = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagevelocityraptor"));
+    CagedHydro = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagehydrolisc"));
+    CagedBasil = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagebasilisc"));
+    CagedDragonfly = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagedragonfly"));
+    CagedEmperorScorpion = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageemperorscorpion"));
+    CagedScorpion = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagescorpion"));
+    CagedCaveFisher = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecavefisher"));
+    CagedSpyro = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagespyro"));
+    CagedBaryonyx = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagebaryonyx"));
+    CagedGammaMetroid = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagegammametroid"));
+    CagedCockateil = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecockateil"));
+    CagedKyuubi = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagekyuubi"));
+    CagedAlien = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagealien"));
+    CagedAttackSquid = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageattacksquid"));
+    CagedWaterDragon = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagewaterdragon"));
+    CagedCephadrome = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecephadrome"));
+    CagedKraken = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagekraken"));
+    CagedLizard = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagelizard"));
+    CagedDragon = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagedragon"));
+    CagedBee = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagebee"));
+    CagedHorse = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagehorse"));
+    CagedFirefly = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagefirefly"));
+    CagedChipmunk = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagechipmunk"));
+    CagedGazelle = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagegazelle"));
+    CagedOstrich = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageostrich"));
+    CagedTrooper = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagetrooper"));
+    CagedSpit = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagespit"));
+    CagedStink = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagestink"));
+    CagedCreepingHorror = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecreepinghorror"));
+    CagedTerribleTerror = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageterribleterror"));
+    CagedCliffRacer = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecliffracer"));
+    CagedTriffid = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagetriffid"));
+    CagedPitchBlack = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagenightmare"));
+    CagedLurkingTerror = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagelurkingterror"));
+    CagedSmallWorm = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagesmallworm"));
+    CagedMediumWorm = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagemediumworm"));
+    CagedLargeWorm = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagelargeworm"));
+    CagedCassowary = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecassowary"));
+    CagedCloudShark = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecloudshark"));
+    CagedGoldFish = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagegoldfish"));
+    CagedLeafMonster = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageleafmonster"));
+    CagedEnderKnight = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageenderknight"));
+    CagedEnderReaper = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageenderreaper"));
+    CagedBeaver = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagebeaver"));
+    CagedUrchin = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageurchin"));
+    CagedFlounder = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageflounder"));
+    CagedSkate = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageskate"));
+    CagedRotator = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagerotator"));
+    CagedPeacock = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagepeacock"));
+    CagedFairy = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagefairy"));
+    CagedDungeonBeast = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagedungeonbeast"));
+    CagedVortex = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagevortex"));
+    CagedRat = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagerat"));
+    CagedWhale = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagewhale"));
+    CagedIrukandji = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageirukandji"));
+    CagedTRex = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagetrex"));
+    CagedHercules = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagehercules"));
+    CagedMantis = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagemantis"));
+    CagedStinky = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagestinky"));
+    CagedEasterBunny = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageeasterbunny"));
+    CagedCaterKiller = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecaterkiller"));
+    CagedMolenoid = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagemolenoid"));
+    CagedSeaMonster = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageseamonster"));
+    CagedSeaViper = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageseaviper"));
+    CagedLeon = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cageleon"));
+    CagedHammerhead = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagehammerhead"));
+    CagedRubberDucky = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagerubberducky"));
+    CagedCrystalCow = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecrystalcow"));
+    CagedVillager = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagevillager"));
+    CagedCriminal = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecriminal"));
+    CagedBrutalfly = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagebrutalfly"));
+    CagedNastysaurus = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagenastysaurus"));
+    CagedPointysaurus = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagepointysaurus"));
+    CagedCricket = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecricket"));
+    CagedFrog = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagefrog"));
+    CagedSpiderDriver = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagespiderdriver"));
+    CagedCrab = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecrab"));
 
-    WitherSkeletonEgg = new ItemSpawnEgg(0,192).setTranslationKey("eggwitherskeleton").setRegistryName("chaospersists", "eggwitherskeleton");
-    EnderDragonEgg = new ItemSpawnEgg(0,193).setTranslationKey("eggenderdragon").setRegistryName("chaospersists", "eggenderdragon");
-    SnowGolemEgg = new ItemSpawnEgg(0,194).setTranslationKey("eggsnowgolem").setRegistryName("chaospersists", "eggsnowgolem");
-    IronGolemEgg = new ItemSpawnEgg(0,195).setTranslationKey("eggirongolem").setRegistryName("chaospersists", "eggirongolem");
-    WitherBossEgg = new ItemSpawnEgg(0,196).setTranslationKey("eggwitherboss").setRegistryName("chaospersists", "eggwitherboss");
-    GirlfriendEgg = new ItemSpawnEgg(0,197).setTranslationKey("egggirlfriend").setRegistryName("chaospersists", "egggirlfriend");
-    RedCowEgg = new ItemSpawnEgg(0,198).setTranslationKey("eggredcow").setRegistryName("chaospersists", "eggredcow");
-    CrystalCowEgg = new ItemSpawnEgg(0,363).setTranslationKey("eggcrystalcow").setRegistryName("chaospersists", "eggcrystalcow");
-    GoldCowEgg = new ItemSpawnEgg(0,199).setTranslationKey("egggoldcow").setRegistryName("chaospersists", "egggoldcow");
-    EnchantedCowEgg = new ItemSpawnEgg(0,200).setTranslationKey("eggenchantedcow").setRegistryName("chaospersists", "eggenchantedcow");
-    MOTHRAEgg = new ItemSpawnEgg(0,201).setTranslationKey("eggmothra").setRegistryName("chaospersists", "eggmothra");
-    AloEgg = new ItemSpawnEgg(0,202).setTranslationKey("eggalosaurus").setRegistryName("chaospersists", "eggalosaurus");
-    CryoEgg = new ItemSpawnEgg(0,203).setTranslationKey("eggcryolophosaurus").setRegistryName("chaospersists", "eggcryolophosaurus");
-    CamaEgg = new ItemSpawnEgg(0,204).setTranslationKey("eggcamarasaurus").setRegistryName("chaospersists", "eggcamarasaurus");
-    VeloEgg = new ItemSpawnEgg(0,205).setTranslationKey("eggvelocityraptor").setRegistryName("chaospersists", "eggvelocityraptor");
-    HydroEgg = new ItemSpawnEgg(0,206).setTranslationKey("egghydrolisc").setRegistryName("chaospersists", "egghydrolisc");
-    BasilEgg = new ItemSpawnEgg(0,207).setTranslationKey("eggbasilisc").setRegistryName("chaospersists", "eggbasilisc");
-    DragonflyEgg = new ItemSpawnEgg(0,221).setTranslationKey("eggdragonfly").setRegistryName("chaospersists", "eggdragonfly");
-    EmperorScorpionEgg = new ItemSpawnEgg(0,223).setTranslationKey("eggemperorscorpion").setRegistryName("chaospersists", "eggemperorscorpion");
-    ScorpionEgg = new ItemSpawnEgg(0,225).setTranslationKey("eggscorpion").setRegistryName("chaospersists", "eggscorpion");
-    CaveFisherEgg = new ItemSpawnEgg(0,227).setTranslationKey("eggcavefisher").setRegistryName("chaospersists", "eggcavefisher");
-    SpyroEgg = new ItemSpawnEgg(0,229).setTranslationKey("eggspyro").setRegistryName("chaospersists", "eggspyro");
-    BaryonyxEgg = new ItemSpawnEgg(0,231).setTranslationKey("eggbaryonyx").setRegistryName("chaospersists", "eggbaryonyx");
-    GammaMetroidEgg = new ItemSpawnEgg(0,233).setTranslationKey("egggammametroid").setRegistryName("chaospersists", "egggammametroid");
-    CockateilEgg = new ItemSpawnEgg(0,235).setTranslationKey("eggcockateil").setRegistryName("chaospersists", "eggcockateil");
-    KyuubiEgg = new ItemSpawnEgg(0,237).setTranslationKey("eggkyuubi").setRegistryName("chaospersists", "eggkyuubi");
-    AlienEgg = new ItemSpawnEgg(0,239).setTranslationKey("eggalien").setRegistryName("chaospersists", "eggalien");
-    AttackSquidEgg = new ItemSpawnEgg(0,241).setTranslationKey("eggattacksquid").setRegistryName("chaospersists", "eggattacksquid");
-    WaterDragonEgg = new ItemSpawnEgg(0,243).setTranslationKey("eggwaterdragon").setRegistryName("chaospersists", "eggwaterdragon");
-    CephadromeEgg = new ItemSpawnEgg(0,249).setTranslationKey("eggcephadrome").setRegistryName("chaospersists", "eggcephadrome");
-    KrakenEgg = new ItemSpawnEgg(0,245).setTranslationKey("eggkraken").setRegistryName("chaospersists", "eggkraken");
-    LizardEgg = new ItemSpawnEgg(0,247).setTranslationKey("egglizard").setRegistryName("chaospersists", "egglizard");
-    DragonEgg = new ItemSpawnEgg(0,251).setTranslationKey("eggdragon").setRegistryName("chaospersists", "eggdragon");
-    BeeEgg = new ItemSpawnEgg(0,254).setTranslationKey("eggbee").setRegistryName("chaospersists", "eggbee");
-    TrooperBugEgg = new ItemSpawnEgg(0,262).setTranslationKey("eggtrooper").setRegistryName("chaospersists", "eggtrooper");
-    SpitBugEgg = new ItemSpawnEgg(0,263).setTranslationKey("eggspit").setRegistryName("chaospersists", "eggspit");
-    StinkBugEgg = new ItemSpawnEgg(0,264).setTranslationKey("eggstink").setRegistryName("chaospersists", "eggstink");
-    OstrichEgg = new ItemSpawnEgg(0,265).setTranslationKey("eggostrich").setRegistryName("chaospersists", "eggostrich");
-    GazelleEgg = new ItemSpawnEgg(0,266).setTranslationKey("egggazelle").setRegistryName("chaospersists", "egggazelle");
-    ChipmunkEgg = new ItemSpawnEgg(0,267).setTranslationKey("eggchipmunk").setRegistryName("chaospersists", "eggchipmunk");
-    CreepingHorrorEgg = new ItemSpawnEgg(0,274).setTranslationKey("eggcreepinghorror").setRegistryName("chaospersists", "eggcreepinghorror");
-    TerribleTerrorEgg = new ItemSpawnEgg(0,275).setTranslationKey("eggterribleterror").setRegistryName("chaospersists", "eggterribleterror");
-    CliffRacerEgg = new ItemSpawnEgg(0,276).setTranslationKey("eggcliffracer").setRegistryName("chaospersists", "eggcliffracer");
-    TriffidEgg = new ItemSpawnEgg(0,277).setTranslationKey("eggtriffid").setRegistryName("chaospersists", "eggtriffid");
-    PitchBlackEgg = new ItemSpawnEgg(0,278).setTranslationKey("eggnightmare").setRegistryName("chaospersists", "eggnightmare");
-    LurkingTerrorEgg = new ItemSpawnEgg(0,279).setTranslationKey("egglurkingterror").setRegistryName("chaospersists", "egglurkingterror");
-    GodzillaEgg = new ItemSpawnEgg(0,280).setTranslationKey("egggodzilla").setRegistryName("chaospersists", "egggodzilla");
-    SmallWormEgg = new ItemSpawnEgg(0,288).setTranslationKey("eggsmallworm").setRegistryName("chaospersists", "eggsmallworm");
-    MediumWormEgg = new ItemSpawnEgg(0,289).setTranslationKey("eggmediumworm").setRegistryName("chaospersists", "eggmediumworm");
-    LargeWormEgg = new ItemSpawnEgg(0,290).setTranslationKey("egglargeworm").setRegistryName("chaospersists", "egglargeworm");
-    CassowaryEgg = new ItemSpawnEgg(0,291).setTranslationKey("eggcassowary").setRegistryName("chaospersists", "eggcassowary");
-    CloudSharkEgg = new ItemSpawnEgg(0,292).setTranslationKey("eggcloudshark").setRegistryName("chaospersists", "eggcloudshark");
-    GoldFishEgg = new ItemSpawnEgg(0,293).setTranslationKey("egggoldfish").setRegistryName("chaospersists", "egggoldfish");
-    LeafMonsterEgg = new ItemSpawnEgg(0,294).setTranslationKey("eggleafmonster").setRegistryName("chaospersists", "eggleafmonster");
-    TshirtEgg = new ItemSpawnEgg(0,295).setTranslationKey("eggtshirt").setRegistryName("chaospersists", "eggtshirt");
-    EnderKnightEgg = new ItemSpawnEgg(0,298).setTranslationKey("eggenderknight").setRegistryName("chaospersists", "eggenderknight");
-    EnderReaperEgg = new ItemSpawnEgg(0,299).setTranslationKey("eggenderreaper").setRegistryName("chaospersists", "eggenderreaper");
-    BeaverEgg = new ItemSpawnEgg(0,301).setTranslationKey("eggbeaver").setRegistryName("chaospersists", "eggbeaver");
-    RotatorEgg = new ItemSpawnEgg(0,302).setTranslationKey("eggrotator").setRegistryName("chaospersists", "eggrotator");
-    VortexEgg = new ItemSpawnEgg(0,303).setTranslationKey("eggvortex").setRegistryName("chaospersists", "eggvortex");
-    PeacockEgg = new ItemSpawnEgg(0,304).setTranslationKey("eggpeacock").setRegistryName("chaospersists", "eggpeacock");
-    FairyEgg = new ItemSpawnEgg(0,305).setTranslationKey("eggfairy").setRegistryName("chaospersists", "eggfairy");
-    DungeonBeastEgg = new ItemSpawnEgg(0,306).setTranslationKey("eggdungeonbeast").setRegistryName("chaospersists", "eggdungeonbeast");
-    RatEgg = new ItemSpawnEgg(0,307).setTranslationKey("eggrat").setRegistryName("chaospersists", "eggrat");
-    FlounderEgg = new ItemSpawnEgg(0,308).setTranslationKey("eggflounder").setRegistryName("chaospersists", "eggflounder");
-    WhaleEgg = new ItemSpawnEgg(0,309).setTranslationKey("eggwhale").setRegistryName("chaospersists", "eggwhale");
-    IrukandjiEgg = new ItemSpawnEgg(0,310).setTranslationKey("eggirukandji").setRegistryName("chaospersists", "eggirukandji");
-    SkateEgg = new ItemSpawnEgg(0,311).setTranslationKey("eggskate").setRegistryName("chaospersists", "eggskate");
-    UrchinEgg = new ItemSpawnEgg(0,312).setTranslationKey("eggurchin").setRegistryName("chaospersists", "eggurchin");
-    Robot1Egg = new ItemSpawnEgg(0,324).setTranslationKey("eggrobot1").setRegistryName("chaospersists", "eggrobot1");
-    Robot2Egg = new ItemSpawnEgg(0,325).setTranslationKey("eggrobot2").setRegistryName("chaospersists", "eggrobot2");
-    Robot3Egg = new ItemSpawnEgg(0,326).setTranslationKey("eggrobot3").setRegistryName("chaospersists", "eggrobot3");
-    Robot4Egg = new ItemSpawnEgg(0,327).setTranslationKey("eggrobot4").setRegistryName("chaospersists", "eggrobot4");
-    GhostEgg = new ItemSpawnEgg(0,328).setTranslationKey("eggghost").setRegistryName("chaospersists", "eggghost");
-    GhostSkellyEgg = new ItemSpawnEgg(0,329).setTranslationKey("eggghostskelly").setRegistryName("chaospersists", "eggghostskelly");
-    BrownAntEgg = new ItemSpawnEgg(0,330).setTranslationKey("eggbrownant").setRegistryName("chaospersists", "eggbrownant");
-    RedAntEgg = new ItemSpawnEgg(0,331).setTranslationKey("eggredant").setRegistryName("chaospersists", "eggredant");
-    RainbowAntEgg = new ItemSpawnEgg(0,332).setTranslationKey("eggrainbowant").setRegistryName("chaospersists", "eggrainbowant");
-    UnstableAntEgg = new ItemSpawnEgg(0,333).setTranslationKey("eggunstableant").setRegistryName("chaospersists", "eggunstableant");
-    TermiteEgg = new ItemSpawnEgg(0,334).setTranslationKey("eggtermite").setRegistryName("chaospersists", "eggtermite");
-    ButterflyEgg = new ItemSpawnEgg(0,335).setTranslationKey("eggbutterfly").setRegistryName("chaospersists", "eggbutterfly");
-    MothEgg = new ItemSpawnEgg(0,336).setTranslationKey("eggmoth").setRegistryName("chaospersists", "eggmoth");
-    MosquitoEgg = new ItemSpawnEgg(0,337).setTranslationKey("eggmosquito").setRegistryName("chaospersists", "eggmosquito");
-    FireflyEgg = new ItemSpawnEgg(0,338).setTranslationKey("eggfirefly").setRegistryName("chaospersists", "eggfirefly");
-    TRexEgg = new ItemSpawnEgg(0,339).setTranslationKey("eggtrex").setRegistryName("chaospersists", "eggtrex");
-    HerculesEgg = new ItemSpawnEgg(0,340).setTranslationKey("egghercules").setRegistryName("chaospersists", "egghercules");
-    MantisEgg = new ItemSpawnEgg(0,341).setTranslationKey("eggmantis").setRegistryName("chaospersists", "eggmantis");
-    StinkyEgg = new ItemSpawnEgg(0,342).setTranslationKey("eggstinky").setRegistryName("chaospersists", "eggstinky");
-    Robot5Egg = new ItemSpawnEgg(0,343).setTranslationKey("eggrobot5").setRegistryName("chaospersists", "eggrobot5");
-    CoinEgg = new ItemSpawnEgg(0,344).setTranslationKey("eggcoin").setRegistryName("chaospersists", "eggcoin");
-    BoyfriendEgg = new ItemSpawnEgg(0,349).setTranslationKey("eggboyfriend").setRegistryName("chaospersists", "eggboyfriend");
-    TheKingEgg = new ItemSpawnEgg(0,350).setTranslationKey("eggtheking").setRegistryName("chaospersists", "eggtheking");
-    TheQueenEgg = new ItemSpawnEgg(0,366).setTranslationKey("eggthequeen").setRegistryName("chaospersists", "eggthequeen");
-    ThePrinceEgg = new ItemSpawnEgg(0,351).setTranslationKey("eggtheprince").setRegistryName("chaospersists", "eggtheprince");
-    EasterBunnyEgg = new ItemSpawnEgg(0,352).setTranslationKey("eggeasterbunny").setRegistryName("chaospersists", "eggeasterbunny");
-    MolenoidEgg = new ItemSpawnEgg(0,353).setTranslationKey("eggmolenoid").setRegistryName("chaospersists", "eggmolenoid");
-    SeaMonsterEgg = new ItemSpawnEgg(0,354).setTranslationKey("eggseamonster").setRegistryName("chaospersists", "eggseamonster");
-    SeaViperEgg = new ItemSpawnEgg(0,355).setTranslationKey("eggseaviper").setRegistryName("chaospersists", "eggseaviper");
-    CaterKillerEgg = new ItemSpawnEgg(0,356).setTranslationKey("eggcaterkiller").setRegistryName("chaospersists", "eggcaterkiller");
-    RubberDuckyEgg = new ItemSpawnEgg(0,362).setTranslationKey("eggrubberducky").setRegistryName("chaospersists", "eggrubberducky");
-    HammerheadEgg = new ItemSpawnEgg(0,360).setTranslationKey("egghammerhead").setRegistryName("chaospersists", "egghammerhead");
-    LeonEgg = new ItemSpawnEgg(0,358).setTranslationKey("eggleon").setRegistryName("chaospersists", "eggleon");
-    CriminalEgg = new ItemSpawnEgg(0,365).setTranslationKey("eggcriminal").setRegistryName("chaospersists", "eggcriminal");
-    BrutalflyEgg = new ItemSpawnEgg(0,367).setTranslationKey("eggbrutalfly").setRegistryName("chaospersists", "eggbrutalfly");
-    NastysaurusEgg = new ItemSpawnEgg(0,368).setTranslationKey("eggnastysaurus").setRegistryName("chaospersists", "eggnastysaurus");
-    PointysaurusEgg = new ItemSpawnEgg(0,369).setTranslationKey("eggpointysaurus").setRegistryName("chaospersists", "eggpointysaurus");
-    CricketEgg = new ItemSpawnEgg(0,370).setTranslationKey("eggcricket").setRegistryName("chaospersists", "eggcricket");
-    ThePrincessEgg = new ItemSpawnEgg(0,371).setTranslationKey("eggtheprincess").setRegistryName("chaospersists", "eggtheprincess");
-    FrogEgg = new ItemSpawnEgg(0,372).setTranslationKey("eggfrog").setRegistryName("chaospersists", "eggfrog");
-    JefferyEgg = new ItemSpawnEgg(0,378).setTranslationKey("eggrobot6").setRegistryName("chaospersists", "eggrobot6");
-    AntRobotEgg = new ItemSpawnEgg(0,379).setTranslationKey("eggantrobot").setRegistryName("chaospersists", "eggantrobot");
-    SpiderRobotEgg = new ItemSpawnEgg(0,380).setTranslationKey("eggspiderrobot").setRegistryName("chaospersists", "eggspiderrobot");
-    SpiderDriverEgg = new ItemSpawnEgg(0,381).setTranslationKey("eggspiderdriver").setRegistryName("chaospersists", "eggspiderdriver");
-    CrabEgg = new ItemSpawnEgg(0,383).setTranslationKey("eggcrab").setRegistryName("chaospersists", "eggcrab");
+    WitherSkeletonEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggwitherskeleton"));
+    EnderDragonEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggenderdragon"));
+    SnowGolemEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggsnowgolem"));
+    IronGolemEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggirongolem"));
+    WitherBossEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggwitherboss"));
+    GirlfriendEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egggirlfriend"));
+    RedCowEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggredcow"));
+    CrystalCowEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcrystalcow"));
+    GoldCowEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egggoldcow"));
+    EnchantedCowEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggenchantedcow"));
+    MOTHRAEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggmothra"));
+    AloEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggalosaurus"));
+    CryoEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcryolophosaurus"));
+    CamaEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcamarasaurus"));
+    VeloEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggvelocityraptor"));
+    HydroEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egghydrolisc"));
+    BasilEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggbasilisc"));
+    DragonflyEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggdragonfly"));
+    EmperorScorpionEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggemperorscorpion"));
+    ScorpionEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggscorpion"));
+    CaveFisherEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcavefisher"));
+    SpyroEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggspyro"));
+    BaryonyxEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggbaryonyx"));
+    GammaMetroidEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egggammametroid"));
+    CockateilEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcockateil"));
+    KyuubiEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggkyuubi"));
+    AlienEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggalien"));
+    AttackSquidEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggattacksquid"));
+    WaterDragonEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggwaterdragon"));
+    CephadromeEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcephadrome"));
+    KrakenEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggkraken"));
+    LizardEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egglizard"));
+    DragonEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggdragon"));
+    BeeEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggbee"));
+    TrooperBugEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggtrooper"));
+    SpitBugEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggspit"));
+    StinkBugEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggstink"));
+    OstrichEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggostrich"));
+    GazelleEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egggazelle"));
+    ChipmunkEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggchipmunk"));
+    CreepingHorrorEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcreepinghorror"));
+    TerribleTerrorEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggterribleterror"));
+    CliffRacerEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcliffracer"));
+    TriffidEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggtriffid"));
+    PitchBlackEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggnightmare"));
+    LurkingTerrorEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egglurkingterror"));
+    GodzillaEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egggodzilla"));
+    SmallWormEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggsmallworm"));
+    MediumWormEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggmediumworm"));
+    LargeWormEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egglargeworm"));
+    CassowaryEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcassowary"));
+    CloudSharkEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcloudshark"));
+    GoldFishEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egggoldfish"));
+    LeafMonsterEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggleafmonster"));
+    TshirtEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggtshirt"));
+    EnderKnightEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggenderknight"));
+    EnderReaperEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggenderreaper"));
+    BeaverEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggbeaver"));
+    RotatorEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggrotator"));
+    VortexEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggvortex"));
+    PeacockEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggpeacock"));
+    FairyEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggfairy"));
+    DungeonBeastEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggdungeonbeast"));
+    RatEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggrat"));
+    FlounderEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggflounder"));
+    WhaleEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggwhale"));
+    IrukandjiEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggirukandji"));
+    SkateEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggskate"));
+    UrchinEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggurchin"));
+    Robot1Egg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggrobot1"));
+    Robot2Egg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggrobot2"));
+    Robot3Egg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggrobot3"));
+    Robot4Egg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggrobot4"));
+    GhostEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggghost"));
+    GhostSkellyEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggghostskelly"));
+    BrownAntEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggbrownant"));
+    RedAntEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggredant"));
+    RainbowAntEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggrainbowant"));
+    UnstableAntEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggunstableant"));
+    TermiteEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggtermite"));
+    ButterflyEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggbutterfly"));
+    MothEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggmoth"));
+    MosquitoEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggmosquito"));
+    FireflyEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggfirefly"));
+    TRexEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggtrex"));
+    HerculesEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egghercules"));
+    MantisEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggmantis"));
+    StinkyEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggstinky"));
+    Robot5Egg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggrobot5"));
+    CoinEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcoin"));
+    BoyfriendEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggboyfriend"));
+    TheKingEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggtheking"));
+    TheQueenEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggthequeen"));
+    ThePrinceEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggtheprince"));
+    EasterBunnyEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggeasterbunny"));
+    MolenoidEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggmolenoid"));
+    SeaMonsterEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggseamonster"));
+    SeaViperEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggseaviper"));
+    CaterKillerEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcaterkiller"));
+    RubberDuckyEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggrubberducky"));
+    HammerheadEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egghammerhead"));
+    LeonEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggleon"));
+    CriminalEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcriminal"));
+    BrutalflyEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggbrutalfly"));
+    NastysaurusEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggnastysaurus"));
+    PointysaurusEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggpointysaurus"));
+    CricketEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcricket"));
+    ThePrincessEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggtheprincess"));
+    FrogEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggfrog"));
+    JefferyEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggrobot6"));
+    AntRobotEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggantrobot"));
+    SpiderRobotEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggspiderrobot"));
+    SpiderDriverEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggspiderdriver"));
+    CrabEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcrab"));
   }
 
   private void DoDispenserRegistrations()
@@ -5426,23 +7473,21 @@ public class ChaosPersists
     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(MyTNTRock, new MyDispenserBehaviorRock());
   }
 
-  @Mod.EventHandler
   public void load(FMLInitializationEvent event)
   {
-    applyChaosCreativeTabs();
     proxy.registerBlockColors();
     proxy.registerLeafColors();
     proxy.registerItemColors();
   }
 
   // ===== Creative Tabs Remap =====
-  public static CreativeTabs tabChaosItems;
-  public static CreativeTabs tabChaosBlocks;
-  public static CreativeTabs tabChaosFoods;
-  public static CreativeTabs tabChaosTools;
-  public static CreativeTabs tabChaosWeapons;
-  public static CreativeTabs tabChaosMobs;
-  public static CreativeTabs tabChaosArmor;
+  public static CreativeModeTab tabChaosItems;
+  public static CreativeModeTab tabChaosBlocks;
+  public static CreativeModeTab tabChaosFoods;
+  public static CreativeModeTab tabChaosTools;
+  public static CreativeModeTab tabChaosWeapons;
+  public static CreativeModeTab tabChaosMobs;
+  public static CreativeModeTab tabChaosArmor;
 
   private static void ensureChaosCreativeTabs()
   {
@@ -5450,41 +7495,13 @@ public class ChaosPersists
       return;
     }
 
-    tabChaosItems = new CreativeTabs("chaos_items") {
-      public ItemStack createIcon() {
-        return new ItemStack(MinersDream);
-      }
-    };
-    tabChaosBlocks = new CreativeTabs("chaos_blocks") {
-      public ItemStack createIcon() {
-        return new ItemStack(MyAntBlock);
-      }
-    };
-    tabChaosFoods = new CreativeTabs("chaos_foods") {
-      public ItemStack createIcon() {
-        return new ItemStack(MyCornCob);
-      }
-    };
-    tabChaosTools = new CreativeTabs("chaos_tools") {
-      public ItemStack createIcon() {
-        return new ItemStack(MyUltimatePickaxe);
-      }
-    };
-    tabChaosWeapons = new CreativeTabs("chaos_weapons") {
-      public ItemStack createIcon() {
-        return new ItemStack(MyUltimateSword);
-      }
-    };
-    tabChaosMobs = new CreativeTabs("chaos_mobs") {
-      public ItemStack createIcon() {
-        return new ItemStack(TheKingEgg);
-      }
-    };
-    tabChaosArmor = new CreativeTabs("chaos_armor") {
-      public ItemStack createIcon() {
-        return new ItemStack(RoyalBody);
-      }
-    };
+    tabChaosItems = TAB_CHAOS_ITEMS.get();
+    tabChaosBlocks = TAB_CHAOS_BLOCKS.get();
+    tabChaosFoods = TAB_CHAOS_FOODS.get();
+    tabChaosTools = TAB_CHAOS_TOOLS.get();
+    tabChaosWeapons = TAB_CHAOS_WEAPONS.get();
+    tabChaosMobs = TAB_CHAOS_MOBS.get();
+    tabChaosArmor = TAB_CHAOS_ARMOR.get();
   }
 
   /**
@@ -5502,6 +7519,35 @@ public class ChaosPersists
         || pathLower.startsWith("quinoa_");
   }
 
+  /** 1.12 items that used {@code CreativeTabs.COMBAT} but are plain {@link Item}, not {@link SwordItem}. */
+  private static boolean isLegacyChaosWeaponItem(Item item) {
+    return item instanceof SwordItem
+        || item instanceof BowItem
+        || item instanceof ItemAcid
+        || item instanceof ItemLaserBall
+        || item instanceof ItemIceBall
+        || item instanceof ItemWaterBall
+        || item instanceof ItemThunderStaff
+        || item instanceof ItemSunspotUrchin
+        || item instanceof ItemSquidZooka
+        || item instanceof ItemRock
+        || item instanceof ItemRayGun
+        || item instanceof ItemIrukandji
+        || item instanceof ItemIrukandjiArrow
+        || item instanceof UltimateBow
+        || item instanceof SkateBow;
+  }
+
+  /** 1.12 items that used {@code CreativeTabs.TOOLS} but are not pickaxes/axes/shovels/hoes. */
+  private static boolean isLegacyChaosToolItem(Item item) {
+    return item instanceof DiggerItem
+        || item instanceof HoeItem
+        || item instanceof FishingRodItem
+        || item instanceof ItemWrench
+        || item instanceof ExperienceCatcher
+        || item instanceof ItemSpiderRobotKit;
+  }
+
   /**
    * Remaps all mod items/blocks onto Chaos creative tabs. Safe to call more than once (idempotent).
    */
@@ -5510,104 +7556,104 @@ public class ChaosPersists
     ensureChaosCreativeTabs();
 
     // Put all chaospersists blocks into Chaos Blocks.
-    for (Block block : Block.REGISTRY) {
+    for (Block block : BuiltInRegistries.BLOCK) {
       if (block == null) {
         continue;
       }
-      ResourceLocation rl = block.getRegistryName();
-      if (rl != null && "chaospersists".equals(rl.getNamespace())) {
+      ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(block);
+      if (rl != null && MODID.equals(rl.getNamespace())) {
         String path = rl.getPath();
         String lower = path == null ? "" : path.toLowerCase();
         // Don't show crop/plant/sapling blocks in Chaos Blocks; keep only their seed items.
         if (isHiddenCropGrowthChaosBlockPath(lower)) {
           continue;
         }
-        block.setCreativeTab(tabChaosBlocks);
+        Item blockItem = block.asItem();
+        if (blockItem instanceof BlockItem bi
+            && (bi.getBlock() == null || bi.getBlock() == Blocks.AIR)) {
+          continue;
+        }
+        CreativeTabCompat.setCreativeTab(block, tabChaosBlocks);
       }
     }
 
     // Put all chaospersists items into the requested tabs.
-    for (Item item : Item.REGISTRY) {
+    for (Item item : BuiltInRegistries.ITEM) {
       if (item == null) {
         continue;
       }
-      ResourceLocation rl = item.getRegistryName();
-      if (rl == null || !"chaospersists".equals(rl.getNamespace())) {
+      ResourceLocation rl = BuiltInRegistries.ITEM.getKey(item);
+      if (rl == null || !MODID.equals(rl.getNamespace())) {
+        continue;
+      }
+      if (item instanceof BlockItem blockItem
+          && (blockItem.getBlock() == null || blockItem.getBlock() == Blocks.AIR)) {
+        CreativeTabCompat.setCreativeTab(item, null);
         continue;
       }
 
       String path = rl.getPath();
       String lower = path == null ? "" : path.toLowerCase();
 
-      if (item instanceof ItemBlock) {
+      if (item instanceof BlockItem) {
         // Hide plant/crop/sapling blocks from Chaos creative tabs.
         // Seeds remain because they are items, not block item forms.
         if (isHiddenCropGrowthChaosBlockPath(lower)) {
-          item.setCreativeTab(null);
+          CreativeTabCompat.setCreativeTab(item, null);
           continue;
         }
 
-        item.setCreativeTab(tabChaosBlocks);
+        CreativeTabCompat.setCreativeTab(item, tabChaosBlocks);
       } else if ("pizza".equals(lower)) {
-        item.setCreativeTab(tabChaosFoods);
+        CreativeTabCompat.setCreativeTab(item, tabChaosFoods);
       } else if ("ducttape".equals(lower)) {
-        item.setCreativeTab(tabChaosItems);
+        CreativeTabCompat.setCreativeTab(item, tabChaosTools);
       } else if ("step_up".equals(lower) || "step_down".equals(lower) || "step_accross".equals(lower)) {
-        item.setCreativeTab(tabChaosItems);
+        CreativeTabCompat.setCreativeTab(item, tabChaosTools);
       } else if ("spiderrobotkit".equals(lower) || "antrobotkit".equals(lower)) {
-        item.setCreativeTab(tabChaosItems);
+        CreativeTabCompat.setCreativeTab(item, tabChaosTools);
       } else if (item instanceof ItemSpawnEgg) {
-        item.setCreativeTab(tabChaosMobs);
-      } else if (item instanceof ItemFood) {
-        item.setCreativeTab(tabChaosFoods);
-      } else if (item instanceof ItemArmor) {
-        item.setCreativeTab(tabChaosArmor);
+        CreativeTabCompat.setCreativeTab(item, tabChaosMobs);
+      } else if (item.isEdible()) {
+        CreativeTabCompat.setCreativeTab(item, tabChaosFoods);
+      } else if (item instanceof ArmorItem) {
+        CreativeTabCompat.setCreativeTab(item, tabChaosArmor);
       } else {
         // Map vanilla tabs and item classes to Chaos Tools / Weapons. Must be idempotent: JEI (and any
         // second caller) re-runs this after tabs are already tabChaosTools/tabChaosWeapons — comparing
-        // only to CreativeTabs.TOOLS/COMBAT would wrongly send everything to Chaos Items.
-        CreativeTabs oldTab = item.getCreativeTab();
+        // only to CreativeModeTabs.TOOLS/COMBAT would wrongly send everything to Chaos Items.
+        CreativeModeTab oldTab = CreativeTabCompat.getCreativeTab(item);
         ItemStack probe = new ItemStack(item);
         if (oldTab == tabChaosTools) {
-          item.setCreativeTab(tabChaosTools);
+          CreativeTabCompat.setCreativeTab(item, tabChaosTools);
         } else if (oldTab == tabChaosWeapons) {
-          item.setCreativeTab(tabChaosWeapons);
-        } else if (oldTab == CreativeTabs.TOOLS) {
-          item.setCreativeTab(tabChaosTools);
-        } else if (oldTab == CreativeTabs.COMBAT) {
-          item.setCreativeTab(tabChaosWeapons);
-        } else if (item instanceof ItemSword || item instanceof ItemBow) {
-          item.setCreativeTab(tabChaosWeapons);
-        } else if (item.getItemUseAction(probe) == EnumAction.BOW) {
-          item.setCreativeTab(tabChaosWeapons);
-        } else if (item instanceof ItemTool || item instanceof ItemHoe || item instanceof ItemFishingRod) {
-          item.setCreativeTab(tabChaosTools);
+          CreativeTabCompat.setCreativeTab(item, tabChaosWeapons);
+        } else if (BuiltInRegistries.CREATIVE_MODE_TAB.getResourceKey(oldTab).orElse(null)
+            == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+          CreativeTabCompat.setCreativeTab(item, tabChaosTools);
+        } else if (BuiltInRegistries.CREATIVE_MODE_TAB.getResourceKey(oldTab).orElse(null)
+            == CreativeModeTabs.COMBAT) {
+          CreativeTabCompat.setCreativeTab(item, tabChaosWeapons);
+        } else if (isLegacyChaosWeaponItem(item) || item.getUseAnimation(probe) == UseAnim.BOW) {
+          CreativeTabCompat.setCreativeTab(item, tabChaosWeapons);
+        } else if (isLegacyChaosToolItem(item)) {
+          CreativeTabCompat.setCreativeTab(item, tabChaosTools);
         } else {
-          item.setCreativeTab(tabChaosItems);
+          CreativeTabCompat.setCreativeTab(item, tabChaosItems);
         }
       }
     }
   }
 
   /** Chaos Items tab (for JEI sub-item enumeration when an item has {@code creativeTab == null}). */
-  public static CreativeTabs getChaosItemsCreativeTab()
+  public static CreativeModeTab getChaosItemsCreativeTab()
   {
     ensureChaosCreativeTabs();
     return tabChaosItems;
   }
 
-  @Mod.EventHandler
-  public void serverStarting(FMLServerStartingEvent event)
-  {
-    event.registerServerCommand(new CommandUtopia());
-    event.registerServerCommand(new CommandVillageMania());
-    event.registerServerCommand(new CommandChaos());
-    event.registerServerCommand(new CommandCrystal());
-    event.registerServerCommand(new CommandDanger());
-    event.registerServerCommand(new CommandMining());
-  }
+  public void serverStarting(FMLServerStartingEvent event) {}
 
-  @Mod.EventHandler
   public static void postInit(FMLPostInitializationEvent event)
   {
     BMaze = new BasiliskMaze();
@@ -5618,73 +7664,69 @@ public class ChaosPersists
     Chunker = new ChunkOreGenerator();
   }
 
-  @SideOnly(Side.CLIENT)
-  public Entity spawnEntity(int entityId, World world, double scaledX, double scaledY, double scaledZ)
+  @OnlyIn(Dist.CLIENT)
+  public Entity spawnEntity(int entityId, Level world, double scaledX, double scaledY, double scaledZ)
   {
     return null;
   }
 
-  public static Entity getPointedAtEntity(World world, EntityPlayer player, double dist) {
+  public static Entity getPointedAtEntity(Level world, Player player, double dist) {
     Entity pointedAt = null;
-    if (player != null)
-    {
-      if (world != null)
-      {
-        double d0 = dist;
-        double d1 = dist;
-        Vec3d vec3 = player.getPositionEyes(1.0F);
-        Vec3d vec31 = player.getLook(1.0F);
-        Vec3d vec32 = vec3.add(vec31.x * d0, vec31.y * d0, vec31.z * d0);
-        pointedAt = null;
-        float f1 = 1.0F;
-        List list = world.getEntitiesWithinAABBExcludingEntity(player, player.getEntityBoundingBox().expand(vec31.x * d0, vec31.y * d0, vec31.z * d0).expand(f1, f1, f1));
-        double d2 = d1;
+    if (player != null && world != null) {
+      double d0 = dist;
+      double d1 = dist;
+      Vec3 vec3 = player.getEyePosition(1.0F);
+      Vec3 vec31 = player.getViewVector(1.0F);
+      Vec3 vec32 = vec3.add(vec31.x * d0, vec31.y * d0, vec31.z * d0);
+      double f1 = 1.0D;
+      AABB searchBox =
+          player.getBoundingBox()
+              .inflate(vec31.x * d0, vec31.y * d0, vec31.z * d0)
+              .inflate(f1, f1, f1);
+      List<Entity> list =
+          world.getEntities(
+              player,
+              searchBox,
+              entity -> !entity.isSpectator() && entity.isPickable() && entity != player);
+      double d2 = d1;
 
-        for (int i = 0; i < list.size(); i++)
-        {
-          Entity entity = (Entity)list.get(i);
+      for (Entity entity : list) {
+        if (!entity.isPickable()) {
+          continue;
+        }
+        double f2 = entity.getPickRadius();
+        AABB axisalignedbb = entity.getBoundingBox().inflate(f2, f2, f2);
+        java.util.Optional<Vec3> intercept = axisalignedbb.clip(vec3, vec32);
 
-          if (!entity.canBeCollidedWith())
+        if (axisalignedbb.contains(vec3)) {
+          if ((0.0D >= d2) && (d2 != 0.0D)) {
             continue;
-          float f2 = entity.getCollisionBorderSize();
-          AxisAlignedBB axisalignedbb = entity.getEntityBoundingBox().expand(f2, f2, f2);
-          RayTraceResult raytraceresult = axisalignedbb.calculateIntercept(vec3, vec32);
-
-          if (axisalignedbb.contains(vec3))
-          {
-            if ((0.0D >= d2) && (d2 != 0.0D))
-              continue;
-            pointedAt = entity;
-            d2 = 0.0D;
           }
-          else {
-            if (raytraceresult == null)
-              continue;
-            double d3 = vec3.distanceTo(raytraceresult.hitVec);
+          pointedAt = entity;
+          d2 = 0.0D;
+        } else if (intercept.isPresent()) {
+          double d3 = vec3.distanceTo(intercept.get());
 
-            if ((d3 >= d2) && (d2 != 0.0D))
+          if ((d3 >= d2) && (d2 != 0.0D)) {
+            continue;
+          }
+          if ((entity == player.getVehicle()) && (!entity.canRiderInteract())) {
+            if (d2 != 0.0D) {
               continue;
-            if ((entity == player.getRidingEntity()) && (!entity.canRiderInteract()))
-            {
-              if (d2 != 0.0D)
-                continue;
-              pointedAt = entity;
             }
-            else
-            {
-              pointedAt = entity;
-              d2 = d3;
-            }
+            pointedAt = entity;
+          } else {
+            pointedAt = entity;
+            d2 = d3;
           }
         }
       }
-
     }
 
     return pointedAt;
   }
 
-  public static boolean setBlockFast(World world, int par1, int par2, int par3, Block par4, int par5, int par6)
+  public static boolean setBlockFast(Level world, int par1, int par2, int par3, Block par4, int par5, int par6)
   {
     if ((par1 >= -30000000) && (par3 >= -30000000) && (par1 < 30000000) && (par3 < 30000000))
     {
@@ -5697,10 +7739,10 @@ public class ChaosPersists
         return false;
       }
 
-      Chunk chunk = world.getChunk(par1 >> 4, par3 >> 4);
+      LevelChunk chunk = world.getChunk(par1 >> 4, par3 >> 4);
       BlockPos pos = new BlockPos(par1, par2, par3);
 
-      IBlockState oldState = Blocks.AIR.getDefaultState();
+      BlockState oldState = Blocks.AIR.defaultBlockState();
       if ((par6 & 0x1) != 0)
       {
         oldState = chunk.getBlockState(new BlockPos(par1 & 0xF, par2, par3 & 0xF));
@@ -5710,25 +7752,25 @@ public class ChaosPersists
 
       if (flag)
       {
-        if (((par6 & 0x2) != 0) && ((!world.isRemote) || ((par6 & 0x4) == 0)))
+        if (((par6 & 0x2) != 0) && ((!world.isClientSide()) || ((par6 & 0x4) == 0)))
         {
-          IBlockState newState = par4.getStateFromMeta(par5);
-          world.notifyBlockUpdate(pos, oldState, newState, 3);
+          BlockState newState = RegistryCompat.getStateFromMeta(par4, par5);
+          world.sendBlockUpdated(pos, oldState, newState, 3);
         }
 
-        if ((!world.isRemote) && ((par6 & 0x1) != 0))
+        if ((!world.isClientSide()) && ((par6 & 0x1) != 0))
         {
-          world.notifyNeighborsOfStateChange(pos, par4, true);
+          world.updateNeighborsAt(pos, par4);
         }
 
         // Direct chunk writes skip vanilla lighting; without this, tall structures often render half-black (stale sky/block light).
-        if (!world.isRemote)
+        if (!world.isClientSide())
         {
-          if (world.provider.hasSkyLight())
+          if (world.dimensionType().hasSkyLight())
           {
-            world.checkLightFor(EnumSkyBlock.SKY, pos);
+            world.getLightEngine().checkBlock(pos);
           }
-          world.checkLightFor(EnumSkyBlock.BLOCK, pos);
+          world.getLightEngine().checkBlock(pos);
         }
 
       }
@@ -5739,7 +7781,7 @@ public class ChaosPersists
     return false;
   }
 
-  public static boolean setBlockSuperFast(World world, int par1, int par2, int par3, Block par4, int par5, int par6, Chunk refChunk)
+  public static boolean setBlockSuperFast(Level world, int par1, int par2, int par3, Block par4, int par5, int par6, LevelChunk refChunk)
   {
     if ((par1 >= -30000000) && (par3 >= -30000000) && (par1 < 30000000) && (par3 < 30000000))
     {
@@ -5752,12 +7794,12 @@ public class ChaosPersists
         return false;
       }
 
-      Chunk chunk = world.getChunk(par1 >> 4, par3 >> 4);
+      LevelChunk chunk = world.getChunk(par1 >> 4, par3 >> 4);
       BlockPos pos = new BlockPos(par1, par2, par3);
       boolean flag = true;
       if (chunk != refChunk)
       {
-        IBlockState oldState = Blocks.AIR.getDefaultState();
+        BlockState oldState = Blocks.AIR.defaultBlockState();
         if ((par6 & 0x1) != 0)
         {
           oldState = chunk.getBlockState(new BlockPos(par1 & 0xF, par2, par3 & 0xF));
@@ -5767,36 +7809,36 @@ public class ChaosPersists
 
         if (flag)
         {
-          if (((par6 & 0x2) != 0) && ((!world.isRemote) || ((par6 & 0x4) == 0)))
+          if (((par6 & 0x2) != 0) && ((!world.isClientSide()) || ((par6 & 0x4) == 0)))
           {
-            IBlockState newState = par4.getStateFromMeta(par5);
-            world.notifyBlockUpdate(pos, oldState, newState, 3);
+            BlockState newState = RegistryCompat.getStateFromMeta(par4, par5);
+            world.sendBlockUpdated(pos, oldState, newState, 3);
           }
 
-          if ((!world.isRemote) && ((par6 & 0x1) != 0))
+          if ((!world.isClientSide()) && ((par6 & 0x1) != 0))
           {
-            world.notifyNeighborsOfStateChange(pos, par4, true);
+            world.updateNeighborsAt(pos, par4);
           }
 
-          if (!world.isRemote)
+          if (!world.isClientSide())
           {
-            if (world.provider.hasSkyLight())
+            if (world.dimensionType().hasSkyLight())
             {
-              world.checkLightFor(EnumSkyBlock.SKY, pos);
+              world.getLightEngine().checkBlock(pos);
             }
-            world.checkLightFor(EnumSkyBlock.BLOCK, pos);
+            world.getLightEngine().checkBlock(pos);
           }
         }
       }
       else {
         setBlockIDWithMetadataFast(chunk, par1 & 0xF, par2, par3 & 0xF, par4, par5);
-        if (!world.isRemote)
+        if (!world.isClientSide())
         {
-          if (world.provider.hasSkyLight())
+          if (world.dimensionType().hasSkyLight())
           {
-            world.checkLightFor(EnumSkyBlock.SKY, pos);
+            world.getLightEngine().checkBlock(pos);
           }
-          world.checkLightFor(EnumSkyBlock.BLOCK, pos);
+          world.getLightEngine().checkBlock(pos);
         }
       }
 
@@ -5806,141 +7848,91 @@ public class ChaosPersists
     return false;
   }
 
-  public static boolean setBlockIDWithMetadataFast(Chunk chunk, int par1, int par2, int par3, Block par4, int par5) {
-      if (par1 >= -30000000 && par3 >= -30000000 && par1 < 30000000 && par3 < 30000000) {
-          if (par2 < 0 || par2 > 255) {
-              return false;
-          }
-          ExtendedBlockStorage[] mystorage = chunk.getBlockStorageArray();
-          ExtendedBlockStorage extendedblockstorage = mystorage[par2 >> 4];
-          if (extendedblockstorage == null) {
-              if (par4 == Blocks.AIR) {
-                  return false;
-              }
-              ExtendedBlockStorage extendedBlockStorage = new ExtendedBlockStorage(par2 >> 4 << 4, chunk.getWorld().provider.hasSkyLight());
-              mystorage[par2 >> 4] = extendedBlockStorage;
-              extendedblockstorage = extendedBlockStorage;
-          }
-          extendedblockstorage.set(par1, par2 & 15, par3, par4.getStateFromMeta(par5));
-          return true;
-      }
+  public static boolean setBlockIDWithMetadataFast(
+      LevelChunk chunk, int par1, int par2, int par3, Block par4, int par5) {
+    if (par1 < 0 || par1 > 15 || par3 < 0 || par3 > 15) {
       return false;
+    }
+    if (par2 < chunk.getMinBuildHeight() || par2 >= chunk.getMaxBuildHeight()) {
+      return false;
+    }
+    if (par4 == null || par4 == Blocks.AIR) {
+      return false;
+    }
+    BlockPos pos = new BlockPos(par1, par2, par3);
+    chunk.setBlockState(pos, RegistryCompat.getStateFromMeta(par4, par5), false);
+    return true;
   }
 
-  public static Block getBlockIDInChunk(Chunk chunk, int par1, int par2, int par3)
+  public static Block getBlockIDInChunk(LevelChunk chunk, int par1, int par2, int par3)
   {
     if ((par1 >= -30000000) && (par3 >= -30000000) && (par1 < 30000000) && (par3 < 30000000)) {
-      if (par1 >> 4 != chunk.x) return Blocks.AIR;
-      if (par3 >> 4 != chunk.z) return Blocks.AIR;
-      if ((par2 < 0) || (par2 > 255)) return Blocks.AIR;
+      if (par1 >> 4 != chunk.getPos().x) return Blocks.AIR;
+      if (par3 >> 4 != chunk.getPos().z) return Blocks.AIR;
+      if ((par2 < chunk.getMinBuildHeight()) || (par2 >= chunk.getMaxBuildHeight())) return Blocks.AIR;
       return chunk.getBlockState(new BlockPos(par1 & 0xF, par2, par3 & 0xF)).getBlock();
     }
     return Blocks.AIR;
   }
 
-  public static boolean setBlockIDWithMetadataInChunk(Chunk chunk, int par1, int par2, int par3, Block par4, int par5) {
-      if (par1 >= -30000000 && par3 >= -30000000 && par1 < 30000000 && par3 < 30000000) {
-          if (par1 >> 4 != chunk.x) {
-              return false;
-          }
-          if (par3 >> 4 != chunk.z) {
-              return false;
-          }
-          if (par2 < 0 || par2 > 255) {
-              return false;
-          }
-          ExtendedBlockStorage[] mystorage = chunk.getBlockStorageArray();
-          ExtendedBlockStorage extendedblockstorage = mystorage[par2 >> 4];
-          par1 &= 15;
-          par3 &= 15;
-          if (extendedblockstorage == null) {
-              if (par4 == Blocks.AIR || par4 == null) {
-                  return false;
-              }
-              ExtendedBlockStorage extendedBlockStorage = new ExtendedBlockStorage(par2 >> 4 << 4, chunk.getWorld().provider.hasSkyLight());
-              mystorage[par2 >> 4] = extendedBlockStorage;
-              extendedblockstorage = extendedBlockStorage;
-          }
-          extendedblockstorage.set(par1, par2 & 15, par3, par4.getStateFromMeta(par5));
-          return true;
+  public static boolean setBlockIDWithMetadataInChunk(
+      LevelChunk chunk, int par1, int par2, int par3, Block par4, int par5) {
+    if (par1 >= -30000000 && par3 >= -30000000 && par1 < 30000000 && par3 < 30000000) {
+      if (par1 >> 4 != chunk.getPos().x) {
+        return false;
       }
-      return false;
+      if (par3 >> 4 != chunk.getPos().z) {
+        return false;
+      }
+      if (par2 < chunk.getMinBuildHeight() || par2 >= chunk.getMaxBuildHeight()) {
+        return false;
+      }
+      par1 &= 15;
+      par3 &= 15;
+      if (par4 == null || par4 == Blocks.AIR) {
+        return false;
+      }
+      chunk.setBlockState(
+          new BlockPos(par1, par2, par3), RegistryCompat.getStateFromMeta(par4, par5), false);
+      return true;
+    }
+    return false;
   }
 
-  /**
-   * Reads BaseDimensionID, optional per-world DimensionId_* overrides (-1 = BaseDimensionID + offset),
-   * validates uniqueness, assigns DimensionID..DimensionID6, and optionally logs resolved IDs.
-   */
+  /** Legacy numeric id kept for 1.12 teleporter/item references; Utopia level stem is {@code chaospersists:utopia}. */
   private static void configureDimensionIds(Configuration config, String ids) {
-    Property logProp = config.get(ids, "LogRegisteredDimensionIds", true);
-    logProp.setComment(
-        "If true, logs every Chaos Persists dimension numeric ID at startup (INFO) so you can compare with other mods and fix collisions.");
-    LogRegisteredDimensionIds = logProp.getBoolean();
-
     Property baseProp = config.get(ids, "BaseDimensionID", 80);
     baseProp.setComment(
-        "First ID of the default contiguous block when a DimensionId_* entry is -1. Offsets: +0 Utopia, +1 Mining, +2 Village Mania, +3 Islands (danger), +4 Crystal, +5 Chaos. "
-            + "Default 80 gives 80-85. If another mod already uses one of these numbers, raise BaseDimensionID (e.g. 100) or set explicit DimensionId_* below.");
-    BaseDimensionID = baseProp.getInt();
-
-    final String[] dimKeys = new String[] {
-        "DimensionId_Utopia",
-        "DimensionId_Mining",
-        "DimensionId_VillageMania",
-        "DimensionId_Islands",
-        "DimensionId_Crystal",
-        "DimensionId_Chaos"
-    };
-    final String[] dimLabels = new String[] {
-        "Utopia (WorldProviderChaos)",
-        "Mining (WorldProviderChaos2)",
-        "Village Mania (WorldProviderChaos3)",
-        "Islands / danger (WorldProviderChaos4)",
-        "Crystal (WorldProviderChaos5)",
-        "Chaos (WorldProviderChaos6)"
-    };
-
-    int[] resolved = new int[6];
-    for (int i = 0; i < 6; i++) {
-      Property p = config.get(ids, dimKeys[i], -1);
-      p.setComment(
-          "Numeric world ID for " + dimLabels[i] + ". Use -1 for automatic: BaseDimensionID+" + i + ". "
-              + "Set a specific free ID to avoid conflicts (each Chaos Persists dimension must differ from every other mod).");
-      int raw = p.getInt();
-      resolved[i] = raw >= 0 ? raw : BaseDimensionID + i;
-    }
-
-    HashSet<Integer> seen = new HashSet<Integer>();
-    for (int i = 0; i < 6; i++) {
-      if (!seen.add(Integer.valueOf(resolved[i]))) {
-        throw new IllegalStateException(
-            "ChaosPersists: duplicate dimension ID "
-                + resolved[i]
-                + " in config category ["
-                + ids
-                + "]. Keys "
-                + java.util.Arrays.toString(dimKeys)
-                + " must all be unique (or -1 with distinct BaseDimensionID offsets).");
-      }
-    }
-
-    DimensionID = resolved[0];
-    DimensionID2 = resolved[1];
-    DimensionID3 = resolved[2];
-    DimensionID4 = resolved[3];
-    DimensionID5 = resolved[4];
-    DimensionID6 = resolved[5];
-
-    if (LogRegisteredDimensionIds) {
-      FMLLog.log.info("ChaosPersists dimension IDs (change in chaospersists.cfg -> [{}] if a mod conflicts):", ids);
-      for (int i = 0; i < 6; i++) {
-        FMLLog.log.info("  [{}] = {}  ({})", dimKeys[i], Integer.valueOf(resolved[i]), dimLabels[i]);
-      }
-    }
+        "Legacy numeric dimension ids (1.12 compat). Datapack stems: chaospersists:utopia, chaospersists:mining, chaospersists:village.");
+    int base = baseProp.getInt();
+    Property utopiaProp = config.get(ids, "DimensionId_Utopia", -1);
+    utopiaProp.setComment("Numeric id for Utopia. -1 uses BaseDimensionID.");
+    DimensionID = utopiaProp.getInt() >= 0 ? utopiaProp.getInt() : base;
+    Property miningProp = config.get(ids, "DimensionId_Mining", -1);
+    miningProp.setComment("Numeric id for Mining. -1 uses BaseDimensionID + 1.");
+    DimensionID2 = miningProp.getInt() >= 0 ? miningProp.getInt() : base + 1;
+    Property villageProp = config.get(ids, "DimensionId_VillageMania", -1);
+    villageProp.setComment("Numeric id for Village Mania. -1 uses BaseDimensionID + 2.");
+    DimensionID3 = villageProp.getInt() >= 0 ? villageProp.getInt() : base + 2;
   }
 
-  private ArmorStats get_armorstats(Configuration config, String s, int dura, int head, int chest, int leg, int boots, int enchant, int e_resp, int e_aqua, int e_prot, int e_fire, int e_blast, int e_proj, int e_unbreak, int e_feather)
-  {
+  private static ArmorStats get_armorstats(
+      Configuration config,
+      String s,
+      int dura,
+      int head,
+      int chest,
+      int leg,
+      int boots,
+      int enchant,
+      int e_resp,
+      int e_aqua,
+      int e_prot,
+      int e_fire,
+      int e_blast,
+      int e_proj,
+      int e_unbreak,
+      int e_feather) {
     ArmorStats a = new ArmorStats();
     String arm = "chaospersistsARMOR";
 
@@ -5979,8 +7971,15 @@ public class ChaosPersists
     return a;
   }
 
-  private WeaponStats get_weaponstats(Configuration config, String arm, String s, int harvest, int maxuses, int efficiency, int damage, int enchantability)
-  {
+  private static WeaponStats get_weaponstats(
+      Configuration config,
+      String arm,
+      String s,
+      int harvest,
+      int maxuses,
+      int efficiency,
+      int damage,
+      int enchantability) {
     WeaponStats w = new WeaponStats();
 
     w.harvestlevel = config.get(arm, s + "_harvestlevel", harvest).getInt();
@@ -6001,8 +8000,8 @@ public class ChaosPersists
     return w;
   }
 
-  private MobStats get_mobstats(Configuration config, String arm, String s, int health, int attack, int defense)
-  {
+  private static MobStats get_mobstats(
+      Configuration config, String arm, String s, int health, int attack, int defense) {
     MobStats m = new MobStats();
 
     m.health = config.get(arm, s + "_health", health).getInt();
@@ -6020,8 +8019,8 @@ public class ChaosPersists
     return m;
   }
 
-  private OreStats get_orestats(Configuration config, String arm, String s, int rate, int clumpsize, int min, int max)
-  {
+  private static OreStats get_orestats(
+      Configuration config, String arm, String s, int rate, int clumpsize, int min, int max) {
     OreStats o = new OreStats();
 
     o.rate = config.get(arm, s + "_rate", rate).getInt();
@@ -6042,240 +8041,7 @@ public class ChaosPersists
     return o;
   }
 
-  private void disableAllMobs()
-  {
-    MosquitoEnable = 0;
-    GhostEnable = 0;
-    GhostSkellyEnable = 0;
-    SpiderDriverEnable = 0;
-    CrabEnable = 0;
-    JefferyEnable = 0;
-    MothraEnable = 0;
-    BrutalflyEnable = 0;
-    NastysaurusEnable = 0;
-    PointysaurusEnable = 0;
-    MothraPeaceful = 0;
-    BlackAntEnable = 0;
-    RedAntEnable = 0;
-    TermiteEnable = 0;
-    UnstableAntEnable = 0;
-    RainbowAntEnable = 0;
-    AlosaurusEnable = 0;
-    HammerheadEnable = 0;
-    LeonEnable = 0;
-    CaterKillerEnable = 0;
-    MolenoidEnable = 0;
-    TRexEnable = 0;
-    CriminalEnable = 0;
-    CryolophosaurusEnable = 0;
-    RatEnable = 0;
-    UrchinEnable = 0;
-    CamarasaurusEnable = 0;
-    VelocityRaptorEnable = 0;
-    HydroliscEnable = 0;
-    SpyroEnable = 0;
-    BaryonyxEnable = 0;
-    CockateilEnable = 0;
-    CassowaryEnable = 0;
-    EasterBunnyEnable = 0;
-    PeacockEnable = 0;
-    KyuubiEnable = 0;
-    CephadromeEnable = 0;
-    DragonEnable = 0;
-    GammaMetroidEnable = 0;
-    BasiliskEnable = 0;
-    DragonflyEnable = 0;
-    EmperorScorpionEnable = 0;
-    TrooperBugEnable = 0;
-    SpitBugEnable = 0;
-    StinkBugEnable = 0;
-    ScorpionEnable = 0;
-    CaveFisherEnable = 0;
-    AlienEnable = 0;
-    WaterDragonEnable = 0;
-    SeaMonsterEnable = 0;
-    SeaViperEnable = 0;
-    AttackSquidEnable = 0;
-    Robot1Enable = 0;
-    Robot2Enable = 0;
-    Robot3Enable = 0;
-    Robot4Enable = 0;
-    Robot5Enable = 0;
-    RotatorEnable = 0;
-    VortexEnable = 0;
-    DungeonBeastEnable = 0;
-    KrakenEnable = 0;
-    LizardEnable = 0;
-    RubberDuckyEnable = 0;
-    GirlfriendEnable = 0;
-    BoyfriendEnable = 0;
-    FireflyEnable = 0;
-    FairyEnable = 0;
-    BeeEnable = 0;
-    TheKingEnable = 0;
-    TheQueenEnable = 0;
-    MantisEnable = 0;
-    StinkyEnable = 0;
-    HerculesBeetleEnable = 0;
-    ChipmunkEnable = 0;
-    OstrichEnable = 0;
-    GazelleEnable = 0;
-    CowEnable = 0;
-    ButterflyEnable = 0;
-    MothEnable = 0;
-    TshirtEnable = 0;
-    CoinEnable = 0;
-    CreepingHorrorEnable = 0;
-    TerribleTerrorEnable = 0;
-    CliffRacerEnable = 0;
-    TriffidEnable = 0;
-    WormEnable = 0;
-    CloudSharkEnable = 0;
-    GoldFishEnable = 0;
-    LeafMonsterEnable = 0;
-    EnderKnightEnable = 0;
-    EnderReaperEnable = 0;
-    BeaverEnable = 0;
-    IrukandjiEnable = 0;
-    SkateEnable = 0;
-    WhaleEnable = 0;
-    FlounderEnable = 0;
-    PitchBlackEnable = 0;
-    LurkingTerrorEnable = 0;
-    GodzillaEnable = 0;
-    CrabEnable = 0;
-  }
-
-  private void laySomeEggs()
-  {
-    MySpiderSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orespider").setRegistryName("chaospersists", "orespider");
-    MyBatSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orebat").setRegistryName("chaospersists", "orebat");
-    MyCowSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecow").setRegistryName("chaospersists", "orecow");
-    MyPigSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orepig").setRegistryName("chaospersists", "orepig");
-    MySquidSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oresquid").setRegistryName("chaospersists", "oresquid");
-    MyChickenSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orechicken").setRegistryName("chaospersists", "orechicken");
-    MyCreeperSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecreeper").setRegistryName("chaospersists", "orecreeper");
-    MySkeletonSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreskeleton").setRegistryName("chaospersists", "oreskeleton");
-    MyZombieSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orezombie").setRegistryName("chaospersists", "orezombie");
-    MySlimeSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreslime").setRegistryName("chaospersists", "oreslime");
-    MyGhastSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreghast").setRegistryName("chaospersists", "oreghast");
-    MyZombiePigmanSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orezombiepigman").setRegistryName("chaospersists", "orezombiepigman");
-    MyEndermanSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreenderman").setRegistryName("chaospersists", "oreenderman");
-    MyCaveSpiderSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecavespider").setRegistryName("chaospersists", "orecavespider");
-    MySilverfishSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oresilverfish").setRegistryName("chaospersists", "oresilverfish");
-    MyMagmaCubeSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oremagmacube").setRegistryName("chaospersists", "oremagmacube");
-    MyWitchSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orewitch").setRegistryName("chaospersists", "orewitch");
-    MySheepSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oresheep").setRegistryName("chaospersists", "oresheep");
-    MyWolfSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orewolf").setRegistryName("chaospersists", "orewolf");
-    MyMooshroomSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oremooshroom").setRegistryName("chaospersists", "oremooshroom");
-    MyOcelotSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreocelot").setRegistryName("chaospersists", "oreocelot");
-    MyBlazeSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreblaze").setRegistryName("chaospersists", "oreblaze");
-    MyWitherSkeletonSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orewitherskeleton").setRegistryName("chaospersists", "orewitherskeleton");
-    MyEnderDragonSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreenderdragon").setRegistryName("chaospersists", "oreenderdragon");
-    MySnowGolemSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oresnowgolem").setRegistryName("chaospersists", "oresnowgolem");
-    MyIronGolemSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreirongolem").setRegistryName("chaospersists", "oreirongolem");
-    MyWitherBossSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orewitherboss").setRegistryName("chaospersists", "orewitherboss");
-    MyGirlfriendSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oregirlfriend").setRegistryName("chaospersists", "oregirlfriend");
-    MyBoyfriendSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreboyfriend").setRegistryName("chaospersists", "oreboyfriend");
-    MyRedCowSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreredcow").setRegistryName("chaospersists", "oreredcow");
-    MyCrystalCowSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecrystalcow").setRegistryName("chaospersists", "orecrystalcow");
-    MyVillagerSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orevillager").setRegistryName("chaospersists", "orevillager");
-    MyGoldCowSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oregoldcow").setRegistryName("chaospersists", "oregoldcow");
-    MyEnchantedCowSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreenchantedcow").setRegistryName("chaospersists", "oreenchantedcow");
-    MyMOTHRASpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oremothra").setRegistryName("chaospersists", "oremothra");
-    MyAntBlock = new AntBlock(0).setTranslationKey("AntBlock").setRegistryName("chaospersists", "AntBlock");
-    MyRedAntBlock = new AntBlock(0).setTranslationKey("RedAntBlock").setRegistryName("chaospersists", "RedAntBlock");
-    TermiteBlock = new AntBlock(0).setTranslationKey("TermiteBlock").setRegistryName("chaospersists", "TermiteBlock");
-    CrystalTermiteBlock = new CrystalAntBlock(0).setTranslationKey("CrystalTermiteBlock").setRegistryName("chaospersists", "CrystalTermiteBlock");
-    MyRainbowAntBlock = new AntBlock(0).setTranslationKey("RainbowAntBlock").setRegistryName("chaospersists", "RainbowAntBlock");
-    MyUnstableAntBlock = new AntBlock(0).setTranslationKey("UnstableAntBlock").setRegistryName("chaospersists", "UnstableAntBlock");
-    MyAloSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orealosaurus").setRegistryName("chaospersists", "orealosaurus");
-    MyCryoSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecryolophosaurus").setRegistryName("chaospersists", "orecryolophosaurus");
-    MyCamaSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecamarasaurus").setRegistryName("chaospersists", "orecamarasaurus");
-    MyVeloSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orevelocityraptor").setRegistryName("chaospersists", "orevelocityraptor");
-    MyHydroSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orehydrolisc").setRegistryName("chaospersists", "orehydrolisc");
-    MyBasilSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orebasilisc").setRegistryName("chaospersists", "orebasilisc");
-    MyDragonflySpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oredragonfly").setRegistryName("chaospersists", "oredragonfly");
-    MyEmperorScorpionSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreemperorscorpion").setRegistryName("chaospersists", "oreemperorscorpion");
-    MyScorpionSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orescorpion").setRegistryName("chaospersists", "orescorpion");
-    MyCaveFisherSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecavefisher").setRegistryName("chaospersists", "orecavefisher");
-    MySpyroSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orespyro").setRegistryName("chaospersists", "orespyro");
-    MyBaryonyxSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orebaryonyx").setRegistryName("chaospersists", "orebaryonyx");
-    MyGammaMetroidSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oregammametroid").setRegistryName("chaospersists", "oregammametroid");
-    MyCockateilSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecockateil").setRegistryName("chaospersists", "orecockateil");
-    MyKyuubiSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orekyuubi").setRegistryName("chaospersists", "orekyuubi");
-    MyAlienSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orealien").setRegistryName("chaospersists", "orealien");
-    MyAttackSquidSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreattacksquid").setRegistryName("chaospersists", "oreattacksquid");
-    MyWaterDragonSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orewaterdragon").setRegistryName("chaospersists", "orewaterdragon");
-    MyCephadromeSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecephadrome").setRegistryName("chaospersists", "orecephadrome");
-    MyDragonSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oredragon").setRegistryName("chaospersists", "oredragon");
-    MyKrakenSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orekraken").setRegistryName("chaospersists", "orekraken");
-    MyLizardSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orelizard").setRegistryName("chaospersists", "orelizard");
-    MyBeeSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orebee").setRegistryName("chaospersists", "orebee");
-    MyHorseSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orehorse").setRegistryName("chaospersists", "orehorse");
-    MyTrooperBugSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oretrooper").setRegistryName("chaospersists", "oretrooper");
-    MySpitBugSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orespit").setRegistryName("chaospersists", "orespit");
-    MyStinkBugSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orestink").setRegistryName("chaospersists", "orestink");
-    MyOstrichSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreostrich").setRegistryName("chaospersists", "oreostrich");
-    MyGazelleSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oregazelle").setRegistryName("chaospersists", "oregazelle");
-    MyChipmunkSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orechipmunk").setRegistryName("chaospersists", "orechipmunk");
-    MyCreepingHorrorSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecreepinghorror").setRegistryName("chaospersists", "orecreepinghorror");
-    MyTerribleTerrorSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreterribleterror").setRegistryName("chaospersists", "oreterribleterror");
-    MyCliffRacerSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecliffracer").setRegistryName("chaospersists", "orecliffracer");
-    MyTriffidSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oretriffid").setRegistryName("chaospersists", "oretriffid");
-    MyPitchBlackSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orenightmare").setRegistryName("chaospersists", "orenightmare");
-    MyLurkingTerrorSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orelurkingterror").setRegistryName("chaospersists", "orelurkingterror");
-    MyGodzillaPartSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oregodzillapart").setRegistryName("chaospersists", "oregodzillapart");
-    MyGodzillaSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oregodzilla").setRegistryName("chaospersists", "oregodzilla");
-    MySmallWormSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oresmallworm").setRegistryName("chaospersists", "oresmallworm");
-    MyMediumWormSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oremediumworm").setRegistryName("chaospersists", "oremediumworm");
-    MyLargeWormSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orelargeworm").setRegistryName("chaospersists", "orelargeworm");
-    MyCassowarySpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecassowary").setRegistryName("chaospersists", "orecassowary");
-    MyCloudSharkSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecloudshark").setRegistryName("chaospersists", "orecloudshark");
-    MyGoldFishSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oregoldfish").setRegistryName("chaospersists", "oregoldfish");
-    MyLeafMonsterSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreleafmonster").setRegistryName("chaospersists", "oreleafmonster");
-    MyTshirtSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oretshirt").setRegistryName("chaospersists", "oretshirt");
-    MyEnderKnightSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreenderknight").setRegistryName("chaospersists", "oreenderknight");
-    MyEnderReaperSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreenderreaper").setRegistryName("chaospersists", "oreenderreaper");
-    MyBeaverSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orebeaver").setRegistryName("chaospersists", "orebeaver");
-    MyUrchinSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreurchin").setRegistryName("chaospersists", "oreurchin");
-    MyFlounderSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreflounder").setRegistryName("chaospersists", "oreflounder");
-    MySkateSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreskate").setRegistryName("chaospersists", "oreskate");
-    MyRotatorSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orerotator").setRegistryName("chaospersists", "orerotator");
-    MyPeacockSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orepeacock").setRegistryName("chaospersists", "orepeacock");
-    MyFairySpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orefairy").setRegistryName("chaospersists", "orefairy");
-    MyDungeonBeastSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oredungeonbeast").setRegistryName("chaospersists", "oredungeonbeast");
-    MyVortexSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orevortex").setRegistryName("chaospersists", "orevortex");
-    MyRatSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orerat").setRegistryName("chaospersists", "orerat");
-    MyWhaleSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orewhale").setRegistryName("chaospersists", "orewhale");
-    MyIrukandjiSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreirukandji").setRegistryName("chaospersists", "oreirukandji");
-    MyTRexSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oretrex").setRegistryName("chaospersists", "oretrex");
-    MyHerculesSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orehercules").setRegistryName("chaospersists", "orehercules");
-    MyMantisSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oremantis").setRegistryName("chaospersists", "oremantis");
-    MyStinkySpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orestinky").setRegistryName("chaospersists", "orestinky");
-    MyTheKingPartSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orethekingpart").setRegistryName("chaospersists", "orethekingpart");
-    MyTheKingSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oretheking").setRegistryName("chaospersists", "oretheking");
-    MyTheQueenPartSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orethequeenpart").setRegistryName("chaospersists", "orethequeenpart");
-    MyTheQueenSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orethequeen").setRegistryName("chaospersists", "orethequeen");
-    MyEasterBunnySpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreeasterbunny").setRegistryName("chaospersists", "oreeasterbunny");
-    MyCaterKillerSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecaterkiller").setRegistryName("chaospersists", "orecaterkiller");
-    MyMolenoidSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oremolenoid").setRegistryName("chaospersists", "oremolenoid");
-    MySeaMonsterSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreseamonster").setRegistryName("chaospersists", "oreseamonster");
-    MySeaViperSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreseaviper").setRegistryName("chaospersists", "oreseaviper");
-    MyLeonSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("oreleon").setRegistryName("chaospersists", "oreleon");
-    MyHammerheadSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orehammerhead").setRegistryName("chaospersists", "orehammerhead");
-    MyRubberDuckySpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orerubberducky").setRegistryName("chaospersists", "orerubberducky");
-    MyCriminalSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecriminal").setRegistryName("chaospersists", "orecriminal");
-    MyBrutalflySpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orebrutalfly").setRegistryName("chaospersists", "orebrutalfly");
-    MyNastysaurusSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orenastysaurus").setRegistryName("chaospersists", "orenastysaurus");
-    MyPointysaurusSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orepointysaurus").setRegistryName("chaospersists", "orepointysaurus");
-    MyCricketSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecricket").setRegistryName("chaospersists", "orecricket");
-    MyFrogSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orefrog").setRegistryName("chaospersists", "orefrog");
-    MySpiderDriverSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orespiderdriver").setRegistryName("chaospersists", "orespiderdriver");
-    MyCrabSpawnBlock = (OreGenericEgg)(OreGenericEgg)new OreGenericEgg().setTranslationKey("orecrab").setRegistryName("chaospersists", "orecrab");
-  }
-
-  private void getMobs(Configuration config, String mobs)
+  private static void getMobs(Configuration config, String mobs)
   {
     MosquitoEnable = config.get(mobs, "MosquitoEnable", 1).getInt();
     RockEnable = config.get(mobs, "RockEnable", 1).getInt();
@@ -6439,6 +8205,247 @@ public class ChaosPersists
     TheQueen_stats = get_mobstats(config, mobs, "TheQueen", 6000, 225, 21);
     Leon_stats = get_mobstats(config, mobs, "Leonopteryx", 150, 20, 8);
     Crab_stats = get_mobstats(config, mobs, "Crab", 180, 24, 16);
+  }
+
+  private void disableAllMobs()
+  {
+    MosquitoEnable = 0;
+    GhostEnable = 0;
+    GhostSkellyEnable = 0;
+    SpiderDriverEnable = 0;
+    CrabEnable = 0;
+    JefferyEnable = 0;
+    MothraEnable = 0;
+    BrutalflyEnable = 0;
+    NastysaurusEnable = 0;
+    PointysaurusEnable = 0;
+    MothraPeaceful = 0;
+    BlackAntEnable = 0;
+    RedAntEnable = 0;
+    TermiteEnable = 0;
+    UnstableAntEnable = 0;
+    RainbowAntEnable = 0;
+    AlosaurusEnable = 0;
+    HammerheadEnable = 0;
+    LeonEnable = 0;
+    CaterKillerEnable = 0;
+    MolenoidEnable = 0;
+    TRexEnable = 0;
+    CriminalEnable = 0;
+    CryolophosaurusEnable = 0;
+    RatEnable = 0;
+    UrchinEnable = 0;
+    CamarasaurusEnable = 0;
+    VelocityRaptorEnable = 0;
+    HydroliscEnable = 0;
+    SpyroEnable = 0;
+    BaryonyxEnable = 0;
+    CockateilEnable = 0;
+    CassowaryEnable = 0;
+    EasterBunnyEnable = 0;
+    PeacockEnable = 0;
+    KyuubiEnable = 0;
+    CephadromeEnable = 0;
+    DragonEnable = 0;
+    GammaMetroidEnable = 0;
+    BasiliskEnable = 0;
+    DragonflyEnable = 0;
+    EmperorScorpionEnable = 0;
+    TrooperBugEnable = 0;
+    SpitBugEnable = 0;
+    StinkBugEnable = 0;
+    ScorpionEnable = 0;
+    CaveFisherEnable = 0;
+    AlienEnable = 0;
+    WaterDragonEnable = 0;
+    SeaMonsterEnable = 0;
+    SeaViperEnable = 0;
+    AttackSquidEnable = 0;
+    Robot1Enable = 0;
+    Robot2Enable = 0;
+    Robot3Enable = 0;
+    Robot4Enable = 0;
+    Robot5Enable = 0;
+    RotatorEnable = 0;
+    VortexEnable = 0;
+    DungeonBeastEnable = 0;
+    KrakenEnable = 0;
+    LizardEnable = 0;
+    RubberDuckyEnable = 0;
+    GirlfriendEnable = 0;
+    BoyfriendEnable = 0;
+    FireflyEnable = 0;
+    FairyEnable = 0;
+    BeeEnable = 0;
+    TheKingEnable = 0;
+    TheQueenEnable = 0;
+    MantisEnable = 0;
+    StinkyEnable = 0;
+    HerculesBeetleEnable = 0;
+    ChipmunkEnable = 0;
+    OstrichEnable = 0;
+    GazelleEnable = 0;
+    CowEnable = 0;
+    ButterflyEnable = 0;
+    MothEnable = 0;
+    TshirtEnable = 0;
+    CoinEnable = 0;
+    CreepingHorrorEnable = 0;
+    TerribleTerrorEnable = 0;
+    CliffRacerEnable = 0;
+    TriffidEnable = 0;
+    WormEnable = 0;
+    CloudSharkEnable = 0;
+    GoldFishEnable = 0;
+    LeafMonsterEnable = 0;
+    EnderKnightEnable = 0;
+    EnderReaperEnable = 0;
+    BeaverEnable = 0;
+    IrukandjiEnable = 0;
+    SkateEnable = 0;
+    WhaleEnable = 0;
+    FlounderEnable = 0;
+    PitchBlackEnable = 0;
+    LurkingTerrorEnable = 0;
+    GodzillaEnable = 0;
+  }
+
+  private OreGenericEgg oreEggBlock(String path) {
+    return (OreGenericEgg)
+        BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, path));
+  }
+
+  private Block antBlock(String path) {
+    return BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, path));
+  }
+
+  private void laySomeEggs()
+  {
+    MySpiderSpawnBlock = oreEggBlock("orespider");
+    MyBatSpawnBlock = oreEggBlock("orebat");
+    MyCowSpawnBlock = oreEggBlock("orecow");
+    MyPigSpawnBlock = oreEggBlock("orepig");
+    MySquidSpawnBlock = oreEggBlock("oresquid");
+    MyChickenSpawnBlock = oreEggBlock("orechicken");
+    MyCreeperSpawnBlock = oreEggBlock("orecreeper");
+    MySkeletonSpawnBlock = oreEggBlock("oreskeleton");
+    MyZombieSpawnBlock = oreEggBlock("orezombie");
+    MySlimeSpawnBlock = oreEggBlock("oreslime");
+    MyGhastSpawnBlock = oreEggBlock("oreghast");
+    MyZombiePigmanSpawnBlock = oreEggBlock("orezombiepigman");
+    MyEndermanSpawnBlock = oreEggBlock("oreenderman");
+    MyCaveSpiderSpawnBlock = oreEggBlock("orecavespider");
+    MySilverfishSpawnBlock = oreEggBlock("oresilverfish");
+    MyMagmaCubeSpawnBlock = oreEggBlock("oremagmacube");
+    MyWitchSpawnBlock = oreEggBlock("orewitch");
+    MySheepSpawnBlock = oreEggBlock("oresheep");
+    MyWolfSpawnBlock = oreEggBlock("orewolf");
+    MyMooshroomSpawnBlock = oreEggBlock("oremooshroom");
+    MyOcelotSpawnBlock = oreEggBlock("oreocelot");
+    MyBlazeSpawnBlock = oreEggBlock("oreblaze");
+    MyWitherSkeletonSpawnBlock = oreEggBlock("orewitherskeleton");
+    MyEnderDragonSpawnBlock = oreEggBlock("oreenderdragon");
+    MySnowGolemSpawnBlock = oreEggBlock("oresnowgolem");
+    MyIronGolemSpawnBlock = oreEggBlock("oreirongolem");
+    MyWitherBossSpawnBlock = oreEggBlock("orewitherboss");
+    MyGirlfriendSpawnBlock = oreEggBlock("oregirlfriend");
+    MyBoyfriendSpawnBlock = oreEggBlock("oreboyfriend");
+    MyRedCowSpawnBlock = oreEggBlock("oreredcow");
+    MyCrystalCowSpawnBlock = oreEggBlock("orecrystalcow");
+    MyVillagerSpawnBlock = oreEggBlock("orevillager");
+    MyGoldCowSpawnBlock = oreEggBlock("oregoldcow");
+    MyEnchantedCowSpawnBlock = oreEggBlock("oreenchantedcow");
+    MyMOTHRASpawnBlock = oreEggBlock("oremothra");
+    MyAntBlock = antBlock("antblock");
+    MyRedAntBlock = antBlock("redantblock");
+    TermiteBlock = antBlock("termiteblock");
+    CrystalTermiteBlock = antBlock("crystaltermiteblock");
+    MyRainbowAntBlock = antBlock("rainbowantblock");
+    MyUnstableAntBlock = antBlock("unstableantblock");
+    MyAloSpawnBlock = oreEggBlock("orealosaurus");
+    MyCryoSpawnBlock = oreEggBlock("orecryolophosaurus");
+    MyCamaSpawnBlock = oreEggBlock("orecamarasaurus");
+    MyVeloSpawnBlock = oreEggBlock("orevelocityraptor");
+    MyHydroSpawnBlock = oreEggBlock("orehydrolisc");
+    MyBasilSpawnBlock = oreEggBlock("orebasilisc");
+    MyDragonflySpawnBlock = oreEggBlock("oredragonfly");
+    MyEmperorScorpionSpawnBlock = oreEggBlock("oreemperorscorpion");
+    MyScorpionSpawnBlock = oreEggBlock("orescorpion");
+    MyCaveFisherSpawnBlock = oreEggBlock("orecavefisher");
+    MySpyroSpawnBlock = oreEggBlock("orespyro");
+    MyBaryonyxSpawnBlock = oreEggBlock("orebaryonyx");
+    MyGammaMetroidSpawnBlock = oreEggBlock("oregammametroid");
+    MyCockateilSpawnBlock = oreEggBlock("orecockateil");
+    MyKyuubiSpawnBlock = oreEggBlock("orekyuubi");
+    MyAlienSpawnBlock = oreEggBlock("orealien");
+    MyAttackSquidSpawnBlock = oreEggBlock("oreattacksquid");
+    MyWaterDragonSpawnBlock = oreEggBlock("orewaterdragon");
+    MyCephadromeSpawnBlock = oreEggBlock("orecephadrome");
+    MyDragonSpawnBlock = oreEggBlock("oredragon");
+    MyKrakenSpawnBlock = oreEggBlock("orekraken");
+    MyLizardSpawnBlock = oreEggBlock("orelizard");
+    MyBeeSpawnBlock = oreEggBlock("orebee");
+    MyHorseSpawnBlock = oreEggBlock("orehorse");
+    MyTrooperBugSpawnBlock = oreEggBlock("oretrooper");
+    MySpitBugSpawnBlock = oreEggBlock("orespit");
+    MyStinkBugSpawnBlock = oreEggBlock("orestink");
+    MyOstrichSpawnBlock = oreEggBlock("oreostrich");
+    MyGazelleSpawnBlock = oreEggBlock("oregazelle");
+    MyChipmunkSpawnBlock = oreEggBlock("orechipmunk");
+    MyCreepingHorrorSpawnBlock = oreEggBlock("orecreepinghorror");
+    MyTerribleTerrorSpawnBlock = oreEggBlock("oreterribleterror");
+    MyCliffRacerSpawnBlock = oreEggBlock("orecliffracer");
+    MyTriffidSpawnBlock = oreEggBlock("oretriffid");
+    MyPitchBlackSpawnBlock = oreEggBlock("orenightmare");
+    MyLurkingTerrorSpawnBlock = oreEggBlock("orelurkingterror");
+    MyGodzillaPartSpawnBlock = oreEggBlock("oregodzillapart");
+    MyGodzillaSpawnBlock = oreEggBlock("oregodzilla");
+    MySmallWormSpawnBlock = oreEggBlock("oresmallworm");
+    MyMediumWormSpawnBlock = oreEggBlock("oremediumworm");
+    MyLargeWormSpawnBlock = oreEggBlock("orelargeworm");
+    MyCassowarySpawnBlock = oreEggBlock("orecassowary");
+    MyCloudSharkSpawnBlock = oreEggBlock("orecloudshark");
+    MyGoldFishSpawnBlock = oreEggBlock("oregoldfish");
+    MyLeafMonsterSpawnBlock = oreEggBlock("oreleafmonster");
+    MyTshirtSpawnBlock = oreEggBlock("oretshirt");
+    MyEnderKnightSpawnBlock = oreEggBlock("oreenderknight");
+    MyEnderReaperSpawnBlock = oreEggBlock("oreenderreaper");
+    MyBeaverSpawnBlock = oreEggBlock("orebeaver");
+    MyUrchinSpawnBlock = oreEggBlock("oreurchin");
+    MyFlounderSpawnBlock = oreEggBlock("oreflounder");
+    MySkateSpawnBlock = oreEggBlock("oreskate");
+    MyRotatorSpawnBlock = oreEggBlock("orerotator");
+    MyPeacockSpawnBlock = oreEggBlock("orepeacock");
+    MyFairySpawnBlock = oreEggBlock("orefairy");
+    MyDungeonBeastSpawnBlock = oreEggBlock("oredungeonbeast");
+    MyVortexSpawnBlock = oreEggBlock("orevortex");
+    MyRatSpawnBlock = oreEggBlock("orerat");
+    MyWhaleSpawnBlock = oreEggBlock("orewhale");
+    MyIrukandjiSpawnBlock = oreEggBlock("oreirukandji");
+    MyTRexSpawnBlock = oreEggBlock("oretrex");
+    MyHerculesSpawnBlock = oreEggBlock("orehercules");
+    MyMantisSpawnBlock = oreEggBlock("oremantis");
+    MyStinkySpawnBlock = oreEggBlock("orestinky");
+    MyTheKingPartSpawnBlock = oreEggBlock("orethekingpart");
+    MyTheKingSpawnBlock = oreEggBlock("oretheking");
+    MyTheQueenPartSpawnBlock = oreEggBlock("orethequeenpart");
+    MyTheQueenSpawnBlock = oreEggBlock("orethequeen");
+    MyEasterBunnySpawnBlock = oreEggBlock("oreeasterbunny");
+    MyCaterKillerSpawnBlock = oreEggBlock("orecaterkiller");
+    MyMolenoidSpawnBlock = oreEggBlock("oremolenoid");
+    MySeaMonsterSpawnBlock = oreEggBlock("oreseamonster");
+    MySeaViperSpawnBlock = oreEggBlock("oreseaviper");
+    MyLeonSpawnBlock = oreEggBlock("oreleon");
+    MyHammerheadSpawnBlock = oreEggBlock("orehammerhead");
+    MyRubberDuckySpawnBlock = oreEggBlock("orerubberducky");
+    MyCriminalSpawnBlock = oreEggBlock("orecriminal");
+    MyBrutalflySpawnBlock = oreEggBlock("orebrutalfly");
+    MyNastysaurusSpawnBlock = oreEggBlock("orenastysaurus");
+    MyPointysaurusSpawnBlock = oreEggBlock("orepointysaurus");
+    MyCricketSpawnBlock = oreEggBlock("orecricket");
+    MyFrogSpawnBlock = oreEggBlock("orefrog");
+    MySpiderDriverSpawnBlock = oreEggBlock("orespiderdriver");
+    MyCrabSpawnBlock = oreEggBlock("orecrab");
   }
 
   public String getVersion()

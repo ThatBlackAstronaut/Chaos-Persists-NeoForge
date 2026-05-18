@@ -1,65 +1,54 @@
-/*
- * Decompiled with CFR 0_125.
- * 
- * Could not load the following classes:
- *  com.astryxion.chaospersists.RedCow
- *  net.minecraft.entity.EntityAgeable
- *  net.minecraft.entity.EntityLivingBase
- *  net.minecraft.entity.item.EntityItem
- *  net.minecraft.entity.passive.EntityCow
- *  net.minecraft.init.Items
- *  net.minecraft.item.Item
- *  net.minecraft.world.World
- */
 package com.astryxion.chaospersists.entity;
 
-import java.util.Random;
-import net.minecraft.entity.EntityAgeable;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.passive.EntityCow;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import com.astryxion.chaospersists.core.ChaosPersists;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 
-public class RedCow
-extends EntityCow {
-    public RedCow(World world) {
-        super(world);
+public class RedCow extends Cow {
+    public RedCow(EntityType<? extends Cow> type, Level level) {
+        super(type, level);
     }
 
-    /** Return null so dropFewItems is used instead of the vanilla cow loot table (leather/beef only). */
+    public static net.minecraft.world.entity.ai.attributes.AttributeSupplier.Builder createAttributes() {
+        return Cow.createAttributes();
+    }
+
     @Override
-    protected ResourceLocation getLootTable() {
-        return null;
+    public Cow getBreedOffspring(ServerLevel level, AgeableMob partner) {
+        return new RedCow(ChaosPersists.ENTITY_TYPE_RED_COW.get(), level);
     }
 
-    protected void dropFewItems(boolean par1, int par2) {
-        int appleCount = 1 + this.rand.nextInt(2 + par2);
-        for (int i = 0; i < appleCount; i++) {
-            this.dropItem(Items.APPLE, 1);
+    @Override
+    protected void dropFromLootTable(DamageSource damageSource, boolean attackedRecently) {
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        int appleCount = 1 + this.getRandom().nextInt(2 + looting);
+        for (int i = 0; i < appleCount; ++i) {
+            this.spawnAtLocation(new ItemStack(Items.APPLE));
         }
-        this.dropItem(Items.LEATHER, 1 + this.rand.nextInt(1 + par2));
-        this.dropItem(Items.BEEF, 1 + this.rand.nextInt(2 + par2));
+        this.spawnAtLocation(new ItemStack(Items.LEATHER, 1 + this.getRandom().nextInt(1 + looting)));
+        this.spawnAtLocation(new ItemStack(Items.BEEF, 1 + this.getRandom().nextInt(2 + looting)));
     }
 
-    public EntityCow createChild(EntityAgeable entityageable) {
-        return this.spawnBabyAnimal(entityageable);
-    }
-
-    public RedCow spawnBabyAnimal(EntityAgeable par1EntityAgeable) {
-        return new RedCow(this.world);
-    }
-
-    protected void updateAITick() {
-        if (this.world.rand.nextInt(200) == 1) {
-            this.setRevengeTarget(null);
+    @Override
+    protected void customServerAiStep() {
+        if (this.getRandom().nextInt(200) == 1) {
+            this.setLastHurtByMob(null);
+            this.setTarget(null);
         }
-        super.updateAITasks();
+        super.customServerAiStep();
     }
 
-    protected boolean canDespawn() {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return false;
     }
 }

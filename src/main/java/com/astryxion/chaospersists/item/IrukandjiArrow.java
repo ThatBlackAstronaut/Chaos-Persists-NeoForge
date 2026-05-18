@@ -1,202 +1,161 @@
 package com.astryxion.chaospersists.item;
 
-import com.astryxion.chaospersists.entity.Boyfriend;
-import com.astryxion.chaospersists.entity.Cephadrome;
-import com.astryxion.chaospersists.entity.Dragon;
-import com.astryxion.chaospersists.entity.Girlfriend;
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.entity.Boyfriend;
+import com.astryxion.chaospersists.entity.Girlfriend;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.passive.EntityTameable;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.entity.projectile.EntityArrow;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.datasync.EntityDataManager;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.datasync.DataSerializers;
-import net.minecraft.network.play.server.SPacketChangeGameState;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.world.World;
-
-public class IrukandjiArrow extends EntityArrow {
-
-    private static final DataParameter<Integer> CRIT =
-            EntityDataManager.createKey(IrukandjiArrow.class, DataSerializers.VARINT);
+public class IrukandjiArrow extends AbstractArrow {
 
     private int knockbackStrength;
-    private int customTicksInGround = 0; // 🔥 replacement for private ticksInGround
+    private int customTicksInGround = 0;
 
-    // Basic constructors
-    public IrukandjiArrow(World world) {
-        super(world);
+    public IrukandjiArrow(EntityType<? extends IrukandjiArrow> type, Level level) {
+        super(type, level);
+        this.setBaseDamage(100.0D);
     }
 
-    public IrukandjiArrow(World world, double x, double y, double z) {
-        super(world, x, y, z);
+    public IrukandjiArrow(EntityType<? extends IrukandjiArrow> type, Level level, double x, double y, double z) {
+        super(type, level);
+        this.setPos(x, y, z);
     }
 
-    // 🔥 Player constructor (proper velocity)
-    public IrukandjiArrow(World world, EntityPlayer player, float velocity) {
-        super(world, player);
-
-        this.shoot(
-                player,
-                player.rotationPitch,
-                player.rotationYaw,
-                0.0F,
-                velocity,
-                1.0F
-        );
+    public IrukandjiArrow(Level level, double x, double y, double z) {
+        this(ChaosPersists.ENTITY_TYPE_IRUKANDJI_ARROW.get(), level, x, y, z);
     }
 
-    // 🔥 Mob constructor (restored compatibility)
-    public IrukandjiArrow(World world,
-                          EntityLiving shooter,
-                          EntityLivingBase target,
-                          float velocity,
-                          float inaccuracy) {
-        super(world, shooter);
+    public IrukandjiArrow(Level level, LivingEntity shooter, float velocity) {
+        super(ChaosPersists.ENTITY_TYPE_IRUKANDJI_ARROW.get(), shooter, level);
+        this.shootFromRotation(shooter, shooter.getXRot(), shooter.getYRot(), 0.0F, velocity, 1.0F);
+    }
 
-        this.shoot(
-                shooter,
-                shooter.rotationPitch,
-                shooter.rotationYaw,
-                0.0F,
-                velocity,
-                inaccuracy
-        );
+    public IrukandjiArrow(
+            Level level, LivingEntity shooter, LivingEntity target, float velocity, float inaccuracy) {
+        super(ChaosPersists.ENTITY_TYPE_IRUKANDJI_ARROW.get(), shooter, level);
+        this.shootFromRotation(shooter, shooter.getXRot(), shooter.getYRot(), 0.0F, velocity, inaccuracy);
     }
 
     @Override
-    protected void entityInit() {
-        super.entityInit(); // REQUIRED
-        this.getDataManager().register(CRIT, 0);
+    protected ItemStack getPickupItem() {
+        return new ItemStack((Item) (Object) ChaosPersists.MyIrukandjiArrow);
     }
 
     @Override
-    protected ItemStack getArrowStack() {
-        return new ItemStack(ChaosPersists.MyIrukandjiArrow);
-    }
+    public void tick() {
+        super.tick();
 
-    @Override
-    public void onUpdate() {
-        super.onUpdate();
-
-        // Reset custom counter if not in ground
         if (!this.inGround) {
             customTicksInGround = 0;
         }
 
-        // Drop arrow after 50 ticks stuck in ground
-        if (this.inGround && !this.world.isRemote) {
+        if (this.inGround && !this.level().isClientSide) {
             customTicksInGround++;
             if (customTicksInGround >= 50) {
-                this.entityDropItem(new ItemStack(ChaosPersists.MyIrukandjiArrow), 0.0F);
-                this.setDead();
+                this.spawnAtLocation(getPickupItem());
+                this.discard();
             }
         }
 
-        // Critical particles
-        if (!this.inGround && this.getIsCritical()) {
+        if (!this.inGround && this.isCritArrow()) {
             for (int i = 0; i < 4; ++i) {
-                this.world.spawnParticle(
-                        EnumParticleTypes.CRIT,
-                        this.posX + this.motionX * i / 4.0,
-                        this.posY + this.motionY * i / 4.0,
-                        this.posZ + this.motionZ * i / 4.0,
-                        -this.motionX,
-                        -this.motionY + 0.2,
-                        -this.motionZ
-                );
+                this.level()
+                        .addParticle(
+                                ParticleTypes.CRIT,
+                                this.getX() + this.getDeltaMovement().x * i / 4.0,
+                                this.getY() + this.getDeltaMovement().y * i / 4.0,
+                                this.getZ() + this.getDeltaMovement().z * i / 4.0,
+                                -this.getDeltaMovement().x,
+                                -this.getDeltaMovement().y + 0.2,
+                                -this.getDeltaMovement().z);
             }
         }
     }
 
     @Override
-    protected void onHit(RayTraceResult result) {
-        if (result.entityHit == null) {
+    protected void onHit(HitResult result) {
+        if (result.getType() != HitResult.Type.ENTITY) {
             super.onHit(result);
             return;
         }
+        this.onHitEntity((EntityHitResult) result);
+    }
 
-        EntityLivingBase target = (EntityLivingBase) result.entityHit;
+    @Override
+    protected void onHitEntity(EntityHitResult result) {
+        if (!(result.getEntity() instanceof LivingEntity target)) {
+            super.onHitEntity(result);
+            return;
+        }
 
-        float damage = 100.0F; // Chaos-tier damage
+        float damage = 100.0F;
 
-        // PvP protection logic
         if (ChaosPersists.ultimate_sword_pvp == 0) {
-
-            if (target instanceof EntityPlayer
-                    || target instanceof Girlfriend
-                    || target instanceof Boyfriend) {
-                this.playSound(SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.0F);
-                this.setDead();
+            if (target instanceof Player
+                    || Girlfriend.class.isInstance(target)
+                    || Boyfriend.class.isInstance(target)) {
+                this.playSound(SoundEvents.ARROW_HIT, 1.0F, 1.0F);
+                this.discard();
                 return;
             }
 
-            if (target instanceof EntityTameable) {
-                EntityTameable tame = (EntityTameable) target;
-                if (tame.isTamed()) {
-                    this.playSound(SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.0F);
-                    this.setDead();
-                    return;
-                }
+            if (target instanceof net.minecraft.world.entity.TamableAnimal tame && tame.isTame()) {
+                this.playSound(SoundEvents.ARROW_HIT, 1.0F, 1.0F);
+                this.discard();
+                return;
             }
         }
 
-        if (this.getIsCritical()) {
+        if (this.isCritArrow()) {
             damage *= 1.5F;
         }
 
-        DamageSource source = this.shootingEntity == null
-                ? DamageSource.causeArrowDamage(this, this)
-                : DamageSource.causeArrowDamage(this, this.shootingEntity);
+        DamageSource source =
+                this.getOwner() == null
+                        ? this.damageSources().arrow(this, this)
+                        : this.damageSources().arrow(this, this.getOwner());
 
-        if (this.isBurning()) {
-            target.setFire(5);
+        if (this.isOnFire()) {
+            target.setSecondsOnFire(5);
         }
 
-        if (target.attackEntityFrom(source, damage)) {
-
+        if (target.hurt(source, damage)) {
             if (this.knockbackStrength > 0) {
-                float f = MathHelper.sqrt(
-                        this.motionX * this.motionX +
-                        this.motionZ * this.motionZ
-                );
-
+                double mx = this.getDeltaMovement().x;
+                double mz = this.getDeltaMovement().z;
+                float f = Mth.sqrt((float) (mx * mx + mz * mz));
                 if (f > 0.0F) {
-                    target.addVelocity(
-                            this.motionX * this.knockbackStrength * 0.6D / f,
+                    target.push(
+                            mx * this.knockbackStrength * 0.6D / f,
                             0.1D,
-                            this.motionZ * this.knockbackStrength * 0.6D / f
-                    );
+                            mz * this.knockbackStrength * 0.6D / f);
                 }
             }
 
-            if (this.shootingEntity instanceof EntityPlayerMP
-                    && target instanceof EntityPlayer) {
-                ((EntityPlayerMP) this.shootingEntity)
-                        .connection
-                        .sendPacket(new SPacketChangeGameState(6, 0.0F));
+            if (this.getOwner() instanceof ServerPlayer serverPlayer && target instanceof Player) {
+                serverPlayer.connection.send(
+                        new ClientboundGameEventPacket(ClientboundGameEventPacket.ARROW_HIT_PLAYER, 0.0F));
             }
 
-            this.playSound(SoundEvents.ENTITY_ARROW_HIT, 1.0F, 1.0F);
-            this.setDead();
+            this.playSound(SoundEvents.ARROW_HIT, 1.0F, 1.0F);
+            this.discard();
         }
     }
 
     public void setKnockbackStrength(int strength) {
         this.knockbackStrength = strength;
-    }
-
-    @Override
-    public double getDamage() {
-        return 100.0;
     }
 }
