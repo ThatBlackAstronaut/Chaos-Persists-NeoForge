@@ -16,7 +16,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.WallTorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -24,7 +23,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Vector3f;
 
-public class KrakenRepellent extends WallTorchBlock {
+public class KrakenRepellent extends ChaosDirectionalTorchBlock {
     private static final int TICK_RATE = 10;
     private static final DustParticleOptions RED_DUST =
             new DustParticleOptions(new Vector3f(1.0f, 0.0f, 0.0f), 1.0f);

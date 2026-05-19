@@ -11,8 +11,6 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class ItemRandomDungeon extends Item {
@@ -23,8 +21,8 @@ public class ItemRandomDungeon extends Item {
         super(new Properties().stacksTo(1));
     }
 
-    private static Block modBlock(Object block) {
-        return (Block) block;
+    private static net.minecraft.world.level.block.Block modBlock(Object block) {
+        return (net.minecraft.world.level.block.Block) block;
     }
 
     @Override
@@ -48,21 +46,17 @@ public class ItemRandomDungeon extends Item {
             return InteractionResult.FAIL;
         }
         ItemStack stack = context.getItemInHand();
-        BlockPos pos = context.getClickedPos();
-        Block clicked = world.getBlockState(pos).getBlock();
-        if (clicked != Blocks.STONE && clicked != Blocks.COBBLESTONE && clicked != Blocks.GRASS_BLOCK && clicked != Blocks.DIRT) {
-            return InteractionResult.FAIL;
-        }
-        if (pos.getY() < 40) {
+        BlockPos placePos = context.getClickedPos().above();
+        BlockState spawner = modBlock(ChaosPersists.MyDungeonSpawnerBlock).defaultBlockState();
+        if (!world.isEmptyBlock(placePos) || !spawner.canSurvive(world, placePos)) {
             return InteractionResult.FAIL;
         }
         if (!world.isClientSide()) {
-            BlockState spawner = modBlock(ChaosPersists.MyDungeonSpawnerBlock).defaultBlockState();
-            world.setBlock(pos.above(), spawner, 2);
+            world.setBlock(placePos, spawner, 2);
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+            }
         }
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-        }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.sidedSuccess(world.isClientSide);
     }
 }

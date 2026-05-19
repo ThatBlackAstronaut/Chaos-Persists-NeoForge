@@ -1,6 +1,5 @@
 {
   "variants": {
-    "" : { "model": "chaospersists:block/redantblock" },
     "snowy=false": { "model": "chaospersists:block/redantblock" },
     "snowy=true": { "model": "chaospersists:block/redantblock" }
   }

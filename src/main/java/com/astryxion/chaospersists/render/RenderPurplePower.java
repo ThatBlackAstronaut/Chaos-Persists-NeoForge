@@ -36,6 +36,11 @@ public class RenderPurplePower extends LivingEntityRenderer<PurplePower, ModelPu
     }
 
     @Override
+    protected boolean shouldShowName(PurplePower entity) {
+        return false;
+    }
+
+    @Override
     public ResourceLocation getTextureLocation(PurplePower entity) {
         return switch (entity.getPurpleType()) {
             case 1 -> TEXTURE2;

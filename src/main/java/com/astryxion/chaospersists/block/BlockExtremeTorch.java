@@ -20,11 +20,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.WallTorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 
-public class BlockExtremeTorch extends WallTorchBlock {
+public class BlockExtremeTorch extends ChaosDirectionalTorchBlock {
 
     private static final DustParticleOptions RED_DUST =
             new DustParticleOptions(new Vector3f(1.0f, 0.0f, 0.0f), 1.0f);
@@ -43,11 +42,19 @@ public class BlockExtremeTorch extends WallTorchBlock {
     @Override
     public void animateTick(BlockState stateIn, Level worldIn, BlockPos pos, net.minecraft.util.RandomSource rand) {
         Direction facing = stateIn.getValue(FACING);
-        Direction attach = facing.getOpposite();
-        double d0 = (double) pos.getX() + 0.5D + (double) attach.getStepX() * 0.3D;
-        double d1 = (double) pos.getY() + 0.22D;
-        double d2 = (double) pos.getZ() + 0.5D + (double) attach.getStepZ() * 0.3D;
-
+        double d0 = pos.getX() + 0.5D;
+        double d1 = pos.getY() + 0.7D;
+        double d2 = pos.getZ() + 0.5D;
+        if (facing.getAxis().isHorizontal()) {
+            Direction attach = facing.getOpposite();
+            d0 += attach.getStepX() * 0.3D;
+            d1 += 0.22D;
+            d2 += attach.getStepZ() * 0.3D;
+        } else if (facing == Direction.UP) {
+            d1 -= 0.1D;
+        } else {
+            d1 += 0.15D;
+        }
         worldIn.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0D, 0.0D, 0.0D);
         worldIn.addParticle(ParticleTypes.FLAME, d0, d1, d2, 0.0D, 0.0D, 0.0D);
         worldIn.addParticle(RED_DUST, d0, d1, d2, 0.0D, 0.0D, 0.0D);

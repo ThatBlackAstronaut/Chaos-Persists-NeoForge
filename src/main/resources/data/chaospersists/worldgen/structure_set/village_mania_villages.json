@@ -1,7 +1,7 @@
 {
   "structures": [
     {
-      "structure": "minecraft:village_plains",
+      "structure": "chaospersists:village_mania_village",
       "weight": 1
     }
   ],

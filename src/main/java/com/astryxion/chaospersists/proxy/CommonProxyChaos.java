@@ -21,6 +21,9 @@ public class CommonProxyChaos {
     public void registerBlockModels() {
     }
 
+    public void registerBlockRenderLayers() {
+    }
+
     public void registerBlockColors() {
     }
 

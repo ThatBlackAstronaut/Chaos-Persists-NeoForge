@@ -13,6 +13,7 @@ import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
 
 public class ModelFirefly extends EntityModel<Firefly> {
+    private Firefly animEntity;
     private final float wingspeed;
     private final ModelPart body;
     private final ModelPart wingLeft;
@@ -103,6 +104,7 @@ public class ModelFirefly extends EntityModel<Firefly> {
 
     @Override
     public void setupAnim(Firefly entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.animEntity = entity;
         this.wingLeft.zRot = 1.11f + Mth.cos(ageInTicks * this.wingspeed) * (float) Math.PI * 0.35f;
         this.wingRight.zRot = -1.11f - Mth.cos(ageInTicks * this.wingspeed) * (float) Math.PI * 0.35f;
     }
@@ -128,19 +130,8 @@ public class ModelFirefly extends EntityModel<Firefly> {
         this.frontLegRight.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.backLegLeft.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.backLegRight.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-    }
-
-    public void renderTailLight(
-            PoseStack poseStack,
-            VertexConsumer buffer,
-            Firefly entity,
-            int packedLight,
-            int packedOverlay,
-            float red,
-            float green,
-            float blue,
-            float alpha) {
-        int tailLight = entity.getBlink() > 0.0f ? 15728880 : packedLight;
+        int tailLight =
+                this.animEntity != null && this.animEntity.getBlink() > 0.0f ? 15728880 : packedLight;
         this.tailLight.render(poseStack, buffer, tailLight, packedOverlay, red, green, blue, alpha);
     }
 }

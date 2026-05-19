@@ -1,21 +1,20 @@
 package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.Boyfriend;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.ModelLayers;
+import com.astryxion.chaospersists.model.LegacySkinModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
 import net.minecraft.resources.ResourceLocation;
 
-public class RenderBoyfriend extends HumanoidMobRenderer<Boyfriend, HumanoidModel<Boyfriend>> {
+public class RenderBoyfriend extends HumanoidMobRenderer<Boyfriend, LegacySkinModel<Boyfriend>> {
     public RenderBoyfriend(EntityRendererProvider.Context context) {
-        super(context, new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER)), 0.5f);
+        super(context, new LegacySkinModel<>(LegacySkinModel.createBodyLayer().bakeRoot()), 0.55f);
         this.addLayer(
                 new HumanoidArmorLayer<>(
                         this,
-                        new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
-                        new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR)),
+                        new LegacySkinModel<>(LegacySkinModel.createBodyLayer().bakeRoot()),
+                        new LegacySkinModel<>(LegacySkinModel.createBodyLayer().bakeRoot()),
                         context.getModelManager()));
     }
 

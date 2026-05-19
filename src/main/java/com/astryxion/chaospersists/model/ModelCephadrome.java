@@ -15,7 +15,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import com.mojang.math.Axis;
 
 public class ModelCephadrome extends EntityModel<Cephadrome> {
     private final float wingspeed;
@@ -357,8 +356,6 @@ public class ModelCephadrome extends EntityModel<Cephadrome> {
 
     @Override
     public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0f));
         this.leftfoot.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.butt.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.rightfoot.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
@@ -409,6 +406,5 @@ public class ModelCephadrome extends EntityModel<Cephadrome> {
         this.rightwingfin4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.rightwingmembrane.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.hammerhead2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        poseStack.popPose();
     }
 }

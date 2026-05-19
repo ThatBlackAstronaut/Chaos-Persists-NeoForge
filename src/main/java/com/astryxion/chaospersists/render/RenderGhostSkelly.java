@@ -2,9 +2,6 @@ package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.GhostSkelly;
 import com.astryxion.chaospersists.model.ModelGhostSkelly;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
@@ -21,7 +18,7 @@ public class RenderGhostSkelly extends MobRenderer<GhostSkelly, ModelGhostSkelly
     }
 
     @Override
-    protected void scale(GhostSkelly entity, PoseStack poseStack, float partialTick) {
+    protected void scale(GhostSkelly entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
         poseStack.scale(this.scale, this.scale, this.scale);
     }
 
@@ -31,15 +28,15 @@ public class RenderGhostSkelly extends MobRenderer<GhostSkelly, ModelGhostSkelly
     }
 
     @Override
-    public void render(
-            GhostSkelly entity,
-            float entityYaw,
-            float partialTicks,
-            PoseStack poseStack,
-            MultiBufferSource buffer,
-            int packedLight) {
-        VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.entityTranslucent(this.getTextureLocation(entity)));
-        this.model.renderToBuffer(
-                poseStack, vertexconsumer, packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, 0.75F, 0.75F, 0.75F, 0.25F);
+    protected RenderType getRenderType(GhostSkelly entity, boolean bodyVisible, boolean translucent, boolean glowing) {
+        if (glowing) {
+            return RenderType.outline(this.getTextureLocation(entity));
+        }
+        return RenderType.entityTranslucent(this.getTextureLocation(entity));
+    }
+
+    @Override
+    protected float getWhiteOverlayProgress(GhostSkelly entity, float partialTicks) {
+        return 0.0F;
     }
 }

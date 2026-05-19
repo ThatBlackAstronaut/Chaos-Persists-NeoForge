@@ -19,6 +19,7 @@
       { "type": "chaospersists:jeffery", "weight": 8, "minCount": 1, "maxCount": 2 },
       { "type": "chaospersists:spider_driver", "weight": 20, "minCount": 3, "maxCount": 5 },
       { "type": "chaospersists:mobzilla", "weight": 2, "minCount": 1, "maxCount": 1 },
+      { "type": "chaospersists:tshirt", "weight": 2, "minCount": 1, "maxCount": 1 },
       { "type": "chaospersists:criminal", "weight": 15, "minCount": 1, "maxCount": 2 }
     ],
     "creature": [
@@ -48,8 +49,7 @@
       { "type": "chaospersists:gold_fish", "weight": 1, "minCount": 1, "maxCount": 1 },
       { "type": "chaospersists:coin", "weight": 2, "minCount": 1, "maxCount": 1 },
       { "type": "chaospersists:coin", "weight": 2, "minCount": 1, "maxCount": 1 },
-      { "type": "chaospersists:cricket", "weight": 5, "minCount": 4, "maxCount": 6 },
-      { "type": "chaospersists:tshirt", "weight": 2, "minCount": 1, "maxCount": 1 }
+      { "type": "chaospersists:cricket", "weight": 5, "minCount": 4, "maxCount": 6 }
     ],
     "water_creature": [
       { "type": "chaospersists:whale", "weight": 1, "minCount": 1, "maxCount": 1 },
@@ -57,17 +57,7 @@
       { "type": "chaospersists:frog", "weight": 5, "minCount": 4, "maxCount": 6 }
     ]
   },
-  "spawn_costs": {
-    "chaospersists:bird": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:butterfly": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:firefly": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:moth": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:chipmunk": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:cricket": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:coin": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:gold_fish": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:tshirt": { "energy_budget": 0.1, "charge": 0.5 }
-  },
+  "spawn_costs": {},
   "carvers": {
     "air": [
       "minecraft:cave",

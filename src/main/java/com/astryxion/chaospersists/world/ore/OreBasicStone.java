@@ -20,12 +20,28 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 public class OreBasicStone extends Block {
 
+    private final boolean crystalBlock;
+
     public OreBasicStone(float hardness, float resistance) {
-        super(Block.Properties.of()
-                .mapColor(MapColor.STONE)
-                .strength(hardness, resistance)
-                .sound(SoundType.STONE)
-                .requiresCorrectToolForDrops());
+        this(hardness, resistance, false);
+    }
+
+    public OreBasicStone(float hardness, float resistance, boolean crystalBlock) {
+        super(buildProperties(hardness, resistance, crystalBlock));
+        this.crystalBlock = crystalBlock;
+    }
+
+    private static Block.Properties buildProperties(float hardness, float resistance, boolean crystalBlock) {
+        Block.Properties properties =
+                Block.Properties.of()
+                        .mapColor(MapColor.STONE)
+                        .strength(hardness, resistance)
+                        .sound(SoundType.STONE)
+                        .requiresCorrectToolForDrops();
+        if (crystalBlock) {
+            properties = properties.noOcclusion();
+        }
+        return properties;
     }
 
     @Override
@@ -84,9 +100,7 @@ public class OreBasicStone extends Block {
     }
 
     private boolean isCrystalBlock() {
-        return this == ChaosPersists.CrystalStone
-                || this == ChaosPersists.CrystalRat
-                || this == ChaosPersists.CrystalFairy;
+        return crystalBlock;
     }
 
     @Override

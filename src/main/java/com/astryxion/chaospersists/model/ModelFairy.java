@@ -11,8 +11,11 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
+import javax.annotation.Nullable;
 
 public class ModelFairy extends EntityModel<Fairy> {
+    @Nullable
+    private Fairy animatingEntity;
     private final float wingspeed;
     private final ModelPart head;
     private final ModelPart chest;
@@ -127,6 +130,7 @@ public class ModelFairy extends EntityModel<Fairy> {
             float ageInTicks,
             float netHeadYaw,
             float headPitch) {
+        this.animatingEntity = entity;
         this.lwing1.yRot = -0.6f + Mth.cos(ageInTicks * this.wingspeed) * (float) Math.PI * 0.35f;
         this.rwing1.yRot = -2.55f - Mth.cos(ageInTicks * this.wingspeed) * (float) Math.PI * 0.35f;
         this.lwing2.yRot = -0.6f + Mth.cos(ageInTicks * this.wingspeed * 0.85f) * (float) Math.PI * 0.25f;
@@ -153,27 +157,18 @@ public class ModelFairy extends EntityModel<Fairy> {
         this.lwing1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.rwing2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.rwing1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-    }
-
-    public void renderBody(
-            PoseStack poseStack,
-            VertexConsumer buffer,
-            int packedLight,
-            int packedOverlay,
-            float red,
-            float green,
-            float blue,
-            float alpha) {
-        this.head.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.chest.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.waist.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.hips.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.lleg1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.lleg2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.rleg.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.b1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.b2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.larm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.rarm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        int bodyLight =
+                this.animatingEntity != null && this.animatingEntity.getBlink() > 1.0f ? 15728880 : packedLight;
+        this.head.render(poseStack, buffer, bodyLight, packedOverlay, red, green, blue, alpha);
+        this.chest.render(poseStack, buffer, bodyLight, packedOverlay, red, green, blue, alpha);
+        this.waist.render(poseStack, buffer, bodyLight, packedOverlay, red, green, blue, alpha);
+        this.hips.render(poseStack, buffer, bodyLight, packedOverlay, red, green, blue, alpha);
+        this.lleg1.render(poseStack, buffer, bodyLight, packedOverlay, red, green, blue, alpha);
+        this.lleg2.render(poseStack, buffer, bodyLight, packedOverlay, red, green, blue, alpha);
+        this.rleg.render(poseStack, buffer, bodyLight, packedOverlay, red, green, blue, alpha);
+        this.b1.render(poseStack, buffer, bodyLight, packedOverlay, red, green, blue, alpha);
+        this.b2.render(poseStack, buffer, bodyLight, packedOverlay, red, green, blue, alpha);
+        this.larm.render(poseStack, buffer, bodyLight, packedOverlay, red, green, blue, alpha);
+        this.rarm.render(poseStack, buffer, bodyLight, packedOverlay, red, green, blue, alpha);
     }
 }

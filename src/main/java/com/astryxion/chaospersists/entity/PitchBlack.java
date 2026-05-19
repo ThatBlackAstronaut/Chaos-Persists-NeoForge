@@ -678,6 +678,9 @@ public class PitchBlack extends Monster {
 
     @Override
     public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        if (spawnReason == MobSpawnType.SPAWN_EGG || spawnReason == MobSpawnType.COMMAND) {
+            return true;
+        }
         BlockPos pos = this.blockPosition();
         for (int k = -5; k <= 5; ++k) {
             for (int j = -5; j <= 5; ++j) {

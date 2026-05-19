@@ -1,3 +1,6 @@
-{
-  "parent": "chaospersists:block/creeperrepellent"
+﻿{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "chaospersists:block/creeperrepellent"
+  }
 }

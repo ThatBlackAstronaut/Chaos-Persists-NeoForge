@@ -42,7 +42,7 @@ public class ModelDragonfly extends EntityModel<Dragonfly> {
     private final ModelPart rrwing;
 
     public ModelDragonfly(float f1) {
-        this(LayerDefinition.create(createMesh(), 64, 32).bakeRoot(), f1);
+        this(LayerDefinition.create(createMesh(), 64, 64).bakeRoot(), f1);
     }
 
     public ModelDragonfly(ModelPart root, float wingspeed) {

@@ -63,7 +63,6 @@ public class Alien extends Monster {
     public Alien(EntityType<? extends Alien> type, Level level) {
         super(type, level);
         this.xpReward = 100;
-        this.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(0.6D);
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
         this.renderdata.rf1 = 0.0f;
@@ -464,6 +463,9 @@ public class Alien extends Monster {
 
     @Override
     public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        if (spawnReason == MobSpawnType.SPAWN_EGG || spawnReason == MobSpawnType.COMMAND) {
+            return true;
+        }
         BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
         for (int k = -3; k < 3; ++k) {
             for (int j = -3; j < 3; ++j) {

@@ -95,8 +95,16 @@ public class ChaosWorld {
     /** Chunks that loaded before the server main loop; processed on {@link ServerStartedEvent}. */
     private static final Set<PendingChunkGen> PENDING_CHUNK_GEN = ConcurrentHashMap.newKeySet();
 
+    /** Chunks already queued or pending — prevents duplicate plant/ore passes per chunk. */
+    private static final Set<PendingChunkGen> SCHEDULED_CHUNK_GEN = ConcurrentHashMap.newKeySet();
+
+    /** Chunks that finished {@link #runChunkWorldGen} (1.12 runs populate decoration once per chunk). */
+    private static final Set<PendingChunkGen> PROCESSED_WORLD_GEN = ConcurrentHashMap.newKeySet();
+
     /** Deferred world-gen so chunk load / save never blocks the server thread for long stretches. */
     private static final Queue<PendingChunkGen> CHUNK_GEN_QUEUE = new ConcurrentLinkedQueue<>();
+
+    private static final long CORN_DECORATE_SEED_SALT = 0xC0FFC0BBL;
 
     private static final int MAX_CHUNK_GEN_PER_TICK = 1;
 
@@ -289,11 +297,6 @@ public class ChaosWorld {
             this.addVeggies(
                     level,
                     net.minecraft.util.RandomSource.create(random.nextLong()), chunkX * 16, chunkZ * 16);
-            this.exposeMiningStonePlatforms(
-                    level,
-                    net.minecraft.util.RandomSource.create(random.nextLong()),
-                    chunkX * 16,
-                    chunkZ * 16);
             this.addRocks(
                     level,
                     net.minecraft.util.RandomSource.create(random.nextLong()),
@@ -650,27 +653,34 @@ public class ChaosWorld {
             return;
         }
         LevelChunk chunk = (LevelChunk) event.getChunk();
-        if (!serverLevel.getServer().isReady()) {
-            PENDING_CHUNK_GEN.add(
-                    new PendingChunkGen(serverLevel.dimension(), chunk.getPos().x, chunk.getPos().z));
+        PendingChunkGen pending =
+                new PendingChunkGen(serverLevel.dimension(), chunk.getPos().x, chunk.getPos().z);
+        if (PROCESSED_WORLD_GEN.contains(pending) || !SCHEDULED_CHUNK_GEN.add(pending)) {
             return;
         }
-        CHUNK_GEN_QUEUE.add(
-                new PendingChunkGen(serverLevel.dimension(), chunk.getPos().x, chunk.getPos().z));
+        if (!serverLevel.getServer().isReady()) {
+            PENDING_CHUNK_GEN.add(pending);
+            return;
+        }
+        CHUNK_GEN_QUEUE.add(pending);
     }
 
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event) {
-        if (!PENDING_CHUNK_GEN.isEmpty()) {
-            CHUNK_GEN_QUEUE.addAll(PENDING_CHUNK_GEN);
-            PENDING_CHUNK_GEN.clear();
+        for (PendingChunkGen pending : PENDING_CHUNK_GEN) {
+            if (!PROCESSED_WORLD_GEN.contains(pending)) {
+                CHUNK_GEN_QUEUE.add(pending);
+            }
         }
+        PENDING_CHUNK_GEN.clear();
     }
 
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
         CHUNK_GEN_QUEUE.clear();
         PENDING_CHUNK_GEN.clear();
+        SCHEDULED_CHUNK_GEN.clear();
+        PROCESSED_WORLD_GEN.clear();
     }
 
     @SubscribeEvent
@@ -690,10 +700,14 @@ public class ChaosWorld {
                 && (pending = CHUNK_GEN_QUEUE.poll()) != null) {
             ServerLevel level = server.getLevel(pending.dimension);
             if (level == null || !level.hasChunk(pending.chunkX, pending.chunkZ)) {
+                SCHEDULED_CHUNK_GEN.remove(pending);
                 continue;
             }
-            this.runChunkWorldGen(level, level.getChunk(pending.chunkX, pending.chunkZ));
-            ++processed;
+            SCHEDULED_CHUNK_GEN.remove(pending);
+            if (PROCESSED_WORLD_GEN.add(pending)) {
+                this.runChunkWorldGen(level, level.getChunk(pending.chunkX, pending.chunkZ));
+                ++processed;
+            }
         }
     }
 
@@ -704,7 +718,10 @@ public class ChaosWorld {
         random.setSeed(serverLevel.getSeed());
         random.setSeed(random.nextLong() ^ ((long) chunkX << 16) ^ (long) chunkZ);
         this.generate(random, chunkX, chunkZ, serverLevel, chunk, null, null);
-        this.tryDecorateGrassForCorn(serverLevel, random, chunkX, chunkZ);
+        Random cornRandom = new Random(serverLevel.getSeed());
+        cornRandom.setSeed(
+                cornRandom.nextLong() ^ ((long) chunkX << 16) ^ (long) chunkZ ^ CORN_DECORATE_SEED_SALT);
+        this.tryDecorateGrassForCorn(serverLevel, cornRandom, chunkX, chunkZ);
     }
 
     public void generateSurface(
@@ -1530,34 +1547,90 @@ public class ChaosWorld {
         }
     }
 
+    /** 1.12.2 {@code addTomatoes}: warm land, not ocean. */
+    private static boolean isWarmLandPlantBiome(net.minecraft.world.level.Level level, int posX, int posY, int posZ) {
+        Holder<Biome> biomeHolder = level.getBiome(new BlockPos(posX, posY, posZ));
+        return biomeHolder.value().getBaseTemperature() > 0.2F && !biomeHolder.is(BiomeTags.IS_OCEAN);
+    }
+
+    private static boolean isTomatoPlantDimension(net.minecraft.world.level.Level level) {
+        return level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
+                || level.dimension() == net.minecraft.world.level.Level.OVERWORLD
+                || level.dimension().equals(ChaosPersists.getMiningDimensionKey());
+    }
+
+    /** 1.12.2 corn decorate: {@code isSurfaceWorld()} → overworld (+ utopia when surface). */
+    private static boolean isCornPlantDimension(net.minecraft.world.level.Level level) {
+        return level.dimension() == net.minecraft.world.level.Level.OVERWORLD
+                || level.dimension().equals(ChaosPersists.getUtopiaDimensionKey());
+    }
+
+    private static boolean isStrawberryForestBiome(Holder<Biome> biome) {
+        return biome.is(Biomes.FOREST)
+                || biome.is(Biomes.WINDSWEPT_FOREST)
+                || biome.is(Biomes.OLD_GROWTH_BIRCH_FOREST)
+                || biome.is(Biomes.BIRCH_FOREST);
+    }
+
+    private static boolean canSpawnStrawberryAt(net.minecraft.world.level.Level level, int posX, int posY, int posZ) {
+        if (level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())) {
+            return true;
+        }
+        return isStrawberryForestBiome(level.getBiome(new BlockPos(posX, posY, posZ)));
+    }
+
+    private static boolean isButterflyOverworldBiome(Holder<Biome> biome) {
+        return biome.is(Biomes.FOREST)
+                || biome.is(Biomes.WINDSWEPT_FOREST)
+                || biome.is(Biomes.RIVER)
+                || biome.is(Biomes.JUNGLE)
+                || biome.is(Biomes.SPARSE_JUNGLE)
+                || biome.is(Biomes.SWAMP)
+                || biome.is(Biomes.BIRCH_FOREST)
+                || biome.is(Biomes.OLD_GROWTH_BIRCH_FOREST)
+                || biome.is(Biomes.DARK_FOREST);
+    }
+
+    private static boolean isButterflyBiomeChunkGate(net.minecraft.world.level.Level level, Holder<Biome> chunkBiome) {
+        return level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
+                || level.dimension().equals(ChaosPersists.getDimensionKey(6))
+                || isButterflyOverworldBiome(chunkBiome);
+    }
+
+    private static boolean canSpawnVeggiesAt(net.minecraft.world.level.Level level, int posX, int posY, int posZ) {
+        if (level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
+                || level.dimension().equals(ChaosPersists.getMiningDimensionKey())
+                || level.dimension().equals(ChaosPersists.getDimensionKey(6))) {
+            return true;
+        }
+        Holder<Biome> biome = level.getBiome(new BlockPos(posX, posY, posZ));
+        return biome.is(Biomes.RIVER) || biome.is(Biomes.SWAMP);
+    }
+
     public void addStrawberries(
             net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
         if (random.nextInt(20) != 0) {
             return;
         }
-        Holder<Biome> biome = level.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
-                || biome.is(Biomes.FOREST)
-                || biome.is(Biomes.WINDSWEPT_FOREST)
-                || biome.is(Biomes.OLD_GROWTH_BIRCH_FOREST)
-                || biome.is(Biomes.BIRCH_FOREST)) {
-            block0:
-            for (int i = 0; i < 5; ++i) {
-                int posX = chunkX + random.nextInt(16);
-                int posZ = chunkZ + random.nextInt(16);
-                for (int posY = 100; posY > 40; --posY) {
-                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
-                    if (!level.getBlockState(pos).isAir()) {
-                        break;
-                    }
-                    if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
-                            .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
-                        continue;
-                    }
-                    ChaosPersists.setBlockFast(
-                            level, posX, posY, posZ, (Block) ChaosPersists.MyStrawberryPlant, 0, 2);
-                    continue block0;
+        block0:
+        for (int i = 0; i < 5; ++i) {
+            int posX = chunkX + random.nextInt(16);
+            int posZ = chunkZ + random.nextInt(16);
+            for (int posY = 100; posY > 40; --posY) {
+                net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(posX, posY, posZ);
+                if (!level.getBlockState(pos).isAir()) {
+                    break;
                 }
+                if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
+                        .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                    continue;
+                }
+                if (!canSpawnStrawberryAt(level, posX, posY, posZ)) {
+                    continue;
+                }
+                ChaosPersists.setBlockFast(
+                        level, posX, posY, posZ, (Block) ChaosPersists.MyStrawberryPlant, 0, 2);
+                continue block0;
             }
         }
     }
@@ -1634,7 +1707,7 @@ public class ChaosWorld {
      * Official 1.12.2 corn runs on grass decoration with 1% chance (see {@link #tryDecorateGrassForCorn}).
      */
     private void placeCornClusters(
-            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int baseX, int baseZ) {
+            net.minecraft.world.level.Level level, java.util.Random random, int baseX, int baseZ) {
         block0:
         for (int j = 0; j < 32; ++j) {
             int posX = baseX + random.nextInt(8) - random.nextInt(8);
@@ -1647,6 +1720,9 @@ public class ChaosWorld {
                 }
                 if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
                         .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                    continue;
+                }
+                if (!isCornPlantDimension(level) || !isWarmLandPlantBiome(level, posX, posY, posZ)) {
                     continue;
                 }
 
@@ -1699,10 +1775,13 @@ public class ChaosWorld {
         }
         int ox = rand.nextInt(16) + 8;
         int oz = rand.nextInt(16) + 8;
-        int x = chunkX * 16 + ox;
-        int z = chunkZ * 16 + oz;
+        int x = chunkX * 16 + 8 + ox;
+        int z = chunkZ * 16 + 8 + oz;
         BlockPos surface = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos(x, 0, z));
-        this.placeCornClusters(level, RandomSource.create(rand.nextLong()), surface.getX(), surface.getZ());
+        if (!isCornPlantDimension(level) || !isWarmLandPlantBiome(level, surface.getX(), surface.getY(), surface.getZ())) {
+            return;
+        }
+        this.placeCornClusters(level, rand, surface.getX(), surface.getZ());
     }
 
     public void addTomatoes(
@@ -1735,13 +1814,7 @@ public class ChaosWorld {
                 if (!is_all_air) {
                     continue block0;
                 }
-                Holder<Biome> biomeHolder = level.getBiome(new BlockPos(posX, posY, posZ));
-                float temp = biomeHolder.value().getBaseTemperature();
-                boolean validBiome = temp > 0.2F && !biomeHolder.is(BiomeTags.IS_OCEAN);
-                if ((level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
-                                || level.dimension() == net.minecraft.world.level.Level.OVERWORLD
-                                || level.dimension().equals(ChaosPersists.getMiningDimensionKey()))
-                        && validBiome) {
+                if (isTomatoPlantDimension(level) && isWarmLandPlantBiome(level, posX, posY, posZ)) {
                     int corn_height = random.nextInt(3);
                     if (++corn_height == 1) {
                         ChaosPersists.setBlockFast(
@@ -1776,17 +1849,7 @@ public class ChaosWorld {
             return;
         }
         Holder<Biome> biome = level.getBiome(new BlockPos(chunkX, 0, chunkZ));
-        if (level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
-                || level.dimension().equals(ChaosPersists.getDimensionKey(6))
-                || biome.is(Biomes.FOREST)
-                || biome.is(Biomes.WINDSWEPT_FOREST)
-                || biome.is(Biomes.RIVER)
-                || biome.is(Biomes.JUNGLE)
-                || biome.is(Biomes.SPARSE_JUNGLE)
-                || biome.is(Biomes.SWAMP)
-                || biome.is(Biomes.BIRCH_FOREST)
-                || biome.is(Biomes.OLD_GROWTH_BIRCH_FOREST)
-                || biome.is(Biomes.DARK_FOREST)) {
+        if (isButterflyBiomeChunkGate(level, biome)) {
             block0:
             for (int i = 0; i < 4; ++i) {
                 int posX = chunkX + random.nextInt(16);
@@ -1798,6 +1861,11 @@ public class ChaosWorld {
                     }
                     if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY - 1, posZ))
                             .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
+                        continue;
+                    }
+                    if (!level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
+                            && !level.dimension().equals(ChaosPersists.getDimensionKey(6))
+                            && !isButterflyOverworldBiome(level.getBiome(new BlockPos(posX, posY, posZ)))) {
                         continue;
                     }
                     int which = random.nextInt(3);
@@ -2907,6 +2975,9 @@ public class ChaosWorld {
                             .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
                         continue;
                     }
+                    if (!canSpawnVeggiesAt(level, posX, posY, posZ)) {
+                        continue;
+                    }
                     int what = random.nextInt(6);
                     if (what == 0) {
                         ChaosPersists.setBlockFast(level, posX, posY, posZ, Blocks.CARROTS, 0, 2);
@@ -2946,94 +3017,6 @@ public class ChaosWorld {
                                 posZ);
                     }
                     continue block0;
-                }
-            }
-        }
-    }
-
-    /**
-     * Large flat stone floors in mining valleys (1.12 amplified extreme-hills stone platforms between peaks).
-     */
-    public void exposeMiningStonePlatforms(
-            net.minecraft.world.level.Level level, net.minecraft.util.RandomSource random, int chunkX, int chunkZ) {
-        if (!level.dimension().equals(ChaosPersists.getMiningDimensionKey())) {
-            return;
-        }
-        net.minecraft.world.level.levelgen.Heightmap.Types heightmap =
-                net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG;
-        for (int lx = 0; lx < 16; lx += 2) {
-            for (int lz = 0; lz < 16; lz += 2) {
-                int wx = chunkX + lx;
-                int wz = chunkZ + lz;
-                int surfaceY = level.getHeight(heightmap, wx, wz);
-                if (surfaceY < 55 || surfaceY > 150) {
-                    continue;
-                }
-                int minH = surfaceY;
-                int maxH = surfaceY;
-                for (int dx = -4; dx <= 4; dx += 4) {
-                    for (int dz = -4; dz <= 4; dz += 4) {
-                        if (dx == 0 && dz == 0) {
-                            continue;
-                        }
-                        int sample = level.getHeight(heightmap, wx + dx, wz + dz);
-                        minH = Math.min(minH, sample);
-                        maxH = Math.max(maxH, sample);
-                    }
-                }
-                if (maxH - minH > 2) {
-                    continue;
-                }
-                int rimY = surfaceY;
-                for (int dx = -7; dx <= 7; dx += 7) {
-                    rimY = Math.max(rimY, level.getHeight(heightmap, wx + dx, wz));
-                    rimY = Math.max(rimY, level.getHeight(heightmap, wx, wz + dx));
-                    rimY = Math.max(rimY, level.getHeight(heightmap, wx + dx, wz + dx));
-                    rimY = Math.max(rimY, level.getHeight(heightmap, wx + dx, wz - dx));
-                }
-                if (rimY - surfaceY < 8) {
-                    continue;
-                }
-                if (random.nextInt(4) != 0) {
-                    continue;
-                }
-                int radius = 5 + random.nextInt(10);
-                int floorY = surfaceY - 1;
-                for (int px = wx - radius; px <= wx + radius; ++px) {
-                    for (int pz = wz - radius; pz <= wz + radius; ++pz) {
-                        int ddx = px - wx;
-                        int ddz = pz - wz;
-                        if (ddx * ddx + ddz * ddz > radius * radius) {
-                            continue;
-                        }
-                        int colY = level.getHeight(heightmap, px, pz) - 1;
-                        if (Math.abs(colY - floorY) > 2) {
-                            continue;
-                        }
-                        net.minecraft.core.BlockPos surfacePos = new net.minecraft.core.BlockPos(px, colY, pz);
-                        net.minecraft.world.level.block.state.BlockState surfaceState =
-                                level.getBlockState(surfacePos);
-                        if (surfaceState.is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)
-                                || surfaceState.is(net.minecraft.world.level.block.Blocks.DIRT)) {
-                            level.setBlock(
-                                    surfacePos,
-                                    net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),
-                                    2);
-                            for (int depth = 1; depth <= 3; ++depth) {
-                                net.minecraft.core.BlockPos below = surfacePos.below(depth);
-                                net.minecraft.world.level.block.state.BlockState belowState =
-                                        level.getBlockState(below);
-                                if (belowState.is(net.minecraft.world.level.block.Blocks.DIRT)
-                                        || belowState.is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)
-                                        || belowState.is(net.minecraft.world.level.block.Blocks.GRAVEL)) {
-                                    level.setBlock(
-                                            below,
-                                            net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),
-                                            2);
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }

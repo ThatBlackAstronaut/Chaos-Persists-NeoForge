@@ -12,7 +12,6 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
-import com.mojang.math.Axis;
 
 public class ModelDragon extends EntityModel<Dragon> {
     private final float wingspeed;
@@ -73,7 +72,7 @@ public class ModelDragon extends EntityModel<Dragon> {
     private final ModelPart tail4;
 
     public ModelDragon(float f1) {
-        this(f1, LayerDefinition.create(createMesh(), 512, 256).bakeRoot());
+        this(f1, LayerDefinition.create(createMesh(), 256, 128).bakeRoot());
     }
 
     public ModelDragon(float wingspeed, ModelPart root) {
@@ -366,8 +365,6 @@ public class ModelDragon extends EntityModel<Dragon> {
 
     @Override
     public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0f));
         this.horn1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.horn2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.tail6.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
@@ -423,6 +420,5 @@ public class ModelDragon extends EntityModel<Dragon> {
         this.wing11.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.wing12.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.tail4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        poseStack.popPose();
     }
 }

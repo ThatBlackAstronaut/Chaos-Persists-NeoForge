@@ -8,10 +8,7 @@ package com.astryxion.chaospersists.world.dimension.structure;
 public final class MapGenMoreVillages {
     /** 1.12 {@code field_82665_g} — chunk grid spacing between village attempts. */
     public static final int SPACING = 9;
-    /**
-     * 1.20 {@code structure_set} separation (not 1.12 {@code field_82666_h}). Spacing 9 / separation 2 ≈ one
-     * village attempt per 9×9 chunk grid (1.12 used {@code nextInt(spacing - field_82666_h)} = {@code nextInt(2)} offset).
-     */
+    /** 1.12 {@code field_82666_h} — minimum separation from grid (via {@code nextInt(spacing - separation)}). */
     public static final int SEPARATION = 2;
     /** 1.12 village structure seed salt ({@code 10387312}). */
     public static final int SALT = 10387312;

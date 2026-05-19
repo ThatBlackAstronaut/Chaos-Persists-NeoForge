@@ -2,15 +2,9 @@ package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.GammaMetroid;
 import com.astryxion.chaospersists.model.ModelGammaMetroid;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 
 public class RenderGammaMetroid extends MobRenderer<GammaMetroid, ModelGammaMetroid> {
     private static final ResourceLocation TEXTURE =
@@ -24,31 +18,7 @@ public class RenderGammaMetroid extends MobRenderer<GammaMetroid, ModelGammaMetr
     }
 
     @Override
-    public void render(
-            GammaMetroid entity,
-            float entityYaw,
-            float partialTicks,
-            PoseStack poseStack,
-            MultiBufferSource buffer,
-            int packedLight) {
-        poseStack.pushPose();
-        this.scale(entity, poseStack, partialTicks);
-        float bodyRot = Mth.rotLerp(partialTicks, entity.yBodyRotO, entity.yBodyRot);
-        float headRot = Mth.rotLerp(partialTicks, entity.yHeadRotO, entity.yHeadRot);
-        this.model.setupAnim(
-                entity,
-                entity.walkAnimation.position(partialTicks),
-                entity.walkAnimation.speed(partialTicks),
-                entity.tickCount + partialTicks,
-                headRot - bodyRot,
-                entity.getViewXRot(partialTicks));
-        VertexConsumer vertexConsumer = buffer.getBuffer(RenderType.entityTranslucent(this.getTextureLocation(entity)));
-        this.model.renderToBuffer(poseStack, vertexConsumer, packedLight, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f);
-        poseStack.popPose();
-    }
-
-    @Override
-    protected void scale(GammaMetroid entity, PoseStack poseStack, float partialTick) {
+    protected void scale(GammaMetroid entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
         poseStack.scale(this.scale, this.scale, this.scale);
     }
 

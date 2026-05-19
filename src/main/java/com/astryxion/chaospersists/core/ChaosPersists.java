@@ -58,6 +58,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.storage.loot.LootPool;
@@ -568,6 +569,11 @@ public class ChaosPersists
     return block != null ? new ItemStack(block) : new ItemStack(fallback);
   }
 
+  /** Keys for {@link CreativeModeTab.Builder#withTabsBefore} — matches 1.12 tab page layout. */
+  private static ResourceKey<CreativeModeTab> chaosTabKey(String path) {
+    return ResourceKey.create(Registries.CREATIVE_MODE_TAB, ResourceLocation.fromNamespaceAndPath(MODID, path));
+  }
+
   public static final DeferredRegister<Block> BLOCKS =
       DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
   public static final DeferredRegister<Item> ITEMS =
@@ -588,6 +594,7 @@ public class ChaosPersists
               CreativeModeTab.builder()
                   .title(Component.translatable("itemGroup.chaospersists.chaos_items"))
                   .icon(() -> creativeTabIconItem("minersdream", Items.AIR))
+                  .withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
                   .build());
   public static final RegistryObject<CreativeModeTab> TAB_CHAOS_BLOCKS =
       CREATIVE_MODE_TABS.register(
@@ -596,6 +603,7 @@ public class ChaosPersists
               CreativeModeTab.builder()
                   .title(Component.translatable("itemGroup.chaospersists.chaos_blocks"))
                   .icon(() -> creativeTabIconBlock("antblock", Items.STONE))
+                  .withTabsBefore(chaosTabKey("chaos_items"))
                   .build());
   public static final RegistryObject<CreativeModeTab> TAB_CHAOS_FOODS =
       CREATIVE_MODE_TABS.register(
@@ -604,6 +612,7 @@ public class ChaosPersists
               CreativeModeTab.builder()
                   .title(Component.translatable("itemGroup.chaospersists.chaos_foods"))
                   .icon(() -> creativeTabIconItem("corn_seed", Items.BREAD))
+                  .withTabsBefore(chaosTabKey("chaos_blocks"))
                   .build());
   public static final RegistryObject<CreativeModeTab> TAB_CHAOS_TOOLS =
       CREATIVE_MODE_TABS.register(
@@ -612,6 +621,7 @@ public class ChaosPersists
               CreativeModeTab.builder()
                   .title(Component.translatable("itemGroup.chaospersists.chaos_tools"))
                   .icon(() -> creativeTabIconItem("ultimatepickaxe", Items.IRON_PICKAXE))
+                  .withTabsBefore(chaosTabKey("chaos_foods"))
                   .build());
   public static final RegistryObject<CreativeModeTab> TAB_CHAOS_WEAPONS =
       CREATIVE_MODE_TABS.register(
@@ -620,6 +630,7 @@ public class ChaosPersists
               CreativeModeTab.builder()
                   .title(Component.translatable("itemGroup.chaospersists.chaos_weapons"))
                   .icon(() -> creativeTabIconItem("ultimatesword", Items.IRON_SWORD))
+                  .withTabsBefore(chaosTabKey("chaos_tools"))
                   .build());
   public static final RegistryObject<CreativeModeTab> TAB_CHAOS_MOBS =
       CREATIVE_MODE_TABS.register(
@@ -628,6 +639,7 @@ public class ChaosPersists
               CreativeModeTab.builder()
                   .title(Component.translatable("itemGroup.chaospersists.chaos_mobs"))
                   .icon(() -> creativeTabIconItem("eggtheking", Items.EGG))
+                  .withTabsBefore(chaosTabKey("chaos_weapons"))
                   .build());
   public static final RegistryObject<CreativeModeTab> TAB_CHAOS_ARMOR =
       CREATIVE_MODE_TABS.register(
@@ -636,6 +648,7 @@ public class ChaosPersists
               CreativeModeTab.builder()
                   .title(Component.translatable("itemGroup.chaospersists.chaos_armor"))
                   .icon(() -> creativeTabIconItem("royal_chest", Items.IRON_CHESTPLATE))
+                  .withTabsBefore(chaosTabKey("chaos_mobs"))
                   .build());
 
   public static final RegistryObject<MenuType<ContainerCrystalWorkbench>> MENU_CRYSTAL_WORKBENCH =
@@ -846,7 +859,7 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<Termite>> ENTITY_TYPE_TERMITE = ENTITY_TYPES.register("termite",
       () -> EntityType.Builder.<Termite>of(Termite::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("termite"));
   public static final RegistryObject<EntityType<Fairy>> ENTITY_TYPE_FAIRY = ENTITY_TYPES.register("fairy",
-      () -> EntityType.Builder.<Fairy>of(Fairy::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("fairy"));
+      () -> EntityType.Builder.<Fairy>of(Fairy::new, MobCategory.CREATURE).sized(0.4f, 0.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("fairy"));
   public static final RegistryObject<EntityType<Peacock>> ENTITY_TYPE_PEACOCK = ENTITY_TYPES.register("peacock",
       () -> EntityType.Builder.<Peacock>of(Peacock::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("peacock"));
   public static final RegistryObject<EntityType<Rotator>> ENTITY_TYPE_ROTATOR = ENTITY_TYPES.register("rotator",
@@ -1083,13 +1096,13 @@ private static void registerAllCritterCages() {
     BLOCKS.register("creeperrepellent", () -> new CreeperRepellent());
     BLOCKS.register("crystalcoal", () -> new OreCrystal(0.6F, 6.0F, 20.0F));
     BLOCKS.register("crystalcrystal", () -> new OreCrystalCrystal(0.4F, 12.0F, 40.0F));
-    BLOCKS.register("crystalfairy", () -> new OreBasicStone(2.5F, 14.0F));
+    BLOCKS.register("crystalfairy", () -> new OreBasicStone(2.5F, 14.0F, true));
     BLOCKS.register("crystalpink_block", BlockCrystal::new);
-    BLOCKS.register("crystalrat", () -> new OreBasicStone(2.5F, 14.0F));
+    BLOCKS.register("crystalrat", () -> new OreBasicStone(2.5F, 14.0F, true));
     BLOCKS.register("crystalsapling", BlockCrystalPlant::new);
     BLOCKS.register("crystalsapling2", BlockCrystalPlant::new);
     BLOCKS.register("crystalsapling3", BlockCrystalPlant::new);
-    BLOCKS.register("crystalstone", () -> new OreBasicStone(2.0F, 10.0F));
+    BLOCKS.register("crystalstone", () -> new OreBasicStone(2.0F, 10.0F, true));
     BLOCKS.register("crystaltorch", () -> new BlockCrystalTorch());
     BLOCKS.register("ducttape", BlockDuctTape::new);
     BLOCKS.register("dungeonspawner", () -> new DungeonSpawnerBlock());
@@ -1460,10 +1473,7 @@ private static void registerAllCritterCages() {
   }
 
   private static void registerAllSpawnEggs() {
-    ITEMS.register("eggwitherskeleton", () -> new ItemSpawnEgg(0, 192));
     ITEMS.register("eggenderdragon", () -> new ItemSpawnEgg(0, 193));
-    ITEMS.register("eggsnowgolem", () -> new ItemSpawnEgg(0, 194));
-    ITEMS.register("eggirongolem", () -> new ItemSpawnEgg(0, 195));
     ITEMS.register("eggwitherboss", () -> new ItemSpawnEgg(0, 196));
     ITEMS.register("egggirlfriend", () -> new ItemSpawnEgg(0, 197));
     ITEMS.register("eggredcow", () -> new ItemSpawnEgg(0, 198));
@@ -2229,7 +2239,11 @@ private static void registerAllCritterCages() {
   }
 
   private void clientInit(final net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
-    load(new FMLInitializationEvent());
+    event.enqueueWork(
+        () -> {
+          proxy.registerBlockRenderLayers();
+          load(new FMLInitializationEvent());
+        });
   }
 
   @SubscribeEvent
@@ -4733,10 +4747,7 @@ private static void registerAllCritterCages() {
     GameRegistry.findRegistry(Item.class).register(SeaViperTongue);
     GameRegistry.findRegistry(Item.class).register(VortexEye);
 
-    GameRegistry.findRegistry(Item.class).register(WitherSkeletonEgg);
     GameRegistry.findRegistry(Item.class).register(EnderDragonEgg);
-    GameRegistry.findRegistry(Item.class).register(SnowGolemEgg);
-    GameRegistry.findRegistry(Item.class).register(IronGolemEgg);
     GameRegistry.findRegistry(Item.class).register(WitherBossEgg);
     GameRegistry.findRegistry(Item.class).register(GirlfriendEgg);
     GameRegistry.findRegistry(Item.class).register(BoyfriendEgg);
@@ -5122,17 +5133,8 @@ private static void registerAllCritterCages() {
     ItemStack OreBlazeEggStack = new ItemStack(MyBlazeSpawnBlock);
     addShapelessRecipe(cpId("egg_blaze"), cpId("eggs"), createVanillaSpawnEgg("blaze"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreBlazeEggStack));
 
-    ItemStack OreWitherSkeletonEggStack = new ItemStack(MyWitherSkeletonSpawnBlock);
-    addShapelessRecipe(cpId("egg_wither_skeleton"), cpId("eggs"), new ItemStack(WitherSkeletonEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreWitherSkeletonEggStack));
-
     ItemStack OreEnderDragonEggStack = new ItemStack(MyEnderDragonSpawnBlock);
     addShapelessRecipe(cpId("egg_ender_dragon"), cpId("eggs"), new ItemStack(EnderDragonEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreEnderDragonEggStack));
-
-    ItemStack OreSnowGolemEggStack = new ItemStack(MySnowGolemSpawnBlock);
-    addShapelessRecipe(cpId("egg_snow_golem"), cpId("eggs"), new ItemStack(SnowGolemEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSnowGolemEggStack));
-
-    ItemStack OreIronGolemEggStack = new ItemStack(MyIronGolemSpawnBlock);
-    addShapelessRecipe(cpId("egg_iron_golem"), cpId("eggs"), new ItemStack(IronGolemEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreIronGolemEggStack));
 
     ItemStack OreWitherBossEggStack = new ItemStack(MyWitherBossSpawnBlock);
     addShapelessRecipe(cpId("egg_wither_boss"), cpId("eggs"), new ItemStack(WitherBossEgg, 64), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreWitherBossEggStack));
@@ -7218,10 +7220,7 @@ private static void registerAllCritterCages() {
     CagedSpiderDriver = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagespiderdriver"));
     CagedCrab = (CritterCage) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "cagecrab"));
 
-    WitherSkeletonEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggwitherskeleton"));
     EnderDragonEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggenderdragon"));
-    SnowGolemEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggsnowgolem"));
-    IronGolemEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggirongolem"));
     WitherBossEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggwitherboss"));
     GirlfriendEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "egggirlfriend"));
     RedCowEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggredcow"));
@@ -7337,10 +7336,7 @@ private static void registerAllCritterCages() {
   private void DoDispenserRegistrations()
   {
     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(LizardEgg, new DispenserBehaviorChaosEgg());
-    BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(WitherSkeletonEgg, new DispenserBehaviorChaosEgg());
     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(EnderDragonEgg, new DispenserBehaviorChaosEgg());
-    BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(SnowGolemEgg, new DispenserBehaviorChaosEgg());
-    BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(IronGolemEgg, new DispenserBehaviorChaosEgg());
     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(WitherBossEgg, new DispenserBehaviorChaosEgg());
     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(GirlfriendEgg, new DispenserBehaviorChaosEgg());
     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(BoyfriendEgg, new DispenserBehaviorChaosEgg());
@@ -7516,7 +7512,8 @@ private static void registerAllCritterCages() {
     return pathLower.contains("plant")
         || pathLower.contains("sapling")
         || pathLower.startsWith("lettuce_")
-        || pathLower.startsWith("quinoa_");
+        || pathLower.startsWith("quinoa_")
+        || "dungeonspawner".equals(pathLower);
   }
 
   /** 1.12 items that used {@code CreativeTabs.COMBAT} but are plain {@link Item}, not {@link SwordItem}. */
@@ -7730,11 +7727,7 @@ private static void registerAllCritterCages() {
   {
     if ((par1 >= -30000000) && (par3 >= -30000000) && (par1 < 30000000) && (par3 < 30000000))
     {
-      if (par2 < 0)
-      {
-        return false;
-      }
-      if (par2 >= 256)
+      if (par2 < world.getMinBuildHeight() || par2 >= world.getMaxBuildHeight())
       {
         return false;
       }
@@ -7754,7 +7747,7 @@ private static void registerAllCritterCages() {
       {
         if (((par6 & 0x2) != 0) && ((!world.isClientSide()) || ((par6 & 0x4) == 0)))
         {
-          BlockState newState = RegistryCompat.getStateFromMeta(par4, par5);
+          BlockState newState = prepareBlockStateForWorldGen(RegistryCompat.getStateFromMeta(par4, par5));
           world.sendBlockUpdated(pos, oldState, newState, 3);
         }
 
@@ -7785,11 +7778,7 @@ private static void registerAllCritterCages() {
   {
     if ((par1 >= -30000000) && (par3 >= -30000000) && (par1 < 30000000) && (par3 < 30000000))
     {
-      if (par2 < 0)
-      {
-        return false;
-      }
-      if (par2 >= 256)
+      if (par2 < world.getMinBuildHeight() || par2 >= world.getMaxBuildHeight())
       {
         return false;
       }
@@ -7811,7 +7800,7 @@ private static void registerAllCritterCages() {
         {
           if (((par6 & 0x2) != 0) && ((!world.isClientSide()) || ((par6 & 0x4) == 0)))
           {
-            BlockState newState = RegistryCompat.getStateFromMeta(par4, par5);
+            BlockState newState = prepareBlockStateForWorldGen(RegistryCompat.getStateFromMeta(par4, par5));
             world.sendBlockUpdated(pos, oldState, newState, 3);
           }
 
@@ -7848,6 +7837,56 @@ private static void registerAllCritterCages() {
     return false;
   }
 
+  /**
+   * 1.12 placed blocks in air/water without fluid properties; 1.20 leaves/fences/etc. default to
+   * waterlogged when set inside water during structure worldgen.
+   */
+  public static BlockState prepareBlockStateForWorldGen(BlockState state) {
+    if (state.hasProperty(BlockStateProperties.WATERLOGGED)) {
+      state = state.setValue(BlockStateProperties.WATERLOGGED, false);
+    }
+    if (state.hasProperty(BlockStateProperties.SNOWY)) {
+      state = state.setValue(BlockStateProperties.SNOWY, false);
+    }
+    if (state.getBlock() instanceof com.astryxion.chaospersists.block.ChaosDirectionalTorchBlock) {
+      net.minecraft.core.Direction facing =
+          state.getValue(com.astryxion.chaospersists.block.ChaosDirectionalTorchBlock.FACING);
+      if (facing == net.minecraft.core.Direction.DOWN) {
+        state =
+            state.setValue(
+                com.astryxion.chaospersists.block.ChaosDirectionalTorchBlock.FACING,
+                net.minecraft.core.Direction.UP);
+      }
+    }
+    if (state.getBlock() instanceof net.minecraft.world.level.block.LeavesBlock leaves) {
+      state = state.setValue(leaves.PERSISTENT, true);
+    }
+    return state;
+  }
+
+  /** Clears terrain so structure worldgen is not clipped by trees/terrain (1.12 pre-clear behavior). */
+  public static void clearStructureVolume(
+      Level world, int x1, int y1, int z1, int x2, int y2, int z2) {
+    if (world == null || world.isClientSide()) {
+      return;
+    }
+    int minX = Math.min(x1, x2);
+    int maxX = Math.max(x1, x2);
+    int minY = Math.max(world.getMinBuildHeight(), Math.min(y1, y2));
+    int maxY = Math.min(world.getMaxBuildHeight() - 1, Math.max(y1, y2));
+    int minZ = Math.min(z1, z2);
+    int maxZ = Math.max(z1, z2);
+    BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+    for (int x = minX; x <= maxX; ++x) {
+      for (int y = minY; y <= maxY; ++y) {
+        for (int z = minZ; z <= maxZ; ++z) {
+          pos.set(x, y, z);
+          world.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+        }
+      }
+    }
+  }
+
   public static boolean setBlockIDWithMetadataFast(
       LevelChunk chunk, int par1, int par2, int par3, Block par4, int par5) {
     if (par1 < 0 || par1 > 15 || par3 < 0 || par3 > 15) {
@@ -7860,7 +7899,7 @@ private static void registerAllCritterCages() {
       return false;
     }
     BlockPos pos = new BlockPos(par1, par2, par3);
-    chunk.setBlockState(pos, RegistryCompat.getStateFromMeta(par4, par5), false);
+    chunk.setBlockState(pos, prepareBlockStateForWorldGen(RegistryCompat.getStateFromMeta(par4, par5)), false);
     return true;
   }
 
@@ -7893,7 +7932,9 @@ private static void registerAllCritterCages() {
         return false;
       }
       chunk.setBlockState(
-          new BlockPos(par1, par2, par3), RegistryCompat.getStateFromMeta(par4, par5), false);
+          new BlockPos(par1, par2, par3),
+          prepareBlockStateForWorldGen(RegistryCompat.getStateFromMeta(par4, par5)),
+          false);
       return true;
     }
     return false;

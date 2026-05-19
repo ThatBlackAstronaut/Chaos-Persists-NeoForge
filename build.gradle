@@ -84,6 +84,9 @@ minecraft {
         client {
             // Game tests are not ported yet; enabling the namespace slows dev startup.
             property 'forge.enabledGameTestNamespaces', ''
+            // Jade mixin remap (https://jademc.readthedocs.io/en/latest/plugins19/getting-started/)
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${project.projectDir}/build/createSrgToMcp/output.srg"
         }
 
         server {
@@ -118,6 +121,13 @@ repositories {
         name = 'JeiMaven'
         url = 'https://maven.blamejared.com'
     }
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
 
     // If you have mod jar dependencies in ./libs, you can declare them as a repository like so.
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html#sub:flat_dir_resolver
@@ -139,6 +149,9 @@ dependencies {
     compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge-api:15.2.0.27")
     compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge:15.2.0.27")
     runtimeOnly fg.deobf("mezz.jei:jei-1.20.1-forge:15.2.0.27")
+
+    // Dev client/server only — WAILA-style block/entity inspector (not shipped in the mod jar)
+    runtimeOnly fg.deobf("maven.modrinth:jade:${jade_version}")
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar

@@ -1,6 +1,5 @@
 package com.astryxion.chaospersists.world.dimension.teleporter;
 
-import com.astryxion.chaospersists.util.MyUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.entity.Entity;
@@ -10,7 +9,7 @@ import net.minecraftforge.common.util.ITeleporter;
 import java.util.function.Function;
 
 /**
- * Teleports into the Mining dimension at the player's X/Z on the surface (1.12 used Y=120).
+ * Teleports into the Mining dimension at the player's X/Z (1.12 {@code TeleporterMining} used Y=120).
  */
 public class MiningTeleporter implements ITeleporter {
     private final double targetX;
@@ -34,11 +33,9 @@ public class MiningTeleporter implements ITeleporter {
         destWorld.getChunkSource().addRegionTicket(TicketType.POST_TELEPORT, chunkPos, 1, entity.getId());
         destWorld.getChunk(chunkPos.x, chunkPos.z);
 
-        int spawnY = MyUtils.findSurfaceSpawnY(destWorld, blockX, blockZ);
-
         Entity moved = repositionEntity.apply(false);
         if (moved != null) {
-            moved.moveTo(this.targetX, spawnY, this.targetZ, yaw, moved.getXRot());
+            moved.moveTo(this.targetX, 120.0D, this.targetZ, yaw, moved.getXRot());
             moved.setDeltaMovement(0.0D, 0.0D, 0.0D);
             moved.fallDistance = 0.0F;
             moved.setRemainingFireTicks(0);

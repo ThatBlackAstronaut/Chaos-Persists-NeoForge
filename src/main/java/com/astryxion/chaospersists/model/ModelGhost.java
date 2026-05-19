@@ -70,8 +70,9 @@ public class ModelGhost extends EntityModel<Ghost> {
             float green,
             float blue,
             float alpha) {
-        this.headAndBody.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.lArm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.rArm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        float ghostAlpha = 0.25f;
+        this.headAndBody.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
+        this.lArm.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
+        this.rArm.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
     }
 }

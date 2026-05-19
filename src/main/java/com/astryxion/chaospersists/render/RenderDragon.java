@@ -3,6 +3,7 @@ package com.astryxion.chaospersists.render;
 import com.astryxion.chaospersists.entity.Dragon;
 import com.astryxion.chaospersists.model.ModelDragon;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
@@ -23,6 +24,14 @@ public class RenderDragon extends MobRenderer<Dragon, ModelDragon> {
     protected void scale(Dragon entity, PoseStack poseStack, float partialTick) {
         float s = this.scale;
         poseStack.scale(s, s, s);
+    }
+
+    @Override
+    protected RenderType getRenderType(Dragon entity, boolean bodyVisible, boolean translucent, boolean glowing) {
+        if (glowing) {
+            return RenderType.outline(this.getTextureLocation(entity));
+        }
+        return RenderType.entityCutoutNoCull(this.getTextureLocation(entity));
     }
 
     @Override

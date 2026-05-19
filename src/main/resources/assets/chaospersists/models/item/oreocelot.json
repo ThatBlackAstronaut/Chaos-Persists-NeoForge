@@ -1,6 +1,3 @@
 {
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "chaospersists:block/oreocelot"
-  }
+  "parent": "chaospersists:block/oreocelot"
 }

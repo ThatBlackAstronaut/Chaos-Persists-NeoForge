@@ -222,11 +222,28 @@ public class IslandToo extends Animal {
                 }
             }
         }
-        this.level()
-                .setBlock(
-                        new BlockPos((int) this.getX() - xoff, (int) this.getY(), (int) this.getZ() - zoff),
-                        Blocks.AIR.defaultBlockState(),
-                        3);
+        this.ensureControllerAirPocket();
+    }
+
+    private void ensureControllerAirPocket() {
+        int xoff = 0;
+        int zoff = 0;
+        if (this.getX() < 0.0) {
+            xoff = 1;
+        }
+        if (this.getZ() < 0.0) {
+            zoff = 1;
+        }
+        int cx = (int) this.getX() - xoff;
+        int cy = (int) this.getY();
+        int cz = (int) this.getZ() - zoff;
+        for (int dy = 0; dy <= 3; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                for (int dz = -1; dz <= 1; ++dz) {
+                    this.FastSetBlock(cx + dx, cy + dy, cz + dz, Blocks.AIR);
+                }
+            }
+        }
     }
 
     private void mySetBlock(int ix, int iy, int iz) {
@@ -524,11 +541,7 @@ public class IslandToo extends Animal {
                     }
                 }
             }
-            this.level()
-                    .setBlock(
-                            new BlockPos((int) this.getX() - xoff, (int) this.getY(), (int) this.getZ() - zoff),
-                            Blocks.AIR.defaultBlockState(),
-                            3);
+            this.ensureControllerAirPocket();
         }
     }
 

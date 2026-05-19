@@ -108,6 +108,9 @@ public class Godzilla extends Monster {
         super.defineSynchedData();
         this.entityData.define(ATTACKING, (byte) 0);
         this.entityData.define(PLAY_NICELY, ChaosPersists.PlayNicely);
+        if (this.renderdata == null) {
+            this.renderdata = new RenderInfo();
+        }
         this.renderdata.rf1 = 0.0f;
         this.renderdata.rf2 = 0.0f;
         this.renderdata.rf3 = 0.0f;
@@ -718,6 +721,9 @@ public class Godzilla extends Monster {
 
     @Override
     public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        if (spawnReason == MobSpawnType.SPAWN_EGG || spawnReason == MobSpawnType.COMMAND) {
+            return true;
+        }
         if (!(level instanceof ServerLevelAccessor serverLevel)) {
             return false;
         }

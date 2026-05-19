@@ -73,9 +73,6 @@ public class Fairy extends AmbientCreature {
     public Fairy(EntityType<? extends Fairy> type, Level level) {
         super(type, level);
         this.my_blink = 20 + this.getRandom().nextInt(20);
-        if (level != null) {
-            this.fairy_type = level.getRandom().nextInt(9);
-        }
         this.targetSorter = new GenericTargetSorter(this);
         this.goalSelector.addGoal(0, new LookAtPlayerGoal(this, LivingEntity.class, 8.0f));
         this.goalSelector.addGoal(1, new RandomLookAroundGoal(this));
@@ -91,35 +88,48 @@ public class Fairy extends AmbientCreature {
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
+        // 1.12 entityInit() ran after constructor set fairy_type; 1.20 defineSynchedData runs during super().
+        if (!this.level().isClientSide()) {
+            this.fairy_type = this.getRandom().nextInt(9);
+        }
         this.entityData.define(FAIRY_TYPE, this.fairy_type);
     }
 
     public ResourceLocation getTexture(Fairy a) {
-        if (a.fairy_type == 8) {
+        int type = a.getFairyType();
+        if (type == 8) {
             return TEXTURE8;
         }
-        if (a.fairy_type == 7) {
+        if (type == 7) {
             return TEXTURE7;
         }
-        if (a.fairy_type == 6) {
+        if (type == 6) {
             return TEXTURE6;
         }
-        if (a.fairy_type == 5) {
+        if (type == 5) {
             return TEXTURE5;
         }
-        if (a.fairy_type == 4) {
+        if (type == 4) {
             return TEXTURE4;
         }
-        if (a.fairy_type == 3) {
+        if (type == 3) {
             return TEXTURE3;
         }
-        if (a.fairy_type == 2) {
+        if (type == 2) {
             return TEXTURE2;
         }
-        if (a.fairy_type == 1) {
+        if (type == 1) {
             return TEXTURE1;
         }
         return TEXTURE0;
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (FAIRY_TYPE.equals(key)) {
+            this.fairy_type = this.getFairyType();
+        }
     }
 
     public int getFairyType() {
@@ -249,8 +259,12 @@ public class Fairy extends AmbientCreature {
         if (this.myowner != null && this.myowner.equals("null")) {
             this.myowner = null;
         }
-        this.fairy_type = par1NBTTagCompound.getInt("fairyType");
-        this.entityData.set(FAIRY_TYPE, this.fairy_type);
+        if (par1NBTTagCompound.contains("FairyType")) {
+            this.fairy_type = par1NBTTagCompound.getInt("FairyType");
+        } else {
+            this.fairy_type = par1NBTTagCompound.getInt("fairyType");
+        }
+        this.setFairyType(this.fairy_type);
     }
 
     public boolean canSeeTarget(double pX, double pY, double pZ) {

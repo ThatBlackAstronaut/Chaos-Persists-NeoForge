@@ -2,10 +2,13 @@ package com.astryxion.chaospersists.item;
 
 import com.astryxion.chaospersists.util.MyUtils;
 
+import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.entity.Godzilla;
 import com.astryxion.chaospersists.entity.PitchBlack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -56,6 +59,9 @@ public class ItemSpawnEgg extends Item {
         }
         if (ent instanceof PitchBlack pitchBlack) {
             pitchBlack.setSpawnedFromEgg();
+        }
+        if (ent instanceof Godzilla) {
+            ChaosPersists.godzilla_has_spawned = 1;
         }
         if (ent instanceof LivingEntity living && stack.hasCustomHoverName()) {
             living.setCustomName(stack.getHoverName());
@@ -539,6 +545,11 @@ public class ItemSpawnEgg extends Item {
     }
 
     public static Entity spawnCreature(Level level, int entityId, String name, double x, double y, double z) {
+        return spawnCreature(level, entityId, name, 0, x, y, z);
+    }
+
+    public static Entity spawnCreature(
+            Level level, int entityId, String name, int skellyType, double x, double y, double z) {
         EntityType<?> type = null;
         if (name != null) {
             ResourceLocation loc = legacySpawnNameToRegistry(name);
@@ -546,9 +557,25 @@ public class ItemSpawnEgg extends Item {
                 type = ForgeRegistries.ENTITY_TYPES.getValue(loc);
             }
         } else if (entityId != 0) {
-            type = legacyVanillaEntityType(entityId);
+            if (entityId == 51 && skellyType != 0) {
+                type = EntityType.WITHER_SKELETON;
+            } else {
+                type = legacyVanillaEntityType(entityId);
+            }
         }
-        return spawnEntityType(level, type, x, y, z);
+        Entity entity = spawnEntityType(level, type, x, y, z);
+        if (entity instanceof Mob mob && level instanceof ServerLevel serverLevel) {
+            if (entityId == 100 || entityId == 120) {
+                BlockPos spawnPos = BlockPos.containing(x, y, z);
+                mob.finalizeSpawn(
+                        serverLevel,
+                        serverLevel.getCurrentDifficultyAt(spawnPos),
+                        MobSpawnType.SPAWN_EGG,
+                        null,
+                        null);
+            }
+        }
+        return entity;
     }
 
     private static Entity spawnVanillaCreature(Level level, EntityType<?> type, double x, double y, double z) {
@@ -560,31 +587,68 @@ public class ItemSpawnEgg extends Item {
             return null;
         }
         Entity entity = type.create(serverLevel);
-        if (entity != null) {
-            entity.moveTo(x, y, z, level.getRandom().nextFloat() * 360.0F, 0.0F);
-            serverLevel.addFreshEntity(entity);
-            if (entity instanceof Mob mob) {
-                MyUtils.playAmbientSound(mob);
-            }
+        if (entity == null) {
+            return null;
+        }
+        entity.moveTo(x, y, z, level.getRandom().nextFloat() * 360.0F, 0.0F);
+        boolean restorePhysics = false;
+        if (entity instanceof Godzilla) {
+            restorePhysics = !entity.noPhysics;
+            entity.noPhysics = true;
+        }
+        if (entity instanceof Mob mob) {
+            BlockPos spawnPos = BlockPos.containing(x, y, z);
+            mob.finalizeSpawn(
+                    serverLevel,
+                    serverLevel.getCurrentDifficultyAt(spawnPos),
+                    MobSpawnType.SPAWN_EGG,
+                    null,
+                    null);
+            mob.setPersistenceRequired();
+            MyUtils.playAmbientSound(mob);
+        }
+        if (!serverLevel.addFreshEntity(entity)) {
+            return null;
+        }
+        if (restorePhysics) {
+            entity.noPhysics = false;
         }
         return entity;
     }
 
+    /** 1.12 numeric entity ids used by {@link CritterCage} filled cages (EntityList.getClassFromID). */
     private static EntityType<?> legacyVanillaEntityType(int legacyId) {
-        switch (legacyId) {
-            case 51:
-                return EntityType.SKELETON;
-            case 63:
-                return EntityType.SLIME;
-            case 97:
-                return EntityType.SILVERFISH;
-            case 99:
-                return EntityType.IRON_GOLEM;
-            case 64:
-                return EntityType.ENDERMAN;
-            default:
-                return null;
-        }
+        return switch (legacyId) {
+            case 50 -> EntityType.CREEPER;
+            case 51 -> EntityType.SKELETON;
+            case 52 -> EntityType.SPIDER;
+            case 54 -> EntityType.ZOMBIE;
+            case 55 -> EntityType.SLIME;
+            case 56 -> EntityType.GHAST;
+            case 57 -> EntityType.ZOMBIFIED_PIGLIN;
+            case 58 -> EntityType.ENDERMAN;
+            case 59 -> EntityType.CAVE_SPIDER;
+            case 60 -> EntityType.SILVERFISH;
+            case 61 -> EntityType.BLAZE;
+            case 62 -> EntityType.MAGMA_CUBE;
+            case 63 -> EntityType.ENDER_DRAGON;
+            case 64 -> EntityType.WITHER;
+            case 65 -> EntityType.BAT;
+            case 66 -> EntityType.WITCH;
+            case 90 -> EntityType.PIG;
+            case 91 -> EntityType.SHEEP;
+            case 92 -> EntityType.COW;
+            case 93 -> EntityType.CHICKEN;
+            case 94 -> EntityType.SQUID;
+            case 95 -> EntityType.WOLF;
+            case 96 -> EntityType.MOOSHROOM;
+            case 97 -> EntityType.SNOW_GOLEM;
+            case 98 -> EntityType.CAT;
+            case 99 -> EntityType.IRON_GOLEM;
+            case 100 -> EntityType.HORSE;
+            case 120 -> EntityType.VILLAGER;
+            default -> null;
+        };
     }
 
     private static ResourceLocation legacySpawnNameToRegistry(String legacyName) {

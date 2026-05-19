@@ -71,6 +71,9 @@ public class Kyuubi extends Monster {
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
         super.tick();
         if (this.getRandom().nextInt(10) == 1) {
+            if (!this.level().isClientSide()) {
+                this.setRemainingFireTicks(5);
+            }
             if (this.level().isClientSide) {
                 this.level()
                         .addParticle(
@@ -128,11 +131,8 @@ public class Kyuubi extends Monster {
                                     0.0,
                                     0.0);
                 }
-            } else {
-                this.setRemainingFireTicks(100);
-                if (this.isInWater()) {
-                    this.hurt(this.damageSources().mobAttack(this), (float) ChaosPersists.Kyuubi_stats.attack);
-                }
+            } else if (this.isInWater()) {
+                this.hurt(this.damageSources().mobAttack(this), (float) ChaosPersists.Kyuubi_stats.attack);
             }
         }
     }

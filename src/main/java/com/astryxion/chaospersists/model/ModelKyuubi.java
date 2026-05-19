@@ -3,6 +3,7 @@ package com.astryxion.chaospersists.model;
 import com.astryxion.chaospersists.entity.Kyuubi;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -267,6 +268,8 @@ public class ModelKyuubi extends EntityModel<Kyuubi> {
 
     @Override
     public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
         this.lfLegLower.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.rtLegLower.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.head.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
@@ -309,5 +312,6 @@ public class ModelKyuubi extends EntityModel<Kyuubi> {
         this.lfLegLowerFire.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.rtLegUpperFire.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.rtLegLowerFire.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        poseStack.popPose();
     }
 }

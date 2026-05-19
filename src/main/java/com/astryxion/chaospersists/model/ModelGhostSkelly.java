@@ -134,15 +134,16 @@ public class ModelGhostSkelly extends EntityModel<GhostSkelly> {
             float green,
             float blue,
             float alpha) {
-        this.body.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.shirt.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.head.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.stem.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.rarm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.larm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.rsleeve.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.lsleeve.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.lchains.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.rchains.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        float ghostAlpha = 0.25f;
+        this.body.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
+        this.shirt.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
+        this.head.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
+        this.stem.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
+        this.rarm.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
+        this.larm.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
+        this.rsleeve.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
+        this.lsleeve.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
+        this.lchains.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
+        this.rchains.render(poseStack, buffer, packedLight, packedOverlay, 0.75f, 0.75f, 0.75f, ghostAlpha);
     }
 }

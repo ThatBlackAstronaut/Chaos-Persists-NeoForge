@@ -1,10 +1,11 @@
 package com.astryxion.chaospersists.world.dimension.teleporter;
 
-import com.astryxion.chaospersists.util.MyUtils;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.common.util.ITeleporter;
 
 import java.util.function.Function;
@@ -34,7 +35,12 @@ public class UtopiaTeleporter implements ITeleporter {
         destWorld.getChunkSource().addRegionTicket(TicketType.POST_TELEPORT, chunkPos, 1, entity.getId());
         destWorld.getChunk(chunkPos.x, chunkPos.z);
 
-        int spawnY = MyUtils.findSurfaceSpawnY(destWorld, blockX, blockZ);
+        int spawnY = destWorld.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, blockX, blockZ);
+        if (spawnY < destWorld.getMinBuildHeight() + 8) {
+            spawnY = 120;
+        } else {
+            spawnY = Math.max(spawnY + 1, 64);
+        }
 
         Entity moved = repositionEntity.apply(false);
         if (moved != null) {

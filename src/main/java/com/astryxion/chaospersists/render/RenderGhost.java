@@ -2,9 +2,6 @@ package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.Ghost;
 import com.astryxion.chaospersists.model.ModelGhost;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
@@ -21,7 +18,7 @@ public class RenderGhost extends MobRenderer<Ghost, ModelGhost> {
     }
 
     @Override
-    protected void scale(Ghost entity, PoseStack poseStack, float partialTick) {
+    protected void scale(Ghost entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
         poseStack.scale(this.scale, this.scale, this.scale);
     }
 
@@ -30,15 +27,20 @@ public class RenderGhost extends MobRenderer<Ghost, ModelGhost> {
         return TEXTURE;
     }
 
+    /**
+     * Use default {@link MobRenderer#render} (applies the -Y flip 1.12 {@code RenderLiving} used).
+     * 1.12 alpha was 0.25 via GL blend in {@link ModelGhost#render}.
+     */
     @Override
-    public void render(
-            Ghost entity,
-            float entityYaw,
-            float partialTicks,
-            PoseStack poseStack,
-            MultiBufferSource buffer,
-            int packedLight) {
-        VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.entityTranslucent(this.getTextureLocation(entity)));
-        this.model.renderToBuffer(poseStack, vertexconsumer, packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, 0.75F, 0.75F, 0.75F, 0.25F);
+    protected RenderType getRenderType(Ghost entity, boolean bodyVisible, boolean translucent, boolean glowing) {
+        if (glowing) {
+            return RenderType.outline(this.getTextureLocation(entity));
+        }
+        return RenderType.entityTranslucent(this.getTextureLocation(entity));
+    }
+
+    @Override
+    protected float getWhiteOverlayProgress(Ghost entity, float partialTicks) {
+        return 0.0F;
     }
 }

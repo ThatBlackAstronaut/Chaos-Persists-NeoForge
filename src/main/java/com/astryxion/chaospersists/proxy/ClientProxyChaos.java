@@ -4,8 +4,46 @@ import com.astryxion.chaospersists.client.BigHammerItemStackRenderer;
 import com.astryxion.chaospersists.client.ChainsawItemStackRenderer;
 import com.astryxion.chaospersists.client.StaticBigWeaponItemStackRenderer;
 import com.astryxion.chaospersists.client.TeisrHandBakedModelWrapper;
+import com.astryxion.chaospersists.block.BlockAppleLeaves;
+import com.astryxion.chaospersists.block.BlockButterflyPlant;
+import com.astryxion.chaospersists.block.BlockCorn;
+import com.astryxion.chaospersists.block.BlockCrystal;
+import com.astryxion.chaospersists.block.BlockCrystalLeaves;
+import com.astryxion.chaospersists.block.BlockCrystalPlant;
+import com.astryxion.chaospersists.block.BlockCrystalTorch;
+import com.astryxion.chaospersists.block.BlockCrystalTreeLog;
+import com.astryxion.chaospersists.block.BlockExperienceLeaves;
+import com.astryxion.chaospersists.block.BlockExperiencePlant;
+import com.astryxion.chaospersists.block.BlockExtremeTorch;
+import com.astryxion.chaospersists.block.BlockFireflyPlant;
+import com.astryxion.chaospersists.block.BlockLettuce;
+import com.astryxion.chaospersists.block.BlockMosquitoPlant;
+import com.astryxion.chaospersists.block.BlockMothPlant;
+import com.astryxion.chaospersists.block.BlockQuinoa;
+import com.astryxion.chaospersists.block.BlockRadish;
+import com.astryxion.chaospersists.block.BlockRice;
+import com.astryxion.chaospersists.block.BlockScaryLeaves;
+import com.astryxion.chaospersists.block.BlockStrawberry;
+import com.astryxion.chaospersists.block.BlockTomato;
+import com.astryxion.chaospersists.block.CrystalAntBlock;
+import com.astryxion.chaospersists.block.CrystalFurnace;
+import com.astryxion.chaospersists.block.CrystalGrass;
+import com.astryxion.chaospersists.block.CrystalWood;
+import com.astryxion.chaospersists.block.CrystalWorkbench;
+import com.astryxion.chaospersists.block.ChaosDirectionalTorchBlock;
+import com.astryxion.chaospersists.block.DungeonSpawnerBlock;
+import com.astryxion.chaospersists.block.IslandBlock;
+import com.astryxion.chaospersists.block.KingSpawnerBlock;
+import com.astryxion.chaospersists.block.KrakenRepellent;
+import com.astryxion.chaospersists.block.QueenSpawnerBlock;
+import com.astryxion.chaospersists.item.CreeperRepellent;
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.core.ChaosSounds;
+import com.astryxion.chaospersists.util.MyBlockFlower;
+import com.astryxion.chaospersists.world.ore.OreBasicStone;
+import com.astryxion.chaospersists.world.ore.OreCrystal;
+import com.astryxion.chaospersists.world.ore.OreCrystalCrystal;
+import com.astryxion.chaospersists.world.ore.OreGenericEgg;
 import com.astryxion.chaospersists.model.ModelBattleAxe;
 import com.astryxion.chaospersists.model.ModelBertha;
 import com.astryxion.chaospersists.model.ModelHammy;
@@ -18,14 +56,18 @@ import com.astryxion.chaospersists.util.KeyHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.color.item.ItemColors;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import com.astryxion.chaospersists.compat.forge.common.util.EnumHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -35,6 +77,67 @@ public class ClientProxyChaos extends CommonProxyChaos {
     @SuppressWarnings("unchecked")
     private static Block cpBlock(Object block) {
         return (Block) block;
+    }
+
+    @Override
+    public void registerBlockRenderLayers() {
+        RenderType cutout = RenderType.cutout();
+        RenderType translucent = RenderType.translucent();
+
+        for (Block block : BuiltInRegistries.BLOCK) {
+            ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
+            if (id == null || !ChaosPersists.MODID.equals(id.getNamespace())) {
+                continue;
+            }
+
+            if (block instanceof OreGenericEgg
+                    || block instanceof OreCrystal
+                    || block instanceof OreCrystalCrystal
+                    || block instanceof CrystalWood
+                    || block instanceof CrystalGrass
+                    || block instanceof CrystalWorkbench
+                    || block instanceof CrystalFurnace
+                    || block instanceof CrystalAntBlock
+                    || block instanceof IslandBlock
+                    || block instanceof BlockCrystal
+                    || block instanceof BlockCrystalTreeLog
+                    || block instanceof BlockCrystalPlant
+                    || block instanceof BlockExperiencePlant
+                    || block instanceof MyBlockFlower
+                    || block instanceof BlockTomato
+                    || block instanceof BlockStrawberry
+                    || block instanceof BlockRice
+                    || block instanceof BlockRadish
+                    || block instanceof BlockQuinoa
+                    || block instanceof BlockMothPlant
+                    || block instanceof BlockMosquitoPlant
+                    || block instanceof BlockLettuce
+                    || block instanceof BlockFireflyPlant
+                    || block instanceof BlockButterflyPlant
+                    || block instanceof BlockCorn
+                    || block instanceof BlockCrystalTorch
+                    || block instanceof BlockExtremeTorch
+                    || block instanceof ChaosDirectionalTorchBlock
+                    || block instanceof CreeperRepellent
+                    || block instanceof KrakenRepellent
+                    || block instanceof KingSpawnerBlock
+                    || block instanceof QueenSpawnerBlock
+                    || block instanceof DungeonSpawnerBlock) {
+                ItemBlockRenderTypes.setRenderLayer(block, cutout);
+            } else if (block instanceof OreBasicStone) {
+                String path = id.getPath();
+                if ("crystalstone".equals(path)
+                        || "crystalrat".equals(path)
+                        || "crystalfairy".equals(path)) {
+                    ItemBlockRenderTypes.setRenderLayer(block, cutout);
+                }
+            } else if (block instanceof BlockScaryLeaves
+                    || block instanceof BlockExperienceLeaves
+                    || block instanceof BlockCrystalLeaves
+                    || block instanceof BlockAppleLeaves) {
+                ItemBlockRenderTypes.setRenderLayer(block, translucent);
+            }
+        }
     }
 
     @Override

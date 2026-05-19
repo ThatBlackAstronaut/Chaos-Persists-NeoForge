@@ -24,7 +24,7 @@ public class ModelCliffRacer extends EntityModel<CliffRacer> {
     private final ModelPart Beak;
 
     public ModelCliffRacer(float f1) {
-        this(LayerDefinition.create(createMesh(), 64, 32).bakeRoot(), f1);
+        this(LayerDefinition.create(createMesh(), 64, 64).bakeRoot(), f1);
     }
 
     public ModelCliffRacer(ModelPart root, float wingspeed) {

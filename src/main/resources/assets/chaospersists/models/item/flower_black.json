@@ -1,3 +1,6 @@
-{
-  "parent": "chaospersists:block/flower_black"
+﻿{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "chaospersists:block/flower_black"
+  }
 }

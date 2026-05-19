@@ -28,9 +28,7 @@
       { "type": "chaospersists:velocity_raptor", "weight": 200, "minCount": 1, "maxCount": 1 }
     ]
   },
-  "spawn_costs": {
-    "chaospersists:bird": { "energy_budget": 0.15, "charge": 0.35 }
-  },
+  "spawn_costs": {},
   "carvers": {
     "air": [
       "minecraft:cave",
@@ -97,8 +95,9 @@
     ],
     [
       "minecraft:glow_lichen",
-      "minecraft:disk_gravel",
-      "minecraft:forest_rock"
+      "minecraft:trees_windswept_hills",
+      "minecraft:flower_default",
+      "minecraft:patch_grass_badlands"
     ],
     [
       "minecraft:freeze_top_layer"

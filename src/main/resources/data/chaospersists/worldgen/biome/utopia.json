@@ -33,16 +33,7 @@
       { "type": "chaospersists:frog", "weight": 5, "minCount": 4, "maxCount": 6 }
     ]
   },
-  "spawn_costs": {
-    "chaospersists:bird": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:butterfly": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:firefly": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:moth": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:chipmunk": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:cricket": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:coin": { "energy_budget": 0.1, "charge": 0.5 },
-    "chaospersists:gold_fish": { "energy_budget": 0.1, "charge": 0.5 }
-  },
+  "spawn_costs": {},
   "carvers": {
     "air": [
       "minecraft:cave",

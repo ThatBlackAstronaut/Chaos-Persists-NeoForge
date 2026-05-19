@@ -544,6 +544,6 @@ public class CritterCage extends Item {
                 name = "trex";
             }
         }
-        return ItemSpawnEgg.spawnCreature(level, entityID, name, x + 0.5, y + 1.1, z + 0.5);
+        return ItemSpawnEgg.spawnCreature(level, entityID, name, skelly_type, x + 0.5, y + 1.1, z + 0.5);
     }
 }

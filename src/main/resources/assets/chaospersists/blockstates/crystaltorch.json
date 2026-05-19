@@ -11,6 +11,9 @@
       "y": 270,
       "model": "chaospersists:block/crystaltorch_wall"
     },
+    "facing=up": {
+      "model": "chaospersists:block/crystaltorch"
+    },
     "facing=west": {
       "y": 180,
       "model": "chaospersists:block/crystaltorch_wall"

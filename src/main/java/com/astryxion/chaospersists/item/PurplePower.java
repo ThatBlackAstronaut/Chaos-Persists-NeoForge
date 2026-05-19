@@ -119,6 +119,11 @@ public class PurplePower extends LivingEntity {
         return 1000;
     }
 
+    @Override
+    public boolean shouldShowName() {
+        return false;
+    }
+
     public int mygetExperienceValue() {
         return 35;
     }

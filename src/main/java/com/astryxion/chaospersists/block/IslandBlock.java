@@ -160,7 +160,7 @@ public class IslandBlock extends Block {
     }
 
     /**
-     * Same UX as {@link com.astryxion.chaospersists.item.ItemRandomDungeon}: Fortune, and use on stone/cobble/grass/dirt (yâ‰¥40) to place the island block above.
+     * Same UX as {@link com.astryxion.chaospersists.item.ItemRandomDungeon}: Fortune, use on any block to place the island above if the space is valid.
      */
     public static class ItemIslandBlock extends BlockItem {
 
@@ -186,30 +186,17 @@ public class IslandBlock extends Block {
                 net.minecraft.world.item.context.UseOnContext context) {
             Player player = context.getPlayer();
             Level world = context.getLevel();
-            BlockPos pos = context.getClickedPos();
+            BlockPos placePos = context.getClickedPos().above();
             ItemStack stack = context.getItemInHand();
-            Block clicked = world.getBlockState(pos).getBlock();
-            if (clicked != Blocks.STONE
-                    && clicked != Blocks.COBBLESTONE
-                    && clicked != Blocks.GRASS_BLOCK
-                    && clicked != Blocks.DIRT) {
-                return InteractionResult.FAIL;
-            }
-            if (world.dimension() == Level.OVERWORLD && pos.getY() < 40) {
+            BlockState placeState = ChaosPersists.MyIslandBlock.defaultBlockState();
+            if (!world.isEmptyBlock(placePos) || !placeState.canSurvive(world, placePos)) {
                 return InteractionResult.FAIL;
             }
             if (!world.isClientSide) {
-                BlockPos up = pos.above();
-                if (!world.isEmptyBlock(up)
-                        || !ChaosPersists.MyIslandBlock.canSurvive(
-                                ChaosPersists.MyIslandBlock.defaultBlockState(), world, up)) {
-                    return InteractionResult.FAIL;
+                world.setBlock(placePos, placeState, 2);
+                if (player != null && !player.getAbilities().instabuild) {
+                    stack.shrink(1);
                 }
-                BlockState placeState = ChaosPersists.MyIslandBlock.defaultBlockState();
-                world.setBlock(up, placeState, 2);
-            }
-            if (player != null && !player.getAbilities().instabuild) {
-                stack.shrink(1);
             }
             return InteractionResult.sidedSuccess(world.isClientSide);
         }

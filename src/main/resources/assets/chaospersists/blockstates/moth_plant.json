@@ -1,8 +1,5 @@
 {
   "variants": {
-    "" : {
-      "model": "chaospersists:block/moth_plant0"
-    },
     "age=0": {
       "model": "chaospersists:block/moth_plant0"
     },

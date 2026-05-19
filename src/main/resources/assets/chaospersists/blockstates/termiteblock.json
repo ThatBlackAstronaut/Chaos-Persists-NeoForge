@@ -1,6 +1,5 @@
 {
   "variants": {
-    "" : { "model": "chaospersists:block/termiteblock" },
     "snowy=false": { "model": "chaospersists:block/termiteblock" },
     "snowy=true": { "model": "chaospersists:block/termiteblock" }
   }

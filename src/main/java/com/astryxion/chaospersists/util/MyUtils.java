@@ -78,10 +78,8 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
@@ -276,15 +274,6 @@ public class MyUtils {
             return null;
         }
         return level.getBlockEntity(pos);
-    }
-
-    /** Safe surface Y for dimension teleporters (1.12 default fallback Y=120). */
-    public static int findSurfaceSpawnY(ServerLevel level, int blockX, int blockZ) {
-        int spawnY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, blockX, blockZ);
-        if (spawnY < level.getMinBuildHeight() + 8) {
-            return 120;
-        }
-        return Math.max(spawnY + 1, 64);
     }
 }
 
