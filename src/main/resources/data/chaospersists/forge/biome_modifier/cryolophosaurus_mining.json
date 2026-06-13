@@ -1,0 +1,9 @@
+{
+  "type": "chaospersists:add_mining_dimension_spawns",
+  "spawners": {
+    "type": "chaospersists:cryolophosaurus",
+    "weight": 8,
+    "minCount": 1,
+    "maxCount": 1
+  }
+}

@@ -9,29 +9,14 @@
     "water_fog_color": 329011
   },
   "spawners": {
-    "creature": [
-      { "type": "chaospersists:gazelle", "weight": 10, "minCount": 2, "maxCount": 4 },
-      { "type": "chaospersists:girlfriend", "weight": 5, "minCount": 2, "maxCount": 3 },
-      { "type": "chaospersists:boyfriend", "weight": 5, "minCount": 2, "maxCount": 3 },
-      { "type": "chaospersists:apple_cow", "weight": 10, "minCount": 4, "maxCount": 8 },
-      { "type": "chaospersists:golden_apple_cow", "weight": 8, "minCount": 2, "maxCount": 6 },
-      { "type": "chaospersists:enchanted_golden_apple_cow", "weight": 5, "minCount": 2, "maxCount": 4 }
-    ],
-    "ambient": [
-      { "type": "chaospersists:firefly", "weight": 15, "minCount": 3, "maxCount": 6 },
-      { "type": "chaospersists:butterfly", "weight": 20, "minCount": 3, "maxCount": 6 },
-      { "type": "chaospersists:moth", "weight": 10, "minCount": 1, "maxCount": 5 },
-      { "type": "chaospersists:chipmunk", "weight": 3, "minCount": 1, "maxCount": 2 },
-      { "type": "chaospersists:bird", "weight": 10, "minCount": 2, "maxCount": 4 },
-      { "type": "chaospersists:gold_fish", "weight": 1, "minCount": 1, "maxCount": 1 },
-      { "type": "chaospersists:coin", "weight": 2, "minCount": 1, "maxCount": 1 },
-      { "type": "chaospersists:cricket", "weight": 5, "minCount": 4, "maxCount": 6 }
-    ],
-    "water_creature": [
-      { "type": "chaospersists:whale", "weight": 1, "minCount": 1, "maxCount": 1 },
-      { "type": "chaospersists:flounder", "weight": 2, "minCount": 2, "maxCount": 4 },
-      { "type": "chaospersists:frog", "weight": 5, "minCount": 4, "maxCount": 6 }
-    ]
+    "monster": [],
+    "creature": [],
+    "ambient": [],
+    "axolotls": [],
+    "underground_water_creature": [],
+    "water_creature": [],
+    "water_ambient": [],
+    "misc": []
   },
   "spawn_costs": {},
   "carvers": {
@@ -98,6 +83,5 @@
     [
       "minecraft:freeze_top_layer"
     ]
-  ],
-  "creature_spawn_probability": 0.1
+  ]
 }

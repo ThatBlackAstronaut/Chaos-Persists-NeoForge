@@ -2,10 +2,10 @@
   "type": "chaospersists:mining_type",
   "generator": {
     "type": "minecraft:noise",
-    "settings": "chaospersists:chaos_mining_mountains",
+    "settings": "chaospersists:chaos_no_ocean",
     "biome_source": {
       "type": "minecraft:fixed",
-      "biome": "chaospersists:mining_dimension"
+      "biome": "minecraft:windswept_hills"
     }
   }
 }

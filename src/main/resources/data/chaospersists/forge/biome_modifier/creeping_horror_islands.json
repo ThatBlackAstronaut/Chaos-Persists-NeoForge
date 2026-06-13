@@ -1,0 +1,10 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": "chaospersists:danger_dimension",
+  "spawners": {
+    "type": "chaospersists:creeping_horror",
+    "weight": 6,
+    "minCount": 4,
+    "maxCount": 8
+  }
+}

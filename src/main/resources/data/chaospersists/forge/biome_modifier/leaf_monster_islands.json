@@ -1,0 +1,10 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": "chaospersists:danger_dimension",
+  "spawners": {
+    "type": "chaospersists:leaf_monster",
+    "weight": 4,
+    "minCount": 2,
+    "maxCount": 4
+  }
+}

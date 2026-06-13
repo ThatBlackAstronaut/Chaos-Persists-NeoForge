@@ -1,0 +1,13 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": [
+    "chaospersists:utopia",
+    "chaospersists:village_dimension"
+  ],
+  "spawners": {
+    "type": "chaospersists:flounder",
+    "weight": 8,
+    "minCount": 1,
+    "maxCount": 2
+  }
+}

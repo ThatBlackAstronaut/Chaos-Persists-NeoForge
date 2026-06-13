@@ -1,0 +1,13 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": [
+    "chaospersists:utopia",
+    "chaospersists:village_dimension"
+  ],
+  "spawners": {
+    "type": "chaospersists:bird",
+    "weight": 45,
+    "minCount": 7,
+    "maxCount": 10
+  }
+}

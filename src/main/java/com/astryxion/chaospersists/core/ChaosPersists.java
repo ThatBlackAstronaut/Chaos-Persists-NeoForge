@@ -5,6 +5,9 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import net.minecraft.world.entity.EntityType;
+import net.minecraftforge.common.world.BiomeModifier;
+import com.astryxion.chaospersists.world.biome.BiomeMiningDimension;
+import com.mojang.serialization.Codec;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -26,7 +29,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -112,6 +114,9 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.Mob;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -544,6 +549,7 @@ import com.astryxion.chaospersists.util.MyDispenserBehaviorIceball;
 import com.astryxion.chaospersists.util.MyDispenserBehaviorDeadIrukandji;
 import com.astryxion.chaospersists.util.MyDispenserBehaviorLaserball;
 import com.astryxion.chaospersists.util.MyDispenserBehaviorRock;
+import com.astryxion.chaospersists.command.CommandDanger;
 import com.astryxion.chaospersists.command.CommandMining;
 import com.astryxion.chaospersists.command.CommandUtopia;
 import com.astryxion.chaospersists.command.CommandVillageMania;
@@ -586,6 +592,12 @@ public class ChaosPersists
       DeferredRegister.create(ForgeRegistries.MENU_TYPES, MODID);
   public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
       DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+  public static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIER_SERIALIZERS =
+      DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, MODID);
+  public static final RegistryObject<Codec<BiomeMiningDimension.MiningDimensionAddSpawnsBiomeModifier>>
+      ADD_MINING_DIMENSION_SPAWNS =
+          BIOME_MODIFIER_SERIALIZERS.register(
+                  "add_mining_dimension_spawns", BiomeMiningDimension::makeCodec);
 
   public static final RegistryObject<CreativeModeTab> TAB_CHAOS_ITEMS =
       CREATIVE_MODE_TABS.register(
@@ -675,6 +687,7 @@ public class ChaosPersists
     BLOCK_ENTITY_TYPES.register(modBus);
     MENU_TYPES.register(modBus);
     CREATIVE_MODE_TABS.register(modBus);
+    BIOME_MODIFIER_SERIALIZERS.register(modBus);
     registerAllCritterCages();
     registerAllWeaponsAndArmor();
     registerAllFoodItems();
@@ -2251,6 +2264,7 @@ private static void registerAllCritterCages() {
     CommandUtopia.register(event.getDispatcher());
     CommandMining.register(event.getDispatcher());
     CommandVillageMania.register(event.getDispatcher());
+    CommandDanger.register(event.getDispatcher());
     serverStarting(new FMLServerStartingEvent(event));
   }
 
@@ -2341,13 +2355,21 @@ private static void registerAllCritterCages() {
         Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(MODID, "village"));
   }
 
-  /** Legacy dimension index (1=Utopia, 2=Mining, 3=Village Mania). */
+  public static ResourceKey<Level> getIslandsDimensionKey() {
+    return ResourceKey.create(
+        Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(MODID, "islands"));
+  }
+
+  /** Legacy dimension index (1=Utopia, 2=Mining, 3=Village Mania, 4=Islands/Danger). */
   public static ResourceKey<Level> getDimensionKey(int n) {
     if (n == 2) {
       return getMiningDimensionKey();
     }
     if (n == 3) {
       return getVillageDimensionKey();
+    }
+    if (n == 4) {
+      return getIslandsDimensionKey();
     }
     return getUtopiaDimensionKey();
   }
@@ -2362,6 +2384,9 @@ private static void registerAllCritterCages() {
     }
     if (n == 3) {
       return DimensionID3;
+    }
+    if (n == 4) {
+      return DimensionID4;
     }
     return DimensionID;
   }
@@ -2670,6 +2695,7 @@ private static void registerAllCritterCages() {
   public static int DimensionID = 0;
   public static int DimensionID2 = 0;
   public static int DimensionID3 = 0;
+  public static int DimensionID4 = 0;
 
   public static int godzilla_has_spawned = 0;
   public static int current_dimension = 0;
@@ -6990,8 +7016,35 @@ private static void registerAllCritterCages() {
   }
 
   @SubscribeEvent
-  public void onLivingSpawnCheckDebug(MobSpawnEvent.SpawnPlacementCheck event) {
-    // Port-time debug hook; keep subscribed but inert (logging here stalls worldgen).
+  public void onSpawnerSpawnPlacementCheck(MobSpawnEvent.SpawnPlacementCheck event) {
+    if (event.getSpawnType() != MobSpawnType.SPAWNER) {
+      return;
+    }
+    ResourceLocation mobId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(event.getEntityType());
+    if (mobId == null || !"chaospersists".equals(mobId.getNamespace())) {
+      return;
+    }
+    if (SpawnerFixHelper.isNearMatchingSpawnerAt(event.getPos(), event.getLevel(), mobId)) {
+      event.setResult(Event.Result.ALLOW);
+    }
+  }
+
+  @SubscribeEvent
+  public void onSpawnerMobPositionCheck(MobSpawnEvent.PositionCheck event) {
+    if (event.getSpawnType() != MobSpawnType.SPAWNER) {
+      return;
+    }
+    Mob mob = event.getEntity();
+    if (mob == null || !SpawnerFixHelper.isChaosEntityFirstTick(mob)) {
+      return;
+    }
+    if (!SpawnerFixHelper.isNearMatchingSpawnerForMob(mob, event.getLevel())) {
+      return;
+    }
+    // Allow only when the mob still fits the space; bypass legacy display-name spawn rules only.
+    if (mob.checkSpawnObstruction(event.getLevel())) {
+      event.setResult(Event.Result.ALLOW);
+    }
   }
 
   @SubscribeEvent
@@ -7745,25 +7798,28 @@ private static void registerAllCritterCages() {
 
       if (flag)
       {
-        if (((par6 & 0x2) != 0) && ((!world.isClientSide()) || ((par6 & 0x4) == 0)))
+        if (!ChaosWorld.isDuringPopulateFeature())
         {
-          BlockState newState = prepareBlockStateForWorldGen(RegistryCompat.getStateFromMeta(par4, par5));
-          world.sendBlockUpdated(pos, oldState, newState, 3);
-        }
-
-        if ((!world.isClientSide()) && ((par6 & 0x1) != 0))
-        {
-          world.updateNeighborsAt(pos, par4);
-        }
-
-        // Direct chunk writes skip vanilla lighting; without this, tall structures often render half-black (stale sky/block light).
-        if (!world.isClientSide())
-        {
-          if (world.dimensionType().hasSkyLight())
+          if (((par6 & 0x2) != 0) && ((!world.isClientSide()) || ((par6 & 0x4) == 0)))
           {
+            BlockState newState = prepareBlockStateForWorldGen(RegistryCompat.getStateFromMeta(par4, par5));
+            world.sendBlockUpdated(pos, oldState, newState, 3);
+          }
+
+          if (!world.isClientSide())
+          {
+            notifyFastBlockPlacement(world, chunk, pos, par4, par6);
+          }
+
+          // Direct chunk writes skip vanilla lighting; without this, tall structures often render half-black (stale sky/block light).
+          if (!world.isClientSide())
+          {
+            if (world.dimensionType().hasSkyLight())
+            {
+              world.getLightEngine().checkBlock(pos);
+            }
             world.getLightEngine().checkBlock(pos);
           }
-          world.getLightEngine().checkBlock(pos);
         }
 
       }
@@ -7785,42 +7841,30 @@ private static void registerAllCritterCages() {
 
       LevelChunk chunk = world.getChunk(par1 >> 4, par3 >> 4);
       BlockPos pos = new BlockPos(par1, par2, par3);
-      boolean flag = true;
-      if (chunk != refChunk)
+      int localX = par1 & 15;
+      int localZ = par3 & 15;
+
+      BlockState oldState = Blocks.AIR.defaultBlockState();
+      if ((par6 & 0x1) != 0)
       {
-        BlockState oldState = Blocks.AIR.defaultBlockState();
-        if ((par6 & 0x1) != 0)
-        {
-          oldState = chunk.getBlockState(new BlockPos(par1 & 0xF, par2, par3 & 0xF));
-        }
-
-        flag = setBlockIDWithMetadataFast(chunk, par1 & 0xF, par2, par3 & 0xF, par4, par5);
-
-        if (flag)
-        {
-          if (((par6 & 0x2) != 0) && ((!world.isClientSide()) || ((par6 & 0x4) == 0)))
-          {
-            BlockState newState = prepareBlockStateForWorldGen(RegistryCompat.getStateFromMeta(par4, par5));
-            world.sendBlockUpdated(pos, oldState, newState, 3);
-          }
-
-          if ((!world.isClientSide()) && ((par6 & 0x1) != 0))
-          {
-            world.updateNeighborsAt(pos, par4);
-          }
-
-          if (!world.isClientSide())
-          {
-            if (world.dimensionType().hasSkyLight())
-            {
-              world.getLightEngine().checkBlock(pos);
-            }
-            world.getLightEngine().checkBlock(pos);
-          }
-        }
+        oldState = chunk.getBlockState(new BlockPos(localX, par2, localZ));
       }
-      else {
-        setBlockIDWithMetadataFast(chunk, par1 & 0xF, par2, par3 & 0xF, par4, par5);
+
+      boolean flag = setBlockIDWithMetadataFast(chunk, localX, par2, localZ, par4, par5);
+
+      if (flag && !ChaosWorld.isDuringPopulateFeature())
+      {
+        if (((par6 & 0x2) != 0) && ((!world.isClientSide()) || ((par6 & 0x4) == 0)))
+        {
+          BlockState newState = prepareBlockStateForWorldGen(RegistryCompat.getStateFromMeta(par4, par5));
+          world.sendBlockUpdated(pos, oldState, newState, 3);
+        }
+
+        if (!world.isClientSide())
+        {
+          notifyFastBlockPlacement(world, chunk, pos, par4, par6);
+        }
+
         if (!world.isClientSide())
         {
           if (world.dimensionType().hasSkyLight())
@@ -7835,6 +7879,48 @@ private static void registerAllCritterCages() {
     }
 
     return false;
+  }
+
+  private static boolean isCrossConnectBlock(Block block) {
+    return block instanceof net.minecraft.world.level.block.IronBarsBlock
+        || block instanceof net.minecraft.world.level.block.FenceBlock
+        || block instanceof net.minecraft.world.level.block.WallBlock
+        || block instanceof net.minecraft.world.level.block.ChainBlock;
+  }
+
+  /**
+   * Direct chunk writes skip vanilla neighbor/shape updates; panes, bars, fences, and walls stay
+   * disconnected unless shapes are refreshed after each placement (1.12 {@code setBlock} flag 3).
+   */
+  private static void notifyFastBlockPlacement(
+      Level world, LevelChunk chunk, BlockPos pos, Block placedBlock, int par6) {
+    if ((par6 & 0x2) != 0 || isCrossConnectBlock(placedBlock)) {
+      world.updateNeighborsAt(pos, placedBlock);
+    }
+    if (isCrossConnectBlock(placedBlock)) {
+      refreshCrossConnectBlockState(world, chunk, pos);
+    }
+  }
+
+  private static void refreshCrossConnectBlockState(Level world, LevelChunk chunk, BlockPos pos) {
+    BlockState state = world.getBlockState(pos);
+    BlockState newState = state;
+    for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
+      BlockPos neighborPos = pos.relative(direction);
+      BlockState neighborState = world.getBlockState(neighborPos);
+      BlockState updated =
+          newState.updateShape(direction, neighborState, world, pos, neighborPos);
+      if (updated != newState) {
+        newState = updated;
+      }
+    }
+    if (newState != state) {
+      chunk.setBlockState(
+          new BlockPos(pos.getX() & 15, pos.getY(), pos.getZ() & 15),
+          prepareBlockStateForWorldGen(newState),
+          false);
+      world.sendBlockUpdated(pos, state, newState, 3);
+    }
   }
 
   /**
@@ -7895,10 +7981,14 @@ private static void registerAllCritterCages() {
     if (par2 < chunk.getMinBuildHeight() || par2 >= chunk.getMaxBuildHeight()) {
       return false;
     }
-    if (par4 == null || par4 == Blocks.AIR) {
+    if (par4 == null) {
       return false;
     }
     BlockPos pos = new BlockPos(par1, par2, par3);
+    if (par4 == Blocks.AIR) {
+      chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false);
+      return true;
+    }
     chunk.setBlockState(pos, prepareBlockStateForWorldGen(RegistryCompat.getStateFromMeta(par4, par5)), false);
     return true;
   }
@@ -7928,11 +8018,16 @@ private static void registerAllCritterCages() {
       }
       par1 &= 15;
       par3 &= 15;
-      if (par4 == null || par4 == Blocks.AIR) {
+      if (par4 == null) {
         return false;
       }
+      BlockPos pos = new BlockPos(par1, par2, par3);
+      if (par4 == Blocks.AIR) {
+        chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false);
+        return true;
+      }
       chunk.setBlockState(
-          new BlockPos(par1, par2, par3),
+          pos,
           prepareBlockStateForWorldGen(RegistryCompat.getStateFromMeta(par4, par5)),
           false);
       return true;
@@ -7944,7 +8039,7 @@ private static void registerAllCritterCages() {
   private static void configureDimensionIds(Configuration config, String ids) {
     Property baseProp = config.get(ids, "BaseDimensionID", 80);
     baseProp.setComment(
-        "Legacy numeric dimension ids (1.12 compat). Datapack stems: chaospersists:utopia, chaospersists:mining, chaospersists:village.");
+        "Legacy numeric dimension ids (1.12 compat). Datapack stems: chaospersists:utopia, chaospersists:mining, chaospersists:village, chaospersists:islands.");
     int base = baseProp.getInt();
     Property utopiaProp = config.get(ids, "DimensionId_Utopia", -1);
     utopiaProp.setComment("Numeric id for Utopia. -1 uses BaseDimensionID.");
@@ -7955,6 +8050,9 @@ private static void registerAllCritterCages() {
     Property villageProp = config.get(ids, "DimensionId_VillageMania", -1);
     villageProp.setComment("Numeric id for Village Mania. -1 uses BaseDimensionID + 2.");
     DimensionID3 = villageProp.getInt() >= 0 ? villageProp.getInt() : base + 2;
+    Property islandsProp = config.get(ids, "DimensionId_Islands", -1);
+    islandsProp.setComment("Numeric id for Islands / Danger. -1 uses BaseDimensionID + 3.");
+    DimensionID4 = islandsProp.getInt() >= 0 ? islandsProp.getInt() : base + 3;
   }
 
   private static ArmorStats get_armorstats(

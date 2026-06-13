@@ -12,10 +12,15 @@ import net.minecraft.util.random.WeightedEntry;
 import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.BaseSpawner;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.SpawnData;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -48,6 +53,50 @@ public final class SpawnerFixHelper {
         return pkg != null
                 && pkg.getName().startsWith("com.astryxion.chaospersists.entity")
                 && entity.tickCount == 0;
+    }
+
+    /**
+     * 1.12 {@code getCanSpawnHere} spawner bypass: entity classes compare legacy display names
+     * (e.g. {@code "Molenoid"}) while spawners store registry paths (e.g. {@code "molenoid"}).
+     * Uses the same volume as large-mob spawner checks (TRex / Nightmare dungeons).
+     */
+    public static boolean isNearMatchingSpawnerForMob(Mob mob, LevelAccessor level) {
+        if (mob == null || level == null) {
+            return false;
+        }
+        return isNearMatchingSpawnerAt(mob.blockPosition(), level, EntityType.getKey(mob.getType()));
+    }
+
+    public static boolean isNearMatchingSpawnerAt(
+            BlockPos base, LevelAccessor level, ResourceLocation mobId) {
+        if (base == null || level == null || mobId == null) {
+            return false;
+        }
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
+        for (int dz = -8; dz <= 8; ++dz) {
+            for (int dx = -8; dx <= 8; ++dx) {
+                for (int dy = -4; dy <= 8; ++dy) {
+                    checkPos.set(base.getX() + dx, base.getY() + dy, base.getZ() + dz);
+                    BlockState state = MyUtils.getBlockStateForSpawnRules(level, checkPos);
+                    if (state.getBlock() != Blocks.SPAWNER) {
+                        continue;
+                    }
+                    BlockEntity blockEntity = MyUtils.getBlockEntityForSpawnRules(level, checkPos);
+                    if (!(blockEntity instanceof SpawnerBlockEntity spawner)) {
+                        continue;
+                    }
+                    ResourceLocation spawnerId = getMobSpawnerEntityIdFromBlockEntity(spawner);
+                    if (spawnerId == null) {
+                        continue;
+                    }
+                    if (entityIdsMatchForSpawner(
+                            mobId, normalizeSpawnerEntityId(spawnerId))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**

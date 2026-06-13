@@ -1,0 +1,9 @@
+{
+  "type": "chaospersists:add_mining_dimension_spawns",
+  "spawners": {
+    "type": "chaospersists:gamma_metroid",
+    "weight": 2,
+    "minCount": 1,
+    "maxCount": 1
+  }
+}

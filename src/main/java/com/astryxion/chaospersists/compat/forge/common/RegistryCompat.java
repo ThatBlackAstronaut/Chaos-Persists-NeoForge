@@ -9,7 +9,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.LadderBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.Half;
 
 /** Legacy 1.12 registry iteration and {@code getRegistryName()} for Chaos Persists. */
 public final class RegistryCompat {
@@ -100,6 +103,28 @@ public final class RegistryCompat {
       return block.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, facing);
     }
 
+    // 1.12 STAINED_HARDENED_CLAY metadata → 1.20.x colored terracotta blocks.
+    if (block == Blocks.TERRACOTTA) {
+      return legacyStainedTerracotta(meta).defaultBlockState();
+    }
+
+    // 1.12 ladder: meta & 3 = EnumFacing.byHorizontalIndex (0=S, 1=W, 2=N, 3=E).
+    if (block instanceof LadderBlock) {
+      return block.defaultBlockState()
+          .setValue(LadderBlock.FACING, Direction.from2DDataValue(meta & 3))
+          .setValue(BlockStateProperties.WATERLOGGED, false);
+    }
+
+    // 1.12 trapdoor: bits 0-1 facing, bit 2 open, bit 3 top half.
+    if (block instanceof TrapDoorBlock) {
+      return block.defaultBlockState()
+          .setValue(TrapDoorBlock.FACING, Direction.from2DDataValue(meta & 3))
+          .setValue(TrapDoorBlock.OPEN, (meta & 4) != 0)
+          .setValue(TrapDoorBlock.HALF, (meta & 8) != 0 ? Half.TOP : Half.BOTTOM)
+          .setValue(TrapDoorBlock.POWERED, false)
+          .setValue(BlockStateProperties.WATERLOGGED, false);
+    }
+
     if (meta == 0) {
       return block.defaultBlockState();
     }
@@ -113,5 +138,27 @@ public final class RegistryCompat {
       return states.get(idx);
     }
     return block.defaultBlockState();
+  }
+
+  /** 1.12 {@code Blocks.STAINED_HARDENED_CLAY} dye metadata order. */
+  private static Block legacyStainedTerracotta(int meta) {
+    return switch (meta & 15) {
+      case 0 -> Blocks.WHITE_TERRACOTTA;
+      case 1 -> Blocks.ORANGE_TERRACOTTA;
+      case 2 -> Blocks.MAGENTA_TERRACOTTA;
+      case 3 -> Blocks.LIGHT_BLUE_TERRACOTTA;
+      case 4 -> Blocks.YELLOW_TERRACOTTA;
+      case 5 -> Blocks.LIME_TERRACOTTA;
+      case 6 -> Blocks.PINK_TERRACOTTA;
+      case 7 -> Blocks.GRAY_TERRACOTTA;
+      case 8 -> Blocks.LIGHT_GRAY_TERRACOTTA;
+      case 9 -> Blocks.CYAN_TERRACOTTA;
+      case 10 -> Blocks.PURPLE_TERRACOTTA;
+      case 11 -> Blocks.BLUE_TERRACOTTA;
+      case 12 -> Blocks.BROWN_TERRACOTTA;
+      case 13 -> Blocks.GREEN_TERRACOTTA;
+      case 14 -> Blocks.RED_TERRACOTTA;
+      default -> Blocks.BLACK_TERRACOTTA;
+    };
   }
 }

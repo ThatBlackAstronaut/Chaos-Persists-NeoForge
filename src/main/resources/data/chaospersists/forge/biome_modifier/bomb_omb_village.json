@@ -1,0 +1,10 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": "chaospersists:village_dimension",
+  "spawners": {
+    "type": "chaospersists:bomb_omb",
+    "weight": 15,
+    "minCount": 1,
+    "maxCount": 3
+  }
+}

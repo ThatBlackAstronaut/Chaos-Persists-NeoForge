@@ -6,7 +6,8 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 
 /**
  * Village Mania plains biome (1.12 {@code BiomeVillagePlains} / {@code BiomeGenUtopianPlains#setVillageCreatures}).
- * Live registration is datapack {@code worldgen/biome/village_dimension.json}; this mirrors spawn weights for reference.
+ * Live registration uses Forge {@code forge:add_spawns} biome modifiers under {@code forge/biome_modifier/};
+ * biome JSON spawner lists are empty (Craziness Awakened-style). This mirrors 1.12 weights for reference only.
  */
 public final class BiomeVillagePlains {
     private BiomeVillagePlains() {}

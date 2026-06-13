@@ -543,7 +543,7 @@ public class Trees {
             }
         }
         net.minecraft.core.BlockPos spawnerPos = new net.minecraft.core.BlockPos(x - 1, y + 1, z);
-        ChaosPersists.setBlockFast(level, x - 1, y + 1, z, net.minecraft.world.level.block.Blocks.SPAWNER, 0, 2);
+        level.setBlock(spawnerPos, net.minecraft.world.level.block.Blocks.SPAWNER.defaultBlockState(), 2);
         net.minecraft.world.level.block.entity.BlockEntity spawnerEntity = level.getBlockEntity(spawnerPos);
         if (spawnerEntity instanceof net.minecraft.world.level.block.entity.SpawnerBlockEntity spawner) {
             net.minecraft.resources.ResourceLocation id =
@@ -687,7 +687,7 @@ public class Trees {
         int i = rnd.nextInt(3);
         if (i == 1) {
             net.minecraft.core.BlockPos spawnerPos = new net.minecraft.core.BlockPos(x, y + 1, z);
-            ChaosPersists.setBlockFast(level, x, y + 1, z, net.minecraft.world.level.block.Blocks.SPAWNER, 0, 2);
+            level.setBlock(spawnerPos, net.minecraft.world.level.block.Blocks.SPAWNER.defaultBlockState(), 2);
             net.minecraft.world.level.block.entity.BlockEntity spawnerEntity = level.getBlockEntity(spawnerPos);
             if (spawnerEntity instanceof net.minecraft.world.level.block.entity.SpawnerBlockEntity spawner) {
                 net.minecraft.resources.ResourceLocation id =

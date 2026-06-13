@@ -1,0 +1,13 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": [
+    "chaospersists:utopia",
+    "chaospersists:village_dimension"
+  ],
+  "spawners": {
+    "type": "chaospersists:coin",
+    "weight": 30,
+    "minCount": 1,
+    "maxCount": 1
+  }
+}

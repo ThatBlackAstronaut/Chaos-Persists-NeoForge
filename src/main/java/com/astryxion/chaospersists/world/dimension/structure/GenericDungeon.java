@@ -3927,6 +3927,8 @@ public class GenericDungeon {
                 2);
         ChaosPersists.setBlockFast(
                 level, cposx + width / 2 + 2, cposy, cposz + depth / 2, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
+        ChaosPersists.setBlockFast(
+                level, cposx + width / 2 + 2, cposy, cposz + depth / 2 + 1, net.minecraft.world.level.block.Blocks.AIR, 0, 2);
         i = cposx + width / 2 + 2;
         k = cposz + depth / 2;
         for (j = 1; j < baseheight; ++j) {
