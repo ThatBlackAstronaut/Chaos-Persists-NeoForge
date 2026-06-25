@@ -2,6 +2,7 @@ package com.astryxion.chaospersists.render;
 
 import com.astryxion.chaospersists.entity.GammaMetroid;
 import com.astryxion.chaospersists.model.ModelGammaMetroid;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
@@ -25,5 +26,14 @@ public class RenderGammaMetroid extends MobRenderer<GammaMetroid, ModelGammaMetr
     @Override
     public ResourceLocation getTextureLocation(GammaMetroid entity) {
         return TEXTURE;
+    }
+
+    /** 1.12 rendered the full model with GL_BLEND enabled in {@link ModelGammaMetroid}. */
+    @Override
+    protected RenderType getRenderType(GammaMetroid entity, boolean bodyVisible, boolean translucent, boolean glowing) {
+        if (glowing) {
+            return RenderType.outline(this.getTextureLocation(entity));
+        }
+        return RenderType.entityTranslucent(this.getTextureLocation(entity));
     }
 }

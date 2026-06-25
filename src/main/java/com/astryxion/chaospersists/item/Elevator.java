@@ -107,7 +107,8 @@ public class Elevator extends Mob {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return LivingEntity.createLivingAttributes()
+        // Mob.createNavigation() requires FOLLOW_RANGE during construction.
+        return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 60.0)
                 .add(Attributes.MOVEMENT_SPEED, 1.3300000429153442)
                 .add(Attributes.ATTACK_DAMAGE, 0.0);
@@ -187,6 +188,25 @@ public class Elevator extends Mob {
         return passenger instanceof LivingEntity living ? living : null;
     }
 
+    private Player getRiderPlayer() {
+        Entity rider = this.getControllingPassenger();
+        if (rider instanceof Player player) {
+            return player;
+        }
+        if (rider != null
+                && !rider.getPassengers().isEmpty()
+                && rider.getPassengers().get(0) instanceof Player player) {
+            return player;
+        }
+        return null;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private LocalPlayer getRiderPlayerClient() {
+        Player rider = this.getRiderPlayer();
+        return rider instanceof LocalPlayer local ? local : null;
+    }
+
     @Override
     protected void positionRider(Entity passenger, MoveFunction moveFunction) {
         if (this.hasPassenger(passenger)) {
@@ -200,7 +220,12 @@ public class Elevator extends Mob {
 
     @Override
     public void travel(Vec3 travelVector) {
-        if (this.getControllingPassenger() != null) {
+        // When mounted, we handle movement in `tick()`; still copy rider input so
+        // `this.zza/this.xxa` reflect the player's controls (needed by the tick logic).
+        Player rider = this.getRiderPlayer();
+        if (rider != null) {
+            this.xxa = rider.xxa;
+            this.zza = rider.zza;
             return;
         }
         super.travel(travelVector);
@@ -414,10 +439,13 @@ public class Elevator extends Mob {
                     my -= 0.003;
                 }
             }
-            if (this.getControllingPassenger() instanceof LocalPlayer pp) {
-                pp.connection.send(new ServerboundMovePlayerPacket.Rot(pp.getYRot(), pp.getXRot(), pp.onGround()));
+            LocalPlayer pp = this.getRiderPlayerClient();
+            if (pp != null) {
                 pp.connection.send(
-                        new ServerboundPlayerInputPacket(pp.xxa, pp.zza, pp.input.jumping, pp.input.shiftKeyDown));
+                        new ServerboundMovePlayerPacket.Rot(pp.getYRot(), pp.getXRot(), pp.onGround()));
+                pp.connection.send(
+                        new ServerboundPlayerInputPacket(
+                                pp.xxa, pp.zza, pp.input.jumping, pp.input.shiftKeyDown));
             }
             if (this.boatPosRotationIncrements > 0) {
                 d4 = this.getX() + (this.boatX - this.getX()) / (double) this.boatPosRotationIncrements;
@@ -480,9 +508,9 @@ public class Elevator extends Mob {
             } else {
                 my -= 0.01;
             }
-            if (this.getControllingPassenger() != null) {
+            Player pp = this.getRiderPlayer();
+            if (pp != null) {
                 double rdv;
-                Player pp = (Player) this.getControllingPassenger();
                 if (pp.isShiftKeyDown()) {
                     pp.stopRiding();
                     this.setDeltaMovement(mx, my, mz);
@@ -509,7 +537,7 @@ public class Elevator extends Mob {
                 }
                 my += obstruction_factor * 0.11;
                 this.setPos(this.getX(), this.getY() + obstruction_factor * 0.11, this.getZ());
-                d4 = this.getControllingPassenger().getYRot();
+                d4 = pp.getYRot();
                 d4 %= 360.0;
                 while (d4 < 0.0) {
                     d4 += 360.0;
@@ -533,9 +561,9 @@ public class Elevator extends Mob {
                     if (d4 > 0.9) {
                         d4 = 0.9;
                     }
-                    this.setYRot(this.getControllingPassenger().getYRot() + (float) (relative_g * d4));
+                    this.setYRot(pp.getYRot() + (float) (relative_g * d4));
                 } else {
-                    this.setYRot(this.getControllingPassenger().getYRot());
+                    this.setYRot(pp.getYRot());
                 }
                 relative_g = Math.abs(relative_g) * velocity;
                 if (relative_g > 50.0) {
@@ -548,7 +576,7 @@ public class Elevator extends Mob {
                     newvelocity = 0.0;
                 }
                 double rhm = Math.atan2(mz, mx);
-                double rhdir = Math.toRadians((this.getControllingPassenger().getYRot() + 90.0f) % 360.0f);
+                double rhdir = Math.toRadians((pp.getYRot() + 90.0f) % 360.0f);
                 double pi = 3.1415926545;
                 double deltav = 0.0;
                 float im = Math.abs(this.zza) > 0.001f ? this.zza : pp.zza;

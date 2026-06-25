@@ -3,12 +3,10 @@ package com.astryxion.chaospersists.render;
 import com.astryxion.chaospersists.entity.RockBase;
 import com.astryxion.chaospersists.model.ModelRockBase;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 
 public class RenderRockBase extends MobRenderer<RockBase, ModelRockBase> {
@@ -57,13 +55,26 @@ public class RenderRockBase extends MobRenderer<RockBase, ModelRockBase> {
             MultiBufferSource buffer,
             int packedLight) {
         int rt = entity.rock_type > 0 ? entity.rock_type : entity.getRockType();
+        super.render(
+                entity,
+                entityYaw,
+                partialTicks,
+                poseStack,
+                buffer,
+                rt >= 9 && rt <= 12 ? 15728880 : packedLight);
+    }
+
+    @Override
+    protected RenderType getRenderType(
+            RockBase entity, boolean bodyVisible, boolean translucent, boolean glowing) {
+        int rt = entity.rock_type > 0 ? entity.rock_type : entity.getRockType();
         if (rt >= 9 && rt <= 12) {
-            int light = 15728880;
-            VertexConsumer vertexConsumer = buffer.getBuffer(RenderType.entityTranslucent(this.getTextureLocation(entity)));
-            this.model.renderToBuffer(poseStack, vertexConsumer, light, OverlayTexture.NO_OVERLAY, 0.75f, 0.75f, 0.75f, 0.55f);
-            return;
+            if (glowing) {
+                return RenderType.outline(this.getTextureLocation(entity));
+            }
+            return RenderType.entityTranslucent(this.getTextureLocation(entity));
         }
-        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+        return super.getRenderType(entity, bodyVisible, translucent, glowing);
     }
 
     @Override

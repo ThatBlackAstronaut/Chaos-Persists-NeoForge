@@ -13,6 +13,9 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CraftingTableBlock;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
@@ -54,5 +57,24 @@ public class CrystalWorkbench extends CraftingTableBlock {
     @Override
     public boolean skipRendering(BlockState state, BlockState adjacentState, net.minecraft.core.Direction side) {
         return false;
+    }
+
+    @Override
+    public VoxelShape getShape(
+            BlockState state,
+            BlockGetter level,
+            BlockPos pos,
+            CollisionContext context) {
+        // Ensure the block is ray-traceable even though it is non-occluding.
+        return Shapes.block();
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(
+            BlockState state,
+            BlockGetter level,
+            BlockPos pos,
+            CollisionContext context) {
+        return Shapes.block();
     }
 }

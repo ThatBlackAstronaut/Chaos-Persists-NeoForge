@@ -92,6 +92,11 @@ public class PitchBlack extends Monster {
         this.entityData.define(ATTACKING, (byte) 0);
         this.entityData.define(ACTIVITY, (byte) 0);
         this.entityData.define(SCALE_INT, 0);
+        // Minecraft may call defineSynchedData() from the Entity base constructor before
+        // this subclass's field initializers run, so ensure renderdata is non-null.
+        if (this.renderdata == null) {
+            this.renderdata = new RenderInfo();
+        }
         this.renderdata.rf1 = 0.0f;
         this.renderdata.rf2 = 0.0f;
         this.renderdata.rf3 = 0.0f;
@@ -107,6 +112,15 @@ public class PitchBlack extends Monster {
         super.onAddedToWorld();
         if (!this.level().isClientSide && !this.scaleInitialized) {
             this.assignInitialScaleIfNeeded();
+        }
+        this.refreshDimensions();
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (SCALE_INT.equals(key)) {
+            this.applyScaleToDimensions();
         }
     }
 
@@ -212,8 +226,11 @@ public class PitchBlack extends Monster {
     }
 
     private void applyScaleToDimensions() {
-        float scale = this.getPitchBlackScale();
         this.refreshDimensions();
+        if (this.level().isClientSide) {
+            return;
+        }
+        float scale = this.getPitchBlackScale();
         this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double) this.mygetMaxHealth());
         this.getAttribute(Attributes.ATTACK_DAMAGE)
                 .setBaseValue((double) (scale * (float) ChaosPersists.PitchBlack_stats.attack));
@@ -729,6 +746,6 @@ public class PitchBlack extends Monster {
     @Override
     public EntityDimensions getDimensions(net.minecraft.world.entity.Pose pose) {
         float scale = this.getPitchBlackScale();
-        return super.getDimensions(pose).scale(2.5f * scale, 3.5f * scale);
+        return EntityDimensions.fixed(2.5f * scale, 3.5f * scale);
     }
 }

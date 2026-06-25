@@ -1,5 +1,5 @@
 {
-  "type": "chaospersists:islands_type",
+  "type": "chaospersists:danger_type",
   "generator": {
     "type": "minecraft:flat",
     "settings": {

@@ -41,6 +41,7 @@ package com.astryxion.chaospersists.core;
 
 import com.astryxion.chaospersists.util.MyUtils;
 import com.astryxion.chaospersists.world.biome.BiomeMiningDimension;
+import com.astryxion.chaospersists.world.dimension.CrystalChunkDecorator;
 
 import com.astryxion.chaospersists.world.dimension.structure.BasiliskMaze;
 import com.astryxion.chaospersists.world.dimension.structure.GenericDungeon;
@@ -72,6 +73,8 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -194,6 +197,14 @@ public class ChaosWorld {
                             chunkZ * 16);
                 }
             }
+            this.tryPlaceWaterLake(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16,
+                    chunk,
+                    16,
+                    false);
             return;
         }
         if (level.dimension().equals(ChaosPersists.getMiningDimensionKey())) {
@@ -255,8 +266,8 @@ public class ChaosWorld {
                             level, oreRandom, randPosX, randPosY, randPosZ, chunk, Blocks.LAPIS_ORE, 4);
                 }
             }
-            if (this.shouldPlaceStructures() && recently_placed == 0) {
-                if (random.nextInt(95) == 1) {
+            if (this.shouldPlaceStructures()) {
+                if (recently_placed == 0 && random.nextInt(95) == 1) {
                     i = random.nextInt(7);
                     if (i == 0) {
                         this.addBasiliskMaze(level, chunkX * 16, chunkZ * 16);
@@ -375,9 +386,17 @@ public class ChaosWorld {
                             chunkZ * 16);
                 }
             }
+            this.tryPlaceWaterLake(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    chunkX * 16,
+                    chunkZ * 16,
+                    chunk,
+                    4,
+                    false);
             return;
         }
-        if (level.dimension().equals(ChaosPersists.getIslandsDimensionKey())) {
+        if (level.dimension().equals(ChaosPersists.getDangerDimensionKey())) {
             int i;
             int surfaceY = this.findIslandsGrassSurfaceY(level, chunkX * 16 + 8, chunkZ * 16 + 8);
             if (surfaceY < 0) {
@@ -517,7 +536,9 @@ public class ChaosWorld {
                     chunkZ * 16);
             return;
         }
-        if (level.dimension().equals(ChaosPersists.getDimensionKey(5))) {
+        if (level.dimension().equals(ChaosPersists.getCrystalDimensionKey())) {
+            RandomSource crystalRandom = net.minecraft.util.RandomSource.create(random.nextLong());
+            CrystalChunkDecorator.decorate(level, crystalRandom, chunkX * 16, chunkZ * 16, chunk);
             if (!this.addFairyTree(
                     level,
                     net.minecraft.util.RandomSource.create(random.nextLong()),
@@ -557,20 +578,37 @@ public class ChaosWorld {
             }
             return;
         }
-        if (level.dimension().equals(ChaosPersists.getDimensionKey(6))) {
+        if (level.dimension().equals(ChaosPersists.getChaosDimensionKey())) {
+            int baseX = chunkX * 16;
+            int baseZ = chunkZ * 16;
+            ChaosPersists.Chunker.generateOresInChunk(
+                    level,
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    baseX,
+                    baseZ,
+                    chunk);
+            if (random.nextInt(4) == 0) {
+                this.addScragglyTrees(
+                        level,
+                        net.minecraft.util.RandomSource.create(random.nextLong()),
+                        baseX,
+                        baseZ);
+            }
             this.addButterfliesAndMoths(
                     level,
                     net.minecraft.util.RandomSource.create(random.nextLong()),
-                    chunkX * 16,
-                    chunkZ * 16);
+                    baseX,
+                    baseZ);
             this.addVeggies(
                     level,
-                    net.minecraft.util.RandomSource.create(random.nextLong()), chunkX * 16, chunkZ * 16);
+                    net.minecraft.util.RandomSource.create(random.nextLong()),
+                    baseX,
+                    baseZ);
             this.addAnts(
                     level,
                     net.minecraft.util.RandomSource.create(random.nextLong()),
-                    chunkX * 16,
-                    chunkZ * 16,
+                    baseX,
+                    baseZ,
                     2);
             return;
         }
@@ -699,17 +737,28 @@ public class ChaosWorld {
             return;
         }
         boolean newChunk = event.isNewChunk();
-        boolean islandsDimension =
-                serverLevel.dimension().equals(ChaosPersists.getIslandsDimensionKey());
-        if (!newChunk && !islandsDimension) {
+        boolean dangerDimension =
+                serverLevel.dimension().equals(ChaosPersists.getDangerDimensionKey());
+        boolean crystalDimension =
+                serverLevel.dimension().equals(ChaosPersists.getCrystalDimensionKey());
+        if (!newChunk && !dangerDimension && !crystalDimension) {
             return;
         }
         LevelChunk chunk = (LevelChunk) event.getChunk();
-        if (islandsDimension && !newChunk && !this.isIslandsChunkUnpopulated(serverLevel, chunk)) {
+        if (dangerDimension && !newChunk && !this.isDangerChunkUnpopulated(serverLevel, chunk)) {
+            return;
+        }
+        boolean crystalNeedsPopulation =
+                crystalDimension && !newChunk && this.isCrystalChunkUnpopulated(serverLevel, chunk);
+        if (crystalDimension && !newChunk && !crystalNeedsPopulation) {
             return;
         }
         PendingChunkGen pending =
                 new PendingChunkGen(serverLevel.dimension(), chunk.getPos().x, chunk.getPos().z);
+        if (crystalNeedsPopulation) {
+            PROCESSED_WORLD_GEN.remove(pending);
+            SCHEDULED_CHUNK_GEN.remove(pending);
+        }
         if (PROCESSED_WORLD_GEN.contains(pending) || !SCHEDULED_CHUNK_GEN.add(pending)) {
             return;
         }
@@ -720,8 +769,8 @@ public class ChaosWorld {
         CHUNK_GEN_QUEUE.add(pending);
     }
 
-    /** True when the superflat grass layer exists but this chunk has no islands/trees/structures yet. */
-    private boolean isIslandsChunkUnpopulated(ServerLevel level, LevelChunk chunk) {
+    /** True when the superflat grass layer exists but this chunk has no floating islands/trees/structures yet. */
+    private boolean isDangerChunkUnpopulated(ServerLevel level, LevelChunk chunk) {
         int baseX = chunk.getPos().getMinBlockX();
         int baseZ = chunk.getPos().getMinBlockZ();
         if (this.findIslandsPlantingY(level, baseX + 8, baseZ + 8) <= 0) {
@@ -744,6 +793,61 @@ public class ChaosWorld {
             }
         }
         return true;
+    }
+
+    /** True when crystal grass exists but trees/flowers from {@link CrystalChunkDecorator} were never placed. */
+    private boolean isCrystalChunkUnpopulated(ServerLevel level, LevelChunk chunk) {
+        int baseX = chunk.getPos().getMinBlockX();
+        int baseZ = chunk.getPos().getMinBlockZ();
+        Block crystalGrass = ChaosPersists.CrystalGrass;
+        Block treeLog = ChaosPersists.MyCrystalTreeLog;
+        if (crystalGrass == null) {
+            return false;
+        }
+        if (findCrystalPlantingY(level, baseX + 8, baseZ + 8) < 0) {
+            return false;
+        }
+        for (int x = baseX; x <= baseX + 15; x += 4) {
+            for (int z = baseZ; z <= baseZ + 15; z += 4) {
+                int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+                for (int y = surfaceY; y <= surfaceY + 24; ++y) {
+                    net.minecraft.world.level.block.state.BlockState state =
+                            level.getBlockState(new net.minecraft.core.BlockPos(x, y, z));
+                    if (treeLog != null && state.is(treeLog)) {
+                        return false;
+                    }
+                    if (ChaosPersists.CrystalFlowerRedBlock != null
+                            && state.is(ChaosPersists.CrystalFlowerRedBlock)) {
+                        return false;
+                    }
+                    if (ChaosPersists.CrystalFlowerBlueBlock != null
+                            && state.is(ChaosPersists.CrystalFlowerBlueBlock)) {
+                        return false;
+                    }
+                    if (ChaosPersists.MyRicePlant != null && state.is(ChaosPersists.MyRicePlant)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private static int findCrystalPlantingY(Level level, int x, int z) {
+        if (ChaosPersists.CrystalGrass == null) {
+            return -1;
+        }
+        int topY = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+        for (int y = topY + 1; y >= level.getMinBuildHeight() + 8; --y) {
+            net.minecraft.core.BlockPos feet = new net.minecraft.core.BlockPos(x, y, z);
+            net.minecraft.core.BlockPos ground = feet.below();
+            if (level.getBlockState(feet).isAir()
+                    && level.getBlockState(ground).is(ChaosPersists.CrystalGrass)
+                    && level.getFluidState(ground).isEmpty()) {
+                return y;
+            }
+        }
+        return -1;
     }
 
     @SubscribeEvent
@@ -858,6 +962,108 @@ public class ChaosWorld {
         if (biome.is(Biomes.RIVER) || biome.is(Biomes.WINDSWEPT_HILLS) || biome.is(Biomes.DESERT)) {
             this.addRocks(level, random, chunkX, chunkZ);
         }
+    }
+
+    /**
+     * 1.12 {@code WorldGenLakes} ponds for custom plains dimensions (vanilla removed lake features in 1.20.1).
+     */
+    private void tryPlaceWaterLake(
+            Level level,
+            RandomSource random,
+            int chunkX,
+            int chunkZ,
+            LevelChunk chunk,
+            int chunkRarity,
+            boolean crystalTerrain) {
+        if (random.nextInt(chunkRarity) != 0) {
+            return;
+        }
+        int localX = random.nextInt(16);
+        int localZ = random.nextInt(16);
+        int surfaceY = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, localX, localZ);
+        BlockPos origin = new BlockPos(chunkX + localX, surfaceY, chunkZ + localZ);
+        if (!this.isFlatLakeSite(level, chunk, origin, crystalTerrain)) {
+            return;
+        }
+        this.placeWaterLakeAt(level, origin, crystalTerrain);
+    }
+
+    private boolean isFlatLakeSite(Level level, LevelChunk chunk, BlockPos origin, boolean crystalTerrain) {
+        int minY = Integer.MAX_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        int baseX = origin.getX();
+        int baseZ = origin.getZ();
+        for (int dx = -6; dx <= 6; ++dx) {
+            for (int dz = -6; dz <= 6; ++dz) {
+                int x = baseX + dx;
+                int z = baseZ + dz;
+                int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z);
+                minY = Math.min(minY, y);
+                maxY = Math.max(maxY, y);
+                BlockPos surface = new BlockPos(x, y, z);
+                if (!this.canLakeReplace(level.getBlockState(surface), crystalTerrain)) {
+                    return false;
+                }
+            }
+        }
+        return maxY - minY <= 2;
+    }
+
+    private boolean canLakeReplace(BlockState state, boolean crystalTerrain) {
+        if (state.isAir() || state.is(Blocks.WATER)) {
+            return true;
+        }
+        if (crystalTerrain) {
+            Block crystalGrass = ChaosPersists.CrystalGrass;
+            Block crystalStone = ChaosPersists.CrystalStone;
+            return (crystalGrass != null && state.is(crystalGrass))
+                    || (crystalStone != null && state.is(crystalStone))
+                    || state.is(Blocks.GRASS_BLOCK)
+                    || state.is(Blocks.DIRT)
+                    || state.is(Blocks.STONE);
+        }
+        return state.is(Blocks.GRASS_BLOCK)
+                || state.is(Blocks.DIRT)
+                || state.is(Blocks.STONE)
+                || state.is(Blocks.SAND)
+                || state.is(Blocks.GRAVEL);
+    }
+
+    /** Port of 1.12 {@code WorldGenLakes#generate}. */
+    private boolean placeWaterLakeAt(Level level, BlockPos origin, boolean crystalTerrain) {
+        BlockPos pos = origin.offset(8, 0, 8);
+        BlockState water = Blocks.WATER.defaultBlockState();
+        for (int l = 0; l < 16; ++l) {
+            for (int i1 = 0; i1 < 16; ++i1) {
+                for (int j1 = 0; j1 < 8; ++j1) {
+                    if (!this.canLakeReplace(level.getBlockState(pos.offset(l, j1, i1)), crystalTerrain)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        for (int l = 0; l < 16; ++l) {
+            for (int i1 = 0; i1 < 16; ++i1) {
+                for (int j1 = 0; j1 < 8; ++j1) {
+                    if (l == 0
+                            || l == 15
+                            || i1 == 0
+                            || i1 == 15
+                            || j1 == 0
+                            || j1 == 7) {
+                        double d0 = (l - 7.5D) / 7.5D;
+                        double d1 = (i1 - 7.5D) / 7.5D;
+                        double d2 = (j1 - 3.5D) / 3.5D;
+                        if (d0 * d0 + d1 * d1 + d2 * d2 < 1.0D) {
+                            level.setBlock(pos.offset(l, j1, i1), water, 2);
+                        }
+                    } else {
+                        level.setBlock(pos.offset(l, j1, i1), water, 2);
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     public void generateRuby(
@@ -2965,16 +3171,6 @@ public class ChaosWorld {
                 if (random.nextInt(100) > 25) {
                     no_critters = true;
                 }
-                int footprint = tree_radius * 4 + 16;
-                int buildY = posY - 1;
-                this.prepareStructureFootprint(
-                        level,
-                        posX - footprint,
-                        buildY - 25,
-                        posZ - footprint,
-                        posX + footprint,
-                        buildY + 80,
-                        posZ + footprint);
                 int rand_treetype = random.nextInt(100);
                 if (rand_treetype > 75) {
                     if ((tree_type != 3) && (random.nextInt(20) == 0)) {
@@ -3243,7 +3439,6 @@ public class ChaosWorld {
                         .is(net.minecraft.world.level.block.Blocks.LAVA)) {
                     continue;
                 }
-                this.prepareStructureFootprint(level, posX, posY, posZ, posX + 9, posY + 4, posZ + 9);
                 ChaosPersists.RubyDungeon.makeDungeon(level, posX, posY, posZ);
                 return true;
             }
@@ -3262,42 +3457,32 @@ public class ChaosWorld {
         if (ChaosPersists.LessLag == 2 && random.nextInt(4) != 0) {
             return false;
         }
-        boolean surfaceDimension =
-                level.dimension().equals(ChaosPersists.getMiningDimensionKey())
-                        || level.dimension().equals(ChaosPersists.getUtopiaDimensionKey())
-                        || level.dimension().equals(ChaosPersists.getDimensionKey(3));
-        for (int attempt = 0; attempt < 8; ++attempt) {
-            int posX = chunkX + random.nextInt(16);
-            int posZ = chunkZ + random.nextInt(16);
-            int posY;
-            if (surfaceDimension) {
-                posY = this.findGrassSurfaceY(level, posX, posZ, 30);
-                if (posY <= 40) {
-                    continue;
-                }
-            } else {
-                posY = 5 + random.nextInt(40);
-            }
-            this.prepareStructureFootprint(level, posX, posY, posZ, posX + 11, posY + 5, posZ + 11);
-            ChaosPersists.MyDungeon.makeDungeon(level, posX, posY, posZ);
-            recently_placed = 50;
-            return true;
-        }
-        return false;
-    }
-
-    /** Top grass block with air above; -1 when no valid surface. */
-    private int findGrassSurfaceY(net.minecraft.world.level.Level level, int posX, int posZ, int minY) {
-        int topY = Math.min(128, level.getMaxBuildHeight() - 2);
-        for (int posY = topY; posY > minY; --posY) {
-            net.minecraft.core.BlockPos above = new net.minecraft.core.BlockPos(posX, posY + 1, posZ);
-            net.minecraft.core.BlockPos ground = new net.minecraft.core.BlockPos(posX, posY, posZ);
-            if (level.getBlockState(above).isAir()
-                    && level.getBlockState(ground).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
-                return posY;
+        int posX = chunkX + random.nextInt(4);
+        int posZ = chunkZ + random.nextInt(4);
+        int dungeonWidth = 12;
+        int dungeonHeight = 6;
+        int minSurface = Integer.MAX_VALUE;
+        int maxSurface = Integer.MIN_VALUE;
+        for (int dx = 0; dx < dungeonWidth; ++dx) {
+            for (int dz = 0; dz < dungeonWidth; ++dz) {
+                int surfaceY = level.getHeight(
+                        net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, posX + dx, posZ + dz);
+                minSurface = Math.min(minSurface, surfaceY);
+                maxSurface = Math.max(maxSurface, surfaceY);
             }
         }
-        return -1;
+        if (maxSurface - minSurface > 3) {
+            return false;
+        }
+        int posY = minSurface - dungeonHeight - 8 - random.nextInt(12);
+        if (posY < level.getMinBuildHeight() + 4) {
+            return false;
+        }
+        if (posY + dungeonHeight >= minSurface) {
+            return false;
+        }
+        ChaosPersists.MyDungeon.makeDungeon(level, posX, posY, posZ);
+        return true;
     }
 
     public boolean addBeeHive(net.minecraft.world.level.Level level, int chunkX, int chunkZ) {
@@ -3327,8 +3512,6 @@ public class ChaosWorld {
         }
         if (found && lowestY > 40) {
             int posY = lowestY + 3;
-            this.prepareStructureFootprint(
-                    level, lowestX, posY - 30, lowestZ, lowestX + 9, posY + 5, lowestZ + 9);
             ChaosPersists.MyDungeon.makeBeeHive(level, lowestX, posY, lowestZ);
             recently_placed = 50;
             return true;
@@ -3362,8 +3545,6 @@ public class ChaosWorld {
             }
         }
         if (found && lowestY > 40) {
-            this.prepareStructureFootprint(
-                    level, lowestX - 2, lowestY - 2, lowestZ - 2, lowestX + 22, lowestY + 10, lowestZ + 22);
             ChaosPersists.MyDungeon.makeAlienWTFDungeon(level, lowestX, lowestY, lowestZ);
             recently_placed = 50;
             return true;
@@ -3397,8 +3578,6 @@ public class ChaosWorld {
             }
         }
         if (found && lowestY > 40) {
-            this.prepareStructureFootprint(
-                    level, lowestX - 2, lowestY - 2, lowestZ - 2, lowestX + 20, lowestY + 8, lowestZ + 12);
             ChaosPersists.MyDungeon.makeEnderKnightDungeon(level, lowestX, lowestY, lowestZ);
             recently_placed = 50;
             return true;
@@ -3432,8 +3611,6 @@ public class ChaosWorld {
             }
         }
         if (found && highestY > 80) {
-            this.prepareStructureFootprint(
-                    level, highestX - 5, highestY - 25, highestZ - 5, highestX + 25, highestY + 10, highestZ + 25);
             ChaosPersists.MyDungeon.makeLeonNest(level, highestX, highestY, highestZ);
             recently_placed = 50;
             return true;
@@ -3467,8 +3644,6 @@ public class ChaosWorld {
             }
         }
         if (found && lowestY > 40) {
-            this.prepareStructureFootprint(
-                    level, lowestX - 2, lowestY - 22, lowestZ - 2, lowestX + 20, lowestY + 2, lowestZ + 20);
             ChaosPersists.MyDungeon.makeShadowDungeon(level, lowestX, lowestY, lowestZ);
             recently_placed = 50;
             return true;
@@ -3487,7 +3662,6 @@ public class ChaosWorld {
                     .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
                 continue;
             }
-            this.prepareStructureFootprint(level, posX, posY, posZ, posX + 9, posY + 4, posZ + 9);
             ChaosPersists.RubyDungeon.makeDungeon(level, posX, posY, posZ);
             recently_placed = 50;
             return true;
@@ -3781,8 +3955,6 @@ public class ChaosWorld {
         int posX = 4 + chunkX + random.nextInt(8);
         int posZ = 4 + chunkZ + random.nextInt(8);
         int posY = 70 + random.nextInt(20);
-        this.prepareStructureFootprint(
-                level, posX - 15, posY + 25, posZ - 4, posX + 14, posY + 47, posZ + 4);
         ChaosPersists.MyDungeon.makeRainbow(level, posX, posY, posZ);
         recently_placed = 50;
         return true;
@@ -3795,7 +3967,7 @@ public class ChaosWorld {
         }
         int posX = chunkX + random.nextInt(8);
         int posZ = chunkZ + random.nextInt(8);
-        for (int posY = Math.min(128, level.getMaxBuildHeight() - 1); posY > level.getMinBuildHeight() + 3; --posY) {
+        for (int posY = 20; posY > 4; --posY) {
             if (!level.getBlockState(new net.minecraft.core.BlockPos(posX, posY, posZ))
                     .is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) {
                 continue;
@@ -3964,8 +4136,6 @@ public class ChaosWorld {
                     return false;
                 }
                 int altarY = posY - 1;
-                this.prepareStructureFootprint(
-                        level, posX - 5, altarY, posZ - 5, posX + 55, altarY + 57, posZ + 55);
                 if (random.nextInt(2) == 0) {
                     ChaosPersists.MyDungeon.makeKingAltar(level, posX, altarY, posZ);
                 } else {
@@ -4004,8 +4174,6 @@ public class ChaosWorld {
         }
         if (found && lowestY > 40) {
             int mazeY = lowestY - 2;
-            this.prepareStructureFootprint(
-                    level, lowestX - 5, mazeY - 45, lowestZ - 25, lowestX + 40, mazeY + 5, lowestZ + 35);
             ChaosPersists.BMaze.buildBasiliskMaze(level, lowestX, mazeY, lowestZ);
             recently_placed = 50;
         }
@@ -4038,8 +4206,6 @@ public class ChaosWorld {
         }
         if (found && lowestY > 40) {
             int dungeonY = lowestY - 2;
-            this.prepareStructureFootprint(
-                    level, lowestX - 2, dungeonY - 25, lowestZ - 2, lowestX + 32, dungeonY + 20, lowestZ + 22);
             ChaosPersists.MyDungeon.makeKyuubiDungeon(level, lowestX, dungeonY, lowestZ);
             recently_placed = 50;
         }

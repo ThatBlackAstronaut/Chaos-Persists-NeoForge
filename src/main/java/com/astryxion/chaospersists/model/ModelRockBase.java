@@ -175,6 +175,9 @@ public class ModelRockBase extends EntityModel<RockBase> {
             float blue,
             float alpha) {
         RockBase entity = this.animEntity;
+        if (entity == null) {
+            return;
+        }
         int rt = entity.rock_type > 0 ? entity.rock_type : entity.getRockType();
         if (rt < 1 || rt > 12) {
             return;
@@ -192,16 +195,20 @@ public class ModelRockBase extends EntityModel<RockBase> {
             this.rockTntShape3.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
             this.rockTntShape4.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         } else if (rt >= 9 && rt <= 12) {
-            this.crystalShape1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-            this.crystalShape2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-            this.crystalShape3a.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-            this.crystalShape3b.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-            this.crystalShape3c.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-            this.crystalShape3d.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-            this.crystalShape4a.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-            this.crystalShape4b.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-            this.crystalShape4c.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-            this.crystalShape4d.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+            float crystalRed = 0.75f;
+            float crystalGreen = 0.75f;
+            float crystalBlue = 0.75f;
+            float crystalAlpha = 0.55f;
+            this.crystalShape1.render(poseStack, buffer, packedLight, packedOverlay, crystalRed, crystalGreen, crystalBlue, crystalAlpha);
+            this.crystalShape2.render(poseStack, buffer, packedLight, packedOverlay, crystalRed, crystalGreen, crystalBlue, crystalAlpha);
+            this.crystalShape3a.render(poseStack, buffer, packedLight, packedOverlay, crystalRed, crystalGreen, crystalBlue, crystalAlpha);
+            this.crystalShape3b.render(poseStack, buffer, packedLight, packedOverlay, crystalRed, crystalGreen, crystalBlue, crystalAlpha);
+            this.crystalShape3c.render(poseStack, buffer, packedLight, packedOverlay, crystalRed, crystalGreen, crystalBlue, crystalAlpha);
+            this.crystalShape3d.render(poseStack, buffer, packedLight, packedOverlay, crystalRed, crystalGreen, crystalBlue, crystalAlpha);
+            this.crystalShape4a.render(poseStack, buffer, packedLight, packedOverlay, crystalRed, crystalGreen, crystalBlue, crystalAlpha);
+            this.crystalShape4b.render(poseStack, buffer, packedLight, packedOverlay, crystalRed, crystalGreen, crystalBlue, crystalAlpha);
+            this.crystalShape4c.render(poseStack, buffer, packedLight, packedOverlay, crystalRed, crystalGreen, crystalBlue, crystalAlpha);
+            this.crystalShape4d.render(poseStack, buffer, packedLight, packedOverlay, crystalRed, crystalGreen, crystalBlue, crystalAlpha);
         } else {
             this.rockShape1.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
             this.rockShape2.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);

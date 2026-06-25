@@ -36,7 +36,9 @@ public class ItemElevator extends Item {
         double y = (double) context.getClickedPos().getY() + 1.2;
         double z = (double) context.getClickedPos().getZ() + 0.5;
         elevator.moveTo(x, y, z, level.getRandom().nextFloat() * 360.0f, 0.0f);
-        level.addFreshEntity(elevator);
+        if (!level.addFreshEntity(elevator)) {
+            return InteractionResult.FAIL;
+        }
         if (!player.getAbilities().instabuild) {
             context.getItemInHand().shrink(1);
         }
