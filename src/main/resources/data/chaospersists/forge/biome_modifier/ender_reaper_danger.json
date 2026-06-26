@@ -1,10 +1,10 @@
 {
   "type": "forge:add_spawns",
-  "biomes": "chaospersists:danger_dimension",
   "spawners": {
     "type": "chaospersists:ender_reaper",
-    "weight": 3,
+    "weight": 25,
     "minCount": 2,
     "maxCount": 4
-  }
+  },
+  "biomes": "chaospersists:danger_dimension"
 }

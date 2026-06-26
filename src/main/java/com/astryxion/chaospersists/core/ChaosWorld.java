@@ -55,10 +55,13 @@ import com.astryxion.chaospersists.util.Trees;
 import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import com.astryxion.chaospersists.util.WeightedRandomChestContent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
+import java.util.EnumSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import net.minecraft.core.BlockPos;
@@ -107,9 +110,36 @@ public class ChaosWorld {
     /** Deferred world-gen: legacy Java structures cannot run inside {@link net.minecraft.world.level.WorldGenLevel} without chunk-load deadlocks. */
     private static final Queue<PendingChunkGen> CHUNK_GEN_QUEUE = new ConcurrentLinkedQueue<>();
 
+    /** Mod-dimension chunks near a player — decorated first so dimensions are playable immediately. */
+    private static final Queue<PendingChunkGen> MOD_NEAR_CHUNK_GEN_QUEUE =
+            new ConcurrentLinkedQueue<>();
+
+    /** Dimensions that rely on deferred {@link #runChunkWorldGen} instead of vanilla chunk decoration. */
+    private static final Set<ResourceKey<Level>> DEFERRED_POPULATE_DIMENSIONS =
+            Set.of(
+                    ChaosPersists.getUtopiaDimensionKey(),
+                    ChaosPersists.getMiningDimensionKey(),
+                    ChaosPersists.getVillageDimensionKey(),
+                    ChaosPersists.getDangerDimensionKey(),
+                    ChaosPersists.getCrystalDimensionKey(),
+                    ChaosPersists.getChaosDimensionKey());
+
+    /** Chunks captured from {@link ChunkEvent.Load} to avoid re-entrant {@link Level#getChunk} deadlocks. */
+    private static final Map<PendingChunkGen, LevelChunk> CHUNK_GEN_CHUNKS =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     private static final int MAX_CHUNK_GEN_PER_TICK = 8;
 
-    private static final long CHUNK_GEN_TICK_BUDGET_NS = 100_000_000L;
+    /** Utopia/danger/crystal populate is heavy (giant trees, islands, crystal structures). */
+    private static final int MAX_HEAVY_CHUNK_GEN_PER_TICK = 4;
+
+    /** Mining/village decoration includes ore passes and dungeons. */
+    private static final int MAX_MEDIUM_CHUNK_GEN_PER_TICK = 6;
+
+    /** Chebyshev chunk radius around each player for priority decoration in mod dimensions. */
+    private static final int NEAR_PLAYER_CHUNK_RADIUS = 10;
+
+    private static final long CHUNK_GEN_TICK_BUDGET_NS = 150_000_000L;
 
     /** Reserved for future worldgen-safe block writes; deferred path is active today. */
     static final ThreadLocal<Boolean> DURING_POPULATE_FEATURE = ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -714,14 +744,12 @@ public class ChaosWorld {
      * Apply {@code forge/biome_modifier/*_mining.json} spawns only in the mining dimension (literal windswept hills).
      */
     @SubscribeEvent
-    public void onMiningPotentialSpawns(LevelEvent.PotentialSpawns event) {
+    public void onDimensionPotentialSpawns(LevelEvent.PotentialSpawns event) {
         if (!(event.getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
-        if (!serverLevel.dimension().equals(ChaosPersists.getMiningDimensionKey())) {
-            return;
-        }
-        BiomeMiningDimension.applyPotentialSpawns(event, serverLevel.registryAccess());
+        com.astryxion.chaospersists.world.biome.DimensionSpawnPopulation.onDimensionPotentialSpawns(
+                event, serverLevel);
     }
 
     /**
@@ -737,100 +765,113 @@ public class ChaosWorld {
             return;
         }
         boolean newChunk = event.isNewChunk();
-        boolean dangerDimension =
-                serverLevel.dimension().equals(ChaosPersists.getDangerDimensionKey());
-        boolean crystalDimension =
-                serverLevel.dimension().equals(ChaosPersists.getCrystalDimensionKey());
-        if (!newChunk && !dangerDimension && !crystalDimension) {
-            return;
-        }
+        ResourceKey<Level> dimension = serverLevel.dimension();
         LevelChunk chunk = (LevelChunk) event.getChunk();
-        if (dangerDimension && !newChunk && !this.isDangerChunkUnpopulated(serverLevel, chunk)) {
+        int chunkX = chunk.getPos().x;
+        int chunkZ = chunk.getPos().z;
+
+        if (isDeferredPopulateDimension(dimension)) {
+            if (com.astryxion.chaospersists.world.ChaosChunkDecorationData.get(serverLevel)
+                    .isDecorated(dimension, chunkX, chunkZ)) {
+                return;
+            }
+        } else if (!newChunk) {
             return;
         }
-        boolean crystalNeedsPopulation =
-                crystalDimension && !newChunk && this.isCrystalChunkUnpopulated(serverLevel, chunk);
-        if (crystalDimension && !newChunk && !crystalNeedsPopulation) {
-            return;
-        }
-        PendingChunkGen pending =
-                new PendingChunkGen(serverLevel.dimension(), chunk.getPos().x, chunk.getPos().z);
-        if (crystalNeedsPopulation) {
-            PROCESSED_WORLD_GEN.remove(pending);
-            SCHEDULED_CHUNK_GEN.remove(pending);
-        }
+
+        PendingChunkGen pending = new PendingChunkGen(dimension, chunkX, chunkZ);
         if (PROCESSED_WORLD_GEN.contains(pending) || !SCHEDULED_CHUNK_GEN.add(pending)) {
             return;
         }
+        CHUNK_GEN_CHUNKS.put(pending, chunk);
         if (!serverLevel.getServer().isReady()) {
             PENDING_CHUNK_GEN.add(pending);
             return;
         }
-        CHUNK_GEN_QUEUE.add(pending);
+        this.queuePendingChunk(serverLevel, pending);
     }
 
-    /** True when the superflat grass layer exists but this chunk has no floating islands/trees/structures yet. */
-    private boolean isDangerChunkUnpopulated(ServerLevel level, LevelChunk chunk) {
-        int baseX = chunk.getPos().getMinBlockX();
-        int baseZ = chunk.getPos().getMinBlockZ();
-        if (this.findIslandsPlantingY(level, baseX + 8, baseZ + 8) <= 0) {
-            return false;
-        }
-        Block islandBlock = ChaosPersists.MyIslandBlock;
-        for (int x = baseX; x <= baseX + 15; x += 4) {
-            for (int z = baseZ; z <= baseZ + 15; z += 4) {
-                for (int y = 8; y <= 48; y += 4) {
-                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
-                    net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
-                    if (state.is(net.minecraft.world.level.block.Blocks.OAK_LOG)
-                            || (islandBlock != null && state.is(islandBlock))
-                            || state.is(net.minecraft.world.level.block.Blocks.COBBLESTONE)
-                            || state.is(net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE)
-                            || state.is(net.minecraft.world.level.block.Blocks.STONE_BRICKS)) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
+    private static boolean isDeferredPopulateDimension(ResourceKey<Level> dimension) {
+        return DEFERRED_POPULATE_DIMENSIONS.contains(dimension);
     }
 
-    /** True when crystal grass exists but trees/flowers from {@link CrystalChunkDecorator} were never placed. */
-    private boolean isCrystalChunkUnpopulated(ServerLevel level, LevelChunk chunk) {
-        int baseX = chunk.getPos().getMinBlockX();
-        int baseZ = chunk.getPos().getMinBlockZ();
-        Block crystalGrass = ChaosPersists.CrystalGrass;
-        Block treeLog = ChaosPersists.MyCrystalTreeLog;
-        if (crystalGrass == null) {
-            return false;
+    private static int getMaxChunkGenPerTick(ResourceKey<Level> dimension) {
+        if (dimension.equals(ChaosPersists.getUtopiaDimensionKey())
+                || dimension.equals(ChaosPersists.getDangerDimensionKey())
+                || dimension.equals(ChaosPersists.getCrystalDimensionKey())) {
+            return MAX_HEAVY_CHUNK_GEN_PER_TICK;
         }
-        if (findCrystalPlantingY(level, baseX + 8, baseZ + 8) < 0) {
-            return false;
+        if (dimension.equals(ChaosPersists.getMiningDimensionKey())
+                || dimension.equals(ChaosPersists.getVillageDimensionKey())) {
+            return MAX_MEDIUM_CHUNK_GEN_PER_TICK;
         }
-        for (int x = baseX; x <= baseX + 15; x += 4) {
-            for (int z = baseZ; z <= baseZ + 15; z += 4) {
-                int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
-                for (int y = surfaceY; y <= surfaceY + 24; ++y) {
-                    net.minecraft.world.level.block.state.BlockState state =
-                            level.getBlockState(new net.minecraft.core.BlockPos(x, y, z));
-                    if (treeLog != null && state.is(treeLog)) {
-                        return false;
-                    }
-                    if (ChaosPersists.CrystalFlowerRedBlock != null
-                            && state.is(ChaosPersists.CrystalFlowerRedBlock)) {
-                        return false;
-                    }
-                    if (ChaosPersists.CrystalFlowerBlueBlock != null
-                            && state.is(ChaosPersists.CrystalFlowerBlueBlock)) {
-                        return false;
-                    }
-                    if (ChaosPersists.MyRicePlant != null && state.is(ChaosPersists.MyRicePlant)) {
-                        return false;
-                    }
-                }
+        if (isDeferredPopulateDimension(dimension)) {
+            return MAX_CHUNK_GEN_PER_TICK;
+        }
+        return MAX_CHUNK_GEN_PER_TICK;
+    }
+
+    private void queuePendingChunk(ServerLevel level, PendingChunkGen pending) {
+        if (isDeferredPopulateDimension(pending.dimension)
+                && this.isChunkNearPlayer(level, pending.chunkX, pending.chunkZ)) {
+            MOD_NEAR_CHUNK_GEN_QUEUE.add(pending);
+        } else {
+            CHUNK_GEN_QUEUE.add(pending);
+        }
+    }
+
+    private boolean isChunkNearPlayer(ServerLevel level, int chunkX, int chunkZ) {
+        if (level.players().isEmpty()) {
+            return true;
+        }
+        for (net.minecraft.server.level.ServerPlayer player : level.players()) {
+            net.minecraft.world.level.ChunkPos playerChunk = player.chunkPosition();
+            if (Math.abs(playerChunk.x - chunkX) <= NEAR_PLAYER_CHUNK_RADIUS
+                    && Math.abs(playerChunk.z - chunkZ) <= NEAR_PLAYER_CHUNK_RADIUS) {
+                return true;
             }
         }
-        return true;
+        return false;
+    }
+
+    /**
+     * Chunks that missed decoration are re-queued while a player is in a mod dimension.
+     */
+    @SubscribeEvent
+    public void onPlayerTickCatchUpDeferredPopulate(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()) {
+            return;
+        }
+        if (!(event.player.level() instanceof ServerLevel level)) {
+            return;
+        }
+        ResourceKey<Level> dimension = level.dimension();
+        if (!isDeferredPopulateDimension(dimension)) {
+            return;
+        }
+        if (event.player.tickCount % 20 != 0) {
+            return;
+        }
+        int centerX = event.player.chunkPosition().x;
+        int centerZ = event.player.chunkPosition().z;
+        for (int dx = -NEAR_PLAYER_CHUNK_RADIUS; dx <= NEAR_PLAYER_CHUNK_RADIUS; ++dx) {
+            for (int dz = -NEAR_PLAYER_CHUNK_RADIUS; dz <= NEAR_PLAYER_CHUNK_RADIUS; ++dz) {
+                int chunkX = centerX + dx;
+                int chunkZ = centerZ + dz;
+                if (com.astryxion.chaospersists.world.ChaosChunkDecorationData.get(level)
+                        .isDecorated(dimension, chunkX, chunkZ)) {
+                    continue;
+                }
+                if (!level.hasChunk(chunkX, chunkZ)) {
+                    continue;
+                }
+                PendingChunkGen pending = new PendingChunkGen(dimension, chunkX, chunkZ);
+                if (PROCESSED_WORLD_GEN.contains(pending) || !SCHEDULED_CHUNK_GEN.add(pending)) {
+                    continue;
+                }
+                MOD_NEAR_CHUNK_GEN_QUEUE.add(pending);
+            }
+        }
     }
 
     private static int findCrystalPlantingY(Level level, int x, int z) {
@@ -854,7 +895,12 @@ public class ChaosWorld {
     public void onServerStarted(ServerStartedEvent event) {
         for (PendingChunkGen pending : PENDING_CHUNK_GEN) {
             if (!PROCESSED_WORLD_GEN.contains(pending)) {
-                CHUNK_GEN_QUEUE.add(pending);
+                ServerLevel level = event.getServer().getLevel(pending.dimension);
+                if (level == null) {
+                    CHUNK_GEN_QUEUE.add(pending);
+                    continue;
+                }
+                this.queuePendingChunk(level, pending);
             }
         }
         PENDING_CHUNK_GEN.clear();
@@ -863,14 +909,19 @@ public class ChaosWorld {
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
         CHUNK_GEN_QUEUE.clear();
+        MOD_NEAR_CHUNK_GEN_QUEUE.clear();
         PENDING_CHUNK_GEN.clear();
         SCHEDULED_CHUNK_GEN.clear();
         PROCESSED_WORLD_GEN.clear();
+        CHUNK_GEN_CHUNKS.clear();
     }
 
     @SubscribeEvent
     public void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || CHUNK_GEN_QUEUE.isEmpty()) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        if (CHUNK_GEN_QUEUE.isEmpty() && MOD_NEAR_CHUNK_GEN_QUEUE.isEmpty()) {
             return;
         }
         MinecraftServer server = event.getServer();
@@ -878,21 +929,60 @@ public class ChaosWorld {
             return;
         }
         long deadline = System.nanoTime() + CHUNK_GEN_TICK_BUDGET_NS;
-        int processed = 0;
-        PendingChunkGen pending;
-        while (processed < MAX_CHUNK_GEN_PER_TICK
-                && System.nanoTime() < deadline
-                && (pending = CHUNK_GEN_QUEUE.poll()) != null) {
+        Map<ResourceKey<Level>, Integer> dimensionProcessed = new HashMap<>();
+        Queue<PendingChunkGen> modDeferred = new ConcurrentLinkedQueue<>();
+
+        while (System.nanoTime() < deadline) {
+            PendingChunkGen pending = MOD_NEAR_CHUNK_GEN_QUEUE.poll();
+            boolean fromNear = pending != null;
+            if (pending == null) {
+                pending = CHUNK_GEN_QUEUE.poll();
+            }
+            if (pending == null) {
+                break;
+            }
+
             ServerLevel level = server.getLevel(pending.dimension);
-            if (level == null || !level.hasChunk(pending.chunkX, pending.chunkZ)) {
+            if (level == null) {
+                SCHEDULED_CHUNK_GEN.remove(pending);
+                CHUNK_GEN_CHUNKS.remove(pending);
+                continue;
+            }
+
+            ResourceKey<Level> dimension = pending.dimension;
+            if (isDeferredPopulateDimension(dimension)
+                    && !fromNear
+                    && !this.isChunkNearPlayer(level, pending.chunkX, pending.chunkZ)) {
+                modDeferred.add(pending);
+                continue;
+            }
+
+            int maxForDimension = getMaxChunkGenPerTick(dimension);
+            int processed = dimensionProcessed.getOrDefault(dimension, 0);
+            if (processed >= maxForDimension) {
+                if (fromNear) {
+                    MOD_NEAR_CHUNK_GEN_QUEUE.add(pending);
+                } else {
+                    CHUNK_GEN_QUEUE.add(pending);
+                }
+                break;
+            }
+
+            LevelChunk chunk = CHUNK_GEN_CHUNKS.remove(pending);
+            if (chunk == null && !level.hasChunk(pending.chunkX, pending.chunkZ)) {
                 SCHEDULED_CHUNK_GEN.remove(pending);
                 continue;
             }
             SCHEDULED_CHUNK_GEN.remove(pending);
             if (PROCESSED_WORLD_GEN.add(pending)) {
-                this.runChunkWorldGen(level, level.getChunk(pending.chunkX, pending.chunkZ));
-                ++processed;
+                this.runChunkWorldGen(
+                        level, chunk != null ? chunk : level.getChunk(pending.chunkX, pending.chunkZ));
+                dimensionProcessed.put(dimension, processed + 1);
             }
+        }
+
+        while (!modDeferred.isEmpty()) {
+            CHUNK_GEN_QUEUE.add(modDeferred.poll());
         }
     }
 
@@ -903,6 +993,13 @@ public class ChaosWorld {
         random.setSeed(serverLevel.getSeed());
         random.setSeed(random.nextLong() ^ ((long) chunkX << 16) ^ (long) chunkZ);
         this.generate(random, chunkX, chunkZ, serverLevel, chunk, null, null);
+        com.astryxion.chaospersists.world.biome.DimensionSpawnPopulation.afterChunkDecoration(
+                serverLevel, chunk);
+        ResourceKey<Level> dimension = serverLevel.dimension();
+        if (isDeferredPopulateDimension(dimension)) {
+            com.astryxion.chaospersists.world.ChaosChunkDecorationData.get(serverLevel)
+                    .markDecorated(dimension, chunkX, chunkZ);
+        }
     }
 
     public void generateSurface(
@@ -1153,7 +1250,7 @@ public class ChaosWorld {
                             break;
                         }
                         case 5: {
-                            b = ChaosPersists.MySpiderDriverSpawnBlock;
+                            b = ChaosPersists.MyAloSpawnBlock;
                             break;
                         }
                         case 6: {

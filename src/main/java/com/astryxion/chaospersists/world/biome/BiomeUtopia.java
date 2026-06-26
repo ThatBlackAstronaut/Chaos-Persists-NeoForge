@@ -62,13 +62,13 @@ public final class BiomeUtopia {
             spawns.addSpawn(MobCategory.AMBIENT, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_MOTH.get(), 10, 1, 5));
         }
         if (ChaosPersists.ChipmunkEnable != 0) {
-            spawns.addSpawn(MobCategory.AMBIENT, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CHIPMUNK.get(), 3, 1, 2));
+            spawns.addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CHIPMUNK.get(), 3, 1, 2));
         }
         if (ChaosPersists.CockateilEnable != 0) {
-            spawns.addSpawn(MobCategory.AMBIENT, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BIRD.get(), 10, 2, 4));
+            spawns.addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BIRD.get(), 10, 2, 4));
         }
         if (ChaosPersists.GoldFishEnable != 0) {
-            spawns.addSpawn(MobCategory.AMBIENT, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_GOLD_FISH.get(), 1, 1, 1));
+            spawns.addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_GOLD_FISH.get(), 1, 1, 1));
         }
         if (ChaosPersists.WhaleEnable != 0) {
             spawns.addSpawn(MobCategory.WATER_CREATURE, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_WHALE.get(), 1, 1, 1));
@@ -77,10 +77,10 @@ public final class BiomeUtopia {
             spawns.addSpawn(MobCategory.WATER_CREATURE, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_FLOUNDER.get(), 2, 2, 4));
         }
         if (ChaosPersists.CoinEnable != 0) {
-            spawns.addSpawn(MobCategory.AMBIENT, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_COIN.get(), 2, 1, 1));
+            spawns.addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_COIN.get(), 2, 1, 1));
         }
         if (ChaosPersists.CricketEnable != 0) {
-            spawns.addSpawn(MobCategory.AMBIENT, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CRICKET.get(), 5, 4, 6));
+            spawns.addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CRICKET.get(), 5, 4, 6));
         }
         if (ChaosPersists.FrogEnable != 0) {
             spawns.addSpawn(MobCategory.WATER_CREATURE, new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_FROG.get(), 5, 4, 6));

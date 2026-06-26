@@ -1,10 +1,10 @@
 {
   "type": "forge:add_spawns",
-  "biomes": "chaospersists:danger_dimension",
   "spawners": {
     "type": "chaospersists:cliff_racer",
-    "weight": 2,
+    "weight": 20,
     "minCount": 3,
     "maxCount": 6
-  }
+  },
+  "biomes": "chaospersists:danger_dimension"
 }

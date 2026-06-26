@@ -1,10 +1,10 @@
 {
   "type": "forge:add_spawns",
-  "biomes": "chaospersists:village_dimension",
   "spawners": {
     "type": "chaospersists:mobzilla",
-    "weight": 1,
+    "weight": 2,
     "minCount": 1,
     "maxCount": 1
-  }
+  },
+  "biomes": "chaospersists:village_dimension"
 }

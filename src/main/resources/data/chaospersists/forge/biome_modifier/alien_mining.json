@@ -2,8 +2,8 @@
   "type": "chaospersists:add_mining_dimension_spawns",
   "spawners": {
     "type": "chaospersists:alien",
-    "weight": 15,
-    "minCount": 1,
-    "maxCount": 1
+    "weight": 35,
+    "minCount": 2,
+    "maxCount": 3
   }
 }

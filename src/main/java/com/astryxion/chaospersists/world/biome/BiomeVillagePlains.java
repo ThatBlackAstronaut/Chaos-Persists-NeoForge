@@ -99,12 +99,12 @@ public final class BiomeVillagePlains {
         }
         if (ChaosPersists.ChipmunkEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.AMBIENT,
+                    MobCategory.CREATURE,
                     new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CHIPMUNK.get(), 5, 1, 2));
         }
         if (ChaosPersists.CockateilEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.AMBIENT,
+                    MobCategory.CREATURE,
                     new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BIRD.get(), 15, 2, 4));
         }
         if (ChaosPersists.TshirtEnable != 0) {
@@ -114,7 +114,7 @@ public final class BiomeVillagePlains {
         }
         if (ChaosPersists.CoinEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.AMBIENT,
+                    MobCategory.CREATURE,
                     new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_COIN.get(), 2, 1, 1));
         }
         if (ChaosPersists.CriminalEnable != 0) {

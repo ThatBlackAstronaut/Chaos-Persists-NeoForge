@@ -1,10 +1,10 @@
 {
   "type": "forge:add_spawns",
-  "biomes": "chaospersists:village_dimension",
   "spawners": {
     "type": "chaospersists:criminal",
-    "weight": 13,
+    "weight": 15,
     "minCount": 1,
     "maxCount": 2
-  }
+  },
+  "biomes": "chaospersists:village_dimension"
 }

@@ -2,8 +2,8 @@
   "type": "chaospersists:add_mining_dimension_spawns",
   "spawners": {
     "type": "chaospersists:alosaurus",
-    "weight": 7,
-    "minCount": 1,
-    "maxCount": 1
+    "weight": 20,
+    "minCount": 2,
+    "maxCount": 4
   }
 }

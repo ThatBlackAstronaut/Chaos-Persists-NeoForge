@@ -2,8 +2,8 @@
   "type": "chaospersists:add_mining_dimension_spawns",
   "spawners": {
     "type": "chaospersists:baryonyx",
-    "weight": 8,
-    "minCount": 1,
-    "maxCount": 1
+    "weight": 6,
+    "minCount": 4,
+    "maxCount": 8
   }
 }

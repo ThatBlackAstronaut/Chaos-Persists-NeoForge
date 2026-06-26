@@ -69,7 +69,7 @@ public class ChunkOreGenerator {
                             break;
                         }
                         case 5: {
-                            b = ChaosPersists.MySpiderDriverSpawnBlock;
+                            b = ChaosPersists.MyAloSpawnBlock;
                             break;
                         }
                         case 6: {

@@ -600,6 +600,11 @@ public class ChaosPersists
       ADD_MINING_DIMENSION_SPAWNS =
           BIOME_MODIFIER_SERIALIZERS.register(
                   "add_mining_dimension_spawns", BiomeMiningDimension::makeCodec);
+  public static final RegistryObject<Codec<com.astryxion.chaospersists.world.biome.LegacyOverworldSpawnBiomeModifier>>
+      LEGACY_OVERWORLD_SPAWNS =
+          BIOME_MODIFIER_SERIALIZERS.register(
+                  "legacy_overworld_spawns",
+                  com.astryxion.chaospersists.world.biome.LegacyOverworldSpawnBiomeModifier::makeCodec);
 
   public static final RegistryObject<CreativeModeTab> TAB_CHAOS_ITEMS =
       CREATIVE_MODE_TABS.register(
@@ -734,17 +739,17 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<EnchantedCow>> ENTITY_TYPE_ENCHANTED_COW = ENTITY_TYPES.register("enchanted_golden_apple_cow",
       () -> EntityType.Builder.<EnchantedCow>of(EnchantedCow::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("enchanted_golden_apple_cow"));
   public static final RegistryObject<EntityType<EntityButterfly>> ENTITY_TYPE_BUTTERFLY = ENTITY_TYPES.register("butterfly",
-      () -> EntityType.Builder.<EntityButterfly>of(EntityButterfly::new, MobCategory.CREATURE).sized(0.4f, 0.4f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("butterfly"));
+      () -> EntityType.Builder.<EntityButterfly>of(EntityButterfly::new, MobCategory.AMBIENT).sized(0.4f, 0.4f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("butterfly"));
   public static final RegistryObject<EntityType<EntityLunaMoth>> ENTITY_TYPE_MOTH = ENTITY_TYPES.register("moth",
-      () -> EntityType.Builder.<EntityLunaMoth>of(EntityLunaMoth::new, MobCategory.CREATURE).sized(0.5f, 0.5f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("moth"));
+      () -> EntityType.Builder.<EntityLunaMoth>of(EntityLunaMoth::new, MobCategory.AMBIENT).sized(0.5f, 0.5f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("moth"));
   public static final RegistryObject<EntityType<EntityMosquito>> ENTITY_TYPE_MOSQUITO = ENTITY_TYPES.register("mosquito",
-      () -> EntityType.Builder.<EntityMosquito>of(EntityMosquito::new, MobCategory.CREATURE).sized(0.2f, 0.2f).clientTrackingRange(16).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("mosquito"));
+      () -> EntityType.Builder.<EntityMosquito>of(EntityMosquito::new, MobCategory.AMBIENT).sized(0.2f, 0.2f).clientTrackingRange(16).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("mosquito"));
   public static final RegistryObject<EntityType<Firefly>> ENTITY_TYPE_FIREFLY = ENTITY_TYPES.register("firefly",
-      () -> EntityType.Builder.<Firefly>of(Firefly::new, MobCategory.CREATURE).sized(0.4f, 0.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("firefly"));
+      () -> EntityType.Builder.<Firefly>of(Firefly::new, MobCategory.AMBIENT).sized(0.4f, 0.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("firefly"));
   public static final RegistryObject<EntityType<Bee>> ENTITY_TYPE_BEE = ENTITY_TYPES.register("bee",
-      () -> EntityType.Builder.<Bee>of(Bee::new, MobCategory.CREATURE).sized(1.5f, 2.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("bee"));
+      () -> EntityType.Builder.<Bee>of(Bee::new, MobCategory.MONSTER).sized(1.5f, 2.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("bee"));
   public static final RegistryObject<EntityType<Mothra>> ENTITY_TYPE_MOTHRA = ENTITY_TYPES.register("mothra",
-      () -> EntityType.Builder.<Mothra>of(Mothra::new, MobCategory.CREATURE).sized(5.0f, 2.0f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("mothra"));
+      () -> EntityType.Builder.<Mothra>of(Mothra::new, MobCategory.MONSTER).sized(5.0f, 2.0f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("mothra"));
   public static final RegistryObject<EntityType<EntityAnt>> ENTITY_TYPE_ANT = ENTITY_TYPES.register("ant",
       () -> EntityType.Builder.<EntityAnt>of(EntityAnt::new, MobCategory.MONSTER).sized(0.1f, 0.1f).clientTrackingRange(16).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ant"));
   public static final RegistryObject<EntityType<EntityRedAnt>> ENTITY_TYPE_RED_ANT = ENTITY_TYPES.register("red_ant",
@@ -776,7 +781,7 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<VelocityRaptor>> ENTITY_TYPE_VELOCITY_RAPTOR = ENTITY_TYPES.register("velocity_raptor",
       () -> EntityType.Builder.<VelocityRaptor>of(VelocityRaptor::new, MobCategory.MONSTER).sized(0.5f, 0.6f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("velocity_raptor"));
   public static final RegistryObject<EntityType<Dragonfly>> ENTITY_TYPE_DRAGONFLY = ENTITY_TYPES.register("dragonfly",
-      () -> EntityType.Builder.<Dragonfly>of(Dragonfly::new, MobCategory.MONSTER).sized(1.5f, 0.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("dragonfly"));
+      () -> EntityType.Builder.<Dragonfly>of(Dragonfly::new, MobCategory.AMBIENT).sized(1.5f, 0.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("dragonfly"));
   public static final RegistryObject<EntityType<EmperorScorpion>> ENTITY_TYPE_EMPEROR_SCORPION = ENTITY_TYPES.register("emperor_scorpion",
       () -> EntityType.Builder.<EmperorScorpion>of(EmperorScorpion::new, MobCategory.MONSTER).sized(3.5f, 3.0f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("emperor_scorpion"));
   public static final RegistryObject<EntityType<Scorpion>> ENTITY_TYPE_SCORPION = ENTITY_TYPES.register("scorpion",
@@ -786,13 +791,13 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<Spyro>> ENTITY_TYPE_BABY_DRAGON = ENTITY_TYPES.register("baby_dragon",
       () -> EntityType.Builder.<Spyro>of(Spyro::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("baby_dragon"));
   public static final RegistryObject<EntityType<Baryonyx>> ENTITY_TYPE_BARYONYX = ENTITY_TYPES.register("baryonyx",
-      () -> EntityType.Builder.<Baryonyx>of(Baryonyx::new, MobCategory.MONSTER).sized(1.5f, 2.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("baryonyx"));
+      () -> EntityType.Builder.<Baryonyx>of(Baryonyx::new, MobCategory.CREATURE).sized(1.5f, 2.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("baryonyx"));
   public static final RegistryObject<EntityType<GammaMetroid>> ENTITY_TYPE_GAMMA_METROID = ENTITY_TYPES.register("gamma_metroid",
       () -> EntityType.Builder.<GammaMetroid>of(GammaMetroid::new, MobCategory.MONSTER).sized(1.5f, 1.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("gamma_metroid"));
   public static final RegistryObject<EntityType<GammaMetroid>> ENTITY_TYPE_WTF = ENTITY_TYPES.register("wtf",
       () -> EntityType.Builder.<GammaMetroid>of(GammaMetroid::new, MobCategory.MONSTER).sized(1.5f, 1.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("wtf"));
   public static final RegistryObject<EntityType<Cockateil>> ENTITY_TYPE_BIRD = ENTITY_TYPES.register("bird",
-      () -> EntityType.Builder.<Cockateil>of(Cockateil::new, MobCategory.MONSTER).sized(0.5f, 0.5f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("bird"));
+      () -> EntityType.Builder.<Cockateil>of(Cockateil::new, MobCategory.CREATURE).sized(0.5f, 0.5f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("bird"));
   public static final RegistryObject<EntityType<RubyBird>> ENTITY_TYPE_RUBY_BIRD = ENTITY_TYPES.register("ruby_bird",
       () -> EntityType.Builder.<RubyBird>of(RubyBird::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ruby_bird"));
   public static final RegistryObject<EntityType<Kyuubi>> ENTITY_TYPE_KYUUBI = ENTITY_TYPES.register("kyuubi",
@@ -812,19 +817,19 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<Cephadrome>> ENTITY_TYPE_CEPHADROME = ENTITY_TYPES.register("cephadrome",
       () -> EntityType.Builder.<Cephadrome>of(Cephadrome::new, MobCategory.MISC).sized(2.5f, 2.25f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("cephadrome"));
   public static final RegistryObject<EntityType<Dragon>> ENTITY_TYPE_DRAGON = ENTITY_TYPES.register("dragon",
-      () -> EntityType.Builder.<Dragon>of(Dragon::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("dragon"));
+      () -> EntityType.Builder.<Dragon>of(Dragon::new, MobCategory.CREATURE).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("dragon"));
   public static final RegistryObject<EntityType<Chipmunk>> ENTITY_TYPE_CHIPMUNK = ENTITY_TYPES.register("chipmunk",
       () -> EntityType.Builder.<Chipmunk>of(Chipmunk::new, MobCategory.CREATURE).sized(0.35f, 0.35f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("chipmunk"));
   public static final RegistryObject<EntityType<Gazelle>> ENTITY_TYPE_GAZELLE = ENTITY_TYPES.register("gazelle",
       () -> EntityType.Builder.<Gazelle>of(Gazelle::new, MobCategory.CREATURE).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("gazelle"));
   public static final RegistryObject<EntityType<Ostrich>> ENTITY_TYPE_OSTRICH = ENTITY_TYPES.register("ostrich",
-      () -> EntityType.Builder.<Ostrich>of(Ostrich::new, MobCategory.MISC).sized(0.85f, 2.1f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("ostrich"));
+      () -> EntityType.Builder.<Ostrich>of(Ostrich::new, MobCategory.CREATURE).sized(0.85f, 2.1f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("ostrich"));
   public static final RegistryObject<EntityType<TrooperBug>> ENTITY_TYPE_TROOPER_BUG = ENTITY_TYPES.register("jumpy_bug",
       () -> EntityType.Builder.<TrooperBug>of(TrooperBug::new, MobCategory.MONSTER).sized(3.0f, 3.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("jumpy_bug"));
   public static final RegistryObject<EntityType<SpitBug>> ENTITY_TYPE_SPIT_BUG = ENTITY_TYPES.register("spit_bug",
       () -> EntityType.Builder.<SpitBug>of(SpitBug::new, MobCategory.MONSTER).sized(2.0f, 2.0f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("spit_bug"));
   public static final RegistryObject<EntityType<StinkBug>> ENTITY_TYPE_STINK_BUG = ENTITY_TYPES.register("stink_bug",
-      () -> EntityType.Builder.<StinkBug>of(StinkBug::new, MobCategory.MONSTER).sized(0.55f, 0.55f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("stink_bug"));
+      () -> EntityType.Builder.<StinkBug>of(StinkBug::new, MobCategory.CREATURE).sized(0.55f, 0.55f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("stink_bug"));
   public static final RegistryObject<EntityType<Tshirt>> ENTITY_TYPE_TSHIRT = ENTITY_TYPES.register("tshirt",
       () -> EntityType.Builder.<Tshirt>of(Tshirt::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("tshirt"));
   public static final RegistryObject<EntityType<Island>> ENTITY_TYPE_ISLAND = ENTITY_TYPES.register("island",
@@ -836,7 +841,7 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<TerribleTerror>> ENTITY_TYPE_TERRIBLE_TERROR = ENTITY_TYPES.register("terrible_terror",
       () -> EntityType.Builder.<TerribleTerror>of(TerribleTerror::new, MobCategory.MONSTER).sized(1.0f, 0.75f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("terrible_terror"));
   public static final RegistryObject<EntityType<CliffRacer>> ENTITY_TYPE_CLIFF_RACER = ENTITY_TYPES.register("cliff_racer",
-      () -> EntityType.Builder.<CliffRacer>of(CliffRacer::new, MobCategory.MONSTER).sized(0.75f, 0.5f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cliff_racer"));
+      () -> EntityType.Builder.<CliffRacer>of(CliffRacer::new, MobCategory.AMBIENT).sized(0.75f, 0.5f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cliff_racer"));
   public static final RegistryObject<EntityType<Triffid>> ENTITY_TYPE_TRIFFID = ENTITY_TYPES.register("triffid",
       () -> EntityType.Builder.<Triffid>of(Triffid::new, MobCategory.MONSTER).sized(2.0f, 4.0f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("triffid"));
   public static final RegistryObject<EntityType<PitchBlack>> ENTITY_TYPE_NIGHTMARE = ENTITY_TYPES.register("nightmare",
@@ -846,9 +851,9 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<Godzilla>> ENTITY_TYPE_MOBZILLA = ENTITY_TYPES.register("mobzilla",
       () -> EntityType.Builder.<Godzilla>of(Godzilla::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("mobzilla"));
   public static final RegistryObject<EntityType<Ghost>> ENTITY_TYPE_GHOST = ENTITY_TYPES.register("ghost",
-      () -> EntityType.Builder.<Ghost>of(Ghost::new, MobCategory.MONSTER).sized(0.5f, 1.5f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ghost"));
+      () -> EntityType.Builder.<Ghost>of(Ghost::new, MobCategory.AMBIENT).sized(0.5f, 1.5f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ghost"));
   public static final RegistryObject<EntityType<GhostSkelly>> ENTITY_TYPE_GHOST_PUMPKIN_SKELLY = ENTITY_TYPES.register("ghost_pumpkin_skelly",
-      () -> EntityType.Builder.<GhostSkelly>of(GhostSkelly::new, MobCategory.MONSTER).sized(1.5f, 2.0f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ghost_pumpkin_skelly"));
+      () -> EntityType.Builder.<GhostSkelly>of(GhostSkelly::new, MobCategory.AMBIENT).sized(1.5f, 2.0f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ghost_pumpkin_skelly"));
   public static final RegistryObject<EntityType<WormSmall>> ENTITY_TYPE_SMALL_WORM = ENTITY_TYPES.register("small_worm",
       () -> EntityType.Builder.<WormSmall>of(WormSmall::new, MobCategory.MONSTER).sized(0.25f, 1.0f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("small_worm"));
   public static final RegistryObject<EntityType<WormMedium>> ENTITY_TYPE_MEDIUM_WORM = ENTITY_TYPES.register("medium_worm",
@@ -856,11 +861,11 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<WormLarge>> ENTITY_TYPE_LARGE_WORM = ENTITY_TYPES.register("large_worm",
       () -> EntityType.Builder.<WormLarge>of(WormLarge::new, MobCategory.MONSTER).sized(1.55f, 2.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("large_worm"));
   public static final RegistryObject<EntityType<Cassowary>> ENTITY_TYPE_CASSOWARY = ENTITY_TYPES.register("cassowary",
-      () -> EntityType.Builder.<Cassowary>of(Cassowary::new, MobCategory.MONSTER).sized(0.5f, 1.2f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cassowary"));
+      () -> EntityType.Builder.<Cassowary>of(Cassowary::new, MobCategory.CREATURE).sized(0.5f, 1.2f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cassowary"));
   public static final RegistryObject<EntityType<CloudShark>> ENTITY_TYPE_CLOUD_SHARK = ENTITY_TYPES.register("cloud_shark",
       () -> EntityType.Builder.<CloudShark>of(CloudShark::new, MobCategory.MONSTER).sized(1.0f, 0.75f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cloud_shark"));
   public static final RegistryObject<EntityType<GoldFish>> ENTITY_TYPE_GOLD_FISH = ENTITY_TYPES.register("gold_fish",
-      () -> EntityType.Builder.<GoldFish>of(GoldFish::new, MobCategory.MONSTER).sized(0.75f, 0.5f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("gold_fish"));
+      () -> EntityType.Builder.<GoldFish>of(GoldFish::new, MobCategory.CREATURE).sized(0.75f, 0.5f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("gold_fish"));
   public static final RegistryObject<EntityType<LeafMonster>> ENTITY_TYPE_LEAF_MONSTER = ENTITY_TYPES.register("leaf_monster",
       () -> EntityType.Builder.<LeafMonster>of(LeafMonster::new, MobCategory.MONSTER).sized(1.0f, 2.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("leaf_monster"));
   public static final RegistryObject<EntityType<GodzillaHead>> ENTITY_TYPE_MOBZILLA_HEAD = ENTITY_TYPES.register("mobzilla_head",
@@ -870,11 +875,11 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<EnderReaper>> ENTITY_TYPE_ENDER_REAPER = ENTITY_TYPES.register("ender_reaper",
       () -> EntityType.Builder.<EnderReaper>of(EnderReaper::new, MobCategory.MONSTER).sized(0.7f, 2.9f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ender_reaper"));
   public static final RegistryObject<EntityType<Beaver>> ENTITY_TYPE_BEAVER = ENTITY_TYPES.register("beaver",
-      () -> EntityType.Builder.<Beaver>of(Beaver::new, MobCategory.MONSTER).sized(0.6f, 0.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("beaver"));
+      () -> EntityType.Builder.<Beaver>of(Beaver::new, MobCategory.CREATURE).sized(0.6f, 0.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("beaver"));
   public static final RegistryObject<EntityType<Termite>> ENTITY_TYPE_TERMITE = ENTITY_TYPES.register("termite",
       () -> EntityType.Builder.<Termite>of(Termite::new, MobCategory.MONSTER).sized(0.2f, 0.2f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("termite"));
   public static final RegistryObject<EntityType<Fairy>> ENTITY_TYPE_FAIRY = ENTITY_TYPES.register("fairy",
-      () -> EntityType.Builder.<Fairy>of(Fairy::new, MobCategory.CREATURE).sized(0.4f, 0.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("fairy"));
+      () -> EntityType.Builder.<Fairy>of(Fairy::new, MobCategory.AMBIENT).sized(0.4f, 0.8f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("fairy"));
   public static final RegistryObject<EntityType<Peacock>> ENTITY_TYPE_PEACOCK = ENTITY_TYPES.register("peacock",
       () -> EntityType.Builder.<Peacock>of(Peacock::new, MobCategory.CREATURE).sized(0.65f, 1.2f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("peacock"));
   public static final RegistryObject<EntityType<Rotator>> ENTITY_TYPE_ROTATOR = ENTITY_TYPES.register("rotator",
@@ -886,19 +891,19 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<Rat>> ENTITY_TYPE_RAT = ENTITY_TYPES.register("rat",
       () -> EntityType.Builder.<Rat>of(Rat::new, MobCategory.MONSTER).sized(0.25f, 0.5f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("rat"));
   public static final RegistryObject<EntityType<Flounder>> ENTITY_TYPE_FLOUNDER = ENTITY_TYPES.register("flounder",
-      () -> EntityType.Builder.<Flounder>of(Flounder::new, MobCategory.CREATURE).sized(0.55f, 0.25f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("flounder"));
+      () -> EntityType.Builder.<Flounder>of(Flounder::new, MobCategory.WATER_CREATURE).sized(0.55f, 0.25f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("flounder"));
   public static final RegistryObject<EntityType<Whale>> ENTITY_TYPE_WHALE = ENTITY_TYPES.register("whale",
-      () -> EntityType.Builder.<Whale>of(Whale::new, MobCategory.CREATURE).sized(1.5f, 2.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("whale"));
+      () -> EntityType.Builder.<Whale>of(Whale::new, MobCategory.WATER_CREATURE).sized(1.5f, 2.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("whale"));
   public static final RegistryObject<EntityType<Irukandji>> ENTITY_TYPE_IRUKANDJI = ENTITY_TYPES.register("irukandji",
       () -> EntityType.Builder.<Irukandji>of(Irukandji::new, MobCategory.MONSTER).sized(0.25f, 0.25f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("irukandji"));
   public static final RegistryObject<EntityType<Skate>> ENTITY_TYPE_SKATE = ENTITY_TYPES.register("skate",
-      () -> EntityType.Builder.<Skate>of(Skate::new, MobCategory.CREATURE).sized(0.75f, 0.25f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("skate"));
+      () -> EntityType.Builder.<Skate>of(Skate::new, MobCategory.MONSTER).sized(0.75f, 0.25f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("skate"));
   public static final RegistryObject<EntityType<Urchin>> ENTITY_TYPE_URCHIN = ENTITY_TYPES.register("crystal_urchin",
-      () -> EntityType.Builder.<Urchin>of(Urchin::new, MobCategory.MISC).sized(1.35f, 2.1f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("crystal_urchin"));
+      () -> EntityType.Builder.<Urchin>of(Urchin::new, MobCategory.MONSTER).sized(1.35f, 2.1f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("crystal_urchin"));
   public static final RegistryObject<EntityType<Mantis>> ENTITY_TYPE_MANTIS = ENTITY_TYPES.register("mantis",
       () -> EntityType.Builder.<Mantis>of(Mantis::new, MobCategory.MONSTER).sized(2.5f, 3.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("mantis"));
   public static final RegistryObject<EntityType<HerculesBeetle>> ENTITY_TYPE_HERCULES_BEETLE = ENTITY_TYPES.register("hercules_beetle",
-      () -> EntityType.Builder.<HerculesBeetle>of(HerculesBeetle::new, MobCategory.CREATURE).sized(3.25f, 2.75f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("hercules_beetle"));
+      () -> EntityType.Builder.<HerculesBeetle>of(HerculesBeetle::new, MobCategory.MONSTER).sized(3.25f, 2.75f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("hercules_beetle"));
   public static final RegistryObject<EntityType<TRex>> ENTITY_TYPE_TREX = ENTITY_TYPES.register("trex",
       () -> EntityType.Builder.<TRex>of(TRex::new, MobCategory.MONSTER).sized(2.0f, 4.2f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("trex"));
   public static final RegistryObject<EntityType<TRex>> ENTITY_TYPE_T_REX = ENTITY_TYPES.register("t._rex",
@@ -906,7 +911,7 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<Stinky>> ENTITY_TYPE_STINKY = ENTITY_TYPES.register("stinky",
       () -> EntityType.Builder.<Stinky>of(Stinky::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("stinky"));
   public static final RegistryObject<EntityType<Coin>> ENTITY_TYPE_COIN = ENTITY_TYPES.register("coin",
-      () -> EntityType.Builder.<Coin>of(Coin::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("coin"));
+      () -> EntityType.Builder.<Coin>of(Coin::new, MobCategory.CREATURE).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("coin"));
   public static final RegistryObject<EntityType<TheKing>> ENTITY_TYPE_THE_KING = ENTITY_TYPES.register("the_king",
       () -> EntityType.Builder.<TheKing>of(TheKing::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_king"));
   public static final RegistryObject<EntityType<KingHead>> ENTITY_TYPE_KING_HEAD = ENTITY_TYPES.register("king_head",
@@ -950,11 +955,11 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<Pointysaurus>> ENTITY_TYPE_POINTYSAURUS = ENTITY_TYPES.register("pointysaurus",
       () -> EntityType.Builder.<Pointysaurus>of(Pointysaurus::new, MobCategory.MONSTER).sized(2.9f, 2.9f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("pointysaurus"));
   public static final RegistryObject<EntityType<Cricket>> ENTITY_TYPE_CRICKET = ENTITY_TYPES.register("cricket",
-      () -> EntityType.Builder.<Cricket>of(Cricket::new, MobCategory.MONSTER).sized(0.1f, 0.1f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cricket"));
+      () -> EntityType.Builder.<Cricket>of(Cricket::new, MobCategory.CREATURE).sized(0.1f, 0.1f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cricket"));
   public static final RegistryObject<EntityType<ThePrincess>> ENTITY_TYPE_THE_PRINCESS = ENTITY_TYPES.register("the_princess",
       () -> EntityType.Builder.<ThePrincess>of(ThePrincess::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_princess"));
   public static final RegistryObject<EntityType<Frog>> ENTITY_TYPE_FROG = ENTITY_TYPES.register("frog",
-      () -> EntityType.Builder.<Frog>of(Frog::new, MobCategory.CREATURE).sized(0.75f, 0.75f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("frog"));
+      () -> EntityType.Builder.<Frog>of(Frog::new, MobCategory.WATER_CREATURE).sized(0.75f, 0.75f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("frog"));
   public static final RegistryObject<EntityType<ThePrinceAdult>> ENTITY_TYPE_THE_YOUNG_ADULT_PRINCE = ENTITY_TYPES.register("the_young_adult_prince",
       () -> EntityType.Builder.<ThePrinceAdult>of(ThePrinceAdult::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_young_adult_prince"));
   public static final RegistryObject<EntityType<SpiderRobot>> ENTITY_TYPE_SPIDER_ROBOT = ENTITY_TYPES.register("robot_spider",

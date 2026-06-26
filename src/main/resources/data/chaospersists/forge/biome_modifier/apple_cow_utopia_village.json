@@ -1,13 +1,13 @@
 {
   "type": "forge:add_spawns",
+  "spawners": {
+    "type": "chaospersists:apple_cow",
+    "weight": 10,
+    "minCount": 4,
+    "maxCount": 8
+  },
   "biomes": [
     "chaospersists:utopia",
     "chaospersists:village_dimension"
-  ],
-  "spawners": {
-    "type": "chaospersists:apple_cow",
-    "weight": 45,
-    "minCount": 1,
-    "maxCount": 5
-  }
+  ]
 }

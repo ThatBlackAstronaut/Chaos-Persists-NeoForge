@@ -23,9 +23,12 @@ public class Biome {
       net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState();
   public final BiomeDecorator decorator = new BiomeDecorator();
   private final net.minecraft.world.level.biome.Biome delegate;
+  /** Original 1.7.10 biome id path (e.g. {@code forest_hills}), used for spawn group matching. */
+  private final String legacyPath;
 
-  private Biome(net.minecraft.world.level.biome.Biome delegate) {
+  private Biome(net.minecraft.world.level.biome.Biome delegate, String legacyPath) {
     this.delegate = delegate;
+    this.legacyPath = legacyPath;
   }
 
   private static final Map<ResourceLocation, float[]> LEGACY_TERRAIN = new HashMap<>();
@@ -46,7 +49,13 @@ public class Biome {
   }
 
   public static Biome wrap(net.minecraft.world.level.biome.Biome delegate) {
-    return new Biome(delegate);
+    ResourceLocation key = ForgeRegistries.BIOMES.getKey(delegate);
+    String path = key != null ? key.getPath() : "plains";
+    return new Biome(delegate, path);
+  }
+
+  public static Biome wrap(net.minecraft.world.level.biome.Biome delegate, String legacyPath) {
+    return new Biome(delegate, legacyPath.toLowerCase());
   }
 
   public float getBaseHeight() {
@@ -120,6 +129,11 @@ public class Biome {
 
   public ResourceLocation getRegistryName() {
     return ForgeRegistries.BIOMES.getKey(delegate);
+  }
+
+  /** 1.7.10 biome name for {@link com.astryxion.chaospersists.world.biome.LegacyBiomeMatcher}. */
+  public ResourceLocation getLegacyGroupId() {
+    return ResourceLocation.withDefaultNamespace(legacyPath);
   }
 
   public List<SpawnListEntry> getSpawnableList(EnumCreatureType type) {

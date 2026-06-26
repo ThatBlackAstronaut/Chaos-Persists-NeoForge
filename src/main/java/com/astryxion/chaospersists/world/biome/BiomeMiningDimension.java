@@ -10,9 +10,11 @@ import java.util.function.Function;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraftforge.common.world.BiomeModifier;
 import net.minecraftforge.common.world.ModifiableBiomeInfo;
@@ -28,6 +30,30 @@ import net.minecraftforge.registries.ForgeRegistries;
 public final class BiomeMiningDimension {
     private BiomeMiningDimension() {}
 
+    private static Holder<Biome> chunkGenSpawnBiome;
+
+    /** Biome holder used only for mining-dimension chunk-gen mob spawning (mod mob table). */
+    public static Holder<Biome> getChunkGenSpawnBiome(RegistryAccess registryAccess) {
+        if (chunkGenSpawnBiome == null) {
+            Registry<Biome> biomes = registryAccess.registryOrThrow(Registries.BIOME);
+            Biome base = biomes.get(Biomes.WINDSWEPT_HILLS);
+            if (base == null) {
+                base = biomes.get(Biomes.PLAINS);
+            }
+            chunkGenSpawnBiome =
+                    Holder.direct(
+                            new Biome.BiomeBuilder()
+                                    .hasPrecipitation(base.hasPrecipitation())
+                                    .temperature(base.getBaseTemperature())
+                                    .downfall(base.getModifiedClimateSettings().downfall())
+                                    .specialEffects(base.getSpecialEffects())
+                                    .mobSpawnSettings(buildMiningSpawns())
+                                    .generationSettings(base.getGenerationSettings())
+                                    .build());
+        }
+        return chunkGenSpawnBiome;
+    }
+
     public static MobSpawnSettings buildMiningSpawns() {
         MobSpawnSettings.Builder spawns = new MobSpawnSettings.Builder();
         addMiningSpawns(spawns);
@@ -39,77 +65,91 @@ public final class BiomeMiningDimension {
         if (ChaosPersists.AlosaurusEnable != 0) {
             spawns.addSpawn(
                     MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_ALOSAURUS.get(), 7, 1, 1));
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_ALOSAURUS.get(), 20, 2, 4));
         }
         if (ChaosPersists.TRexEnable != 0) {
             spawns.addSpawn(
                     MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_TREX.get(), 4, 1, 1));
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_TREX.get(), 15, 2, 4));
         }
         if (ChaosPersists.PointysaurusEnable != 0) {
             spawns.addSpawn(
                     MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_POINTYSAURUS.get(), 4, 1, 1));
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_POINTYSAURUS.get(), 22, 4, 8));
         }
         if (ChaosPersists.CryolophosaurusEnable != 0) {
             spawns.addSpawn(
                     MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CRYOLOPHOSAURUS.get(), 8, 1, 1));
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CRYOLOPHOSAURUS.get(), 40, 4, 8));
         }
         if (ChaosPersists.AlienEnable != 0) {
             spawns.addSpawn(
                     MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_ALIEN.get(), 15, 1, 1));
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_ALIEN.get(), 35, 2, 3));
+        }
+        if (ChaosPersists.CaveFisherEnable != 0) {
+            spawns.addSpawn(
+                    MobCategory.MONSTER,
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CAVE_FISHER.get(), 35, 4, 8));
         }
         if (ChaosPersists.BaryonyxEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BARYONYX.get(), 8, 1, 1));
+                    MobCategory.CREATURE,
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BARYONYX.get(), 6, 4, 8));
         }
         if (ChaosPersists.CamarasaurusEnable != 0) {
             spawns.addSpawn(
                     MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CAMARASAURUS.get(), 25, 1, 1));
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CAMARASAURUS.get(), 4, 2, 6));
         }
         if (ChaosPersists.CockateilEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BIRD.get(), 45, 7, 10));
+                    MobCategory.CREATURE,
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BIRD.get(), 10, 1, 2));
         }
         if (ChaosPersists.SpyroEnable != 0) {
             spawns.addSpawn(
                     MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BABY_DRAGON.get(), 7, 1, 1));
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BABY_DRAGON.get(), 5, 1, 2));
         }
         if (ChaosPersists.GammaMetroidEnable != 0) {
             spawns.addSpawn(
                     MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_GAMMA_METROID.get(), 2, 1, 1));
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_GAMMA_METROID.get(), 35, 4, 7));
         }
         if (ChaosPersists.NastysaurusEnable != 0) {
             spawns.addSpawn(
                     MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_NASTYSAURUS.get(), 2, 1, 1));
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_NASTYSAURUS.get(), 15, 2, 4));
         }
         if (ChaosPersists.VelocityRaptorEnable != 0) {
             spawns.addSpawn(
                     MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_VELOCITY_RAPTOR.get(), 9, 1, 1));
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_VELOCITY_RAPTOR.get(), 4, 2, 6));
+        }
+        if (ChaosPersists.DragonflyEnable != 0) {
+            spawns.addSpawn(
+                    MobCategory.AMBIENT,
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_DRAGONFLY.get(), 2, 1, 3));
         }
         if (ChaosPersists.ButterflyEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.CREATURE,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BUTTERFLY.get(), 115, 4, 4));
+                    MobCategory.AMBIENT,
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BUTTERFLY.get(), 5, 1, 2));
         }
     }
 
+    /**
+     * OreSpawn {@code ChunkProviderOreSpawn2}: custom monster/ambient lists merge with extreme hills;
+     * creature/water lists stay on the biome. Replace monsters with the mining table only; add others.
+     */
     public static void applyPotentialSpawns(LevelEvent.PotentialSpawns event, RegistryAccess registryAccess) {
         MobCategory category = event.getMobCategory();
         List<MobSpawnSettings.SpawnerData> miningSpawns = collectDatapackMiningSpawns(registryAccess, category);
         if (miningSpawns.isEmpty()) {
             return;
         }
-        if (category == MobCategory.CREATURE) {
+        if (category == MobCategory.MONSTER) {
             List<MobSpawnSettings.SpawnerData> existing = new ArrayList<>(event.getSpawnerDataList());
             for (MobSpawnSettings.SpawnerData data : existing) {
                 event.removeSpawnerData(data);
@@ -120,7 +160,7 @@ public final class BiomeMiningDimension {
         }
     }
 
-    private static List<MobSpawnSettings.SpawnerData> collectDatapackMiningSpawns(
+    public static List<MobSpawnSettings.SpawnerData> collectDatapackMiningSpawns(
             RegistryAccess registryAccess, MobCategory category) {
         Registry<BiomeModifier> registry =
                 registryAccess.registryOrThrow(ForgeRegistries.Keys.BIOME_MODIFIERS);

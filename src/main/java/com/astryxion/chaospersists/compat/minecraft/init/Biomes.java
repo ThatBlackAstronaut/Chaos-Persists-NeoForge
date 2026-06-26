@@ -80,6 +80,6 @@ public final class Biomes {
           ForgeRegistries.BIOMES.getValue(
               net.minecraft.world.level.biome.Biomes.PLAINS.location());
     }
-    return Biome.wrap(biome);
+    return Biome.wrap(biome, path);
   }
 }

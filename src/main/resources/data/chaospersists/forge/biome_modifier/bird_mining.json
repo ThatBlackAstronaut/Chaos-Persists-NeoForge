@@ -2,8 +2,8 @@
   "type": "chaospersists:add_mining_dimension_spawns",
   "spawners": {
     "type": "chaospersists:bird",
-    "weight": 45,
-    "minCount": 7,
-    "maxCount": 10
+    "weight": 10,
+    "minCount": 1,
+    "maxCount": 2
   }
 }

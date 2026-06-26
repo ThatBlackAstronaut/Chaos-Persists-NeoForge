@@ -21,27 +21,27 @@ public final class BiomeDangerPlains {
     public static void addDangerSpawns(MobSpawnSettings.Builder spawns) {
         if (ChaosPersists.ButterflyEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.CREATURE,
+                    MobCategory.AMBIENT,
                     new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BUTTERFLY.get(), 5, 2, 6));
         }
         if (ChaosPersists.CockateilEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.MONSTER,
+                    MobCategory.CREATURE,
                     new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_BIRD.get(), 4, 1, 2));
         }
         if (ChaosPersists.MothEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.CREATURE,
+                    MobCategory.AMBIENT,
                     new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_MOTH.get(), 5, 2, 4));
         }
         if (ChaosPersists.FireflyEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.CREATURE,
+                    MobCategory.AMBIENT,
                     new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_FIREFLY.get(), 10, 4, 8));
         }
         if (ChaosPersists.DragonEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.MISC,
+                    MobCategory.CREATURE,
                     new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_DRAGON.get(), 1, 1, 2));
         }
         if (ChaosPersists.StinkyEnable != 0) {
@@ -51,7 +51,7 @@ public final class BiomeDangerPlains {
         }
         if (ChaosPersists.CliffRacerEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.MONSTER,
+                    MobCategory.AMBIENT,
                     new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CLIFF_RACER.get(), 20, 3, 6));
         }
         if (ChaosPersists.CloudSharkEnable != 0) {
@@ -61,13 +61,13 @@ public final class BiomeDangerPlains {
         }
         if (ChaosPersists.GoldFishEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.MONSTER,
+                    MobCategory.CREATURE,
                     new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_GOLD_FISH.get(), 5, 2, 4));
         }
         if (ChaosPersists.CreepingHorrorEnable != 0) {
             spawns.addSpawn(
                     MobCategory.MONSTER,
-                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CREEPING_HORROR.get(), 60, 4, 8));
+                    new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_CREEPING_HORROR.get(), 25, 2, 4));
         }
         if (ChaosPersists.TerribleTerrorEnable != 0) {
             spawns.addSpawn(
@@ -96,7 +96,7 @@ public final class BiomeDangerPlains {
         }
         if (ChaosPersists.HerculesBeetleEnable != 0) {
             spawns.addSpawn(
-                    MobCategory.CREATURE,
+                    MobCategory.MONSTER,
                     new MobSpawnSettings.SpawnerData(ChaosPersists.ENTITY_TYPE_HERCULES_BEETLE.get(), 5, 1, 2));
         }
     }
