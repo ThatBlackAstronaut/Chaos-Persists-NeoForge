@@ -112,6 +112,7 @@ public class ThePrinceTeen extends TamableAnimal {
     private int kill_count = 0;
     private int day_count = 0;
     private int is_day = 0;
+    private int dismountCooldown = 0;
 
     public ThePrinceTeen(EntityType<? extends ThePrinceTeen> type, Level level) {
         super(type, level);
@@ -122,7 +123,7 @@ public class ThePrinceTeen extends TamableAnimal {
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new MyEntityAIFollowOwner(this, 1.1f, 12.0f, 2.0f));
+        this.goalSelector.addGoal(1, new MyEntityAIFollowOwner(this, 1.15f, 12.0f, 2.0f));
         this.goalSelector.addGoal(2, new TemptGoal(this, 1.25, Ingredient.of(Items.BEEF), false));
         this.goalSelector.addGoal(3, new MyEntityAIWander(this, 0.75f));
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, LivingEntity.class, 9.0f));
@@ -151,6 +152,12 @@ public class ThePrinceTeen extends TamableAnimal {
         return EntityDimensions.scalable(3.25f, 4.25f);
     }
 
+    @Override
+    public void onAddedToWorld() {
+        super.onAddedToWorld();
+        this.refreshDimensions();
+    }
+
     public boolean shouldRiderSit() {
         return true;
     }
@@ -175,11 +182,11 @@ public class ThePrinceTeen extends TamableAnimal {
 
     @Override
     public double getPassengersRidingOffset() {
-        return 2.75;
+        return 2.55;
     }
 
     public double getMountedYOffset() {
-        return 2.75;
+        return 2.55;
     }
 
     @Override
@@ -289,52 +296,33 @@ public class ThePrinceTeen extends TamableAnimal {
                 my = 2.0;
             }
 
-            double d4 = pp.getYRot();
-            d4 %= 360.0;
-            while (d4 < 0.0) {
-                d4 += 360.0;
-            }
-            double d5 = this.getYRot();
-            d5 %= 360.0;
-            while (d5 < 0.0) {
-                d5 += 360.0;
-            }
-            relative_g = (d4 - d5) % 180.0;
-            while (relative_g < 0.0) {
-                relative_g += 180.0;
-            }
-            if (relative_g > 90.0) {
-                relative_g -= 180.0;
-            }
-
-            if (velocity > 0.01) {
-                d4 = 1.85 - velocity;
-                d4 = Math.abs(d4);
-                if (d4 < 0.01) {
-                    d4 = 0.01;
-                }
-                if (d4 > 0.9) {
-                    d4 = 0.9;
-                }
-                this.setYRot(pp.getYRot() + (float) (relative_g * d4));
-            } else {
-                this.setYRot(pp.getYRot());
-            }
-            relative_g = Math.abs(relative_g) * velocity;
-            if (relative_g > 50.0) {
-                relative_g = 0.0;
-            }
-
+            this.setYRot(pp.getYRot());
             this.setXRot(2.0f * (float) velocity);
             this.setRot(this.getYRot(), this.getXRot());
             this.setYHeadRot(this.getYRot());
 
             double newvelocity = Math.sqrt(mx * mx + mz * mz);
+            double rhm = Math.atan2(mz, mx);
+            double rhdir = Math.toRadians((pp.getYRot() + 90.0f) % 360.0f);
+            double rdv;
+            if ((rdv = Math.abs(rhm - rhdir) % (Math.PI * 2.0)) > Math.PI) {
+                rdv -= Math.PI * 2.0;
+            }
+            rdv = Math.abs(rdv);
+            if (Math.abs(newvelocity) < 0.01) {
+                rdv = 0.0;
+            }
+            if (rdv > 1.5) {
+                newvelocity = -newvelocity;
+            }
             double im = pp.zza;
 
             boolean riderJumping =
                     pp instanceof LocalPlayer lp && lp.input.jumping || ChaosPersists.flyup_keystate != 0;
-            if (riderJumping) {
+            if (ChaosPersists.flyup_keystate != 0) {
+                my += 0.035;
+                my += velocity * 0.046;
+            } else if (riderJumping) {
                 my += 0.06;
             } else if (pp.getXRot() > 45.0f && pp.zza > 0.0f) {
                 my -= 0.05;
@@ -425,14 +413,19 @@ public class ThePrinceTeen extends TamableAnimal {
     protected void removePassenger(Entity passenger) {
         super.removePassenger(passenger);
         if (!this.level().isClientSide && this.getPassengers().isEmpty()) {
-            this.setActivity(0);
-            this.owner_flying = 0;
-            this.setNoGravity(false);
-            this.noPhysics = false;
-            this.setDeltaMovement(this.getDeltaMovement().x, 0.0, this.getDeltaMovement().z);
-            this.moveTo(this.getX(), this.getY(), this.getZ());
-            MyUtils.enforceDragonMountGroundSafety(this);
+            this.finishDismountLanding();
         }
+    }
+
+    private void finishDismountLanding() {
+        this.dismountCooldown = 80;
+        this.setActivity(0);
+        this.owner_flying = 0;
+        this.setNoGravity(false);
+        this.noPhysics = false;
+        Vec3 dm = this.getDeltaMovement();
+        this.setDeltaMovement(dm.x, Math.min(dm.y, -0.25), dm.z);
+        MyUtils.enforceDragonMountGroundSafety(this);
     }
 
     private void princeTeenRiderStrafeAttack(Player pp, double mx, double my, double mz) {
@@ -757,6 +750,13 @@ public class ThePrinceTeen extends TamableAnimal {
         if (par1DamageSource.is(DamageTypes.IN_WALL)) {
             return ret;
         }
+        e = par1DamageSource.getEntity();
+        if (e instanceof BetterFireball bf && bf.shootingEntity == this) {
+            return false;
+        }
+        if (par1DamageSource.getDirectEntity() instanceof BetterFireball bf2 && bf2.shootingEntity == this) {
+            return false;
+        }
         if (!this.level().isClientSide) {
             this.setOrderedToSit(false);
             this.setActivity(1);
@@ -792,17 +792,23 @@ public class ThePrinceTeen extends TamableAnimal {
     @Override
     protected void customServerAiStep() {
         LivingEntity e;
-        if (this.getActivity() == 0 || this.getPassengers().isEmpty()) {
+        if (this.getActivity() == 0 && this.getPassengers().isEmpty()) {
             super.customServerAiStep();
         }
         if (!this.isInSittingPose()
+                && this.dismountCooldown == 0
                 && this.getActivity() == 0
                 && this.getPassengers().isEmpty()
                 && this.level().getDifficulty() != Difficulty.PEACEFUL
                 && this.getRandom().nextInt(10) == 1) {
             e = this.findSomethingToAttack();
             if (e != null) {
-                this.setActivity(1);
+                LivingEntity owner = this.getOwner();
+                if (!this.isTame()
+                        || owner == null
+                        || this.distanceToSqr(owner) > 256.0) {
+                    this.setActivity(1);
+                }
             } else {
                 this.setAttacking(0);
             }
@@ -844,15 +850,35 @@ public class ThePrinceTeen extends TamableAnimal {
             this.setTarget(null);
         }
         if (this.isInSittingPose()) {
+            if (!this.level().isClientSide) {
+                this.setNoGravity(false);
+                this.noPhysics = false;
+                if (this.getNavigation() != null) {
+                    this.getNavigation().stop();
+                }
+            }
             return;
         }
         this.owner_flying = 0;
+        if (this.isTame()
+                && this.getOwner() != null
+                && this.getPassengers().isEmpty()
+                && !this.isInSittingPose()
+                && this.getOwner() instanceof Player owner
+                && owner.getAbilities().flying) {
+            this.owner_flying = 1;
+            this.setActivity(1);
+        }
         if (this.getRandom().nextInt(50) == 1
                 && !this.isInSittingPose()
                 && !this.target_in_sight
                 && this.getPassengers().isEmpty()) {
-            if (this.getRandom().nextInt(15) == 1) {
+            if (MyUtils.isPrinceAirborne(this)) {
                 this.setActivity(1);
+            } else if (this.getRandom().nextInt(15) == 1) {
+                this.setActivity(1);
+            } else {
+                this.setActivity(0);
             }
         }
     }
@@ -999,9 +1025,43 @@ public class ThePrinceTeen extends TamableAnimal {
     @Override
     public void tick() {
         LivingEntity e;
+        if (this.dismountCooldown > 0) {
+            --this.dismountCooldown;
+        }
+        if (!this.level().isClientSide && this.getRemainingFireTicks() > 0) {
+            this.clearFire();
+        }
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
+        if (!this.level().isClientSide
+                && this.getPassengers().isEmpty()
+                && !this.isInSittingPose()
+                && this.getActivity() == 0
+                && MyUtils.isPrinceAirborne(this)) {
+            this.setActivity(1);
+        }
+        if (!this.level().isClientSide
+                && this.getPassengers().isEmpty()
+                && this.getActivity() == 0
+                && !this.isInSittingPose()) {
+            this.setNoGravity(false);
+            this.noPhysics = false;
+            if (!this.onGround()) {
+                Vec3 dm = this.getDeltaMovement();
+                this.setDeltaMovement(dm.x, Math.min(dm.y - 0.04, -0.08), dm.z);
+            }
+        }
         super.tick();
-        this.noPhysics = this.getActivity() != 0;
+        if (this.isInSittingPose() && this.getPassengers().isEmpty()) {
+            this.noPhysics = false;
+            if (!this.level().isClientSide) {
+                this.setNoGravity(false);
+            }
+        } else {
+            this.noPhysics = this.getActivity() != 0;
+            if (!this.level().isClientSide && this.getActivity() != 0 && this.getPassengers().isEmpty()) {
+                this.setNoGravity(true);
+            }
+        }
         if (!this.level().isClientSide) {
             int i;
             if (this.getRandom().nextInt(10) == 1) {
@@ -1068,7 +1128,10 @@ public class ThePrinceTeen extends TamableAnimal {
         if (this.hurt_timer > 0) {
             --this.hurt_timer;
         }
-        if (this.getActivity() == 1 && !this.onGround()) {
+        if (this.getActivity() != 0
+                && (this.owner_flying != 0
+                        || !this.onGround()
+                        || this.getDeltaMovement().horizontalDistanceSqr() > 1.0E-4)) {
             ++this.wing_sound;
             if (this.wing_sound > 20) {
                 if (!this.level().isClientSide && ChaosSounds.MOTHRA_WINGS != null) {
@@ -1090,28 +1153,21 @@ public class ThePrinceTeen extends TamableAnimal {
             this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.07, 0.0));
         }
         if (!this.level().isClientSide
-                && this.getActivity() != 0
-                && this.getPassengers().isEmpty()
-                && !this.isInSittingPose()) {
-            this.fly_without_rider();
-        }
-        if (this.level().isClientSide) {
-            return;
-        }
-        if (this.getActivity() == 0
+                && this.getActivity() == 0
                 && this.isTame()
                 && this.getOwner() != null
                 && !this.isInSittingPose()
+                && this.getPassengers().isEmpty()
                 && this.distanceToSqr((e = this.getOwner())) > 400.0) {
             this.setActivity(1);
         }
         MyUtils.enforceDragonMountGroundSafety(this);
-        if (this.getPassengers().isEmpty()) {
-            this.moveTo(this.getX(), this.getY(), this.getZ());
-        }
     }
 
     private void fly_without_rider() {
+        if (this.getNavigation() != null) {
+            this.getNavigation().stop();
+        }
         Vec3 dm = this.getDeltaMovement();
         double mx = dm.x;
         double my = dm.y;
@@ -1158,6 +1214,10 @@ public class ThePrinceTeen extends TamableAnimal {
             ox = e.getX();
             oy = e.getY();
             oz = e.getZ();
+            if (this.owner_flying != 0) {
+                this.currentFlightTarget = BlockPos.containing(ox, oy + 2.0, oz);
+                do_new = false;
+            }
             if (this.distanceToSqr(e) > 400.0) {
                 toofar = true;
                 this.target_in_sight = false;
@@ -1231,7 +1291,10 @@ public class ThePrinceTeen extends TamableAnimal {
                     gox = (int) ox;
                     goy = (int) oy;
                     goz = (int) oz;
-                    if (this.owner_flying == 0) {
+                    if (this.isTame() && e != null && this.distanceToSqr(e) < 64.0 && this.owner_flying == 0) {
+                        zdir = this.getRandom().nextInt(5) - 2;
+                        xdir = this.getRandom().nextInt(5) - 2;
+                    } else if (this.owner_flying == 0) {
                         zdir = this.getRandom().nextInt(14) + 5;
                         xdir = this.getRandom().nextInt(14) + 5;
                     } else {
@@ -1287,6 +1350,8 @@ public class ThePrinceTeen extends TamableAnimal {
             if (this.isTame() && this.getOwner() != null && this.distanceToSqr((e = this.getOwner())) > 49.0) {
                 speed_factor = 3.5;
             }
+        } else if (has_owner && e != null && this.distanceToSqr(e) < 64.0) {
+            speed_factor = 0.35;
         }
         mx += (Math.signum(var1) - mx) * 0.15 * speed_factor;
         my += (Math.signum(var3) - my) * 0.21 * speed_factor;
@@ -1295,7 +1360,15 @@ public class ThePrinceTeen extends TamableAnimal {
         float var8 = Mth.wrapDegrees((float)(var7 - this.getYRot()));
         this.zza = (float) (0.75 * speed_factor);
         this.setYRot(this.getYRot() + var8 / 4.0f);
+        float horizSpeed = (float) Math.sqrt(mx * mx + mz * mz);
+        this.zza = Mth.clamp(horizSpeed * 1.5f, 0.15f, 1.0f);
+        if (mx * mx + my * my + mz * mz < 0.0025) {
+            mx = (this.getRandom().nextDouble() - 0.5) * 0.35;
+            my = -0.12;
+            mz = (this.getRandom().nextDouble() - 0.5) * 0.35;
+        }
         this.setDeltaMovement(mx, my, mz);
+        this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
     }
 
     @Override
@@ -1304,7 +1377,14 @@ public class ThePrinceTeen extends TamableAnimal {
             super.aiStep();
             return;
         }
+        this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
+        if (this.currentFlightTarget == null) {
+            this.currentFlightTarget = BlockPos.containing(this.getX(), this.getY(), this.getZ());
+        }
         super.aiStep();
+        if (this.isInWater()) {
+            this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.07, 0.0));
+        }
         if (this.level().isClientSide) {
             if (this.getActivity() != 0 && !this.getPassengers().isEmpty()) {
                 Entity rider = this.getPassengers().get(0);
@@ -1328,24 +1408,55 @@ public class ThePrinceTeen extends TamableAnimal {
                                                 / (double) this.boatPosRotationIncrements));
                 double d10 = Mth.wrapDegrees(this.boatYaw - (double) this.getYRot());
                 if (!this.getPassengers().isEmpty()) {
-                    d10 =
-                            Mth.wrapDegrees(
-                                    (double) this.getPassengers().get(0).getYRot() - (double) this.getYRot());
+                    Entity rider = this.getPassengers().get(0);
+                    this.setYRot(rider.getYRot());
+                    this.setYHeadRot(rider.getYRot());
+                } else {
+                    this.setYRot((float) ((double) this.getYRot() + d10 / (double) this.boatPosRotationIncrements));
                 }
-                this.setYRot((float) ((double) this.getYRot() + d10 / (double) this.boatPosRotationIncrements));
                 this.setRot(this.getYRot(), this.getXRot());
                 --this.boatPosRotationIncrements;
             }
         } else {
-            if (this.getActivity() != 0 && !this.getPassengers().isEmpty()) {
-                this.fly_with_rider();
-                Entity rider = this.getFirstPassenger();
-                if (rider != null && !rider.isAlive()) {
-                    this.ejectPassengers();
+            if (this.getActivity() != 0) {
+                if (!this.getPassengers().isEmpty()) {
+                    this.fly_with_rider();
+                    Entity rider = this.getFirstPassenger();
+                    if (rider != null && !rider.isAlive()) {
+                        this.ejectPassengers();
+                    }
+                } else if (!this.isInSittingPose()) {
+                    this.fly_without_rider();
                 }
             }
             this.always_do();
         }
+    }
+
+    private boolean isPlayerWithinPrinceReach(Player player, double maxCenterDistSq, double inflate) {
+        if (player.distanceToSqr(this) <= maxCenterDistSq) {
+            return true;
+        }
+        return this.getBoundingBox().inflate(inflate, inflate, inflate).contains(player.position());
+    }
+
+    private InteractionResult toggleSitStay(Player player) {
+        if (!this.level().isClientSide) {
+            if (!this.isInSittingPose()) {
+                this.setOrderedToSit(true);
+                this.setActivity(0);
+                if (this.getNavigation() != null) {
+                    this.getNavigation().stop();
+                }
+                this.setNoGravity(false);
+                this.noPhysics = false;
+                this.setDeltaMovement(Vec3.ZERO);
+            } else {
+                this.setOrderedToSit(false);
+                this.setActivity(0);
+            }
+        }
+        return InteractionResult.sidedSuccess(this.level().isClientSide);
     }
 
     @Override
@@ -1381,13 +1492,23 @@ public class ThePrinceTeen extends TamableAnimal {
             if (!this.isOwnedBy(par1EntityPlayer)) {
                 return super.mobInteract(par1EntityPlayer, hand);
             }
-            if (var2.isEmpty() && par1EntityPlayer.distanceToSqr(this) < 25.0) {
-                if (!this.level().isClientSide) {
-                    par1EntityPlayer.startRiding(this);
-                    this.setActivity(1);
-                    this.setOrderedToSit(false);
+            if (var2.isEmpty()) {
+                if (this.isInSittingPose()
+                        && this.isPlayerWithinPrinceReach(par1EntityPlayer, 64.0, 3.0)) {
+                    return this.toggleSitStay(par1EntityPlayer);
                 }
-                return InteractionResult.SUCCESS;
+                if (par1EntityPlayer.isShiftKeyDown()
+                        && this.isPlayerWithinPrinceReach(par1EntityPlayer, 64.0, 3.0)) {
+                    return this.toggleSitStay(par1EntityPlayer);
+                }
+                if (this.isPlayerWithinPrinceReach(par1EntityPlayer, 25.0, 1.5)) {
+                    if (!this.level().isClientSide) {
+                        par1EntityPlayer.startRiding(this);
+                        this.setActivity(1);
+                        this.setOrderedToSit(false);
+                    }
+                    return InteractionResult.sidedSuccess(this.level().isClientSide);
+                }
             }
             if (!var2.isEmpty() && var2.is(Items.BEEF) && par1EntityPlayer.distanceToSqr(this) < 25.0) {
                 if (this.level().isClientSide) {
@@ -1495,15 +1616,8 @@ public class ThePrinceTeen extends TamableAnimal {
                 }
                 return InteractionResult.SUCCESS;
             }
-            if (!var2.isEmpty() && par1EntityPlayer.distanceToSqr(this) < 16.0) {
-                if (!this.isInSittingPose()) {
-                    this.setOrderedToSit(true);
-                    this.setActivity(0);
-                } else {
-                    this.setOrderedToSit(false);
-                    this.setActivity(0);
-                }
-                return InteractionResult.SUCCESS;
+            if (!var2.isEmpty() && this.isPlayerWithinPrinceReach(par1EntityPlayer, 64.0, 3.0)) {
+                return this.toggleSitStay(par1EntityPlayer);
             }
         }
         return super.mobInteract(par1EntityPlayer, hand);
@@ -1531,6 +1645,15 @@ public class ThePrinceTeen extends TamableAnimal {
     public void setActivity(int par1) {
         if (this.level() != null && this.level().isClientSide) {
             return;
+        }
+        if (par1 == 0
+                && !this.isInSittingPose()
+                && this.getNavigation() != null
+                && MyUtils.isPrinceAirborne(this)) {
+            par1 = 1;
+        }
+        if (par1 != 0 && this.getNavigation() != null) {
+            this.getNavigation().stop();
         }
         this.entityData.set(ACTIVITY, par1);
     }
@@ -1564,6 +1687,7 @@ public class ThePrinceTeen extends TamableAnimal {
         this.setThePrinceTeenFire(tag.getInt("ThePrinceTeenFire"));
         this.kill_count = tag.getInt("SpyroKill");
         this.day_count = tag.getInt("SpyroDay");
+        this.refreshDimensions();
     }
 
     public static Entity spawnCreature(Level level, String par1, double par2, double par4, double par6) {
@@ -1581,7 +1705,9 @@ public class ThePrinceTeen extends TamableAnimal {
             return null;
         }
         entity.moveTo(par2, par4, par6, level.getRandom().nextFloat() * 360.0f, 0.0f);
-        serverLevel.addFreshEntity(entity);
+        if (!serverLevel.addFreshEntity(entity)) {
+            return null;
+        }
         return entity;
     }
 

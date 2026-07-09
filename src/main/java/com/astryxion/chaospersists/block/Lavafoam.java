@@ -30,8 +30,7 @@ public class Lavafoam extends Block {
                 .sound(SoundType.STONE)
                 .requiresCorrectToolForDrops()
                 .randomTicks()
-                .friction(0.6f)
-                .speedFactor(1.1f));
+                .friction(1.1f));
     }
 
     public int tickRate() {

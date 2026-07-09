@@ -274,7 +274,8 @@ public class ModelThePrinceTeen extends EntityModel<ThePrinceTeen> {
         float tailamp = 0.08f;
         float pi4 = 0.7853982f;
         int current_activity = entity.getActivity();
-        boolean useFlightPose = current_activity == 1 && !entity.onGround();
+        boolean useFlightPose =
+                (current_activity != 0 || !entity.onGround()) && !entity.isInSittingPose();
         newangle = (double)limbSwingAmount > 0.1 && current_activity == 0 ? Mth.cos((float)(ageInTicks * 1.3f * this.wingspeed)) * 3.1415927f * 0.2f * limbSwingAmount : Mth.cos((float)(ageInTicks * 0.3f * this.wingspeed)) * 3.1415927f * 0.04f;
         if (useFlightPose) {
             newangle = Mth.cos((float)(ageInTicks * 1.4f * this.wingspeed)) * 3.1415927f * 0.4f;
@@ -282,7 +283,7 @@ public class ModelThePrinceTeen extends EntityModel<ThePrinceTeen> {
         if (entity.getAttacking() != 0) {
             newangle = Mth.cos((float)(ageInTicks * 1.7f * this.wingspeed)) * 3.1415927f * 0.4f;
         }
-        if (entity.onGround() && !entity.isVehicle() && entity.getAttacking() == 0) {
+        if (entity.onGround() && current_activity == 0 && !entity.isVehicle() && entity.getAttacking() == 0) {
             if ((double)limbSwingAmount > 0.1) {
                 newangle = Mth.cos((float)(ageInTicks * 0.35f * this.wingspeed)) * 3.1415927f * 0.05f * limbSwingAmount;
             } else {

@@ -85,6 +85,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nullable;
 
 /*
@@ -229,6 +230,81 @@ public class MyUtils {
         return false;
     }
 
+    /** True when a large prince should keep flight AI instead of ground pathing. */
+    public static boolean isPrinceAirborne(net.minecraft.world.entity.TamableAnimal pet) {
+        if (pet.onGround()) {
+            return false;
+        }
+        LivingEntity owner = pet.getOwner();
+        if (owner != null && pet.getY() <= owner.getY() + 2.5) {
+            return false;
+        }
+        return true;
+    }
+
+    /** Offset follow point behind the owner so large princes do not stack on top of them. */
+    public static Vec3 getPrinceWalkFollowTarget(LivingEntity owner, double followDist, double hoverHeight) {
+        double yawRad = Math.toRadians(owner.getYRot());
+        double offX = -Math.sin(yawRad) * followDist;
+        double offZ = Math.cos(yawRad) * followDist;
+        return new Vec3(owner.getX() + offX, owner.getY() + hoverHeight, owner.getZ() + offZ);
+    }
+
+    /** True when a prince should use flight AI instead of follow-owner pathing/teleport. */
+    public static boolean isPrinceFlying(net.minecraft.world.entity.TamableAnimal pet) {
+        if (!pet.getPassengers().isEmpty()) {
+            return true;
+        }
+        if (pet instanceof ThePrinceTeen teen) {
+            if (teen.getActivity() == 0) {
+                return false;
+            }
+            LivingEntity owner = pet.getOwner();
+            if (owner instanceof net.minecraft.world.entity.player.Player player
+                    && !player.getAbilities().flying
+                    && teen.onGround()) {
+                return false;
+            }
+            return true;
+        }
+        if (pet instanceof ThePrinceAdult adult) {
+            if (adult.getActivity() == 0) {
+                return false;
+            }
+            LivingEntity owner = pet.getOwner();
+            if (owner instanceof net.minecraft.world.entity.player.Player player
+                    && !player.getAbilities().flying
+                    && adult.onGround()) {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /** Skip follow-owner teleport while a prince is flying nearby; still allow catch-up when far away. */
+    public static boolean shouldPrinceSkipFollowTeleport(net.minecraft.world.entity.TamableAnimal pet, LivingEntity owner) {
+        if (pet.getPassengers().isEmpty() && owner != null) {
+            if (pet instanceof ThePrinceTeen teen && teen.getActivity() != 0) {
+                return pet.distanceToSqr(owner) < 625.0;
+            }
+            if (pet instanceof ThePrinceAdult adult && adult.getActivity() != 0) {
+                return pet.distanceToSqr(owner) < 625.0;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isPrinceGrounded(net.minecraft.world.entity.TamableAnimal pet) {
+        if (pet instanceof ThePrinceTeen teen) {
+            return teen.getActivity() == 0;
+        }
+        if (pet instanceof ThePrinceAdult adult) {
+            return adult.getActivity() == 0;
+        }
+        return false;
+    }
+
     /**
      * Prince-family mounts: while nobody is riding, never leave noClip/gravity-off on or stay inside blocks.
      */
@@ -237,6 +313,12 @@ public class MyUtils {
             return;
         }
         if (!entity.getPassengers().isEmpty()) {
+            return;
+        }
+        if (entity instanceof ThePrinceTeen teen && teen.getActivity() != 0) {
+            return;
+        }
+        if (entity instanceof ThePrinceAdult adult && adult.getActivity() != 0) {
             return;
         }
         entity.noPhysics = false;

@@ -181,6 +181,10 @@ public class BetterFireball extends AbstractHurtingProjectile {
                 return;
             }
             if (hit instanceof LivingEntity living) {
+                if (hit == this.shootingEntity || isRoyaltyEntity(hit)) {
+                    this.discard();
+                    return;
+                }
                 if (!(living.getBbWidth() * living.getBbHeight() <= 30.0f)
                         && !isRoyaltyEntity(hit)
                         && !hit.getClass().getSimpleName().equals("Godzilla")

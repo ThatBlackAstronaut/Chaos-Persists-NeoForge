@@ -126,6 +126,12 @@ public class ThePrincess extends TamableAnimal {
     }
 
     @Override
+    public void onAddedToWorld() {
+        super.onAddedToWorld();
+        this.refreshDimensions();
+    }
+
+    @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.activity = 1;
@@ -159,6 +165,7 @@ public class ThePrincess extends TamableAnimal {
         this.kill_count = tag.getInt("SpyroKill");
         this.fed_count = tag.getInt("SpyroFed");
         this.day_count = tag.getInt("SpyroDay");
+        this.refreshDimensions();
     }
 
     public int getPower() {
@@ -1160,7 +1167,9 @@ public class ThePrincess extends TamableAnimal {
             return null;
         }
         entity.moveTo(par2, par4, par6, level.getRandom().nextFloat() * 360.0f, 0.0f);
-        serverLevel.addFreshEntity(entity);
+        if (!serverLevel.addFreshEntity(entity)) {
+            return null;
+        }
         return entity;
     }
 }

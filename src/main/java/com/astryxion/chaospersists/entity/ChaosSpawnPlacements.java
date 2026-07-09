@@ -49,6 +49,12 @@ public final class ChaosSpawnPlacements {
       return;
     }
     switch (id.getPath()) {
+      case "large_worm" ->
+          SpawnPlacements.register(
+              (EntityType<WormLarge>) type,
+              SpawnPlacements.Type.ON_GROUND,
+              Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+              ChaosSpawnPlacements::checkLargeWormSpawnRules);
       case "frog" ->
           SpawnPlacements.register(
               (EntityType<Frog>) type,
@@ -86,19 +92,19 @@ public final class ChaosSpawnPlacements {
               (EntityType<? extends Monster>) type,
               SpawnPlacements.Type.ON_GROUND,
               Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-              Monster::checkMonsterSpawnRules);
+              ChaosSpawnPlacements::checkLandMonsterSpawnRules);
       case CREATURE ->
           SpawnPlacements.register(
               (EntityType<? extends Animal>) type,
               SpawnPlacements.Type.ON_GROUND,
               Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-              Animal::checkAnimalSpawnRules);
+              ChaosSpawnPlacements::checkLandAnimalSpawnRules);
       case AMBIENT ->
           SpawnPlacements.register(
               (EntityType<? extends Mob>) type,
               SpawnPlacements.Type.NO_RESTRICTIONS,
               Heightmap.Types.MOTION_BLOCKING,
-              Mob::checkMobSpawnRules);
+              ChaosSpawnPlacements::checkLandAmbientSpawnRules);
       case WATER_CREATURE, WATER_AMBIENT ->
           SpawnPlacements.register(
               (EntityType<? extends Mob>) type,
@@ -110,8 +116,77 @@ public final class ChaosSpawnPlacements {
               (EntityType<? extends Mob>) type,
               SpawnPlacements.Type.ON_GROUND,
               Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-              Mob::checkMobSpawnRules);
+              ChaosSpawnPlacements::checkLandMobSpawnRules);
     }
+  }
+
+  private static boolean isSubmergedInWater(ServerLevelAccessor level, BlockPos pos) {
+    if (level.getFluidState(pos).is(FluidTags.WATER)) {
+      return true;
+    }
+    return level.getFluidState(pos.below()).is(FluidTags.WATER);
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static boolean checkLargeWormSpawnRules(
+      EntityType<? extends Mob> type,
+      ServerLevelAccessor level,
+      MobSpawnType spawnType,
+      BlockPos pos,
+      RandomSource random) {
+    if (isSubmergedInWater(level, pos)) {
+      return false;
+    }
+    return WormLarge.checkWormLargeSpawnRules((EntityType<WormLarge>) type, level, spawnType, pos, random);
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static boolean checkLandAnimalSpawnRules(
+      EntityType<? extends Animal> type,
+      ServerLevelAccessor level,
+      MobSpawnType spawnType,
+      BlockPos pos,
+      RandomSource random) {
+    if (isSubmergedInWater(level, pos)) {
+      return false;
+    }
+    return Animal.checkAnimalSpawnRules(type, level, spawnType, pos, random);
+  }
+
+  private static boolean checkLandMobSpawnRules(
+      EntityType<? extends Mob> type,
+      ServerLevelAccessor level,
+      MobSpawnType spawnType,
+      BlockPos pos,
+      RandomSource random) {
+    if (isSubmergedInWater(level, pos)) {
+      return false;
+    }
+    return Mob.checkMobSpawnRules(type, level, spawnType, pos, random);
+  }
+
+  private static boolean checkLandAmbientSpawnRules(
+      EntityType<? extends Mob> type,
+      ServerLevelAccessor level,
+      MobSpawnType spawnType,
+      BlockPos pos,
+      RandomSource random) {
+    if (isSubmergedInWater(level, pos)) {
+      return false;
+    }
+    return Mob.checkMobSpawnRules(type, level, spawnType, pos, random);
+  }
+
+  private static boolean checkLandMonsterSpawnRules(
+      EntityType<? extends Monster> type,
+      ServerLevelAccessor level,
+      MobSpawnType spawnType,
+      BlockPos pos,
+      RandomSource random) {
+    if (isSubmergedInWater(level, pos)) {
+      return false;
+    }
+    return Monster.checkMonsterSpawnRules(type, level, spawnType, pos, random);
   }
 
   /** OreSpawn 1.7.10 water creatures: Y >= 50; day/night handled in entity {@code checkSpawnRules}. */

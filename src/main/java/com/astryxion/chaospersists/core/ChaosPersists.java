@@ -923,7 +923,7 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<Boyfriend>> ENTITY_TYPE_BOYFRIEND = ENTITY_TYPES.register("boyfriend",
       () -> EntityType.Builder.<Boyfriend>of(Boyfriend::new, MobCategory.CREATURE).sized(0.5f, 1.6f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("boyfriend"));
   public static final RegistryObject<EntityType<ThePrince>> ENTITY_TYPE_THE_PRINCE = ENTITY_TYPES.register("the_prince",
-      () -> EntityType.Builder.<ThePrince>of(ThePrince::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_prince"));
+      () -> EntityType.Builder.<ThePrince>of(ThePrince::new, MobCategory.MONSTER).sized(0.75f, 1.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_prince"));
   public static final RegistryObject<EntityType<Molenoid>> ENTITY_TYPE_MOLENOID = ENTITY_TYPES.register("molenoid",
       () -> EntityType.Builder.<Molenoid>of(Molenoid::new, MobCategory.MONSTER).sized(3.9f, 2.6f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("molenoid"));
   public static final RegistryObject<EntityType<SeaMonster>> ENTITY_TYPE_SEA_MONSTER = ENTITY_TYPES.register("sea_monster",
@@ -957,7 +957,7 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<Cricket>> ENTITY_TYPE_CRICKET = ENTITY_TYPES.register("cricket",
       () -> EntityType.Builder.<Cricket>of(Cricket::new, MobCategory.CREATURE).sized(0.1f, 0.1f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("cricket"));
   public static final RegistryObject<EntityType<ThePrincess>> ENTITY_TYPE_THE_PRINCESS = ENTITY_TYPES.register("the_princess",
-      () -> EntityType.Builder.<ThePrincess>of(ThePrincess::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_princess"));
+      () -> EntityType.Builder.<ThePrincess>of(ThePrincess::new, MobCategory.MONSTER).sized(0.75f, 1.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_princess"));
   public static final RegistryObject<EntityType<Frog>> ENTITY_TYPE_FROG = ENTITY_TYPES.register("frog",
       () -> EntityType.Builder.<Frog>of(Frog::new, MobCategory.WATER_CREATURE).sized(0.75f, 0.75f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("frog"));
   public static final RegistryObject<EntityType<ThePrinceAdult>> ENTITY_TYPE_THE_YOUNG_ADULT_PRINCE = ENTITY_TYPES.register("the_young_adult_prince",

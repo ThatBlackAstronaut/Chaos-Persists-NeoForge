@@ -418,6 +418,9 @@ public class WormLarge extends Monster {
                 }
             }
         }
+        if (level.getFluidState(origin).is(net.minecraft.tags.FluidTags.WATER)) {
+            return false;
+        }
         if (origin.getY() < 50) {
             return false;
         }

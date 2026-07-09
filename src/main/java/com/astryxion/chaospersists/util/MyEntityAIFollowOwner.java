@@ -40,14 +40,18 @@ public class MyEntityAIFollowOwner extends Goal {
         if (this.thePet.isInSittingPose()) {
             return false;
         }
+        if (MyUtils.isPrinceFlying(this.thePet)) {
+            return false;
+        }
         if (Girlfriend.class.isInstance(this.thePet) && ChaosPersists.valentines_day != 0) {
             return false;
         }
+        double distSq = this.thePet.distanceToSqr(this.theOwner);
         if (!(this.thePet.getY() >= 60.0 && MyUtils.isDay(this.theWorld))
-                && this.thePet.distanceToSqr(this.theOwner) <= (double) (this.maxDist / 2.0f * (this.maxDist / 2.0f))) {
+                && distSq <= (double) (this.maxDist / 2.0f * (this.maxDist / 2.0f))) {
             return true;
         }
-        if (this.thePet.distanceToSqr(this.theOwner) < (double) (this.maxDist * this.maxDist)) {
+        if (distSq < (double) (this.maxDist * this.maxDist)) {
             return false;
         }
         return true;
@@ -56,6 +60,9 @@ public class MyEntityAIFollowOwner extends Goal {
     @Override
     public boolean canContinueToUse() {
         if (this.thePet.isInSittingPose()) {
+            return false;
+        }
+        if (MyUtils.isPrinceFlying(this.thePet)) {
             return false;
         }
         if (this.petPathfinder.isDone()) {
@@ -89,7 +96,8 @@ public class MyEntityAIFollowOwner extends Goal {
         if (!this.thePet.isInSittingPose() && --this.field_75343_h <= 0) {
             this.field_75343_h = 10;
             if (!this.petPathfinder.moveTo(this.theOwner, (double) this.field_75336_f)
-                    && this.thePet.distanceToSqr(this.theOwner) >= 144.0) {
+                    && this.thePet.distanceToSqr(this.theOwner) >= 144.0
+                    && !MyUtils.shouldPrinceSkipFollowTeleport(this.thePet, this.theOwner)) {
                 int var1 = Mth.floor(this.theOwner.getX()) - 2;
                 int var2 = Mth.floor(this.theOwner.getZ()) - 2;
                 int var3 = Mth.floor(this.theOwner.getBoundingBox().minY);

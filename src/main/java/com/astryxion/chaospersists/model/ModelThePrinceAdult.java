@@ -422,8 +422,12 @@ float newangle = 0.0f;
             newangle = Mth.cos((float)(ageInTicks * 0.75f * this.wingspeed)) * 3.1415927f * 0.21f;
         } else {
             newangle = Mth.cos((float)(ageInTicks * 0.35f * this.wingspeed)) * 3.1415927f * 0.15f;
-            if (entity.getActivity() == 0 || entity.onGround()) {
+            if (entity.getActivity() == 0) {
                 newangle = Mth.cos((float)(ageInTicks * 0.35f * this.wingspeed)) * 3.1415927f * 0.15f * limbSwingAmount;
+            } else if (entity.getActivity() != 0) {
+                newangle = Mth.cos((float)(ageInTicks * 0.75f * this.wingspeed)) * 3.1415927f * 0.4f;
+            } else if (!entity.onGround()) {
+                newangle = Mth.cos((float)(ageInTicks * 0.75f * this.wingspeed)) * 3.1415927f * 0.35f;
             }
         }
         if (entity.isInSittingPose()) {
@@ -489,7 +493,7 @@ float newangle = 0.0f;
         newangle = 0.0f;
         if (entity.getAttacking() != 0) {
             newangle = Mth.cos((float)(ageInTicks * 0.6f * this.wingspeed)) * 3.1415927f * 0.45f;
-        } else if (!entity.isInSittingPose() && (entity.getActivity() == 0 || entity.onGround())) {
+        } else if (!entity.isInSittingPose() && entity.getActivity() == 0) {
             newangle = Mth.cos((float)(ageInTicks * 0.3f * this.wingspeed)) * 3.1415927f * 0.25f * limbSwingAmount;
         }
         this.LThigh.xRot = this.LUpperLeg.xRot = 0.785f + newangle / 4.0f;
