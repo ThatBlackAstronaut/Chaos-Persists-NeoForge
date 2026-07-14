@@ -102,7 +102,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -161,7 +161,7 @@ public class Cephadrome extends PathfinderMob {
         this.goalSelector.addGoal(1, new MyEntityAIWanderALot(this, 16, 1.0));
         this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 9.0f));
         this.goalSelector.addGoal(3, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -752,16 +752,21 @@ public class Cephadrome extends PathfinderMob {
         if (this.hurt_timer > 0) {
             return false;
         }
+        if (this.isInvulnerableTo(par1DamageSource)) {
+            return false;
+        }
         if (par1DamageSource.is(DamageTypes.CACTUS)) {
             return false;
         }
         boolean ret = super.hurt(par1DamageSource, par2);
-        this.hurt_timer = 25;
+        if (ret) {
+            this.hurt_timer = 25;
+        }
         Entity e = par1DamageSource.getEntity();
-        if (!this.level().isClientSide && e != null && e instanceof LivingEntity) {
-            this.setTarget((LivingEntity)e);
+        if (!this.level().isClientSide && e instanceof LivingEntity living && MyUtils.isValidAggroTarget(living)) {
+            this.setTarget(living);
             if (this.getActivity() == 0) {
-                this.getNavigation().moveTo(e, 1.2);
+                this.getNavigation().moveTo(living, 1.2);
             }
         }
         if (e != null && e instanceof Player && this.getHealth() < this.getMaxHealth() * 9.0f / 10.0f) {

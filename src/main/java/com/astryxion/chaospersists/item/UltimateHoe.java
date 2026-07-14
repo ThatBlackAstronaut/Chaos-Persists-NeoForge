@@ -20,9 +20,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 
 public class UltimateHoe extends HoeItem {
+    private static final int WEAPON_DAMAGE = 1;
 
     public UltimateHoe(Tier tier) {
-        super(tier, 0, -0.0f, new Properties().stacksTo(1).durability(3000));
+        super(
+                tier,
+                ChaosWeaponDamage.modifierFor(tier, WEAPON_DAMAGE),
+                -0.0f,
+                new Properties().stacksTo(1).durability(3000));
     }
 
     @Override

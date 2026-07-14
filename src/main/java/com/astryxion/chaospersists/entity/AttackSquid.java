@@ -31,7 +31,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.CaveSpider;
 import net.minecraft.world.entity.monster.Monster;
@@ -71,7 +71,7 @@ public class AttackSquid extends Monster {
         this.goalSelector.addGoal(1, new MyEntityAIWanderALot(this, 16, 1.0));
         this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 8.0f));
         this.goalSelector.addGoal(3, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -373,7 +373,7 @@ private void dropFewItems() {
         if (e instanceof WaterDragon) {
             return false;
         }
-        if (e instanceof LivingEntity living) {
+        if (e instanceof LivingEntity living && MyUtils.isValidAggroTarget(living)) {
             if (e instanceof AttackSquid) {
                 return false;
             }

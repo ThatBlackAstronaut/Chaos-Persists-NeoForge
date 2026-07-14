@@ -9,6 +9,7 @@ import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -34,7 +35,7 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MoveThroughVillageGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -77,7 +78,7 @@ public class CaterKiller extends Monster {
         this.goalSelector.addGoal(2, new MyEntityAIWanderALot(this, 16, 1.0));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 8.0f));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -122,7 +123,7 @@ public class CaterKiller extends Monster {
         }
         boolean ret = super.hurt(par1DamageSource, par2);
         Entity e = par1DamageSource.getEntity();
-        if (e instanceof LivingEntity living) {
+        if (e instanceof LivingEntity living && MyUtils.isValidAggroTarget(living)) {
             this.setTarget(living);
         }
         return ret;
@@ -392,10 +393,7 @@ public class CaterKiller extends Monster {
         if (level == null) {
             return null;
         }
-        ResourceLocation key =
-                par1.indexOf(':') >= 0
-                        ? ResourceLocation.parse(par1)
-                        : ResourceLocation.fromNamespaceAndPath("chaospersists", par1);
+        ResourceLocation key = resolveSpawnId(par1);
         EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(key);
         if (type == null) {
             return null;
@@ -409,6 +407,19 @@ public class CaterKiller extends Monster {
             }
         }
         return var8;
+    }
+
+    private static ResourceLocation resolveSpawnId(String par1) {
+        if (par1.contains(":")) {
+            return ResourceLocation.parse(par1);
+        }
+        return switch (par1) {
+            case "Butterfly" -> ResourceLocation.fromNamespaceAndPath("chaospersists", "butterfly");
+            case "Brutalfly" -> ResourceLocation.fromNamespaceAndPath("chaospersists", "brutalfly");
+            default ->
+                    ResourceLocation.fromNamespaceAndPath(
+                            "chaospersists", par1.toLowerCase(Locale.ROOT).replace(' ', '_'));
+        };
     }
 
     @Override

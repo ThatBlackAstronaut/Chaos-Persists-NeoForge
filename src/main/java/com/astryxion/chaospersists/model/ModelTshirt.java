@@ -33,11 +33,11 @@ public class ModelTshirt extends EntityModel<Tshirt> {
         PartDefinition partdefinition = meshdefinition.getRoot();
         partdefinition.addOrReplaceChild(
                 "Shape1",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-128.0f, -64.0f, 0.0f, 256, 64, 1),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-128.0f, -64.0f, 0.0f, 256, 64, 1),
                 PartPose.offsetAndRotation(0.0f, -128.0f, 0.0f, 0.0f, 0.0f, 0.0f));
         partdefinition.addOrReplaceChild(
                 "Shape2",
-                CubeListBuilder.create().texOffs(0, 64).mirror().addBox(-64.0f, 0.0f, 0.0f, 128, 128, 1),
+                CubeListBuilder.create().texOffs(0, 64).addBox(-64.0f, 0.0f, 0.0f, 128, 128, 1),
                 PartPose.offsetAndRotation(0.0f, -128.0f, 0.0f, 0.0f, 0.0f, 0.0f));
         return meshdefinition;
     }

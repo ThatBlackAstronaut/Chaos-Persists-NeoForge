@@ -31,9 +31,9 @@ public class ModelIsland<T extends net.minecraft.world.entity.Entity> extends En
     public static MeshDefinition createMesh() {
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
-        partdefinition.addOrReplaceChild("Shape1", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8), PartPose.offset(0.0f, 16.0f, 0.0f));
-        partdefinition.addOrReplaceChild("Shape2", CubeListBuilder.create().texOffs(32, 0).mirror().addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8), PartPose.offsetAndRotation(0.0f, 16.0f, 0.0f, 0.7853982f, 0.7853982f, 0.7853982f));
-        partdefinition.addOrReplaceChild("Shape3", CubeListBuilder.create().texOffs(32, 16).mirror().addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8), PartPose.offsetAndRotation(0.0f, 16.0f, 0.0f, 0.7853982f, 0.7853982f, 0.7853982f));
+        partdefinition.addOrReplaceChild("Shape1", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8), PartPose.offset(0.0f, 16.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Shape2", CubeListBuilder.create().texOffs(32, 0).addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8), PartPose.offsetAndRotation(0.0f, 16.0f, 0.0f, 0.7853982f, 0.7853982f, 0.7853982f));
+        partdefinition.addOrReplaceChild("Shape3", CubeListBuilder.create().texOffs(32, 16).addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8), PartPose.offsetAndRotation(0.0f, 16.0f, 0.0f, 0.7853982f, 0.7853982f, 0.7853982f));
         return meshdefinition;
     }
 

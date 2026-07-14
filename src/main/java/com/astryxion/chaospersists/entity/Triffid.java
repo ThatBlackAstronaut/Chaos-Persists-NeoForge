@@ -24,7 +24,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -55,7 +55,7 @@ public class Triffid extends Monster {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 10.0f));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -219,14 +219,21 @@ public class Triffid extends Monster {
     @Override
     public boolean hurt(DamageSource par1DamageSource, float par2) {
         if (this.hurt_timer > 0 || this.getOpenClosed() == 0) {
-            this.hurt_timer = 300;
+            if (!this.isInvulnerableTo(par1DamageSource)) {
+                this.hurt_timer = 300;
+            }
             this.setAttacking(0);
             return false;
         }
+        if (this.isInvulnerableTo(par1DamageSource)) {
+            return false;
+        }
         boolean ret = super.hurt(par1DamageSource, par2);
-        this.hurt_timer = 300;
-        this.setOpenClosed(0);
-        this.setAttacking(0);
+        if (ret) {
+            this.hurt_timer = 300;
+            this.setOpenClosed(0);
+            this.setAttacking(0);
+        }
         return ret;
     }
 

@@ -33,20 +33,20 @@ public class ModelGhost extends EntityModel<Ghost> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "head_and_body",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-3.0f, 0.0f, -3.0f, 6.0f, 21.0f, 6.0f),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-3.0f, 0.0f, -3.0f, 6.0f, 21.0f, 6.0f),
                 PartPose.ZERO);
         root.addOrReplaceChild(
                 "l_arm",
                 CubeListBuilder.create()
                         .texOffs(34, 0)
-                        .mirror()
+                        
                         .addBox(-1.0f, -1.0f, -1.0f, 2.0f, 11.0f, 2.0f),
                 PartPose.offsetAndRotation(3.0f, 6.0f, 0.0f, 0.0f, 0.0f, -0.3316126f));
         root.addOrReplaceChild(
                 "r_arm",
                 CubeListBuilder.create()
                         .texOffs(25, 0)
-                        .mirror()
+                        
                         .addBox(-1.0f, -1.0f, -1.0f, 2.0f, 11.0f, 2.0f),
                 PartPose.offsetAndRotation(-3.0f, 6.0f, 0.0f, 0.0f, 0.0f, 0.3316126f));
         return mesh;

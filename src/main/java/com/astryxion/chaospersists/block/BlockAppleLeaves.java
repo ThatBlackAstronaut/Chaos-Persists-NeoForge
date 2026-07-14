@@ -57,6 +57,11 @@ public class BlockAppleLeaves extends LeavesBlock implements IForgeShearable {
     }
 
     @Override
+    public int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
+        return 1;
+    }
+
+    @Override
     public boolean skipRendering(BlockState state, BlockState adjacentState, Direction side) {
         if (ChaosPersists.FastGraphicsLeaves == 0 && adjacentState.getBlock() == this) {
             return true;

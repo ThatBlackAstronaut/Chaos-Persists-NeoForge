@@ -36,12 +36,12 @@ public class ModelFlounder extends EntityModel<Flounder> {
     private static MeshDefinition createMesh() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
-        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 16).mirror().addBox(-4.0f, 0.0f, -5.0f, 8, 1, 12), PartPose.offset(0.0f, 22.0f, 0.0f));
-        root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 5).mirror().addBox(-2.0f, 0.0f, 0.0f, 4, 1, 2), PartPose.offset(0.0f, 22.0f, -7.0f));
-        root.addOrReplaceChild("tail1", CubeListBuilder.create().texOffs(30, 0).mirror().addBox(-2.0f, 0.0f, 0.0f, 4, 1, 2), PartPose.offset(0.0f, 22.0f, 7.0f));
-        root.addOrReplaceChild("tail2", CubeListBuilder.create().texOffs(30, 4).mirror().addBox(-3.0f, 0.0f, 2.0f, 6, 1, 3), PartPose.offset(0.0f, 22.0f, 7.0f));
-        root.addOrReplaceChild("rfin", CubeListBuilder.create().texOffs(12, 0).mirror().addBox(-3.0f, 0.0f, 0.0f, 3, 1, 2), PartPose.offset(-4.0f, 22.0f, -2.0f));
-        root.addOrReplaceChild("lfin", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 3, 1, 2), PartPose.offset(4.0f, 22.0f, -2.0f));
+        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 16).addBox(-4.0f, 0.0f, -5.0f, 8, 1, 12), PartPose.offset(0.0f, 22.0f, 0.0f));
+        root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 5).addBox(-2.0f, 0.0f, 0.0f, 4, 1, 2), PartPose.offset(0.0f, 22.0f, -7.0f));
+        root.addOrReplaceChild("tail1", CubeListBuilder.create().texOffs(30, 0).addBox(-2.0f, 0.0f, 0.0f, 4, 1, 2), PartPose.offset(0.0f, 22.0f, 7.0f));
+        root.addOrReplaceChild("tail2", CubeListBuilder.create().texOffs(30, 4).addBox(-3.0f, 0.0f, 2.0f, 6, 1, 3), PartPose.offset(0.0f, 22.0f, 7.0f));
+        root.addOrReplaceChild("rfin", CubeListBuilder.create().texOffs(12, 0).addBox(-3.0f, 0.0f, 0.0f, 3, 1, 2), PartPose.offset(-4.0f, 22.0f, -2.0f));
+        root.addOrReplaceChild("lfin", CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, 0.0f, 0.0f, 3, 1, 2), PartPose.offset(4.0f, 22.0f, -2.0f));
         return mesh;
     }
 

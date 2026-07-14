@@ -35,15 +35,15 @@ public class ModelPurplePower extends EntityModel<PurplePower> {
         PartDefinition partdefinition = meshdefinition.getRoot();
         partdefinition.addOrReplaceChild(
                 "Shape1",
-                CubeListBuilder.create().texOffs(0, 12).mirror().addBox(-2.0f, -0.5f, -0.5f, 4, 1, 1),
+                CubeListBuilder.create().texOffs(0, 12).addBox(-2.0f, -0.5f, -0.5f, 4, 1, 1),
                 PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
         partdefinition.addOrReplaceChild(
                 "Shape2",
-                CubeListBuilder.create().texOffs(0, 7).mirror().addBox(-4.0f, -0.5f, -0.5f, 8, 1, 1),
+                CubeListBuilder.create().texOffs(0, 7).addBox(-4.0f, -0.5f, -0.5f, 8, 1, 1),
                 PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
         partdefinition.addOrReplaceChild(
                 "Shape3",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-7.0f, -0.5f, -0.5f, 14, 1, 1),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-7.0f, -0.5f, -0.5f, 14, 1, 1),
                 PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
         return meshdefinition;
     }

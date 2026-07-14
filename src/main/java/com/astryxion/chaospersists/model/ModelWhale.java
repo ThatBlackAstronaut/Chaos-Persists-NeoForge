@@ -52,20 +52,20 @@ public class ModelWhale extends EntityModel<Whale> {
     private static MeshDefinition createMesh() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
-        root.addOrReplaceChild("belly", CubeListBuilder.create().texOffs(0, 92).mirror().addBox(-6.0f, 0.0f, 0.0f, 12, 2, 32), PartPose.offset(0.0f, 22.0f, 6.0f));
-        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 188).mirror().addBox(-10.0f, 0.0f, 0.0f, 20, 12, 52), PartPose.offset(0.0f, 10.0f, 0.0f));
-        root.addOrReplaceChild("back", CubeListBuilder.create().texOffs(0, 45).mirror().addBox(-4.0f, 0.0f, 0.0f, 8, 2, 40), PartPose.offset(0.0f, 8.0f, 3.0f));
-        root.addOrReplaceChild("tail1", CubeListBuilder.create().texOffs(186, 0).mirror().addBox(-6.0f, 0.0f, 0.0f, 12, 7, 14), PartPose.offset(0.0f, 11.0f, 52.0f));
-        root.addOrReplaceChild("tail2", CubeListBuilder.create().texOffs(186, 24).mirror().addBox(-4.0f, 0.0f, 0.0f, 8, 5, 10), PartPose.offset(0.0f, 12.0f, 66.0f));
-        root.addOrReplaceChild("tailfin1", CubeListBuilder.create().texOffs(186, 43).mirror().addBox(0.0f, 0.0f, 0.0f, 17, 2, 11), PartPose.offsetAndRotation(2.0f, 13.0f, 74.0f, 0.0872665f, -0.0872665f, 0.0f));
-        root.addOrReplaceChild("tailfin2", CubeListBuilder.create().texOffs(186, 59).mirror().addBox(-17.0f, 0.0f, 0.0f, 17, 2, 11), PartPose.offsetAndRotation(-2.0f, 13.0f, 74.0f, 0.0872665f, 0.0872665f, 0.0f));
-        root.addOrReplaceChild("backfin", CubeListBuilder.create().texOffs(0, 15).mirror().addBox(-0.5f, 0.0f, 0.0f, 1, 4, 8), PartPose.offsetAndRotation(0.0f, 8.0f, 11.0f, 0.3665191f, 0.0f, 0.0f));
-        root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 155).mirror().addBox(-8.0f, 0.0f, -16.0f, 16, 8, 22), PartPose.offset(0.0f, 11.0f, -6.0f));
-        root.addOrReplaceChild("jaw", CubeListBuilder.create().texOffs(0, 130).mirror().addBox(-7.0f, -1.0f, -20.0f, 14, 2, 20), PartPose.offsetAndRotation(0.0f, 20.0f, 0.0f, 0.0698132f, 0.0f, 0.0f));
-        root.addOrReplaceChild("lfin1", CubeListBuilder.create().texOffs(96, 0).mirror().addBox(0.0f, -1.0f, -3.0f, 4, 3, 6), PartPose.offsetAndRotation(10.0f, 18.0f, 8.0f, 0.0f, -0.0872665f, 0.0f));
-        root.addOrReplaceChild("lfin2", CubeListBuilder.create().texOffs(120, 0).mirror().addBox(2.0f, -0.5f, -3.0f, 22, 2, 8), PartPose.offsetAndRotation(10.0f, 18.0f, 8.0f, 0.0f, -0.0872665f, 0.0f));
-        root.addOrReplaceChild("rfin1", CubeListBuilder.create().texOffs(96, 12).mirror().addBox(-4.0f, -1.0f, -3.0f, 4, 3, 6), PartPose.offsetAndRotation(-10.0f, 18.0f, 8.0f, 0.0f, 0.0872665f, 0.0f));
-        root.addOrReplaceChild("rfin2", CubeListBuilder.create().texOffs(120, 13).mirror().addBox(-24.0f, -0.5f, -3.0f, 22, 2, 8), PartPose.offsetAndRotation(-10.0f, 18.0f, 8.0f, 0.0f, 0.0872665f, 0.0f));
+        root.addOrReplaceChild("belly", CubeListBuilder.create().texOffs(0, 92).addBox(-6.0f, 0.0f, 0.0f, 12, 2, 32), PartPose.offset(0.0f, 22.0f, 6.0f));
+        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 188).addBox(-10.0f, 0.0f, 0.0f, 20, 12, 52), PartPose.offset(0.0f, 10.0f, 0.0f));
+        root.addOrReplaceChild("back", CubeListBuilder.create().texOffs(0, 45).addBox(-4.0f, 0.0f, 0.0f, 8, 2, 40), PartPose.offset(0.0f, 8.0f, 3.0f));
+        root.addOrReplaceChild("tail1", CubeListBuilder.create().texOffs(186, 0).addBox(-6.0f, 0.0f, 0.0f, 12, 7, 14), PartPose.offset(0.0f, 11.0f, 52.0f));
+        root.addOrReplaceChild("tail2", CubeListBuilder.create().texOffs(186, 24).addBox(-4.0f, 0.0f, 0.0f, 8, 5, 10), PartPose.offset(0.0f, 12.0f, 66.0f));
+        root.addOrReplaceChild("tailfin1", CubeListBuilder.create().texOffs(186, 43).addBox(0.0f, 0.0f, 0.0f, 17, 2, 11), PartPose.offsetAndRotation(2.0f, 13.0f, 74.0f, 0.0872665f, -0.0872665f, 0.0f));
+        root.addOrReplaceChild("tailfin2", CubeListBuilder.create().texOffs(186, 59).addBox(-17.0f, 0.0f, 0.0f, 17, 2, 11), PartPose.offsetAndRotation(-2.0f, 13.0f, 74.0f, 0.0872665f, 0.0872665f, 0.0f));
+        root.addOrReplaceChild("backfin", CubeListBuilder.create().texOffs(0, 15).addBox(-0.5f, 0.0f, 0.0f, 1, 4, 8), PartPose.offsetAndRotation(0.0f, 8.0f, 11.0f, 0.3665191f, 0.0f, 0.0f));
+        root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 155).addBox(-8.0f, 0.0f, -16.0f, 16, 8, 22), PartPose.offset(0.0f, 11.0f, -6.0f));
+        root.addOrReplaceChild("jaw", CubeListBuilder.create().texOffs(0, 130).addBox(-7.0f, -1.0f, -20.0f, 14, 2, 20), PartPose.offsetAndRotation(0.0f, 20.0f, 0.0f, 0.0698132f, 0.0f, 0.0f));
+        root.addOrReplaceChild("lfin1", CubeListBuilder.create().texOffs(96, 0).addBox(0.0f, -1.0f, -3.0f, 4, 3, 6), PartPose.offsetAndRotation(10.0f, 18.0f, 8.0f, 0.0f, -0.0872665f, 0.0f));
+        root.addOrReplaceChild("lfin2", CubeListBuilder.create().texOffs(120, 0).addBox(2.0f, -0.5f, -3.0f, 22, 2, 8), PartPose.offsetAndRotation(10.0f, 18.0f, 8.0f, 0.0f, -0.0872665f, 0.0f));
+        root.addOrReplaceChild("rfin1", CubeListBuilder.create().texOffs(96, 12).addBox(-4.0f, -1.0f, -3.0f, 4, 3, 6), PartPose.offsetAndRotation(-10.0f, 18.0f, 8.0f, 0.0f, 0.0872665f, 0.0f));
+        root.addOrReplaceChild("rfin2", CubeListBuilder.create().texOffs(120, 13).addBox(-24.0f, -0.5f, -3.0f, 22, 2, 8), PartPose.offsetAndRotation(-10.0f, 18.0f, 8.0f, 0.0f, 0.0872665f, 0.0f));
         return mesh;
     }
 

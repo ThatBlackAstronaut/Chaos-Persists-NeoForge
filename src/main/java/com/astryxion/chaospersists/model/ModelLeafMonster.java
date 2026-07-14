@@ -34,11 +34,11 @@ public class ModelLeafMonster extends EntityModel<LeafMonster> {
     public static MeshDefinition createMesh() {
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
-        partdefinition.addOrReplaceChild("body", CubeListBuilder.create().texOffs(32, 32).mirror().addBox(-8.0f, -8.0f, -8.0f, 16, 16, 16), PartPose.offset(0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("larm", CubeListBuilder.create().texOffs(64, 0).mirror().addBox(0.0f, -16.0f, -8.0f, 16, 16, 16), PartPose.offset(8.0f, -8.0f, 0.0f));
-        partdefinition.addOrReplaceChild("rarm", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-16.0f, -16.0f, -8.0f, 16, 16, 16), PartPose.offset(-8.0f, -8.0f, 0.0f));
-        partdefinition.addOrReplaceChild("lleg", CubeListBuilder.create().texOffs(64, 64).mirror().addBox(0.0f, 0.0f, -8.0f, 16, 16, 16), PartPose.offset(8.0f, 8.0f, 0.0f));
-        partdefinition.addOrReplaceChild("rleg", CubeListBuilder.create().texOffs(0, 64).mirror().addBox(-16.0f, 0.0f, -8.0f, 16, 16, 16), PartPose.offset(-8.0f, 8.0f, 0.0f));
+        partdefinition.addOrReplaceChild("body", CubeListBuilder.create().texOffs(32, 32).addBox(-8.0f, -8.0f, -8.0f, 16, 16, 16), PartPose.offset(0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("larm", CubeListBuilder.create().texOffs(64, 0).addBox(0.0f, -16.0f, -8.0f, 16, 16, 16), PartPose.offset(8.0f, -8.0f, 0.0f));
+        partdefinition.addOrReplaceChild("rarm", CubeListBuilder.create().texOffs(0, 0).addBox(-16.0f, -16.0f, -8.0f, 16, 16, 16), PartPose.offset(-8.0f, -8.0f, 0.0f));
+        partdefinition.addOrReplaceChild("lleg", CubeListBuilder.create().texOffs(64, 64).addBox(0.0f, 0.0f, -8.0f, 16, 16, 16), PartPose.offset(8.0f, 8.0f, 0.0f));
+        partdefinition.addOrReplaceChild("rleg", CubeListBuilder.create().texOffs(0, 64).addBox(-16.0f, 0.0f, -8.0f, 16, 16, 16), PartPose.offset(-8.0f, 8.0f, 0.0f));
         return meshdefinition;
     }
 

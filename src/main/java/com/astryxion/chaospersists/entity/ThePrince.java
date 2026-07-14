@@ -57,6 +57,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
+import com.astryxion.chaospersists.util.MyUtils;
 
 public class ThePrince extends TamableAnimal {
     private static final EntityDataAccessor<Integer> SPYRO_FIRE =
@@ -222,8 +223,7 @@ public class ThePrince extends TamableAnimal {
                 && var2.is(Blocks.DIAMOND_BLOCK.asItem())
                 && par1EntityPlayer.distanceToSqr(this) < 16.0) {
             if (!this.level().isClientSide) {
-                this.setTame(true);
-                this.setOwnerUUID(par1EntityPlayer.getUUID());
+                this.tame(par1EntityPlayer);
                 spawnTamingParticles(true);
                 this.level().broadcastEntityEvent(this, (byte) 7);
                 this.heal((float) this.mygetMaxHealth() - this.getHealth());
@@ -478,6 +478,9 @@ public class ThePrince extends TamableAnimal {
         int i;
         super.tick();
         this.noPhysics = this.getActivity() == 2;
+        if (!this.level().isClientSide) {
+            this.setNoGravity(this.getActivity() == 2);
+        }
         if (this.getRandom().nextInt(10) == 1) {
             i = this.getRandom().nextInt(3);
             if (i == 0) {
@@ -584,8 +587,7 @@ public class ThePrince extends TamableAnimal {
         if (!this.isTame()) {
             Player p = this.level().getNearestPlayer(this, 10.0);
             if (p != null) {
-                this.setTame(true);
-                this.setOwnerUUID(p.getUUID());
+                this.tame(p);
                 spawnTamingParticles(true);
                 this.level().broadcastEntityEvent(this, (byte) 7);
                 this.heal((float) this.mygetMaxHealth() - this.getHealth());
@@ -849,6 +851,7 @@ public class ThePrince extends TamableAnimal {
         float var8 = Mth.wrapDegrees(var7 - this.getYRot());
         this.setZza((float) (0.75 * speed_factor));
         this.setYRot(this.getYRot() + var8 / 3.0f);
+        MyUtils.applyChaosFlightMovement(this);
     }
 
     /** Same targets as {@link com.astryxion.chaospersists.util.MyUtils#isRoyalty}. */

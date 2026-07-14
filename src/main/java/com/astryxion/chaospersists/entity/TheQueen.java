@@ -21,6 +21,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
@@ -32,7 +33,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
@@ -76,6 +77,7 @@ public class TheQueen extends Monster {
     private int backoff_timer = 0;
     private int guard_mode = 0;
     private volatile int head_found = 0;
+    private int headEntityId = -1;
     private int wing_sound = 0;
     private int attack_level = 1;
     private LivingEntity ev = null;
@@ -93,7 +95,7 @@ public class TheQueen extends Monster {
         this.getNavigation().setCanFloat(true);
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -117,6 +119,10 @@ public class TheQueen extends Monster {
     public void onAddedToWorld() {
         super.onAddedToWorld();
         this.refreshDimensions();
+        MyUtils.ensureBossMaxHealth(this, this.mygetMaxHealth());
+        if (!this.level().isClientSide && this.tickCount <= 1) {
+            this.setHealth((float) this.mygetMaxHealth());
+        }
     }
 
     @Override
@@ -300,6 +306,33 @@ public class TheQueen extends Monster {
                 }
             }
         }
+    }
+
+    private void discardAttachedHeads() {
+        if (this.headEntityId >= 0) {
+            Entity head = this.level().getEntity(this.headEntityId);
+            if (head != null) {
+                head.discard();
+            }
+            this.headEntityId = -1;
+        }
+        AABB box = this.getBoundingBox().inflate(64.0, 64.0, 64.0);
+        for (QueenHead head : this.level().getEntitiesOfClass(QueenHead.class, box)) {
+            head.discard();
+        }
+        this.head_found = 0;
+    }
+
+    @Override
+    public void die(DamageSource source) {
+        this.discardAttachedHeads();
+        super.die(source);
+    }
+
+    @Override
+    public void remove(Entity.RemovalReason reason) {
+        this.discardAttachedHeads();
+        super.remove(reason);
     }
 
     private boolean isFriendly() {
@@ -702,7 +735,11 @@ public class TheQueen extends Monster {
             }
             f = this.findSomethingToAttack();
             if (this.head_found == 0 && this.mood == 1) {
-                spawnCreature(this.level(), "QueenHead", this.getX(), this.getY() + 20.0, this.getZ());
+                Entity spawned = spawnCreature(this.level(), "QueenHead", this.getX(), this.getY() + 20.0, this.getZ());
+                if (spawned != null) {
+                    this.head_found = 1;
+                    this.headEntityId = spawned.getId();
+                }
             }
             if (e == null) {
                 e = f;
@@ -878,7 +915,8 @@ public class TheQueen extends Monster {
         if (this.player_hit_count < 10 && this.getHealth() < 2000.0f) {
             this.heal(2000.0f - this.getHealth());
         }
-    }
+        MyUtils.applyChaosFlightMovement(this);
+}
 
     private double getHorizontalDistanceSqToEntity(Entity e) {
         double d1 = e.getZ() - this.getZ();
@@ -1004,14 +1042,25 @@ public class TheQueen extends Monster {
     }
 
     @Override
+    protected float getDamageAfterArmorAbsorb(DamageSource damageSource, float damageAmount) {
+        return Math.min(super.getDamageAfterArmorAbsorb(damageSource, damageAmount), 120.0f);
+    }
+
+    @Override
     public boolean hurt(DamageSource par1DamageSource, float par2) {
         boolean ret = false;
         float dm = par2;
         if (this.hurt_timer > 0) {
             return false;
         }
+        if (this.isInvulnerableTo(par1DamageSource)) {
+            return false;
+        }
         if (dm > 750.0f) {
             dm = 750.0f;
+        }
+        if (dm > 120.0f && par1DamageSource.is(DamageTypeTags.BYPASSES_ARMOR)) {
+            dm = 120.0f;
         }
         if (par1DamageSource.is(DamageTypes.IN_WALL)) {
             return false;
@@ -1037,8 +1086,10 @@ public class TheQueen extends Monster {
             }
         }
         if (!par1DamageSource.is(DamageTypes.CACTUS)) {
-            this.hurt_timer = 20;
             ret = super.hurt(par1DamageSource, dm);
+            if (ret) {
+                this.hurt_timer = 20;
+            }
             if (ent instanceof Player) {
                 this.player_hit_count += 1;
             }

@@ -1,6 +1,6 @@
 package com.astryxion.chaospersists.item;
 
-import com.astryxion.chaospersists.client.TeisrHandBakedModelWrapper;
+import com.astryxion.chaospersists.client.BigWeaponClientExtensions;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -49,14 +49,6 @@ public class BigHammer extends SwordItem {
 
     @Override
     public void initializeClient(java.util.function.Consumer<IClientItemExtensions> consumer) {
-        var renderer = TeisrHandBakedModelWrapper.getCustomRenderer(this);
-        if (renderer != null) {
-            consumer.accept(new IClientItemExtensions() {
-                @Override
-                public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                    return renderer;
-                }
-            });
-        }
+        BigWeaponClientExtensions.register(consumer, this);
     }
 }

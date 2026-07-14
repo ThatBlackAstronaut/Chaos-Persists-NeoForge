@@ -17,7 +17,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -34,8 +33,19 @@ public class GodzillaHead extends LivingEntity {
 
     public GodzillaHead(EntityType<? extends GodzillaHead> type, Level level) {
         super(type, level);
-        this.fireImmune();
         this.noPhysics = true;
+        this.refreshDimensions();
+    }
+
+    @Override
+    public void onAddedToWorld() {
+        super.onAddedToWorld();
+        this.refreshDimensions();
+    }
+
+    @Override
+    public boolean fireImmune() {
+        return true;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -118,16 +128,15 @@ public class GodzillaHead extends LivingEntity {
     @OnlyIn(Dist.CLIENT)
     @Override
     public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, boolean teleport) {
-        this.boatPosRotationIncrements = this.getControllingPassenger() != null ? steps + 8 : 6;
         this.boatX = x;
         this.boatY = y;
         this.boatZ = z;
         this.boatYaw = yRot;
         this.boatPitch = xRot;
-        Vec3 dm = this.getDeltaMovement();
-        this.velocityX = dm.x;
-        this.velocityY = dm.y;
-        this.velocityZ = dm.z;
+        this.boatPosRotationIncrements = steps > 0 ? steps : 6;
+        this.velocityX = this.getDeltaMovement().x;
+        this.velocityY = this.getDeltaMovement().y;
+        this.velocityZ = this.getDeltaMovement().z;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -141,50 +150,41 @@ public class GodzillaHead extends LivingEntity {
 
     @Override
     public void tick() {
-        if (!this.isAlive()) {
-            return;
-        }
+        super.tick();
         this.setOnGround(false);
         this.clearFire();
         if (this.level().isClientSide) {
             if (this.boatPosRotationIncrements > 0) {
-                double d4 = this.getX() + (this.boatX - this.getX()) / (double) this.boatPosRotationIncrements;
-                double d5 = this.getY() + (this.boatY - this.getY()) / (double) this.boatPosRotationIncrements;
-                double d11 = this.getZ() + (this.boatZ - this.getZ()) / (double) this.boatPosRotationIncrements;
-                this.setPos(d4, d5, d11);
-                this.setXRot(
-                        (float)
-                                ((double) this.getXRot()
-                                        + (this.boatPitch - (double) this.getXRot())
-                                                / (double) this.boatPosRotationIncrements));
-                double d10 = Mth.wrapDegrees(this.boatYaw - (double) this.getYRot());
-                Entity rider = this.getControllingPassenger();
-                if (rider != null) {
-                    d10 = Mth.wrapDegrees((double) rider.getYRot() - (double) this.getYRot());
-                }
-                this.setYRot(
-                        (float)
-                                ((double) this.getYRot()
-                                        + d10 / (double) this.boatPosRotationIncrements));
-                this.setRot(this.getYRot(), this.getXRot());
+                double x = this.getX() + (this.boatX - this.getX()) / (double) this.boatPosRotationIncrements;
+                double y = this.getY() + (this.boatY - this.getY()) / (double) this.boatPosRotationIncrements;
+                double z = this.getZ() + (this.boatZ - this.getZ()) / (double) this.boatPosRotationIncrements;
+                this.setPos(x, y, z);
+                this.setXRot((float) ((double) this.getXRot() + (this.boatPitch - (double) this.getXRot()) / (double) this.boatPosRotationIncrements));
+                double yawDelta = Mth.wrapDegrees(this.boatYaw - (double) this.getYRot());
+                this.setYRot((float) ((double) this.getYRot() + yawDelta / (double) this.boatPosRotationIncrements));
+                this.setDeltaMovement(this.velocityX, this.velocityY, this.velocityZ);
                 --this.boatPosRotationIncrements;
             }
         } else {
-            AABB box = this.getBoundingBox().inflate(32.0, 32.0, 32.0);
-            List<Godzilla> mobzillas = this.level().getEntitiesOfClass(Godzilla.class, box);
-            if (!mobzillas.isEmpty()) {
-                Godzilla mobzilla = mobzillas.get(0);
-                this.setPos(
-                        mobzilla.getX() - 17.0 * Math.sin(Math.toRadians(mobzilla.getYHeadRot())),
-                        mobzilla.getY() + 16.0,
-                        mobzilla.getZ() + 17.0 * Math.cos(Math.toRadians(mobzilla.getYHeadRot())));
-                this.setYRot(mobzilla.getYRot());
-                this.setYHeadRot(mobzilla.getYHeadRot());
-                this.setDeltaMovement(mobzilla.getDeltaMovement());
-                this.setHealth(mobzilla.getHealth());
-            } else {
-                this.discard();
-            }
+            this.syncToMobzilla();
         }
+    }
+
+    private void syncToMobzilla() {
+        AABB box = this.getBoundingBox().inflate(32.0, 32.0, 32.0);
+        List<Godzilla> mobzillas = this.level().getEntitiesOfClass(Godzilla.class, box);
+        if (mobzillas.isEmpty() || !mobzillas.get(0).isAlive()) {
+            this.discard();
+            return;
+        }
+        Godzilla mobzilla = mobzillas.get(0);
+        double yawRad = Math.toRadians(mobzilla.getYRot());
+        this.setPos(
+                mobzilla.getX() - 17.0 * Math.sin(yawRad),
+                mobzilla.getY() + 16.0,
+                mobzilla.getZ() + 17.0 * Math.cos(yawRad));
+        this.setYRot(mobzilla.getYRot());
+        this.setYHeadRot(mobzilla.getYHeadRot());
+        this.setDeltaMovement(mobzilla.getDeltaMovement());
     }
 }

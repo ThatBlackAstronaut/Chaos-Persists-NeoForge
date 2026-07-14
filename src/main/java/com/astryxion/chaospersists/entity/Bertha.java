@@ -115,15 +115,6 @@ public class Bertha extends SwordItem {
 
     @Override
     public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
-        net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer renderer =
-                com.astryxion.chaospersists.client.TeisrHandBakedModelWrapper.getCustomRenderer(this);
-        if (renderer != null) {
-            consumer.accept(new net.minecraftforge.client.extensions.common.IClientItemExtensions() {
-                @Override
-                public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                    return renderer;
-                }
-            });
-        }
+        com.astryxion.chaospersists.client.BigWeaponClientExtensions.register(consumer, this);
     }
 }

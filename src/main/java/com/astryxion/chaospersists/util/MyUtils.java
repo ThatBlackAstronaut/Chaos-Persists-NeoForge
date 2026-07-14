@@ -75,8 +75,11 @@ import com.astryxion.chaospersists.entity.WaterDragon;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.Level;
@@ -110,6 +113,35 @@ public class MyUtils {
     public static void playAmbientSound(LivingEntity entity) {
         if (entity instanceof Mob mob) {
             mob.playAmbientSound();
+        }
+    }
+
+    /** Returns false for creative/spectator players; true for all other living entities. */
+    public static boolean isValidAggroTarget(@Nullable LivingEntity target) {
+        if (target == null) {
+            return false;
+        }
+        if (target instanceof Player player) {
+            return !player.isCreative() && !player.isSpectator();
+        }
+        return true;
+    }
+
+    /** Re-applies boss max HP when vanilla's 1024 attribute cap was in effect at spawn. */
+    public static void ensureBossMaxHealth(LivingEntity entity, int desiredMax) {
+        if (entity.level().isClientSide || desiredMax <= 0) {
+            return;
+        }
+        if (entity.getMaxHealth() + 0.5F >= desiredMax) {
+            return;
+        }
+        entity.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double) desiredMax);
+        float newMax = entity.getMaxHealth();
+        if (newMax + 0.5F < desiredMax) {
+            return;
+        }
+        if (entity.getHealth() <= 0.0F || entity.getHealth() > newMax) {
+            entity.setHealth(newMax);
         }
     }
 
@@ -321,12 +353,28 @@ public class MyUtils {
         if (entity instanceof ThePrinceAdult adult && adult.getActivity() != 0) {
             return;
         }
+        if (entity instanceof Leon leon && leon.getActivity() != 0) {
+            return;
+        }
         entity.noPhysics = false;
         entity.setNoGravity(false);
         int n = 0;
         while (entity.isInWall() && n++ < 48) {
             entity.setPos(entity.getX(), Math.min(252.0, entity.getY() + 0.5), entity.getZ());
         }
+    }
+
+    /**
+     * Apply 3-axis flight velocity from chaos AI. In 1.7.10 motionX/Y/Z moved the entity directly;
+     * vanilla 1.20 {@code travel()} only uses {@code zza} horizontally and ignores Y from {@code setDeltaMovement}.
+     */
+    public static void applyChaosFlightMovement(LivingEntity entity) {
+        if (entity.level().isClientSide || entity.isDeadOrDying()) {
+            return;
+        }
+        entity.setNoGravity(true);
+        entity.noPhysics = true;
+        entity.move(MoverType.SELF, entity.getDeltaMovement());
     }
 
     /** Avoid {@link WorldGenRegion} out-of-bounds chunk access during natural spawn in chunk generation. */

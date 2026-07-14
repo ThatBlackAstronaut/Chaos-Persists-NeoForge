@@ -48,43 +48,43 @@ public class ModelFrog extends EntityModel<Frog> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "body",
-                CubeListBuilder.create().texOffs(41, 0).mirror().addBox(-4.0f, -10.0f, 0.0f, 8.0f, 11.0f, 2.0f),
+                CubeListBuilder.create().texOffs(41, 0).addBox(-4.0f, -10.0f, 0.0f, 8.0f, 11.0f, 2.0f),
                 PartPose.offsetAndRotation(0.0f, 24.0f, 2.0f, 0.7330383f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "jaw",
-                CubeListBuilder.create().texOffs(42, 15).mirror().addBox(-4.0f, -8.0f, 0.0f, 8.0f, 8.0f, 1.0f),
+                CubeListBuilder.create().texOffs(42, 15).addBox(-4.0f, -8.0f, 0.0f, 8.0f, 8.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 24.0f, 2.0f, 1.22173f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "lfleg",
-                CubeListBuilder.create().texOffs(14, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 5.0f, 1.0f),
+                CubeListBuilder.create().texOffs(14, 0).addBox(0.0f, 0.0f, 0.0f, 1.0f, 5.0f, 1.0f),
                 PartPose.offsetAndRotation(3.0f, 20.0f, 0.0f, -0.5235988f, 0.0f, -0.4712389f));
         root.addOrReplaceChild(
                 "rfleg",
-                CubeListBuilder.create().texOffs(20, 0).mirror().addBox(-1.0f, 0.0f, 0.0f, 1.0f, 5.0f, 1.0f),
+                CubeListBuilder.create().texOffs(20, 0).addBox(-1.0f, 0.0f, 0.0f, 1.0f, 5.0f, 1.0f),
                 PartPose.offsetAndRotation(-3.0f, 20.0f, 0.0f, -0.5235988f, 0.0f, 0.4712389f));
         root.addOrReplaceChild(
                 "lleg1",
-                CubeListBuilder.create().texOffs(10, 8).mirror().addBox(0.0f, -9.0f, -1.0f, 1.0f, 9.0f, 2.0f),
+                CubeListBuilder.create().texOffs(10, 8).addBox(0.0f, -9.0f, -1.0f, 1.0f, 9.0f, 2.0f),
                 PartPose.offsetAndRotation(3.0f, 24.0f, 3.0f, 0.0f, 0.0f, 0.2268928f));
         root.addOrReplaceChild(
                 "rleg1",
-                CubeListBuilder.create().texOffs(18, 8).mirror().addBox(-1.0f, -9.0f, -1.0f, 1.0f, 9.0f, 2.0f),
+                CubeListBuilder.create().texOffs(18, 8).addBox(-1.0f, -9.0f, -1.0f, 1.0f, 9.0f, 2.0f),
                 PartPose.offsetAndRotation(-3.0f, 24.0f, 3.0f, 0.0f, 0.0f, -0.2268928f));
         root.addOrReplaceChild(
                 "lleg2",
-                CubeListBuilder.create().texOffs(11, 20).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 10.0f, 1.0f),
+                CubeListBuilder.create().texOffs(11, 20).addBox(0.0f, 0.0f, 0.0f, 1.0f, 10.0f, 1.0f),
                 PartPose.offsetAndRotation(5.0f, 15.0f, 3.0f, 0.0f, 0.0f, -0.3839724f));
         root.addOrReplaceChild(
                 "rleg2",
-                CubeListBuilder.create().texOffs(19, 20).mirror().addBox(-1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 1.0f),
+                CubeListBuilder.create().texOffs(19, 20).addBox(-1.0f, 0.0f, 0.0f, 1.0f, 10.0f, 1.0f),
                 PartPose.offsetAndRotation(-5.0f, 15.0f, 3.0f, 0.0f, 0.0f, 0.3839724f));
         root.addOrReplaceChild(
                 "leye",
-                CubeListBuilder.create().texOffs(0, 8).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 2.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 8).addBox(0.0f, 0.0f, 0.0f, 1.0f, 2.0f, 1.0f),
                 PartPose.offsetAndRotation(2.0f, 17.0f, -2.0f, 0.7330383f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "reye",
-                CubeListBuilder.create().texOffs(0, 4).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 2.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 4).addBox(0.0f, 0.0f, 0.0f, 1.0f, 2.0f, 1.0f),
                 PartPose.offsetAndRotation(-3.0f, 17.0f, -2.0f, 0.7330383f, 0.0f, 0.0f));
         return mesh;
     }

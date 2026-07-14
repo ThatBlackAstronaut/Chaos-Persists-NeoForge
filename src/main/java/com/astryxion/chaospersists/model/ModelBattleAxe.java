@@ -27,7 +27,7 @@ public class ModelBattleAxe {
     private final ModelPart Blade10;
 
     public ModelBattleAxe() {
-        this(LayerDefinition.create(createMesh(), 64, 128).bakeRoot());
+        this(LayerDefinition.create(createMesh(), 128, 64).bakeRoot());
     }
 
     public ModelBattleAxe(ModelPart root) {
@@ -51,21 +51,21 @@ public class ModelBattleAxe {
     public static MeshDefinition createMesh() {
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
-        partdefinition.addOrReplaceChild("Handle1", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-7.0f, -0.5f, 0.0f, 31, 2, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 1.570796f));
-        partdefinition.addOrReplaceChild("Head1", CubeListBuilder.create().texOffs(29, 18).mirror().addBox(-2.0f, -4.5f, -0.5f, 3, 4, 2), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("Grip", CubeListBuilder.create().texOffs(0, 7).mirror().addBox(-1.92f, 13.0f, -0.5f, 3, 11, 2), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("Pin", CubeListBuilder.create().texOffs(38, 11).mirror().addBox(-1.0f, -3.0f, -1.0f, 1, 1, 3), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("Top", CubeListBuilder.create().texOffs(24, 11).mirror().addBox(-2.0f, -8.0f, -0.5f, 3, 2, 2), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("Blade1", CubeListBuilder.create().texOffs(70, 0).mirror().addBox(6.0f, -8.0f, 0.0f, 3, 10, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.5061455f));
-        partdefinition.addOrReplaceChild("Blade2", CubeListBuilder.create().texOffs(70, 0).mirror().addBox(8.5f, -6.9f, 0.0f, 3, 10, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, -0.5061455f));
-        partdefinition.addOrReplaceChild("Blade3", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-1.5f, -3.0f, 0.0f, 10, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("Blade4", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-1.0f, -2.0f, 0.0f, 7, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.5061455f));
-        partdefinition.addOrReplaceChild("Blade5", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.5f, -3.5f, 0.0f, 8, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, -0.5061455f));
-        partdefinition.addOrReplaceChild("Blade6", CubeListBuilder.create().texOffs(70, 0).mirror().addBox(-12.2f, -5.2f, 0.0f, 3, 10, 1), PartPose.offsetAndRotation(0.0f, -13.0f, 0.0f, 0.0f, 0.0f, 0.5061455f));
-        partdefinition.addOrReplaceChild("Blade7", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-9.9f, -3.0f, 0.0f, 8, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.5061455f));
-        partdefinition.addOrReplaceChild("Blade8", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-10.0f, -3.0f, 0.0f, 10, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("Blade9", CubeListBuilder.create().texOffs(70, 0).mirror().addBox(-10.0f, -8.5f, 0.0f, 3, 10, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, -0.5061455f));
-        partdefinition.addOrReplaceChild("Blade10", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-7.0f, -2.5f, 0.0f, 7, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, -0.5061455f));
+        partdefinition.addOrReplaceChild("Handle1", CubeListBuilder.create().texOffs(0, 0).addBox(-7.0f, -0.5f, 0.0f, 31, 2, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 1.570796f));
+        partdefinition.addOrReplaceChild("Head1", CubeListBuilder.create().texOffs(29, 18).addBox(-2.0f, -4.5f, -0.5f, 3, 4, 2), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Grip", CubeListBuilder.create().texOffs(0, 7).addBox(-1.92f, 13.0f, -0.5f, 3, 11, 2), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Pin", CubeListBuilder.create().texOffs(38, 11).addBox(-1.0f, -3.0f, -1.0f, 1, 1, 3), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Top", CubeListBuilder.create().texOffs(24, 11).addBox(-2.0f, -8.0f, -0.5f, 3, 2, 2), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Blade1", CubeListBuilder.create().texOffs(70, 0).addBox(6.0f, -8.0f, 0.0f, 3, 10, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.5061455f));
+        partdefinition.addOrReplaceChild("Blade2", CubeListBuilder.create().texOffs(70, 0).addBox(8.5f, -6.9f, 0.0f, 3, 10, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, -0.5061455f));
+        partdefinition.addOrReplaceChild("Blade3", CubeListBuilder.create().texOffs(0, 0).addBox(-1.5f, -3.0f, 0.0f, 10, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Blade4", CubeListBuilder.create().texOffs(0, 0).addBox(-1.0f, -2.0f, 0.0f, 7, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.5061455f));
+        partdefinition.addOrReplaceChild("Blade5", CubeListBuilder.create().texOffs(0, 0).addBox(0.5f, -3.5f, 0.0f, 8, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, -0.5061455f));
+        partdefinition.addOrReplaceChild("Blade6", CubeListBuilder.create().texOffs(70, 0).addBox(-12.2f, -5.2f, 0.0f, 3, 10, 1), PartPose.offsetAndRotation(0.0f, -13.0f, 0.0f, 0.0f, 0.0f, 0.5061455f));
+        partdefinition.addOrReplaceChild("Blade7", CubeListBuilder.create().texOffs(0, 0).addBox(-9.9f, -3.0f, 0.0f, 8, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.5061455f));
+        partdefinition.addOrReplaceChild("Blade8", CubeListBuilder.create().texOffs(0, 0).addBox(-10.0f, -3.0f, 0.0f, 10, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Blade9", CubeListBuilder.create().texOffs(70, 0).addBox(-10.0f, -8.5f, 0.0f, 3, 10, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, -0.5061455f));
+        partdefinition.addOrReplaceChild("Blade10", CubeListBuilder.create().texOffs(0, 0).addBox(-7.0f, -2.5f, 0.0f, 7, 1, 1), PartPose.offsetAndRotation(0.0f, -12.0f, 0.0f, 0.0f, 0.0f, -0.5061455f));
         return meshdefinition;
     }
 

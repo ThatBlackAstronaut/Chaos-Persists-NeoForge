@@ -47,43 +47,43 @@ public class ModelGhostSkelly extends EntityModel<GhostSkelly> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "body",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 21.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, 0.0f, 0.0f, 1.0f, 21.0f, 1.0f),
                 PartPose.offset(0.0f, -1.0f, 0.0f));
         root.addOrReplaceChild(
                 "shirt",
-                CubeListBuilder.create().texOffs(42, 43).mirror().addBox(-2.0f, 0.0f, -2.0f, 5.0f, 12.0f, 5.0f),
+                CubeListBuilder.create().texOffs(42, 43).addBox(-2.0f, 0.0f, -2.0f, 5.0f, 12.0f, 5.0f),
                 PartPose.ZERO);
         root.addOrReplaceChild(
                 "head",
-                CubeListBuilder.create().texOffs(40, 29).mirror().addBox(-3.0f, 0.0f, -3.0f, 7.0f, 5.0f, 7.0f),
+                CubeListBuilder.create().texOffs(40, 29).addBox(-3.0f, 0.0f, -3.0f, 7.0f, 5.0f, 7.0f),
                 PartPose.offset(0.0f, -6.0f, 0.0f));
         root.addOrReplaceChild(
                 "stem",
-                CubeListBuilder.create().texOffs(49, 23).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 2.0f, 1.0f),
+                CubeListBuilder.create().texOffs(49, 23).addBox(0.0f, 0.0f, 0.0f, 1.0f, 2.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, -8.0f, 0.0f, 0.1745329f, 0.0f, 0.1745329f));
         root.addOrReplaceChild(
                 "rarm",
-                CubeListBuilder.create().texOffs(26, 0).mirror().addBox(-14.0f, 0.0f, 0.0f, 15.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(26, 0).addBox(-14.0f, 0.0f, 0.0f, 15.0f, 1.0f, 1.0f),
                 PartPose.ZERO);
         root.addOrReplaceChild(
                 "larm",
-                CubeListBuilder.create().texOffs(63, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 15.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(63, 0).addBox(0.0f, 0.0f, 0.0f, 15.0f, 1.0f, 1.0f),
                 PartPose.ZERO);
         root.addOrReplaceChild(
                 "rsleeve",
-                CubeListBuilder.create().texOffs(31, 7).mirror().addBox(-11.0f, 0.0f, -1.0f, 9.0f, 8.0f, 3.0f),
+                CubeListBuilder.create().texOffs(31, 7).addBox(-11.0f, 0.0f, -1.0f, 9.0f, 8.0f, 3.0f),
                 PartPose.ZERO);
         root.addOrReplaceChild(
                 "lsleeve",
-                CubeListBuilder.create().texOffs(71, 7).mirror().addBox(3.0f, 0.0f, -1.0f, 9.0f, 8.0f, 3.0f),
+                CubeListBuilder.create().texOffs(71, 7).addBox(3.0f, 0.0f, -1.0f, 9.0f, 8.0f, 3.0f),
                 PartPose.ZERO);
         root.addOrReplaceChild(
                 "lchains",
-                CubeListBuilder.create().texOffs(98, 0).mirror().addBox(11.0f, -1.0f, 0.0f, 3.0f, 16.0f, 1.0f),
+                CubeListBuilder.create().texOffs(98, 0).addBox(11.0f, -1.0f, 0.0f, 3.0f, 16.0f, 1.0f),
                 PartPose.ZERO);
         root.addOrReplaceChild(
                 "rchains",
-                CubeListBuilder.create().texOffs(12, 0).mirror().addBox(-13.0f, -1.0f, 0.0f, 3.0f, 10.0f, 1.0f),
+                CubeListBuilder.create().texOffs(12, 0).addBox(-13.0f, -1.0f, 0.0f, 3.0f, 10.0f, 1.0f),
                 PartPose.ZERO);
         return mesh;
     }

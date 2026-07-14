@@ -45,6 +45,10 @@ public abstract class MyEntityAITarget extends Goal {
         if (var1 == null) {
             return false;
         }
+        if (!MyUtils.isValidAggroTarget(var1)) {
+            this.taskOwner.setTarget(null);
+            return false;
+        }
         if (!var1.isAlive()) {
             this.taskOwner.setTarget(null);
             return false;

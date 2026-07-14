@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import com.astryxion.chaospersists.util.MyUtils;
 
 public class CliffRacer extends AmbientCreature {
     private BlockPos currentFlightTarget = null;
@@ -143,7 +144,8 @@ public class CliffRacer extends AmbientCreature {
         float var7 = (float) (Mth.atan2(motion.z, motion.x) * 180.0 / Math.PI) - 90.0f;
         float var8 = Mth.wrapDegrees(var7 - this.getYRot());
         this.setYRot(this.getYRot() + var8 / 6.0f);
-    }
+        MyUtils.applyChaosFlightMovement(this);
+}
 
     @Override
     public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {

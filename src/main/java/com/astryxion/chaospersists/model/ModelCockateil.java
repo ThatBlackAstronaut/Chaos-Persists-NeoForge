@@ -60,67 +60,67 @@ public class ModelCockateil extends EntityModel<Cockateil> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "body",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 5.0f, 3.0f, 6.0f),
+                CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, 0.0f, 0.0f, 5.0f, 3.0f, 6.0f),
                 PartPose.offset(-1.0f, 18.0f, 0.0f));
         root.addOrReplaceChild(
                 "head",
-                CubeListBuilder.create().texOffs(22, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 3.0f, 3.0f, 4.0f),
+                CubeListBuilder.create().texOffs(22, 0).addBox(0.0f, 0.0f, 0.0f, 3.0f, 3.0f, 4.0f),
                 PartPose.offset(0.0f, 16.0f, -3.0f));
         root.addOrReplaceChild(
                 "beak",
-                CubeListBuilder.create().texOffs(0, 21).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 3.0f),
+                CubeListBuilder.create().texOffs(0, 21).addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 3.0f),
                 PartPose.offset(1.0f, 17.0f, -6.0f));
         root.addOrReplaceChild(
                 "lower_beak",
-                CubeListBuilder.create().texOffs(1, 17).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(1, 17).addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f),
                 PartPose.offset(1.0f, 18.0f, -4.0f));
         root.addOrReplaceChild(
                 "feather2",
-                CubeListBuilder.create().texOffs(15, 9).mirror().addBox(0.0f, -2.5f, -0.75f, 1.0f, 3.0f, 1.0f),
+                CubeListBuilder.create().texOffs(15, 9).addBox(0.0f, -2.5f, -0.75f, 1.0f, 3.0f, 1.0f),
                 PartPose.offsetAndRotation(1.0f, 16.0f, 0.0f, -0.6426736f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "feather1",
-                CubeListBuilder.create().texOffs(11, 9).mirror().addBox(0.0f, -2.5f, -0.5f, 1.0f, 3.0f, 1.0f),
+                CubeListBuilder.create().texOffs(11, 9).addBox(0.0f, -2.5f, -0.5f, 1.0f, 3.0f, 1.0f),
                 PartPose.offsetAndRotation(1.0f, 16.0f, -2.0f, -0.2230717f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "feather3",
-                CubeListBuilder.create().texOffs(19, 9).mirror().addBox(0.0f, -3.0f, 0.5f, 1.0f, 4.0f, 1.0f),
+                CubeListBuilder.create().texOffs(19, 9).addBox(0.0f, -3.0f, 0.5f, 1.0f, 4.0f, 1.0f),
                 PartPose.offsetAndRotation(1.0f, 16.0f, 1.0f, -1.276259f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "tailfeather1",
-                CubeListBuilder.create().texOffs(46, 15).mirror().addBox(0.0f, 0.0f, 0.0f, 3.0f, 2.0f, 3.0f),
+                CubeListBuilder.create().texOffs(46, 15).addBox(0.0f, 0.0f, 0.0f, 3.0f, 2.0f, 3.0f),
                 PartPose.offset(0.0f, 18.0f, 6.0f));
         root.addOrReplaceChild(
                 "rwing1",
-                CubeListBuilder.create().texOffs(23, 9).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 4.0f, 4.0f),
+                CubeListBuilder.create().texOffs(23, 9).addBox(0.0f, 0.0f, 0.0f, 1.0f, 4.0f, 4.0f),
                 PartPose.offsetAndRotation(-1.0f, 18.0f, 1.0f, 0.0f, 0.0f, 1.595066f));
         root.addOrReplaceChild(
                 "lwing1",
-                CubeListBuilder.create().texOffs(33, 9).mirror().addBox(-1.0f, 0.0f, 0.0f, 1.0f, 4.0f, 4.0f),
+                CubeListBuilder.create().texOffs(33, 9).addBox(-1.0f, 0.0f, 0.0f, 1.0f, 4.0f, 4.0f),
                 PartPose.offsetAndRotation(4.0f, 18.0f, 1.0f, 0.0f, 0.0f, -1.561488f));
         root.addOrReplaceChild(
                 "leg",
-                CubeListBuilder.create().texOffs(4, 12).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 3.0f, 1.0f),
+                CubeListBuilder.create().texOffs(4, 12).addBox(0.0f, 0.0f, 0.0f, 1.0f, 3.0f, 1.0f),
                 PartPose.offsetAndRotation(2.0f, 21.0f, 3.0f, 0.8726646f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "otherleg",
-                CubeListBuilder.create().texOffs(0, 12).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 3.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 12).addBox(0.0f, 0.0f, 0.0f, 1.0f, 3.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 21.0f, 3.0f, 0.6108652f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "lwing2",
-                CubeListBuilder.create().texOffs(10, 14).mirror().addBox(4.0f, 0.0f, 0.0f, 3.0f, 1.0f, 3.0f),
+                CubeListBuilder.create().texOffs(10, 14).addBox(4.0f, 0.0f, 0.0f, 3.0f, 1.0f, 3.0f),
                 PartPose.offset(4.0f, 18.0f, 1.0f));
         root.addOrReplaceChild(
                 "rwing2",
-                CubeListBuilder.create().texOffs(10, 19).mirror().addBox(-7.0f, 0.0f, 0.0f, 3.0f, 1.0f, 3.0f),
+                CubeListBuilder.create().texOffs(10, 19).addBox(-7.0f, 0.0f, 0.0f, 3.0f, 1.0f, 3.0f),
                 PartPose.offset(-1.0f, 18.0f, 1.0f));
         root.addOrReplaceChild(
                 "tailfeather2",
-                CubeListBuilder.create().texOffs(44, 20).mirror().addBox(-0.5f, 0.0f, 3.0f, 4.0f, 1.0f, 4.0f),
+                CubeListBuilder.create().texOffs(44, 20).addBox(-0.5f, 0.0f, 3.0f, 4.0f, 1.0f, 4.0f),
                 PartPose.offset(0.0f, 18.0f, 6.0f));
         root.addOrReplaceChild(
                 "tailfeather3",
-                CubeListBuilder.create().texOffs(36, 26).mirror().addBox(-1.0f, 0.0f, 7.0f, 5.0f, 1.0f, 4.0f),
+                CubeListBuilder.create().texOffs(36, 26).addBox(-1.0f, 0.0f, 7.0f, 5.0f, 1.0f, 4.0f),
                 PartPose.offset(0.0f, 18.0f, 6.0f));
         return mesh;
     }

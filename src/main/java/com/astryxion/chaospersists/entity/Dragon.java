@@ -48,7 +48,7 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
@@ -131,7 +131,7 @@ public class Dragon extends TamableAnimal {
         if (ChaosPersists.PlayNicely == 0) {
             this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Monster.class, true, false));
         }
-        this.targetSelector.addGoal(2, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -842,8 +842,10 @@ public class Dragon extends TamableAnimal {
             return false;
         }
         ret = super.hurt(par1DamageSource, par2);
-        this.hurt_timer = 20;
-        if (e instanceof LivingEntity living) {
+        if (ret) {
+            this.hurt_timer = 20;
+        }
+        if (e instanceof LivingEntity living && MyUtils.isValidAggroTarget(living)) {
             if (this.isTame() && e instanceof Player) {
                 return false;
             }
@@ -1477,7 +1479,7 @@ public class Dragon extends TamableAnimal {
         this.zza = (float) (0.75 * speed_factor);
         this.setYRot(this.getYRot() + var8 / 4.0f);
         this.setDeltaMovement(mx, my, mz);
-        // Movement comes from vanilla travel() in the same tick (Prince pattern); extra move() here fought physics.
+        MyUtils.applyChaosFlightMovement(this);
     }
 
     @Override

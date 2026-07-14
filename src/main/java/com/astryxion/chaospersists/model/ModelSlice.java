@@ -49,20 +49,20 @@ public class ModelSlice {
     public static MeshDefinition createMesh() {
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
-        partdefinition.addOrReplaceChild("Grip", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, -6.0f, 0.0f, 1, 12, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("Blade1", CubeListBuilder.create().texOffs(6, 49).mirror().addBox(0.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(0.5f, 0.0f, -2.3f, 0.0f, 0.3490659f, 0.0f));
-        partdefinition.addOrReplaceChild("Handguard2", CubeListBuilder.create().texOffs(16, 0).mirror().addBox(0.0f, -7.0f, -4.0f, 1, 1, 9), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("Handguard1", CubeListBuilder.create().texOffs(18, 12).mirror().addBox(-3.0f, -7.0f, 0.0f, 7, 1, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("hg2", CubeListBuilder.create().texOffs(0, 15).mirror().addBox(0.0f, -9.0f, -7.0f, 1, 3, 3), PartPose.offsetAndRotation(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("hg4", CubeListBuilder.create().texOffs(0, 22).mirror().addBox(0.0f, -9.0f, 5.0f, 1, 3, 3), PartPose.offsetAndRotation(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("hg3", CubeListBuilder.create().texOffs(0, 29).mirror().addBox(-4.0f, -9.0f, 0.0f, 3, 3, 1), PartPose.offsetAndRotation(-2.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("hg1", CubeListBuilder.create().texOffs(0, 34).mirror().addBox(4.0f, -9.0f, 0.0f, 3, 3, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("BaseGrip", CubeListBuilder.create().texOffs(0, 39).mirror().addBox(-1.0f, 5.0f, -1.0f, 3, 1, 3), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("Bottom", CubeListBuilder.create().texOffs(0, 45).mirror().addBox(0.0f, 6.0f, 0.0f, 1, 1, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("Blade2", CubeListBuilder.create().texOffs(24, 49).mirror().addBox(-1.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(0.5f, 0.0f, -2.3f, 0.0f, -0.3490659f, 0.0f));
-        partdefinition.addOrReplaceChild("Blade3", CubeListBuilder.create().texOffs(15, 49).mirror().addBox(0.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(1.5f, 0.0f, 0.4f, 0.0f, -0.3490659f, 0.0f));
-        partdefinition.addOrReplaceChild("Blade4", CubeListBuilder.create().texOffs(33, 49).mirror().addBox(0.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(-1.5f, 0.0f, 0.7f, 0.0f, 0.3490659f, 0.0f));
-        partdefinition.addOrReplaceChild("Shape1", CubeListBuilder.create().texOffs(6, 0).mirror().addBox(0.0f, -6.0f, 0.0f, 1, 6, 3), PartPose.offsetAndRotation(0.5f, -40.0f, -1.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Grip", CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, -6.0f, 0.0f, 1, 12, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Blade1", CubeListBuilder.create().texOffs(6, 49).addBox(0.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(0.5f, 0.0f, -2.3f, 0.0f, 0.3490659f, 0.0f));
+        partdefinition.addOrReplaceChild("Handguard2", CubeListBuilder.create().texOffs(16, 0).addBox(0.0f, -7.0f, -4.0f, 1, 1, 9), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Handguard1", CubeListBuilder.create().texOffs(18, 12).addBox(-3.0f, -7.0f, 0.0f, 7, 1, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("hg2", CubeListBuilder.create().texOffs(0, 15).addBox(0.0f, -9.0f, -7.0f, 1, 3, 3), PartPose.offsetAndRotation(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("hg4", CubeListBuilder.create().texOffs(0, 22).addBox(0.0f, -9.0f, 5.0f, 1, 3, 3), PartPose.offsetAndRotation(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("hg3", CubeListBuilder.create().texOffs(0, 29).addBox(-4.0f, -9.0f, 0.0f, 3, 3, 1), PartPose.offsetAndRotation(-2.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("hg1", CubeListBuilder.create().texOffs(0, 34).addBox(4.0f, -9.0f, 0.0f, 3, 3, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("BaseGrip", CubeListBuilder.create().texOffs(0, 39).addBox(-1.0f, 5.0f, -1.0f, 3, 1, 3), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Bottom", CubeListBuilder.create().texOffs(0, 45).addBox(0.0f, 6.0f, 0.0f, 1, 1, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Blade2", CubeListBuilder.create().texOffs(24, 49).addBox(-1.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(0.5f, 0.0f, -2.3f, 0.0f, -0.3490659f, 0.0f));
+        partdefinition.addOrReplaceChild("Blade3", CubeListBuilder.create().texOffs(15, 49).addBox(0.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(1.5f, 0.0f, 0.4f, 0.0f, -0.3490659f, 0.0f));
+        partdefinition.addOrReplaceChild("Blade4", CubeListBuilder.create().texOffs(33, 49).addBox(0.0f, -41.0f, 0.0f, 1, 34, 3), PartPose.offsetAndRotation(-1.5f, 0.0f, 0.7f, 0.0f, 0.3490659f, 0.0f));
+        partdefinition.addOrReplaceChild("Shape1", CubeListBuilder.create().texOffs(6, 0).addBox(0.0f, -6.0f, 0.0f, 1, 6, 3), PartPose.offsetAndRotation(0.5f, -40.0f, -1.0f, 0.0f, 0.0f, 0.0f));
         return meshdefinition;
     }
 

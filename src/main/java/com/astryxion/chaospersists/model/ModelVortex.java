@@ -29,7 +29,7 @@ public class ModelVortex extends EntityModel<Vortex> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "shape1",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-64.0f, -64.0f, 0.0f, 128, 64, 0),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-64.0f, -64.0f, 0.0f, 128, 64, 0),
                 PartPose.offset(0.0f, 22.0f, 0.0f));
         return mesh;
     }

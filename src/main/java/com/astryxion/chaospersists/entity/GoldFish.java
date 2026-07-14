@@ -25,6 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
+import com.astryxion.chaospersists.util.MyUtils;
 
 public class GoldFish extends Animal {
     private BlockPos currentFlightTarget = null;
@@ -175,7 +176,8 @@ public class GoldFish extends Animal {
         this.setYRot(this.getYRot() + var8 / 6.0f);
         this.setYBodyRot(this.getYRot());
         this.setYHeadRot(this.getYRot());
-    }
+        MyUtils.applyChaosFlightMovement(this);
+}
 
     @Override
     public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {

@@ -231,11 +231,19 @@ public class PitchBlack extends Monster {
             return;
         }
         float scale = this.getPitchBlackScale();
-        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double) this.mygetMaxHealth());
+        float previousMax = (float) this.getAttribute(Attributes.MAX_HEALTH).getBaseValue();
+        float newMax = (float) this.mygetMaxHealth();
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double) newMax);
         this.getAttribute(Attributes.ATTACK_DAMAGE)
                 .setBaseValue((double) (scale * (float) ChaosPersists.PitchBlack_stats.attack));
         this.getAttribute(Attributes.ARMOR)
                 .setBaseValue((double) (ChaosPersists.PitchBlack_stats.defense + (int) (2.0f * scale)));
+        float currentHealth = this.getHealth();
+        if (currentHealth > newMax) {
+            this.setHealth(newMax);
+        } else if (currentHealth >= previousMax - 0.01f) {
+            this.setHealth(newMax);
+        }
     }
 
     public RenderInfo getRenderInfo() {
@@ -515,7 +523,8 @@ public class PitchBlack extends Monster {
         float var7 = (float) (Mth.atan2(motion.z, motion.x) * 180.0 / Math.PI) - 90.0f;
         float var8 = Mth.wrapDegrees(var7 - this.getYRot());
         this.setYRot(this.getYRot() + var8 / 5.0f);
-    }
+        MyUtils.applyChaosFlightMovement(this);
+}
 
     @Override
     public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {

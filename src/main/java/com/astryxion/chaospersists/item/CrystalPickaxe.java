@@ -5,7 +5,11 @@ import net.minecraft.world.item.Tier;
 
 public class CrystalPickaxe extends PickaxeItem {
 
-    public CrystalPickaxe(Tier tier) {
-        super(tier, 1, -2.8f, new Properties().stacksTo(1));
+    public CrystalPickaxe(Tier tier, float attackDamage) {
+        super(
+                tier,
+                ChaosWeaponDamage.modifierFor(tier, attackDamage),
+                -2.8f,
+                new Properties().stacksTo(1));
     }
 }

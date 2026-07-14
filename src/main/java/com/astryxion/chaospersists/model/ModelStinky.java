@@ -68,83 +68,83 @@ public class ModelStinky extends EntityModel<Stinky> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "body",
-                CubeListBuilder.create().texOffs(0, 12).mirror().addBox(-4.5f, -3.0f, -5.0f, 8, 8, 10),
+                CubeListBuilder.create().texOffs(0, 12).addBox(-4.5f, -3.0f, -5.0f, 8, 8, 10),
                 PartPose.offset(0.5f, 15.0f, 1.0f));
         root.addOrReplaceChild(
                 "neck1",
-                CubeListBuilder.create().texOffs(0, 31).mirror().addBox(-2.0f, -3.0f, -2.0f, 4, 5, 5),
+                CubeListBuilder.create().texOffs(0, 31).addBox(-2.0f, -3.0f, -2.0f, 4, 5, 5),
                 PartPose.offsetAndRotation(0.0f, 16.0f, -5.0f, 0.715585f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "neck",
-                CubeListBuilder.create().texOffs(0, 42).mirror().addBox(-2.0f, -8.0f, -3.0f, 4, 8, 4),
+                CubeListBuilder.create().texOffs(0, 42).addBox(-2.0f, -8.0f, -3.0f, 4, 8, 4),
                 PartPose.offset(0.0f, 15.0f, -5.5f));
         root.addOrReplaceChild(
                 "neckbase",
-                CubeListBuilder.create().texOffs(0, 55).mirror().addBox(-3.0f, -4.0f, 0.0f, 6, 6, 3),
+                CubeListBuilder.create().texOffs(0, 55).addBox(-3.0f, -4.0f, 0.0f, 6, 6, 3),
                 PartPose.offset(0.0f, 17.0f, 5.0f));
         root.addOrReplaceChild(
                 "head",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-2.5f, -10.0f, -3.5f, 5, 5, 5),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-2.5f, -10.0f, -3.5f, 5, 5, 5),
                 PartPose.offset(0.0f, 15.0f, -5.5f));
         root.addOrReplaceChild(
                 "Rleg1",
-                CubeListBuilder.create().texOffs(19, 53).mirror().addBox(-1.5f, 0.0f, -1.0f, 3, 8, 3),
+                CubeListBuilder.create().texOffs(19, 53).addBox(-1.5f, 0.0f, -1.0f, 3, 8, 3),
                 PartPose.offset(2.0f, 16.0f, 5.5f));
         root.addOrReplaceChild(
                 "Lleg1",
-                CubeListBuilder.create().texOffs(19, 53).mirror().addBox(-1.5f, 0.0f, -0.5f, 3, 8, 3),
+                CubeListBuilder.create().texOffs(19, 53).addBox(-1.5f, 0.0f, -0.5f, 3, 8, 3),
                 PartPose.offset(-2.0f, 16.0f, 5.0f));
         root.addOrReplaceChild(
                 "Lhorn1",
-                CubeListBuilder.create().texOffs(19, 47).mirror().addBox(-3.0f, -10.5f, -1.0f, 2, 2, 3),
+                CubeListBuilder.create().texOffs(19, 47).addBox(-3.0f, -10.5f, -1.0f, 2, 2, 3),
                 PartPose.offset(0.0f, 15.0f, -5.5f));
         root.addOrReplaceChild(
                 "Rhorn1",
-                CubeListBuilder.create().texOffs(19, 47).mirror().addBox(1.0f, -10.5f, -1.0f, 2, 2, 3),
+                CubeListBuilder.create().texOffs(19, 47).addBox(1.0f, -10.5f, -1.0f, 2, 2, 3),
                 PartPose.offset(0.0f, 15.0f, -5.5f));
         root.addOrReplaceChild(
                 "snout",
-                CubeListBuilder.create().texOffs(32, 57).mirror().addBox(-1.5f, -8.0f, -6.5f, 3, 3, 4),
+                CubeListBuilder.create().texOffs(32, 57).addBox(-1.5f, -8.0f, -6.5f, 3, 3, 4),
                 PartPose.offset(0.0f, 15.0f, -5.5f));
         root.addOrReplaceChild(
                 "Lhorn2",
-                CubeListBuilder.create().texOffs(19, 42).mirror().addBox(-2.5f, -10.0f, 1.0f, 1, 1, 3),
+                CubeListBuilder.create().texOffs(19, 42).addBox(-2.5f, -10.0f, 1.0f, 1, 1, 3),
                 PartPose.offset(0.0f, 15.0f, -5.5f));
         root.addOrReplaceChild(
                 "Rhorn2",
-                CubeListBuilder.create().texOffs(19, 42).mirror().addBox(1.5f, -10.0f, 1.0f, 1, 1, 3),
+                CubeListBuilder.create().texOffs(19, 42).addBox(1.5f, -10.0f, 1.0f, 1, 1, 3),
                 PartPose.offset(0.0f, 15.0f, -5.5f));
         root.addOrReplaceChild(
                 "tail1",
-                CubeListBuilder.create().texOffs(47, 55).mirror().addBox(-3.0f, -3.0f, -3.0f, 6, 6, 3),
+                CubeListBuilder.create().texOffs(47, 55).addBox(-3.0f, -3.0f, -3.0f, 6, 6, 3),
                 PartPose.offset(0.0f, 16.5f, -2.0f));
         root.addOrReplaceChild(
                 "Rleg2",
-                CubeListBuilder.create().texOffs(19, 53).mirror().addBox(-1.5f, 0.0f, -1.5f, 3, 8, 3),
+                CubeListBuilder.create().texOffs(19, 53).addBox(-1.5f, 0.0f, -1.5f, 3, 8, 3),
                 PartPose.offset(2.0f, 16.0f, -3.0f));
         root.addOrReplaceChild(
                 "Lleg2",
-                CubeListBuilder.create().texOffs(19, 53).mirror().addBox(-1.5f, 0.0f, -1.5f, 3, 8, 3),
+                CubeListBuilder.create().texOffs(19, 53).addBox(-1.5f, 0.0f, -1.5f, 3, 8, 3),
                 PartPose.offset(-2.0f, 16.0f, -3.0f));
         root.addOrReplaceChild(
                 "tail2",
-                CubeListBuilder.create().texOffs(19, 31).mirror().addBox(-2.5f, -2.5f, 0.0f, 5, 5, 5),
+                CubeListBuilder.create().texOffs(19, 31).addBox(-2.5f, -2.5f, 0.0f, 5, 5, 5),
                 PartPose.offsetAndRotation(0.0f, 16.0f, 7.0f, -0.3839724f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "tail3",
-                CubeListBuilder.create().texOffs(32, 46).mirror().addBox(-2.0f, -2.0f, 0.0f, 4, 4, 4),
+                CubeListBuilder.create().texOffs(32, 46).addBox(-2.0f, -2.0f, 0.0f, 4, 4, 4),
                 PartPose.offsetAndRotation(0.0f, 17.2f, 11.0f, -0.2094395f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "tail4",
-                CubeListBuilder.create().texOffs(37, 13).mirror().addBox(-1.5f, -1.5f, 0.0f, 3, 3, 5),
+                CubeListBuilder.create().texOffs(37, 13).addBox(-1.5f, -1.5f, 0.0f, 3, 3, 5),
                 PartPose.offsetAndRotation(0.0f, 17.5f, 14.0f, -0.0698132f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "Lwing",
-                CubeListBuilder.create().texOffs(59, 0).mirror().addBox(-18.0f, 0.0f, -5.0f, 18, 0, 10),
+                CubeListBuilder.create().texOffs(59, 0).addBox(-18.0f, 0.0f, -5.0f, 18, 0, 10),
                 PartPose.offsetAndRotation(-2.0f, 12.6f, 0.0f, 0.0f, 0.0f, 0.4014257f));
         root.addOrReplaceChild(
                 "Rwing",
-                CubeListBuilder.create().texOffs(59, 11).mirror().addBox(0.0f, 0.0f, -5.0f, 18, 0, 10),
+                CubeListBuilder.create().texOffs(59, 11).addBox(0.0f, 0.0f, -5.0f, 18, 0, 10),
                 PartPose.offsetAndRotation(2.0f, 12.6f, 0.0f, 0.0f, 0.0f, -0.4014257f));
         return mesh;
     }

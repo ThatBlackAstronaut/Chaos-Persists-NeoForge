@@ -48,7 +48,7 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
@@ -132,7 +132,7 @@ public class ThePrinceTeen extends TamableAnimal {
         if (ChaosPersists.PlayNicely == 0) {
             this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Monster.class, true, false));
         }
-        this.targetSelector.addGoal(2, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new ChaosHurtByTargetGoal(this));
     }
 
     @Override
@@ -778,7 +778,7 @@ public class ThePrinceTeen extends TamableAnimal {
         }
         ret = super.hurt(par1DamageSource, par2);
         this.hurt_timer = 20;
-        if (e instanceof LivingEntity living && !this.level().isClientSide) {
+        if (e instanceof LivingEntity living && !this.level().isClientSide && MyUtils.isValidAggroTarget(living)) {
             if (this.isTame() && e instanceof Player) {
                 return false;
             }

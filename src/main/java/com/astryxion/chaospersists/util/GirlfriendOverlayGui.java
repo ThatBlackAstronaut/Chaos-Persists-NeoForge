@@ -50,6 +50,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -452,9 +453,11 @@ public class GirlfriendOverlayGui {
             return;
         }
 
+        gfHealth = Mth.clamp(gfHealth, 0.0F, 1.0F);
+
         GuiGraphics guiGraphics = event.getGuiGraphics();
         int width = this.mc.getWindow().getGuiScaledWidth();
-        int barWidthFilled = (int) (gfHealth * (barWidth + 1));
+        int barWidthFilled = Math.min((int) (gfHealth * (barWidth + 1)), barWidth);
         int x = width / 2 - barWidth / 2;
         int y = 25;
 

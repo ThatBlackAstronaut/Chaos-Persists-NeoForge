@@ -238,8 +238,7 @@ public class ThePrincess extends TamableAnimal {
                 && var2.is(Blocks.DIAMOND_BLOCK.asItem())
                 && par1EntityPlayer.distanceToSqr(this) < 16.0) {
             if (!this.level().isClientSide) {
-                this.setTame(true);
-                this.setOwnerUUID(par1EntityPlayer.getUUID());
+                this.tame(par1EntityPlayer);
                 spawnTamingParticles(true);
                 this.level().broadcastEntityEvent(this, (byte) 7);
                 this.heal((float) this.mygetMaxHealth() - this.getHealth());
@@ -596,8 +595,7 @@ public class ThePrincess extends TamableAnimal {
         if (!this.isTame()) {
             Player p = this.level().getNearestPlayer(this, 10.0);
             if (p != null) {
-                this.setTame(true);
-                this.setOwnerUUID(p.getUUID());
+                this.tame(p);
                 spawnTamingParticles(true);
                 this.level().broadcastEntityEvent(this, (byte) 7);
                 this.heal((float) this.mygetMaxHealth() - this.getHealth());
@@ -989,7 +987,8 @@ public class ThePrincess extends TamableAnimal {
         float var8 = Mth.wrapDegrees(var7 - this.getYRot());
         this.setZza((float) (0.75 * speed_factor));
         this.setYRot(this.getYRot() + var8 / 3.0f);
-    }
+        MyUtils.applyChaosFlightMovement(this);
+}
 
     private boolean isSuitableTarget(LivingEntity par1EntityLiving, boolean par2) {
         if (this.level().getDifficulty() == Difficulty.PEACEFUL) {

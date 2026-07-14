@@ -24,7 +24,7 @@ public class ModelSquidZooka {
     private final ModelPart handle1;
 
     public ModelSquidZooka() {
-        this(LayerDefinition.create(createMesh(), 64, 128).bakeRoot());
+        this(LayerDefinition.create(createMesh(), 128, 128).bakeRoot());
     }
 
     public ModelSquidZooka(ModelPart root) {
@@ -45,18 +45,18 @@ public class ModelSquidZooka {
     public static MeshDefinition createMesh() {
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
-        partdefinition.addOrReplaceChild("Barrel", CubeListBuilder.create().texOffs(29, 19).mirror().addBox(-1.0f, -1.0f, -19.0f, 2, 2, 34), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("tail1", CubeListBuilder.create().texOffs(0, 53).mirror().addBox(-1.5f, -1.5f, 15.0f, 3, 3, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("tail2", CubeListBuilder.create().texOffs(0, 58).mirror().addBox(-2.0f, -2.0f, 16.0f, 4, 4, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("tail3", CubeListBuilder.create().texOffs(0, 64).mirror().addBox(-2.5f, -2.5f, 17.0f, 5, 5, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("tail4", CubeListBuilder.create().texOffs(0, 71).mirror().addBox(-3.0f, -3.0f, 18.0f, 6, 6, 6), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("tail5", CubeListBuilder.create().texOffs(0, 84).mirror().addBox(-2.5f, -2.5f, 24.0f, 5, 5, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("tail6", CubeListBuilder.create().texOffs(0, 91).mirror().addBox(-2.0f, -2.0f, 25.0f, 4, 4, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("tail7", CubeListBuilder.create().texOffs(0, 97).mirror().addBox(-1.5f, -1.5f, 26.0f, 3, 3, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("sight3", CubeListBuilder.create().texOffs(25, 0).mirror().addBox(1.0f, -2.0f, -10.0f, 1, 1, 2), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("sight2", CubeListBuilder.create().texOffs(32, 0).mirror().addBox(0.5f, -4.0f, -12.0f, 2, 2, 6), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("sight1", CubeListBuilder.create().texOffs(18, 0).mirror().addBox(1.0f, -1.0f, -10.0f, 1, 1, 2), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("handle1", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 1.0f, 0.0f, 1, 7, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("Barrel", CubeListBuilder.create().texOffs(29, 19).addBox(-1.0f, -1.0f, -19.0f, 2, 2, 34), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail1", CubeListBuilder.create().texOffs(0, 53).addBox(-1.5f, -1.5f, 15.0f, 3, 3, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail2", CubeListBuilder.create().texOffs(0, 58).addBox(-2.0f, -2.0f, 16.0f, 4, 4, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail3", CubeListBuilder.create().texOffs(0, 64).addBox(-2.5f, -2.5f, 17.0f, 5, 5, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail4", CubeListBuilder.create().texOffs(0, 71).addBox(-3.0f, -3.0f, 18.0f, 6, 6, 6), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail5", CubeListBuilder.create().texOffs(0, 84).addBox(-2.5f, -2.5f, 24.0f, 5, 5, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail6", CubeListBuilder.create().texOffs(0, 91).addBox(-2.0f, -2.0f, 25.0f, 4, 4, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("tail7", CubeListBuilder.create().texOffs(0, 97).addBox(-1.5f, -1.5f, 26.0f, 3, 3, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("sight3", CubeListBuilder.create().texOffs(25, 0).addBox(1.0f, -2.0f, -10.0f, 1, 1, 2), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("sight2", CubeListBuilder.create().texOffs(32, 0).addBox(0.5f, -4.0f, -12.0f, 2, 2, 6), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("sight1", CubeListBuilder.create().texOffs(18, 0).addBox(1.0f, -1.0f, -10.0f, 1, 1, 2), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("handle1", CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, 1.0f, 0.0f, 1, 7, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
         return meshdefinition;
     }
 

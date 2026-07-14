@@ -6,8 +6,12 @@ import net.minecraft.world.item.Tier;
 
 public class CrystalSword extends SwordItem {
 
-    public CrystalSword(Tier tier) {
-        super(tier, 3, -2.4f, new Properties().stacksTo(1));
+    public CrystalSword(Tier tier, float attackDamage) {
+        super(
+                tier,
+                ChaosWeaponDamage.modifierFor(tier, attackDamage),
+                -2.4f,
+                new Properties().stacksTo(1));
     }
 
     @Override

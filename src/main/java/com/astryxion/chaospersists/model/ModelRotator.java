@@ -36,15 +36,15 @@ public class ModelRotator extends EntityModel<Rotator> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "shape1",
-                CubeListBuilder.create().texOffs(0, 12).mirror().addBox(-2.0f, 3.9f, 0.0f, 4, 1, 1),
+                CubeListBuilder.create().texOffs(0, 12).addBox(-2.0f, 3.9f, 0.0f, 4, 1, 1),
                 PartPose.offset(0.0f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "shape2",
-                CubeListBuilder.create().texOffs(0, 7).mirror().addBox(-4.0f, 7.6f, 0.0f, 8, 2, 2),
+                CubeListBuilder.create().texOffs(0, 7).addBox(-4.0f, 7.6f, 0.0f, 8, 2, 2),
                 PartPose.offset(0.0f, 0.0f, -0.5f));
         root.addOrReplaceChild(
                 "shape3",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-7.0f, 13.7f, 0.0f, 14, 3, 3),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-7.0f, 13.7f, 0.0f, 14, 3, 3),
                 PartPose.offset(0.0f, 0.0f, -1.0f));
         return mesh;
     }

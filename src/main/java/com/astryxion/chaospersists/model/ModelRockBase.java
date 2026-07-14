@@ -70,91 +70,91 @@ public class ModelRockBase extends EntityModel<RockBase> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "RockShape1",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-3.0f, 0.0f, -1.0f, 6.0f, 1.0f, 2.0f),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-3.0f, 0.0f, -1.0f, 6.0f, 1.0f, 2.0f),
                 PartPose.offset(0.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "RockShape2",
-                CubeListBuilder.create().texOffs(0, 4).mirror().addBox(-3.0f, 0.0f, 1.0f, 3.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 4).addBox(-3.0f, 0.0f, 1.0f, 3.0f, 1.0f, 1.0f),
                 PartPose.offset(0.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "RockShape3",
-                CubeListBuilder.create().texOffs(0, 7).mirror().addBox(0.0f, 0.0f, -2.0f, 2.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 7).addBox(0.0f, 0.0f, -2.0f, 2.0f, 1.0f, 1.0f),
                 PartPose.offset(0.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "RockSmallShape2",
-                CubeListBuilder.create().texOffs(0, 4).mirror().addBox(-2.0f, 0.0f, 0.0f, 3.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 4).addBox(-2.0f, 0.0f, 0.0f, 3.0f, 1.0f, 1.0f),
                 PartPose.offset(0.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "RockSmallShape1",
-                CubeListBuilder.create().texOffs(0, 7).mirror().addBox(0.0f, 0.0f, -1.0f, 2.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 7).addBox(0.0f, 0.0f, -1.0f, 2.0f, 1.0f, 1.0f),
                 PartPose.offset(0.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "RockTNTShape1",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-3.0f, 0.0f, -1.0f, 6.0f, 1.0f, 2.0f),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-3.0f, 0.0f, -1.0f, 6.0f, 1.0f, 2.0f),
                 PartPose.offset(0.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "RockTNTShape2",
-                CubeListBuilder.create().texOffs(0, 4).mirror().addBox(-3.0f, 0.0f, 1.0f, 3.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 4).addBox(-3.0f, 0.0f, 1.0f, 3.0f, 1.0f, 1.0f),
                 PartPose.offset(0.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "RockTNTShape3",
-                CubeListBuilder.create().texOffs(0, 7).mirror().addBox(0.0f, 0.0f, -2.0f, 2.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 7).addBox(0.0f, 0.0f, -2.0f, 2.0f, 1.0f, 1.0f),
                 PartPose.offset(0.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "RockTNTShape4",
-                CubeListBuilder.create().texOffs(0, 10).mirror().addBox(-4.0f, 0.0f, -2.0f, 3.0f, 1.0f, 3.0f),
+                CubeListBuilder.create().texOffs(0, 10).addBox(-4.0f, 0.0f, -2.0f, 3.0f, 1.0f, 3.0f),
                 PartPose.offset(0.0f, 22.0f, 0.0f));
         root.addOrReplaceChild(
                 "RockSpikeyShape1",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-3.0f, 0.0f, -1.0f, 6.0f, 1.0f, 2.0f),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-3.0f, 0.0f, -1.0f, 6.0f, 1.0f, 2.0f),
                 PartPose.offset(0.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "RockSpikeyShape2",
-                CubeListBuilder.create().texOffs(0, 4).mirror().addBox(-4.0f, 0.0f, -1.0f, 3.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 4).addBox(-4.0f, 0.0f, -1.0f, 3.0f, 1.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 23.0f, 0.0f, 0.0f, 1.570796f, 0.0f));
         root.addOrReplaceChild(
                 "RockSpikeyShape3",
-                CubeListBuilder.create().texOffs(0, 7).mirror().addBox(1.0f, 0.0f, 1.0f, 2.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 7).addBox(1.0f, 0.0f, 1.0f, 2.0f, 1.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 23.0f, 0.0f, 0.0f, 1.570796f, 0.0f));
         root.addOrReplaceChild(
                 "CrystalShape1",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-1.0f, -4.0f, -1.0f, 2.0f, 5.0f, 2.0f),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-1.0f, -4.0f, -1.0f, 2.0f, 5.0f, 2.0f),
                 PartPose.offset(0.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "CrystalShape2",
-                CubeListBuilder.create().texOffs(10, 0).mirror().addBox(-0.5f, -7.0f, -0.5f, 1.0f, 3.0f, 1.0f),
+                CubeListBuilder.create().texOffs(10, 0).addBox(-0.5f, -7.0f, -0.5f, 1.0f, 3.0f, 1.0f),
                 PartPose.offset(0.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "CrystalShape3a",
-                CubeListBuilder.create().texOffs(0, 8).mirror().addBox(-1.0f, -5.0f, -1.0f, 1.0f, 5.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 8).addBox(-1.0f, -5.0f, -1.0f, 1.0f, 5.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 23.0f, 0.0f, 0.5410521f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "CrystalShape3b",
-                CubeListBuilder.create().texOffs(0, 8).mirror().addBox(0.0f, -5.0f, 0.0f, 1.0f, 5.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 8).addBox(0.0f, -5.0f, 0.0f, 1.0f, 5.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 23.0f, 0.0f, -0.5410521f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "CrystalShape3c",
-                CubeListBuilder.create().texOffs(0, 8).mirror().addBox(0.0f, -5.0f, -1.0f, 1.0f, 5.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 8).addBox(0.0f, -5.0f, -1.0f, 1.0f, 5.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 23.0f, 0.0f, 0.0f, 0.0f, 0.5410521f));
         root.addOrReplaceChild(
                 "CrystalShape3d",
-                CubeListBuilder.create().texOffs(0, 8).mirror().addBox(-1.0f, -5.0f, 0.0f, 1.0f, 5.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 8).addBox(-1.0f, -5.0f, 0.0f, 1.0f, 5.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 23.0f, 0.0f, 0.0f, 0.0f, -0.5410521f));
         root.addOrReplaceChild(
                 "CrystalShape4a",
-                CubeListBuilder.create().texOffs(0, 16).mirror().addBox(0.0f, -3.0f, -1.0f, 1.0f, 3.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 16).addBox(0.0f, -3.0f, -1.0f, 1.0f, 3.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 23.0f, 0.0f, 1.308997f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "CrystalShape4b",
-                CubeListBuilder.create().texOffs(0, 16).mirror().addBox(-1.0f, -3.0f, 0.0f, 1.0f, 3.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 16).addBox(-1.0f, -3.0f, 0.0f, 1.0f, 3.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 23.0f, 0.0f, -1.308997f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "CrystalShape4c",
-                CubeListBuilder.create().texOffs(0, 16).mirror().addBox(0.0f, -3.0f, 0.0f, 1.0f, 3.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 16).addBox(0.0f, -3.0f, 0.0f, 1.0f, 3.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 23.0f, 0.0f, 0.0f, 0.0f, 1.308997f));
         root.addOrReplaceChild(
                 "CrystalShape4d",
-                CubeListBuilder.create().texOffs(0, 16).mirror().addBox(-1.0f, -3.0f, -1.0f, 1.0f, 3.0f, 1.0f),
+                CubeListBuilder.create().texOffs(0, 16).addBox(-1.0f, -3.0f, -1.0f, 1.0f, 3.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 23.0f, 0.0f, 0.0f, 0.0f, -1.308997f));
         return mesh;
     }

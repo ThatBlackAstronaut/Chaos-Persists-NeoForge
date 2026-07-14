@@ -33,29 +33,25 @@ public class BigHammerItemStackRenderer extends BlockEntityWithoutLevelRenderer 
         if (ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND) {
             boolean left = ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
             poseStack.pushPose();
+            poseStack.translate(0.5f, 0.5f, 0.5f);
             if (left) {
                 poseStack.scale(-1.0f, 1.0f, 1.0f);
             }
             applyFirstPerson(poseStack);
-            Minecraft.getInstance()
-                    .getItemRenderer()
-                    .render(stack, ctx, left, poseStack, buffer, packedLight, packedOverlay, this.flatModel);
+            FlatItemModelRenderer.render(flatModel, stack, poseStack, buffer, packedLight, packedOverlay);
             poseStack.popPose();
         } else if (ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND || ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
             boolean left = ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
             poseStack.pushPose();
+            poseStack.translate(0.5f, 0.5f, 0.5f);
             if (left) {
                 poseStack.scale(-1.0f, 1.0f, 1.0f);
             }
             applyThirdPerson(poseStack);
-            Minecraft.getInstance()
-                    .getItemRenderer()
-                    .render(stack, ctx, left, poseStack, buffer, packedLight, packedOverlay, this.flatModel);
+            FlatItemModelRenderer.render(flatModel, stack, poseStack, buffer, packedLight, packedOverlay);
             poseStack.popPose();
         } else {
-            Minecraft.getInstance()
-                    .getItemRenderer()
-                    .render(stack, ctx, false, poseStack, buffer, packedLight, packedOverlay, this.flatModel);
+            FlatItemModelRenderer.render(flatModel, stack, poseStack, buffer, packedLight, packedOverlay);
         }
     }
 

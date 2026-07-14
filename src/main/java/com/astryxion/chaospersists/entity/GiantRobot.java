@@ -29,7 +29,7 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MoveThroughVillageGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -59,7 +59,7 @@ public class GiantRobot extends Monster {
                 2, new MoveThroughVillageGoal(this, 0.8999999761581421, false, 4, () -> false));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 8.0f));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -330,7 +330,7 @@ public class GiantRobot extends Monster {
             ret = super.hurt(par1DamageSource, par2);
         }
         Entity src = par1DamageSource.getEntity();
-        if (src instanceof LivingEntity living) {
+        if (src instanceof LivingEntity living && MyUtils.isValidAggroTarget(living)) {
             this.setTarget(living);
         }
         return ret;

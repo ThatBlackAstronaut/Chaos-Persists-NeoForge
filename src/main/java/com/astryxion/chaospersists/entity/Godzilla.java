@@ -31,7 +31,7 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MoveThroughVillageGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
@@ -75,13 +75,13 @@ public class Godzilla extends Monster {
     private int stream_count = 8;
     private MyEntityAIWanderALot wander = null;
     private int head_found = 0;
+    private int headEntityId = -1;
     private int large_unknown_detected = 0;
     private int lastPlayNicely = -1;
 
     public Godzilla(EntityType<? extends Godzilla> type, Level level) {
         super(type, level);
         this.xpReward = 10000;
-        this.fireImmune();
         this.noPhysics = false;
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
@@ -91,7 +91,7 @@ public class Godzilla extends Monster {
         this.goalSelector.addGoal(2, this.wander);
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, LivingEntity.class, 50.0f));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
         this.applyGodzillaDimensions();
     }
 
@@ -169,6 +169,11 @@ public class Godzilla extends Monster {
         return false;
     }
 
+    @Override
+    public boolean fireImmune() {
+        return true;
+    }
+
     public int mygetMaxHealth() {
         return ChaosPersists.Godzilla_stats.health;
     }
@@ -193,6 +198,33 @@ public class Godzilla extends Monster {
         if (!this.onGround()) {
             this.getNavigation().stop();
         }
+    }
+
+    private void discardAttachedHeads() {
+        if (this.headEntityId >= 0) {
+            Entity head = this.level().getEntity(this.headEntityId);
+            if (head != null) {
+                head.discard();
+            }
+            this.headEntityId = -1;
+        }
+        AABB box = this.getBoundingBox().inflate(64.0, 64.0, 64.0);
+        for (GodzillaHead head : this.level().getEntitiesOfClass(GodzillaHead.class, box)) {
+            head.discard();
+        }
+        this.head_found = 0;
+    }
+
+    @Override
+    public void die(DamageSource source) {
+        this.discardAttachedHeads();
+        super.die(source);
+    }
+
+    @Override
+    public void remove(Entity.RemovalReason reason) {
+        this.discardAttachedHeads();
+        super.remove(reason);
     }
 
     @Override
@@ -451,12 +483,16 @@ public class Godzilla extends Monster {
                     this.setTarget(e);
                 }
                 if (this.head_found == 0) {
-                    spawnCreature(
+                    Entity spawned = spawnCreature(
                             this.level(),
                             "chaospersists:mobzilla_head",
                             this.getX(),
                             this.getY() + 20.0,
                             this.getZ());
+                    if (spawned != null) {
+                        this.head_found = 1;
+                        this.headEntityId = spawned.getId();
+                    }
                 }
             }
             if (e != null) {
@@ -975,6 +1011,9 @@ public class Godzilla extends Monster {
         if (this.hurt_timer > 0) {
             return false;
         }
+        if (this.isInvulnerableTo(par1DamageSource)) {
+            return false;
+        }
         if (dm > 120.0f) {
             dm = 120.0f;
         }
@@ -987,17 +1026,19 @@ public class Godzilla extends Monster {
                     || enl instanceof PitchBlack
                     || enl instanceof Kraken)) {
                 dm /= 10.0f;
-                this.hurt_timer = 50;
                 this.large_unknown_detected = 1;
             }
         }
         if (!par1DamageSource.getMsgId().equals("cactus")) {
             ret = super.hurt(par1DamageSource, dm);
-            this.hurt_timer = 20;
+            if (ret) {
+                this.hurt_timer = 20;
+            }
             e = par1DamageSource.getEntity();
             if (e instanceof LivingEntity living
                     && !(e instanceof GodzillaHead)
-                    && !(e instanceof Godzilla)) {
+                    && !(e instanceof Godzilla)
+                    && MyUtils.isValidAggroTarget(living)) {
                 this.setTarget(living);
                 this.getNavigation().moveTo(living, 1.2);
             }

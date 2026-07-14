@@ -23,12 +23,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class UltimatePickaxe extends PickaxeItem {
-    private static final int WEAPON_DAMAGE = 15;
+    private static final int WEAPON_DAMAGE = 38;
 
     public UltimatePickaxe(Tier tier) {
         super(
                 tier,
-                (int)(WEAPON_DAMAGE - tier.getAttackDamageBonus()),
+                ChaosWeaponDamage.modifierFor(tier, WEAPON_DAMAGE),
                 -2.8f,
                 new Properties().stacksTo(1).durability(3000));
     }

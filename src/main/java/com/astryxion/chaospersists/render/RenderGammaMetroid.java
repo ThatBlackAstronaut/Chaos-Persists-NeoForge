@@ -20,7 +20,8 @@ public class RenderGammaMetroid extends MobRenderer<GammaMetroid, ModelGammaMetr
 
     @Override
     protected void scale(GammaMetroid entity, com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTick) {
-        poseStack.scale(this.scale, this.scale, this.scale);
+        float s = entity.isBaby() ? this.scale / 2.0f : this.scale;
+        poseStack.scale(s, s, s);
     }
 
     @Override

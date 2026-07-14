@@ -1,5 +1,7 @@
 package com.astryxion.chaospersists.entity;
 
+
+import com.astryxion.chaospersists.util.MyUtils;
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.core.ChaosSounds;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
@@ -32,7 +34,7 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.monster.CaveSpider;
 import net.minecraft.world.entity.monster.Spider;
@@ -77,7 +79,7 @@ public class Lizard extends EntityCannonFodder {
         this.goalSelector.addGoal(4, new MyEntityAIWanderALot(this, 16, 1.0));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0f));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -114,7 +116,7 @@ public class Lizard extends EntityCannonFodder {
         Entity e = par1DamageSource.getEntity();
         if (!par1DamageSource.is(DamageTypes.CACTUS)) {
             ret = super.hurt(par1DamageSource, par2);
-            if (e instanceof LivingEntity living) {
+            if (e instanceof LivingEntity living && MyUtils.isValidAggroTarget(living)) {
                 this.setTarget(living);
             }
         }

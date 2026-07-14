@@ -34,7 +34,7 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MoveThroughVillageGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.EnderMan;
@@ -78,7 +78,7 @@ public class EmperorScorpion extends Monster {
         this.goalSelector.addGoal(2, new MyEntityAIWanderALot(this, 14, 1.0));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 8.0f));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -427,12 +427,17 @@ public class EmperorScorpion extends Monster {
         if (this.hurtTimer > 0) {
             return false;
         }
+        if (this.isInvulnerableTo(source)) {
+            return false;
+        }
         boolean ret = false;
         if (!source.getMsgId().equals("cactus")) {
             ret = super.hurt(source, amount);
-            this.hurtTimer = 30;
+            if (ret) {
+                this.hurtTimer = 30;
+            }
             Entity e = source.getEntity();
-            if (e instanceof LivingEntity living) {
+            if (e instanceof LivingEntity living && MyUtils.isValidAggroTarget(living)) {
                 this.setTarget(living);
                 this.getNavigation().moveTo(living, 1.2);
             }

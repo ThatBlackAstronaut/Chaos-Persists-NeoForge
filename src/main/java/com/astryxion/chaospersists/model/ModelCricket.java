@@ -50,47 +50,47 @@ public class ModelCricket extends EntityModel<Cricket> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "body",
-                CubeListBuilder.create().texOffs(0, 25).mirror().addBox(-1.0f, -1.0f, -3.0f, 3.0f, 3.0f, 6.0f),
+                CubeListBuilder.create().texOffs(0, 25).addBox(-1.0f, -1.0f, -3.0f, 3.0f, 3.0f, 6.0f),
                 PartPose.offset(0.0f, 21.0f, 0.0f));
         root.addOrReplaceChild(
                 "head",
-                CubeListBuilder.create().texOffs(0, 17).mirror().addBox(-1.0f, -2.0f, -1.0f, 3.0f, 4.0f, 3.0f),
+                CubeListBuilder.create().texOffs(0, 17).addBox(-1.0f, -2.0f, -1.0f, 3.0f, 4.0f, 3.0f),
                 PartPose.offsetAndRotation(0.0f, 21.0f, -5.0f, -0.1745329f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "abdomen",
-                CubeListBuilder.create().texOffs(0, 36).mirror().addBox(-0.5f, -1.0f, 3.0f, 2.0f, 2.0f, 3.0f),
+                CubeListBuilder.create().texOffs(0, 36).addBox(-0.5f, -1.0f, 3.0f, 2.0f, 2.0f, 3.0f),
                 PartPose.offset(0.0f, 21.0f, 0.0f));
         root.addOrReplaceChild(
                 "lfleg",
-                CubeListBuilder.create().texOffs(25, 0).mirror().addBox(2.0f, 0.0f, 0.0f, 5.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(25, 0).addBox(2.0f, 0.0f, 0.0f, 5.0f, 1.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 21.0f, -2.0f, 0.0f, 0.4712389f, 0.418879f));
         root.addOrReplaceChild(
                 "lrleg",
-                CubeListBuilder.create().texOffs(23, 4).mirror().addBox(1.0f, 0.0f, -2.0f, 6.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(23, 4).addBox(1.0f, 0.0f, -2.0f, 6.0f, 1.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 21.0f, 0.0f, 0.0f, -0.296706f, 0.418879f));
         root.addOrReplaceChild(
                 "rfleg",
-                CubeListBuilder.create().texOffs(25, 8).mirror().addBox(-7.0f, 0.0f, 0.0f, 5.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(25, 8).addBox(-7.0f, 0.0f, 0.0f, 5.0f, 1.0f, 1.0f),
                 PartPose.offsetAndRotation(1.0f, 21.0f, -2.0f, 0.0f, -0.5410521f, -0.4363323f));
         root.addOrReplaceChild(
                 "rrleg",
-                CubeListBuilder.create().texOffs(25, 12).mirror().addBox(-7.0f, -1.0f, 0.0f, 5.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(25, 12).addBox(-7.0f, -1.0f, 0.0f, 5.0f, 1.0f, 1.0f),
                 PartPose.offsetAndRotation(1.0f, 22.0f, -2.0f, 0.0f, 0.3839724f, -0.418879f));
         root.addOrReplaceChild(
                 "lleg1",
-                CubeListBuilder.create().texOffs(40, 0).mirror().addBox(-1.0f, -1.0f, 0.0f, 1.0f, 2.0f, 8.0f),
+                CubeListBuilder.create().texOffs(40, 0).addBox(-1.0f, -1.0f, 0.0f, 1.0f, 2.0f, 8.0f),
                 PartPose.offsetAndRotation(2.0f, 22.0f, 0.0f, 0.5585054f, 0.4363323f, 0.0f));
         root.addOrReplaceChild(
                 "rleg1",
-                CubeListBuilder.create().texOffs(40, 11).mirror().addBox(0.0f, -1.0f, 0.0f, 1.0f, 2.0f, 8.0f),
+                CubeListBuilder.create().texOffs(40, 11).addBox(0.0f, -1.0f, 0.0f, 1.0f, 2.0f, 8.0f),
                 PartPose.offsetAndRotation(-1.0f, 22.0f, 0.0f, 0.5585054f, -0.4363323f, 0.0f));
         root.addOrReplaceChild(
                 "lleg2",
-                CubeListBuilder.create().texOffs(21, 23).mirror().addBox(-0.5f, -6.5f, 4.5f, 1.0f, 1.0f, 8.0f),
+                CubeListBuilder.create().texOffs(21, 23).addBox(-0.5f, -6.5f, 4.5f, 1.0f, 1.0f, 8.0f),
                 PartPose.offsetAndRotation(2.0f, 22.0f, 0.0f, -0.3665191f, 0.3490659f, 0.0f));
         root.addOrReplaceChild(
                 "rleg2",
-                CubeListBuilder.create().texOffs(21, 34).mirror().addBox(-0.5f, -6.5f, 4.0f, 1.0f, 1.0f, 8.0f),
+                CubeListBuilder.create().texOffs(21, 34).addBox(-0.5f, -6.5f, 4.0f, 1.0f, 1.0f, 8.0f),
                 PartPose.offsetAndRotation(-1.0f, 22.0f, 0.0f, -0.3665191f, -0.3490659f, 0.0f));
         return mesh;
     }

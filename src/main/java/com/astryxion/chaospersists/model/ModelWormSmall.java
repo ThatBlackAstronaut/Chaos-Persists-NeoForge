@@ -30,9 +30,9 @@ public class ModelWormSmall extends EntityModel<WormSmall> {
     private static MeshDefinition createMesh() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
-        root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-0.5f, -5.0f, -0.5f, 1, 5, 1), PartPose.offset(0.0f, 14.0f, 0.0f));
-        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(6, 0).mirror().addBox(-0.5f, -5.0f, -0.5f, 1, 5, 1), PartPose.offset(0.0f, 19.0f, 0.0f));
-        root.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(12, 0).mirror().addBox(-0.5f, -5.0f, -0.5f, 1, 5, 1), PartPose.offset(0.0f, 24.0f, 0.0f));
+        root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0).addBox(-0.5f, -5.0f, -0.5f, 1, 5, 1), PartPose.offset(0.0f, 14.0f, 0.0f));
+        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(6, 0).addBox(-0.5f, -5.0f, -0.5f, 1, 5, 1), PartPose.offset(0.0f, 19.0f, 0.0f));
+        root.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(12, 0).addBox(-0.5f, -5.0f, -0.5f, 1, 5, 1), PartPose.offset(0.0f, 24.0f, 0.0f));
         return mesh;
     }
 

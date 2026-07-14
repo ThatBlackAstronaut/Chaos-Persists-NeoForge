@@ -2,7 +2,6 @@ package com.astryxion.chaospersists.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
@@ -15,8 +14,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * 3D orespawn weapons in hand: Bertha / Slice / Royal use sword-tuned first- and third-person transforms;
- * other styles reuse {@link ChainsawItemStackRenderer} hand poses (hammy, axes, zooka).
+ * 3D orespawn weapons in hand; flat JSON model everywhere else (GUI, ground, frame).
  */
 public class StaticBigWeaponItemStackRenderer extends BlockEntityWithoutLevelRenderer {
 
@@ -74,14 +72,10 @@ public class StaticBigWeaponItemStackRenderer extends BlockEntityWithoutLevelRen
             MultiBufferSource buffer,
             int packedLight,
             int packedOverlay) {
-        if (ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND) {
-            renderHand(true, ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND, poseStack, buffer, packedLight, packedOverlay);
-        } else if (ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND || ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-            renderHand(false, ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND, poseStack, buffer, packedLight, packedOverlay);
+        if (isHandContext(ctx)) {
+            renderHand(isFirstPerson(ctx), isLeftHand(ctx), poseStack, buffer, packedLight, packedOverlay);
         } else {
-            Minecraft.getInstance()
-                    .getItemRenderer()
-                    .render(stack, ctx, false, poseStack, buffer, packedLight, packedOverlay, this.flatModel);
+            FlatItemModelRenderer.render(flatModel, stack, poseStack, buffer, packedLight, packedOverlay);
         }
     }
 
@@ -93,54 +87,27 @@ public class StaticBigWeaponItemStackRenderer extends BlockEntityWithoutLevelRen
             int packedLight,
             int packedOverlay) {
         poseStack.pushPose();
-        if (leftHand) {
-            poseStack.scale(-1.0f, 1.0f, 1.0f);
-        }
-        if (firstPerson) {
-            if (style == Style.BERTHA) {
-                applyBerthaSwordFirstPersonTransformsTuned(poseStack);
-            } else if (style == Style.SLICE || style == Style.ROYAL) {
-                applySliceRoyalFirstPersonTransformsTuned(poseStack);
-            } else if (style == Style.HAMMY) {
-                ChainsawItemStackRenderer.applyHammyFirstPersonTransforms(poseStack);
-            } else {
-                ChainsawItemStackRenderer.applyHandFirstPersonTransforms(poseStack);
-            }
-        } else {
-            if (style == Style.BERTHA || style == Style.SLICE || style == Style.ROYAL) {
-                applySwordThirdPersonTransformsTuned(poseStack);
-            } else {
-                ChainsawItemStackRenderer.applyHandThirdPersonTransforms(poseStack);
-            }
-        }
+        BigWeaponHandTransforms.apply(
+                poseStack, BigWeaponHandTransforms.fromStaticStyle(this.style), firstPerson, leftHand);
         VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(texture));
         this.renderModel.render(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
     }
 
-    private static void applyBerthaSwordFirstPersonTransformsTuned(PoseStack poseStack) {
-        poseStack.translate(0.72f, -0.12f, 0.16f);
-        poseStack.scale(0.19f, 0.19f, 0.19f);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-20.0f));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(58.0f));
-        poseStack.mulPose(Axis.XP.rotationDegrees(58.0f));
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
+    private static boolean isHandContext(ItemDisplayContext ctx) {
+        return ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
+                || ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+                || ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND
+                || ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
     }
 
-    private static void applySliceRoyalFirstPersonTransformsTuned(PoseStack poseStack) {
-        poseStack.translate(0.74f, -0.12f, 0.16f);
-        poseStack.scale(0.19f, 0.19f, 0.19f);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-24.0f));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(56.0f));
-        poseStack.mulPose(Axis.XP.rotationDegrees(60.0f));
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
+    private static boolean isFirstPerson(ItemDisplayContext ctx) {
+        return ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
+                || ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND;
     }
 
-    private static void applySwordThirdPersonTransformsTuned(PoseStack poseStack) {
-        poseStack.translate(0.85f, -0.06f, -0.14f);
-        poseStack.scale(0.24f, 0.24f, 0.24f);
-        poseStack.mulPose(Axis.XP.rotationDegrees(-46.0f));
-        poseStack.mulPose(Axis.YP.rotationDegrees(-68.0f));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
+    private static boolean isLeftHand(ItemDisplayContext ctx) {
+        return ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
+                || ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
     }
 }

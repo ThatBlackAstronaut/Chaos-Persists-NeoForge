@@ -706,7 +706,7 @@ public class AntRobot extends Mob {
             return false;
         }
         Entity e = par1DamageSource.getEntity();
-        if (e instanceof LivingEntity living) {
+        if (e instanceof LivingEntity living && MyUtils.isValidAggroTarget(living)) {
             this.setTarget(living);
             this.getLookControl().setLookAt(e, 20.0f, 20.0f);
         }

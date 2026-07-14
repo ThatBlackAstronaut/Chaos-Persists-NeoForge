@@ -39,7 +39,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.npc.Villager;
@@ -77,7 +77,7 @@ public class Crab extends Monster {
         this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 10.0f));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, LivingEntity.class, 8.0f));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -282,11 +282,13 @@ public class Crab extends Monster {
         }
         Entity e = source.getEntity();
         boolean ret = false;
-        if (this.hurt_timer <= 0) {
+        if (this.hurt_timer <= 0 && !this.isInvulnerableTo(source)) {
             ret = super.hurt(source, amount);
-            this.hurt_timer = 8;
+            if (ret) {
+                this.hurt_timer = 8;
+            }
         }
-        if (e instanceof LivingEntity living) {
+        if (e instanceof LivingEntity living && MyUtils.isValidAggroTarget(living)) {
             if (e instanceof Crab) {
                 return false;
             }

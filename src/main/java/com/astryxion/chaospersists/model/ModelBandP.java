@@ -44,32 +44,32 @@ public class ModelBandP extends EntityModel<BandP> {
                 "belly",
                 CubeListBuilder.create()
                         .texOffs(0, 61)
-                        .mirror()
+                        
                         .addBox(-8.0f, -5.0f, -7.0f, 16, 10, 16),
                 PartPose.offsetAndRotation(0.0f, 12.0f, 0.0f, 0.0698132f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "chest",
-                CubeListBuilder.create().texOffs(0, 42).mirror().addBox(-5.0f, -3.0f, -5.0f, 10, 6, 10),
+                CubeListBuilder.create().texOffs(0, 42).addBox(-5.0f, -3.0f, -5.0f, 10, 6, 10),
                 PartPose.offset(0.0f, 5.0f, 2.0f));
         root.addOrReplaceChild(
                 "head",
-                CubeListBuilder.create().texOffs(0, 11).mirror().addBox(-3.0f, -5.0f, -3.0f, 6, 6, 6),
+                CubeListBuilder.create().texOffs(0, 11).addBox(-3.0f, -5.0f, -3.0f, 6, 6, 6),
                 PartPose.offset(0.0f, 1.0f, 3.0f));
         root.addOrReplaceChild(
                 "lleg",
-                CubeListBuilder.create().texOffs(25, 90).mirror().addBox(-2.0f, 0.0f, -3.0f, 6, 8, 6),
+                CubeListBuilder.create().texOffs(25, 90).addBox(-2.0f, 0.0f, -3.0f, 6, 8, 6),
                 PartPose.offset(2.0f, 16.0f, 2.0f));
         root.addOrReplaceChild(
                 "rleg",
-                CubeListBuilder.create().texOffs(0, 90).mirror().addBox(-4.0f, 0.0f, -3.0f, 6, 8, 6),
+                CubeListBuilder.create().texOffs(0, 90).addBox(-4.0f, 0.0f, -3.0f, 6, 8, 6),
                 PartPose.offset(-2.0f, 16.0f, 2.0f));
         root.addOrReplaceChild(
                 "larm",
-                CubeListBuilder.create().texOffs(0, 25).mirror().addBox(-1.0f, -1.0f, -2.0f, 4, 10, 4),
+                CubeListBuilder.create().texOffs(0, 25).addBox(-1.0f, -1.0f, -2.0f, 4, 10, 4),
                 PartPose.offsetAndRotation(6.0f, 4.0f, 3.0f, 0.0f, 0.0f, -0.4886922f));
         root.addOrReplaceChild(
                 "rarm",
-                CubeListBuilder.create().texOffs(18, 25).mirror().addBox(-3.0f, -1.0f, -2.0f, 4, 10, 4),
+                CubeListBuilder.create().texOffs(18, 25).addBox(-3.0f, -1.0f, -2.0f, 4, 10, 4),
                 PartPose.offsetAndRotation(-6.0f, 4.0f, 3.0f, 0.0f, 0.0f, 0.4886922f));
         return meshdefinition;
     }

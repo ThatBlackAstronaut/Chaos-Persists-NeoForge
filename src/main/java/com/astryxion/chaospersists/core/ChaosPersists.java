@@ -13,7 +13,10 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.GregorianCalendar;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +24,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -44,6 +49,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -51,6 +57,11 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.server.TickTask;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ThreadedLevelLightEngine;
 import com.astryxion.chaospersists.compat.minecraft.init.Biomes;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
@@ -73,6 +84,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundLightUpdatePacket;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -91,7 +103,6 @@ import com.astryxion.chaospersists.compat.forge.fml.common.event.FMLPostInitiali
 import com.astryxion.chaospersists.compat.forge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import com.astryxion.chaospersists.compat.minecraft.block.BlockDispenser;
-import com.astryxion.chaospersists.compat.minecraft.world.item.ItemMonsterPlacer;
 import com.astryxion.chaospersists.compat.minecraft.world.storage.loot.LootTableList;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.ArmorMaterial;
@@ -102,6 +113,7 @@ import com.astryxion.chaospersists.container.ContainerCrystalWorkbench;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.renderer.entity.ArrowRenderer;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.common.MinecraftForge;
 import com.astryxion.chaospersists.compat.forge.common.config.Configuration;
@@ -119,6 +131,7 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import com.astryxion.chaospersists.compat.forge.fml.common.registry.EntityRegistry;
 import com.astryxion.chaospersists.compat.forge.fml.common.registry.GameRegistry;
@@ -687,6 +700,7 @@ public class ChaosPersists
                   .build(null));
 
   static {
+    raiseVanillaMaxHealthCap();
     IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
     BLOCKS.register(modBus);
     ITEMS.register(modBus);
@@ -725,7 +739,7 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<BerthaHit>> ENTITY_TYPE_BERTHA_HIT = ENTITY_TYPES.register("bertha_hit",
       () -> EntityType.Builder.<BerthaHit>of(BerthaHit::new, MobCategory.MISC).sized(0.33f, 0.33f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("bertha_hit"));
   public static final RegistryObject<EntityType<PurplePower>> ENTITY_TYPE_PURPLE_POWER = ENTITY_TYPES.register("purple_power",
-      () -> EntityType.Builder.<PurplePower>of(PurplePower::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("purple_power"));
+      () -> EntityType.Builder.<PurplePower>of(PurplePower::new, MobCategory.MISC).sized(0.75f, 0.75f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("purple_power"));
   public static final RegistryObject<EntityType<EntityThrownRock>> ENTITY_TYPE_THROWN_ROCK = ENTITY_TYPES.register("thrown_rock",
       () -> EntityType.Builder.<EntityThrownRock>of(EntityThrownRock::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("thrown_rock"));
   public static final RegistryObject<EntityType<ThunderBolt>> ENTITY_TYPE_THUNDER_BOLT = ENTITY_TYPES.register("thunder_bolt",
@@ -869,7 +883,7 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<LeafMonster>> ENTITY_TYPE_LEAF_MONSTER = ENTITY_TYPES.register("leaf_monster",
       () -> EntityType.Builder.<LeafMonster>of(LeafMonster::new, MobCategory.MONSTER).sized(1.0f, 2.5f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("leaf_monster"));
   public static final RegistryObject<EntityType<GodzillaHead>> ENTITY_TYPE_MOBZILLA_HEAD = ENTITY_TYPES.register("mobzilla_head",
-      () -> EntityType.Builder.<GodzillaHead>of(GodzillaHead::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(10).setShouldReceiveVelocityUpdates(true).build("mobzilla_head"));
+      () -> EntityType.Builder.<GodzillaHead>of(GodzillaHead::new, MobCategory.MISC).sized(9.9f, 10.0f).clientTrackingRange(128).updateInterval(10).setShouldReceiveVelocityUpdates(false).build("mobzilla_head"));
   public static final RegistryObject<EntityType<EnderKnight>> ENTITY_TYPE_ENDER_KNIGHT = ENTITY_TYPES.register("ender_knight",
       () -> EntityType.Builder.<EnderKnight>of(EnderKnight::new, MobCategory.MONSTER).sized(0.6f, 2.9f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("ender_knight"));
   public static final RegistryObject<EntityType<EnderReaper>> ENTITY_TYPE_ENDER_REAPER = ENTITY_TYPES.register("ender_reaper",
@@ -915,11 +929,11 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<TheKing>> ENTITY_TYPE_THE_KING = ENTITY_TYPES.register("the_king",
       () -> EntityType.Builder.<TheKing>of(TheKing::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_king"));
   public static final RegistryObject<EntityType<KingHead>> ENTITY_TYPE_KING_HEAD = ENTITY_TYPES.register("king_head",
-      () -> EntityType.Builder.<KingHead>of(KingHead::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(10).setShouldReceiveVelocityUpdates(true).build("king_head"));
+      () -> EntityType.Builder.<KingHead>of(KingHead::new, MobCategory.MISC).sized(19.9f, 10.0f).clientTrackingRange(128).updateInterval(10).setShouldReceiveVelocityUpdates(false).build("king_head"));
   public static final RegistryObject<EntityType<TheQueen>> ENTITY_TYPE_THE_QUEEN = ENTITY_TYPES.register("the_queen",
       () -> EntityType.Builder.<TheQueen>of(TheQueen::new, MobCategory.MONSTER).sized(2f, 2f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_queen"));
   public static final RegistryObject<EntityType<QueenHead>> ENTITY_TYPE_QUEEN_HEAD = ENTITY_TYPES.register("queen_head",
-      () -> EntityType.Builder.<QueenHead>of(QueenHead::new, MobCategory.MISC).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(10).setShouldReceiveVelocityUpdates(true).build("queen_head"));
+      () -> EntityType.Builder.<QueenHead>of(QueenHead::new, MobCategory.MISC).sized(19.9f, 10.0f).clientTrackingRange(128).updateInterval(10).setShouldReceiveVelocityUpdates(false).build("queen_head"));
   public static final RegistryObject<EntityType<Boyfriend>> ENTITY_TYPE_BOYFRIEND = ENTITY_TYPES.register("boyfriend",
       () -> EntityType.Builder.<Boyfriend>of(Boyfriend::new, MobCategory.CREATURE).sized(0.5f, 1.6f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("boyfriend"));
   public static final RegistryObject<EntityType<ThePrince>> ENTITY_TYPE_THE_PRINCE = ENTITY_TYPES.register("the_prince",
@@ -937,7 +951,7 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<CrystalCow>> ENTITY_TYPE_CRYSTAL_COW = ENTITY_TYPES.register("crystal_apple_cow",
       () -> EntityType.Builder.<CrystalCow>of(CrystalCow::new, MobCategory.CREATURE).sized(0.6f, 1.4f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("crystal_apple_cow"));
   public static final RegistryObject<EntityType<Leon>> ENTITY_TYPE_LEONOPTERYX = ENTITY_TYPES.register("leonopteryx",
-      () -> EntityType.Builder.<Leon>of(Leon::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("leonopteryx"));
+      () -> EntityType.Builder.<Leon>of(Leon::new, MobCategory.MONSTER).sized(3.5f, 8.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("leonopteryx"));
   public static final RegistryObject<EntityType<Hammerhead>> ENTITY_TYPE_HAMMERHEAD = ENTITY_TYPES.register("hammerhead",
       () -> EntityType.Builder.<Hammerhead>of(Hammerhead::new, MobCategory.MONSTER).sized(3.0f, 5.0f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("hammerhead"));
   public static final RegistryObject<EntityType<RubberDucky>> ENTITY_TYPE_RUBBER_DUCKY = ENTITY_TYPES.register("rubber_ducky",
@@ -963,7 +977,7 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<ThePrinceAdult>> ENTITY_TYPE_THE_YOUNG_ADULT_PRINCE = ENTITY_TYPES.register("the_young_adult_prince",
       () -> EntityType.Builder.<ThePrinceAdult>of(ThePrinceAdult::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_young_adult_prince"));
   public static final RegistryObject<EntityType<SpiderRobot>> ENTITY_TYPE_SPIDER_ROBOT = ENTITY_TYPES.register("robot_spider",
-      () -> EntityType.Builder.<SpiderRobot>of(SpiderRobot::new, MobCategory.MONSTER).sized(3.25f, 2.25f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("robot_spider"));
+      () -> EntityType.Builder.<SpiderRobot>of(SpiderRobot::new, MobCategory.MONSTER).sized(3.25f, 2.25f).clientTrackingRange(128).updateInterval(3).setShouldReceiveVelocityUpdates(true).build("robot_spider"));
   public static final RegistryObject<EntityType<SpiderDriver>> ENTITY_TYPE_SPIDER_DRIVER = ENTITY_TYPES.register("spider_driver",
       () -> EntityType.Builder.<SpiderDriver>of(SpiderDriver::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("spider_driver"));
   public static final RegistryObject<EntityType<GiantRobot>> ENTITY_TYPE_GIANT_ROBOT = ENTITY_TYPES.register("jeffery",
@@ -1645,26 +1659,26 @@ private static void registerAllCritterCages() {
     ITEMS.register("amethystshovel", () -> new AmethystShovel(toolAMETHYST));
     ITEMS.register("amethysthoe", () -> new AmethystHoe(toolAMETHYST));
     ITEMS.register("amethystaxe", () -> new AmethystAxe(toolAMETHYST));
-    ITEMS.register("crystalwoodsword", () -> new CrystalSword(toolCRYSTALWOOD));
-    ITEMS.register("crystalwoodpickaxe", () -> new CrystalPickaxe(toolCRYSTALWOOD));
-    ITEMS.register("crystalwoodshovel", () -> new CrystalShovel(toolCRYSTALWOOD));
-    ITEMS.register("crystalwoodhoe", () -> new CrystalHoe(toolCRYSTALWOOD));
-    ITEMS.register("crystalwoodaxe", () -> new CrystalAxe(toolCRYSTALWOOD));
-    ITEMS.register("crystalpinksword", () -> new CrystalSword(toolCRYSTALPINK));
-    ITEMS.register("crystalpinkpickaxe", () -> new CrystalPickaxe(toolCRYSTALPINK));
-    ITEMS.register("crystalpinkshovel", () -> new CrystalShovel(toolCRYSTALPINK));
-    ITEMS.register("crystalpinkhoe", () -> new CrystalHoe(toolCRYSTALPINK));
-    ITEMS.register("crystalpinkaxe", () -> new CrystalAxe(toolCRYSTALPINK));
-    ITEMS.register("crystalstonesword", () -> new CrystalSword(toolCRYSTALSTONE));
-    ITEMS.register("crystalstonepickaxe", () -> new CrystalPickaxe(toolCRYSTALSTONE));
-    ITEMS.register("crystalstoneshovel", () -> new CrystalShovel(toolCRYSTALSTONE));
-    ITEMS.register("crystalstonehoe", () -> new CrystalHoe(toolCRYSTALSTONE));
-    ITEMS.register("crystalstoneaxe", () -> new CrystalAxe(toolCRYSTALSTONE));
-    ITEMS.register("tigerseye_sword", () -> new CrystalSword(toolTIGERSEYE));
-    ITEMS.register("tigerseye_pickaxe", () -> new CrystalPickaxe(toolTIGERSEYE));
-    ITEMS.register("tigerseye_shovel", () -> new CrystalShovel(toolTIGERSEYE));
-    ITEMS.register("tigerseye_hoe", () -> new CrystalHoe(toolTIGERSEYE));
-    ITEMS.register("tigerseye_axe", () -> new CrystalAxe(toolTIGERSEYE));
+    ITEMS.register("crystalwoodsword", () -> new CrystalSword(toolCRYSTALWOOD, 6));
+    ITEMS.register("crystalwoodpickaxe", () -> new CrystalPickaxe(toolCRYSTALWOOD, 4));
+    ITEMS.register("crystalwoodshovel", () -> new CrystalShovel(toolCRYSTALWOOD, 3));
+    ITEMS.register("crystalwoodhoe", () -> new CrystalHoe(toolCRYSTALWOOD, 1));
+    ITEMS.register("crystalwoodaxe", () -> new CrystalAxe(toolCRYSTALWOOD, 5));
+    ITEMS.register("crystalpinksword", () -> new CrystalSword(toolCRYSTALPINK, 11));
+    ITEMS.register("crystalpinkpickaxe", () -> new CrystalPickaxe(toolCRYSTALPINK, 9));
+    ITEMS.register("crystalpinkshovel", () -> new CrystalShovel(toolCRYSTALPINK, 8));
+    ITEMS.register("crystalpinkhoe", () -> new CrystalHoe(toolCRYSTALPINK, 1));
+    ITEMS.register("crystalpinkaxe", () -> new CrystalAxe(toolCRYSTALPINK, 10));
+    ITEMS.register("crystalstonesword", () -> new CrystalSword(toolCRYSTALSTONE, 9));
+    ITEMS.register("crystalstonepickaxe", () -> new CrystalPickaxe(toolCRYSTALSTONE, 7));
+    ITEMS.register("crystalstoneshovel", () -> new CrystalShovel(toolCRYSTALSTONE, 6));
+    ITEMS.register("crystalstonehoe", () -> new CrystalHoe(toolCRYSTALSTONE, 1));
+    ITEMS.register("crystalstoneaxe", () -> new CrystalAxe(toolCRYSTALSTONE, 8));
+    ITEMS.register("tigerseye_sword", () -> new CrystalSword(toolTIGERSEYE, 12));
+    ITEMS.register("tigerseye_pickaxe", () -> new CrystalPickaxe(toolTIGERSEYE, 10));
+    ITEMS.register("tigerseye_shovel", () -> new CrystalShovel(toolTIGERSEYE, 9));
+    ITEMS.register("tigerseye_hoe", () -> new CrystalHoe(toolTIGERSEYE, 1));
+    ITEMS.register("tigerseye_axe", () -> new CrystalAxe(toolTIGERSEYE, 11));
     ITEMS.register("rosesword", () -> new EmeraldSword(toolEMERALD));
     ITEMS.register("redheels", () -> new ItemShoes(2));
     ITEMS.register("blackheels", () -> new ItemShoes(3));
@@ -1805,6 +1819,7 @@ private static void registerAllCritterCages() {
     modBus.addListener(this::registerEntityRenderers);
     modBus.addListener(this::buildCreativeModeTabContents);
     modBus.addListener(this::clientInit);
+    modBus.addListener(com.astryxion.chaospersists.client.BigWeaponModelHandler::onModifyBakingResult);
     MinecraftForge.EVENT_BUS.register(this);
     ensureEarlyConfigLoaded();
   }
@@ -1839,8 +1854,9 @@ private static void registerAllCritterCages() {
                 .resolve("chaospersists.cfg")
                 .toFile());
     config.load();
+    migrateLegacyAmethystArmorConfig(config);
     String weapons = "chaospersistsWEAPONS";
-    Amethyst_armorstats = get_armorstats(config, "Amethyst", 100, 3, 6, 8, 3, 10, 0, 0, 0, 0, 0, 0, 0, 0);
+    Amethyst_armorstats = get_armorstats(config, "Amethyst", 100, 4, 8, 7, 3, 40, 0, 0, 0, 0, 0, 0, 0, 0);
     Emerald_armorstats = get_armorstats(config, "Emerald", 60, 3, 8, 6, 3, 40, 0, 0, 0, 0, 0, 0, 0, 0);
     Experience_armorstats = get_armorstats(config, "Experience", 70, 5, 9, 7, 4, 50, 0, 0, 2, 0, 1, 0, 0, 1);
     MothScale_armorstats = get_armorstats(config, "MothScale", 50, 2, 7, 5, 2, 50, 0, 0, 3, 3, 3, 0, 0, 5);
@@ -1870,6 +1886,27 @@ private static void registerAllCritterCages() {
     chainsaw_stats = get_weaponstats(config, weapons, "Chainsaw", 3, 1500, 10, 56, 75);
     queenbattleaxe_stats = get_weaponstats(config, weapons, "QueenBattleAxe", 3, 2200, 15, 662, 100);
     config.save();
+  }
+
+  /** 1.20.1 armor toughness scaled by set tier (vanilla netherite = 3.0). */
+  private static float armorToughnessFor(String set) {
+    return switch (set) {
+      case "PEACOCK" -> 0.5f;
+      case "LAPIS" -> 0.5f;
+      case "MOTHSCALE" -> 0.5f;
+      case "LAVAEEL" -> 1.0f;
+      case "PINK" -> 1.0f;
+      case "EMERALD" -> 1.5f;
+      case "EXPERIENCE" -> 2.0f;
+      case "AMETHYST" -> 2.0f;
+      case "TIGERSEYE" -> 2.0f;
+      case "RUBY" -> 2.5f;
+      case "ULTIMATE" -> 3.5f;
+      case "MOBZILLA" -> 4.0f;
+      case "ROYAL" -> 5.0f;
+      case "QUEEN" -> 6.0f;
+      default -> 0.0f;
+    };
   }
 
   @SuppressWarnings("unchecked")
@@ -2042,7 +2079,7 @@ private static void registerAllCritterCages() {
                     },
                     Ultimate_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("ULTIMATE"));
     armorMOBZILLA =
         (ArmorMaterial)
             (Object)
@@ -2058,7 +2095,7 @@ private static void registerAllCritterCages() {
                     },
                     Mobzilla_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("MOBZILLA"));
     armorLAVAEEL =
         (ArmorMaterial)
             (Object)
@@ -2074,7 +2111,7 @@ private static void registerAllCritterCages() {
                     },
                     LavaEel_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("LAVAEEL"));
     armorMOTHSCALE =
         (ArmorMaterial)
             (Object)
@@ -2090,7 +2127,7 @@ private static void registerAllCritterCages() {
                     },
                     MothScale_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("MOTHSCALE"));
     armorEMERALD =
         (ArmorMaterial)
             (Object)
@@ -2106,7 +2143,7 @@ private static void registerAllCritterCages() {
                     },
                     Emerald_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("EMERALD"));
     armorEXPERIENCE =
         (ArmorMaterial)
             (Object)
@@ -2122,7 +2159,7 @@ private static void registerAllCritterCages() {
                     },
                     Experience_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("EXPERIENCE"));
     armorRUBY =
         (ArmorMaterial)
             (Object)
@@ -2138,7 +2175,7 @@ private static void registerAllCritterCages() {
                     },
                     Ruby_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("RUBY"));
     armorAMETHYST =
         (ArmorMaterial)
             (Object)
@@ -2154,7 +2191,7 @@ private static void registerAllCritterCages() {
                     },
                     Amethyst_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("AMETHYST"));
     armorPINK =
         (ArmorMaterial)
             (Object)
@@ -2170,7 +2207,7 @@ private static void registerAllCritterCages() {
                     },
                     Pink_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("PINK"));
     armorTIGERSEYE =
         (ArmorMaterial)
             (Object)
@@ -2186,7 +2223,7 @@ private static void registerAllCritterCages() {
                     },
                     TigersEye_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("TIGERSEYE"));
     armorPEACOCK =
         (ArmorMaterial)
             (Object)
@@ -2202,7 +2239,7 @@ private static void registerAllCritterCages() {
                     },
                     Peacock_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("PEACOCK"));
     armorROYAL =
         (ArmorMaterial)
             (Object)
@@ -2218,7 +2255,7 @@ private static void registerAllCritterCages() {
                     },
                     Royal_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("ROYAL"));
     armorLAPIS =
         (ArmorMaterial)
             (Object)
@@ -2234,7 +2271,7 @@ private static void registerAllCritterCages() {
                     },
                     Lapis_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("LAPIS"));
     armorQUEEN =
         (ArmorMaterial)
             (Object)
@@ -2250,7 +2287,7 @@ private static void registerAllCritterCages() {
                     },
                     Queen_armorstats.enchantability,
                     net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC,
-                    0.0f);
+                    armorToughnessFor("QUEEN"));
   }
 
   private void commonSetup(final FMLCommonSetupEvent event) {
@@ -2298,9 +2335,15 @@ private static void registerAllCritterCages() {
       }
       tabItems.add(item);
     }
-    tabItems.sort(
-        Comparator.comparing(
-            item -> BuiltInRegistries.ITEM.getKey(item).toString(), Comparator.naturalOrder()));
+    if (chaosTabKey("chaos_weapons").equals(tabKey)) {
+      tabItems.sort(chaosWeaponTabComparator());
+    } else if (chaosTabKey("chaos_armor").equals(tabKey)) {
+      tabItems.sort(chaosArmorTabComparator());
+    } else {
+      tabItems.sort(
+          Comparator.comparing(
+              item -> BuiltInRegistries.ITEM.getKey(item).toString(), Comparator.naturalOrder()));
+    }
     for (Item item : tabItems) {
       event.accept(new ItemStack(item, 1));
     }
@@ -2562,12 +2605,10 @@ private static void registerAllCritterCages() {
     final ResourceLocation texIceBall = ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/iceball.png");
     final ResourceLocation texAcid = ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/acid.png");
     final ResourceLocation texDeadIruk = ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/deadirukandji.png");
-    final ResourceLocation texFireball =
-            ResourceLocation.withDefaultNamespace("textures/entity/ghast/ghast_fireball.png");
     final ResourceLocation texArrow =
             ResourceLocation.withDefaultNamespace("textures/entity/projectiles/arrow.png");
     event.registerEntityRenderer(ENTITY_TYPE_ACID.get(), ctx -> new RenderThrowableBillboard(ctx, texAcid));
-    event.registerEntityRenderer(ENTITY_TYPE_BETTER_FIREBALL.get(), ctx -> new RenderThrowableBillboard(ctx, texFireball));
+    event.registerEntityRenderer(ENTITY_TYPE_BETTER_FIREBALL.get(), ctx -> new ThrownItemRenderer<>(ctx, 3.0F, true));
     event.registerEntityRenderer(ENTITY_TYPE_ALIEN.get(), ctx -> new RenderAlien(ctx, new ModelAlien(0.22f), 0.35f, 1.1f));
     event.registerEntityRenderer(ENTITY_TYPE_ALOSAURUS.get(), ctx -> new RenderAlosaurus(ctx, new ModelAlosaurus(0.22f), 1.0f, 1.0f));
     event.registerEntityRenderer(ENTITY_TYPE_ANT.get(), ctx -> new RenderAnt(ctx, new ModelAnt(), 0.1f, 0.25f));
@@ -3818,7 +3859,7 @@ private static void registerAllCritterCages() {
   public static OreStats Gold_stats = null;
   public static OreStats BlkGold_stats = null;
 
-  /** Raises vanilla {@code generic.maxHealth} cap (1024 in 1.12.2) so 1.7.10-scale boss HP applies. */
+  /** Raises vanilla {@code generic.maxHealth} cap (1024 in 1.20.1) so 1.7.10-scale boss HP applies. */
   private static void raiseVanillaMaxHealthCap()
   {
     try
@@ -3829,17 +3870,83 @@ private static void registerAllCritterCages() {
         return;
       }
       RangedAttribute ranged = (RangedAttribute)attr;
-      if (Math.abs(ranged.getMaxValue() - 1024.0D) >= 1.0E-6D)
+      if (ranged.getMaxValue() >= 1.0E8D)
       {
         return;
       }
-      MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(RangedAttribute.class, MethodHandles.lookup());
-      VarHandle maxHealthCap = lookup.findVarHandle(RangedAttribute.class, "maxValue", double.class);
-      maxHealthCap.set(ranged, 1.0E9D);
+      if (!setRangedAttributeMaxValue(ranged, 1.0E9D))
+      {
+        LOGGER.error("ChaosPersists: failed to raise generic.maxHealth cap; boss HP may stay capped at 1024");
+        return;
+      }
+      LOGGER.info("ChaosPersists: raised generic.maxHealth cap to {}", ranged.getMaxValue());
     }
     catch (Throwable t)
     {
       LOGGER.error("ChaosPersists: failed to raise generic.maxHealth cap; boss HP may stay capped at 1024", t);
+    }
+  }
+
+  private static boolean setRangedAttributeMaxValue(RangedAttribute ranged, double newMax)
+  {
+    try
+    {
+      Field unsafeField = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+      unsafeField.setAccessible(true);
+      sun.misc.Unsafe unsafe = (sun.misc.Unsafe)unsafeField.get(null);
+      Field maxValueField = RangedAttribute.class.getDeclaredField("maxValue");
+      unsafe.putDouble(ranged, unsafe.objectFieldOffset(maxValueField), newMax);
+      return Math.abs(ranged.getMaxValue() - newMax) < 1.0E-3D;
+    }
+    catch (Throwable ignored)
+    {
+    }
+    try
+    {
+      MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(RangedAttribute.class, MethodHandles.lookup());
+      VarHandle maxHealthCap = lookup.findVarHandle(RangedAttribute.class, "maxValue", double.class);
+      maxHealthCap.set(ranged, newMax);
+      return Math.abs(ranged.getMaxValue() - newMax) < 1.0E-3D;
+    }
+    catch (Throwable ignored)
+    {
+    }
+    try
+    {
+      Field target = null;
+      for (Field f : RangedAttribute.class.getDeclaredFields())
+      {
+        if (f.getType() != double.class || !Modifier.isFinal(f.getModifiers()))
+        {
+          continue;
+        }
+        f.setAccessible(true);
+        double v = f.getDouble(ranged);
+        if (Math.abs(v - 1024.0D) < 1.0E-6D || Math.abs(v - ranged.getMaxValue()) < 1.0E-6D)
+        {
+          target = f;
+          break;
+        }
+      }
+      if (target == null)
+      {
+        return false;
+      }
+      try
+      {
+        Field modifiers = Field.class.getDeclaredField("modifiers");
+        modifiers.setAccessible(true);
+        modifiers.setInt(target, target.getModifiers() & ~Modifier.FINAL);
+      }
+      catch (Throwable ignored)
+      {
+      }
+      target.setDouble(ranged, newMax);
+      return Math.abs(ranged.getMaxValue() - newMax) < 1.0E-3D;
+    }
+    catch (Throwable ignored)
+    {
+      return false;
     }
   }
 
@@ -3854,6 +3961,8 @@ private static void registerAllCritterCages() {
     String ores = "chaospersistsORES";
 
     config.load();
+
+    migrateLegacyAmethystArmorConfig(config);
 
     config.setCategoryComment(ids,
         "Block / item / biome / dimension numeric IDs. Dimension conflicts: each mod needs a unique world ID. Vanilla uses Overworld 0, Nether -1, End 1. "
@@ -3890,8 +3999,8 @@ private static void registerAllCritterCages() {
     DisableOverworldDungeons = config.get(tweaks, "DisableOverworldDungeons", 0).getInt();
     FullPowerKingEnable = config.get(tweaks, "FullPowerKingEnable", 0).getInt();
 
-    // 1.12.2 diamond armor is 3/6/8/3 with toughness 2; keep OreSpawn durability 100, match diamond protection + enchant tier.
-    Amethyst_armorstats = get_armorstats(config, "Amethyst", 100, 3, 6, 8, 3, 10, 0, 0, 0, 0, 0, 0, 0, 0);
+    // OreSpawn wiki / 1.7.10 Amethyst defaults: 4/8/7/3 defense, durability 100, enchantability 40.
+    Amethyst_armorstats = get_armorstats(config, "Amethyst", 100, 4, 8, 7, 3, 40, 0, 0, 0, 0, 0, 0, 0, 0);
     Emerald_armorstats = get_armorstats(config, "Emerald", 60, 3, 8, 6, 3, 40, 0, 0, 0, 0, 0, 0, 0, 0);
     Experience_armorstats = get_armorstats(config, "Experience", 70, 5, 9, 7, 4, 50, 0, 0, 2, 0, 1, 0, 0, 1);
     MothScale_armorstats = get_armorstats(config, "MothScale", 50, 2, 7, 5, 2, 50, 0, 0, 3, 3, 3, 0, 0, 5);
@@ -4164,33 +4273,33 @@ private static void registerAllCritterCages() {
     SeaViperTongue = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "seavipertongue"));
     VortexEye = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "vortexeye"));
 
-    armorULTIMATE = EnumHelper.addArmorMaterial("ULTIMATE", "chaospersists", Ultimate_armorstats.durability, new int[] { Ultimate_armorstats.head_protection, Ultimate_armorstats.chest_protection, Ultimate_armorstats.leg_protection, Ultimate_armorstats.boot_protection }, Ultimate_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
+    armorULTIMATE = EnumHelper.addArmorMaterial("ULTIMATE", "chaospersists", Ultimate_armorstats.durability, new int[] { Ultimate_armorstats.head_protection, Ultimate_armorstats.chest_protection, Ultimate_armorstats.leg_protection, Ultimate_armorstats.boot_protection }, Ultimate_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("ULTIMATE"));
 
-    armorMOBZILLA = EnumHelper.addArmorMaterial("MOBZILLA", "chaospersists", Mobzilla_armorstats.durability, new int[] { Mobzilla_armorstats.head_protection, Mobzilla_armorstats.chest_protection, Mobzilla_armorstats.leg_protection, Mobzilla_armorstats.boot_protection }, Mobzilla_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 4.0f);
+    armorMOBZILLA = EnumHelper.addArmorMaterial("MOBZILLA", "chaospersists", Mobzilla_armorstats.durability, new int[] { Mobzilla_armorstats.head_protection, Mobzilla_armorstats.chest_protection, Mobzilla_armorstats.leg_protection, Mobzilla_armorstats.boot_protection }, Mobzilla_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("MOBZILLA"));
 
-    armorLAVAEEL = EnumHelper.addArmorMaterial("LAVAEEL", "chaospersists", LavaEel_armorstats.durability, new int[] { LavaEel_armorstats.head_protection, LavaEel_armorstats.chest_protection, LavaEel_armorstats.leg_protection, LavaEel_armorstats.boot_protection }, LavaEel_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
+    armorLAVAEEL = EnumHelper.addArmorMaterial("LAVAEEL", "chaospersists", LavaEel_armorstats.durability, new int[] { LavaEel_armorstats.head_protection, LavaEel_armorstats.chest_protection, LavaEel_armorstats.leg_protection, LavaEel_armorstats.boot_protection }, LavaEel_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("LAVAEEL"));
 
-    armorMOTHSCALE = EnumHelper.addArmorMaterial("MOTHSCALE", "chaospersists", MothScale_armorstats.durability, new int[] { MothScale_armorstats.head_protection, MothScale_armorstats.chest_protection, MothScale_armorstats.leg_protection, MothScale_armorstats.boot_protection }, MothScale_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
+    armorMOTHSCALE = EnumHelper.addArmorMaterial("MOTHSCALE", "chaospersists", MothScale_armorstats.durability, new int[] { MothScale_armorstats.head_protection, MothScale_armorstats.chest_protection, MothScale_armorstats.leg_protection, MothScale_armorstats.boot_protection }, MothScale_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("MOTHSCALE"));
 
-    armorEMERALD = EnumHelper.addArmorMaterial("EMERALD", "chaospersists", Emerald_armorstats.durability, new int[] { Emerald_armorstats.head_protection, Emerald_armorstats.chest_protection, Emerald_armorstats.leg_protection, Emerald_armorstats.boot_protection }, Emerald_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
+    armorEMERALD = EnumHelper.addArmorMaterial("EMERALD", "chaospersists", Emerald_armorstats.durability, new int[] { Emerald_armorstats.head_protection, Emerald_armorstats.chest_protection, Emerald_armorstats.leg_protection, Emerald_armorstats.boot_protection }, Emerald_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("EMERALD"));
 
-    armorEXPERIENCE = EnumHelper.addArmorMaterial("EXPERIENCE", "chaospersists", Experience_armorstats.durability, new int[] { Experience_armorstats.head_protection, Experience_armorstats.chest_protection, Experience_armorstats.leg_protection, Experience_armorstats.boot_protection }, Experience_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
+    armorEXPERIENCE = EnumHelper.addArmorMaterial("EXPERIENCE", "chaospersists", Experience_armorstats.durability, new int[] { Experience_armorstats.head_protection, Experience_armorstats.chest_protection, Experience_armorstats.leg_protection, Experience_armorstats.boot_protection }, Experience_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("EXPERIENCE"));
 
-    armorRUBY = EnumHelper.addArmorMaterial("RUBY", "chaospersists", Ruby_armorstats.durability, new int[] { Ruby_armorstats.head_protection, Ruby_armorstats.chest_protection, Ruby_armorstats.leg_protection, Ruby_armorstats.boot_protection }, Ruby_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 2.5f);
+    armorRUBY = EnumHelper.addArmorMaterial("RUBY", "chaospersists", Ruby_armorstats.durability, new int[] { Ruby_armorstats.head_protection, Ruby_armorstats.chest_protection, Ruby_armorstats.leg_protection, Ruby_armorstats.boot_protection }, Ruby_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("RUBY"));
 
-    armorAMETHYST = EnumHelper.addArmorMaterial("AMETHYST", "chaospersists", Amethyst_armorstats.durability, new int[] { Amethyst_armorstats.head_protection, Amethyst_armorstats.chest_protection, Amethyst_armorstats.leg_protection, Amethyst_armorstats.boot_protection }, Amethyst_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 2.0f);
+    armorAMETHYST = EnumHelper.addArmorMaterial("AMETHYST", "chaospersists", Amethyst_armorstats.durability, new int[] { Amethyst_armorstats.head_protection, Amethyst_armorstats.chest_protection, Amethyst_armorstats.leg_protection, Amethyst_armorstats.boot_protection }, Amethyst_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("AMETHYST"));
 
-    armorPINK = EnumHelper.addArmorMaterial("PINK", "chaospersists", Pink_armorstats.durability, new int[] { Pink_armorstats.head_protection, Pink_armorstats.chest_protection, Pink_armorstats.leg_protection, Pink_armorstats.boot_protection }, Pink_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
+    armorPINK = EnumHelper.addArmorMaterial("PINK", "chaospersists", Pink_armorstats.durability, new int[] { Pink_armorstats.head_protection, Pink_armorstats.chest_protection, Pink_armorstats.leg_protection, Pink_armorstats.boot_protection }, Pink_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("PINK"));
 
-    armorTIGERSEYE = EnumHelper.addArmorMaterial("TIGERSEYE", "chaospersists", TigersEye_armorstats.durability, new int[] { TigersEye_armorstats.head_protection, TigersEye_armorstats.chest_protection, TigersEye_armorstats.leg_protection, TigersEye_armorstats.boot_protection }, TigersEye_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
+    armorTIGERSEYE = EnumHelper.addArmorMaterial("TIGERSEYE", "chaospersists", TigersEye_armorstats.durability, new int[] { TigersEye_armorstats.head_protection, TigersEye_armorstats.chest_protection, TigersEye_armorstats.leg_protection, TigersEye_armorstats.boot_protection }, TigersEye_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("TIGERSEYE"));
 
-    armorPEACOCK = EnumHelper.addArmorMaterial("PEACOCK", "chaospersists", Peacock_armorstats.durability, new int[] { Peacock_armorstats.head_protection, Peacock_armorstats.chest_protection, Peacock_armorstats.leg_protection, Peacock_armorstats.boot_protection }, Peacock_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
+    armorPEACOCK = EnumHelper.addArmorMaterial("PEACOCK", "chaospersists", Peacock_armorstats.durability, new int[] { Peacock_armorstats.head_protection, Peacock_armorstats.chest_protection, Peacock_armorstats.leg_protection, Peacock_armorstats.boot_protection }, Peacock_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("PEACOCK"));
 
-    armorROYAL = EnumHelper.addArmorMaterial("ROYAL", "chaospersists", Royal_armorstats.durability, new int[] { Royal_armorstats.head_protection, Royal_armorstats.chest_protection, Royal_armorstats.leg_protection, Royal_armorstats.boot_protection }, Royal_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 5.0f);
+    armorROYAL = EnumHelper.addArmorMaterial("ROYAL", "chaospersists", Royal_armorstats.durability, new int[] { Royal_armorstats.head_protection, Royal_armorstats.chest_protection, Royal_armorstats.leg_protection, Royal_armorstats.boot_protection }, Royal_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("ROYAL"));
 
-    armorLAPIS = EnumHelper.addArmorMaterial("LAPIS", "chaospersists", Lapis_armorstats.durability, new int[] { Lapis_armorstats.head_protection, Lapis_armorstats.chest_protection, Lapis_armorstats.leg_protection, Lapis_armorstats.boot_protection }, Lapis_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
+    armorLAPIS = EnumHelper.addArmorMaterial("LAPIS", "chaospersists", Lapis_armorstats.durability, new int[] { Lapis_armorstats.head_protection, Lapis_armorstats.chest_protection, Lapis_armorstats.leg_protection, Lapis_armorstats.boot_protection }, Lapis_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("LAPIS"));
 
-    armorQUEEN = EnumHelper.addArmorMaterial("QUEEN", "chaospersists", Queen_armorstats.durability, new int[] { Queen_armorstats.head_protection, Queen_armorstats.chest_protection, Queen_armorstats.leg_protection, Queen_armorstats.boot_protection }, Queen_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, 0.0f);
+    armorQUEEN = EnumHelper.addArmorMaterial("QUEEN", "chaospersists", Queen_armorstats.durability, new int[] { Queen_armorstats.head_protection, Queen_armorstats.chest_protection, Queen_armorstats.leg_protection, Queen_armorstats.boot_protection }, Queen_armorstats.enchantability, SoundEvents.ARMOR_EQUIP_GENERIC, armorToughnessFor("QUEEN"));
 
     UltimateHelmet = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimate_helmet"));
     UltimateBody = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ultimate_chest"));
@@ -4436,9 +4545,41 @@ private static void registerAllCritterCages() {
 
   private ItemStack createVanillaSpawnEgg(String entityId)
   {
-    ItemStack egg = new ItemStack(Items.PIG_SPAWN_EGG);
-    ItemMonsterPlacer.applyEntityIdToItemStack(egg, new ResourceLocation("minecraft", entityId));
-    return egg;
+    Item spawnEgg =
+        switch (entityId) {
+          case "spider" -> Items.SPIDER_SPAWN_EGG;
+          case "bat" -> Items.BAT_SPAWN_EGG;
+          case "cow" -> Items.COW_SPAWN_EGG;
+          case "pig" -> Items.PIG_SPAWN_EGG;
+          case "squid" -> Items.SQUID_SPAWN_EGG;
+          case "chicken" -> Items.CHICKEN_SPAWN_EGG;
+          case "creeper" -> Items.CREEPER_SPAWN_EGG;
+          case "skeleton" -> Items.SKELETON_SPAWN_EGG;
+          case "zombie" -> Items.ZOMBIE_SPAWN_EGG;
+          case "slime" -> Items.SLIME_SPAWN_EGG;
+          case "ghast" -> Items.GHAST_SPAWN_EGG;
+          case "zombie_pigman", "zombified_piglin" -> Items.ZOMBIFIED_PIGLIN_SPAWN_EGG;
+          case "enderman" -> Items.ENDERMAN_SPAWN_EGG;
+          case "cave_spider" -> Items.CAVE_SPIDER_SPAWN_EGG;
+          case "silverfish" -> Items.SILVERFISH_SPAWN_EGG;
+          case "magma_cube" -> Items.MAGMA_CUBE_SPAWN_EGG;
+          case "witch" -> Items.WITCH_SPAWN_EGG;
+          case "sheep" -> Items.SHEEP_SPAWN_EGG;
+          case "wolf" -> Items.WOLF_SPAWN_EGG;
+          case "mooshroom" -> Items.MOOSHROOM_SPAWN_EGG;
+          case "ocelot" -> Items.OCELOT_SPAWN_EGG;
+          case "blaze" -> Items.BLAZE_SPAWN_EGG;
+          case "villager" -> Items.VILLAGER_SPAWN_EGG;
+          case "horse" -> Items.HORSE_SPAWN_EGG;
+          case "iron_golem" -> Items.IRON_GOLEM_SPAWN_EGG;
+          case "snow_golem" -> Items.SNOW_GOLEM_SPAWN_EGG;
+          case "wither_skeleton" -> Items.WITHER_SKELETON_SPAWN_EGG;
+          default -> null;
+        };
+    if (spawnEgg == null) {
+      throw new IllegalArgumentException("Unknown vanilla spawn egg entity id: " + entityId);
+    }
+    return new ItemStack(spawnEgg);
   }
 
   private void make_some_more_things()
@@ -5201,11 +5342,20 @@ private static void registerAllCritterCages() {
     ItemStack OreBlazeEggStack = new ItemStack(MyBlazeSpawnBlock);
     addShapelessRecipe(cpId("egg_blaze"), cpId("eggs"), createVanillaSpawnEgg("blaze"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreBlazeEggStack));
 
+    ItemStack OreWitherSkeletonEggStack = new ItemStack(MyWitherSkeletonSpawnBlock);
+    addShapelessRecipe(cpId("egg_wither_skeleton"), cpId("eggs"), createVanillaSpawnEgg("wither_skeleton"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreWitherSkeletonEggStack));
+
+    ItemStack OreSnowGolemEggStack = new ItemStack(MySnowGolemSpawnBlock);
+    addShapelessRecipe(cpId("egg_snow_golem"), cpId("eggs"), createVanillaSpawnEgg("snow_golem"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreSnowGolemEggStack));
+
+    ItemStack OreIronGolemEggStack = new ItemStack(MyIronGolemSpawnBlock);
+    addShapelessRecipe(cpId("egg_iron_golem"), cpId("eggs"), createVanillaSpawnEgg("iron_golem"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreIronGolemEggStack));
+
     ItemStack OreEnderDragonEggStack = new ItemStack(MyEnderDragonSpawnBlock);
     addShapelessRecipe(cpId("egg_ender_dragon"), cpId("eggs"), new ItemStack(EnderDragonEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreEnderDragonEggStack));
 
     ItemStack OreWitherBossEggStack = new ItemStack(MyWitherBossSpawnBlock);
-    addShapelessRecipe(cpId("egg_wither_boss"), cpId("eggs"), new ItemStack(WitherBossEgg, 64), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreWitherBossEggStack));
+    addShapelessRecipe(cpId("egg_wither_boss"), cpId("eggs"), new ItemStack(WitherBossEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreWitherBossEggStack));
 
     ItemStack OreGirlfriendEggStack = new ItemStack(MyGirlfriendSpawnBlock);
     addShapelessRecipe(cpId("egg_girlfriend"), cpId("eggs"), new ItemStack(GirlfriendEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreGirlfriendEggStack));
@@ -5301,7 +5451,7 @@ private static void registerAllCritterCages() {
     addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(BeeEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreBeeEggStack));
 
     ItemStack OreHorseEggStack = new ItemStack(MyHorseSpawnBlock);
-    addShapelessRecipe(cpId("egg_horse"), cpId("eggs"), new ItemStack(Items.PIG_SPAWN_EGG, 100), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreHorseEggStack));
+    addShapelessRecipe(cpId("egg_horse"), cpId("eggs"), createVanillaSpawnEgg("horse"), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreHorseEggStack));
 
     ItemStack OreTrooperBugEggStack = new ItemStack(MyTrooperBugSpawnBlock);
     addShapelessRecipe(cpId("egg_mob"), cpId("eggs"), new ItemStack(TrooperBugEgg), Ingredient.of(new ItemStack(Items.WATER_BUCKET)), Ingredient.of(OreTrooperBugEggStack));
@@ -6942,12 +7092,9 @@ private static void registerAllCritterCages() {
   }
 
   /**
-   * 1.7.10 parity: custom mobs used legacy armor reduction expectations.
-   * In 1.12.2, high-damage hits penetrate armor more aggressively, making
-   * high-defense mobs (e.g. Emperor Scorpion) take too much damage.
-   *
-   * This adjusts pre-armor incoming damage for ChaosPersists mobs so that
-   * post-armor damage tracks the legacy model: damage * (1 - armor/25).
+   * 1.7.10 parity: OreSpawn armor used legacy linear reduction (damage * (1 - armor/25)).
+   * In 1.12+/1.20+, high-damage hits penetrate armor more aggressively via toughness,
+   * so players in Ultimate/Mobzilla/etc. and high-defense mobs take far too much damage.
    */
   @SubscribeEvent
   public void onLivingHurtLegacyArmorParity(LivingHurtEvent event) {
@@ -6959,7 +7106,9 @@ private static void registerAllCritterCages() {
       return;
     }
     ResourceLocation id = EntityType.getKey(living.getType());
-    if (id == null || !"chaospersists".equals(id.getNamespace())) {
+    boolean chaosMob = id != null && "chaospersists".equals(id.getNamespace());
+    boolean playerInChaosArmor = living instanceof Player && hasChaosArmorEquipped(living);
+    if (!chaosMob && !playerInChaosArmor) {
       return;
     }
     DamageSource source = event.getSource();
@@ -6971,13 +7120,13 @@ private static void registerAllCritterCages() {
       return;
     }
 
-    int armor = Math.max(0, Math.min(20, living.getArmorValue()));
+    int armor = Math.max(0, living.getArmorValue());
     if (armor <= 0) {
       return;
     }
 
-    // 1.7.10-style final damage expectation.
-    float legacyFinal = incoming * (25.0f - (float)armor) / 25.0f;
+    // 1.7.10-style final damage expectation (armor above 20 still helps).
+    float legacyFinal = Math.max(0.0f, incoming * (25.0f - (float)armor) / 25.0f);
 
     float toughness = 0.0f;
     AttributeInstance toughAttr = living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS);
@@ -6990,7 +7139,7 @@ private static void registerAllCritterCages() {
       return;
     }
 
-    // Invert 1.12 armor curve by binary search for pre-armor amount.
+    // Invert modern armor curve by binary search for pre-armor amount.
     float low = 0.0f;
     float high = incoming;
     float cappedHigh = incoming * 8.0f + 40.0f;
@@ -7013,6 +7162,19 @@ private static void registerAllCritterCages() {
     event.setAmount(high);
   }
 
+  private static boolean hasChaosArmorEquipped(LivingEntity living) {
+    for (EquipmentSlot slot : EquipmentSlot.values()) {
+      if (!slot.isArmor()) {
+        continue;
+      }
+      ItemStack stack = living.getItemBySlot(slot);
+      if (!stack.isEmpty() && stack.getItem() instanceof ItemChaosArmor) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private ResourceLocation getSpawnerEntityId(SpawnerBlockEntity spawner) {
     if (spawner == null) {
       return null;
@@ -7024,11 +7186,18 @@ private static void registerAllCritterCages() {
     if (spawner == null) {
       return;
     }
-    ResourceLocation current = SpawnerFixHelper.getMobSpawnerEntityId(spawner.getSpawner());
-    ResourceLocation normalized = SpawnerFixHelper.normalizeSpawnerEntityId(current);
-    if (normalized != null && (current == null || !normalized.equals(current))) {
-      SpawnerFixHelper.setMobSpawnerEntityId(spawner.getSpawner(), normalized);
-      spawner.setChanged();
+    try {
+      ResourceLocation current = SpawnerFixHelper.getMobSpawnerEntityId(spawner.getSpawner());
+      ResourceLocation normalized = SpawnerFixHelper.normalizeSpawnerEntityId(current);
+      if (normalized != null && (current == null || !normalized.equals(current))) {
+        SpawnerFixHelper.setMobSpawnerEntityId(spawner.getSpawner(), normalized);
+        spawner.setChanged();
+      }
+    } catch (Exception ex) {
+      LOGGER.warn(
+          "ChaosPersists: failed to normalize spawner at {} (skipping)",
+          spawner.getBlockPos(),
+          ex);
     }
   }
 
@@ -7086,6 +7255,83 @@ private static void registerAllCritterCages() {
     // Allow only when the mob still fits the space; bypass legacy display-name spawn rules only.
     if (mob.checkSpawnObstruction(event.getLevel())) {
       event.setResult(Event.Result.ALLOW);
+    }
+  }
+
+  /** OMG apple trees save with stale skylight; rebuild lighting near the player after relog only. */
+  @SubscribeEvent
+  public void onPlayerLoggedInRelightNearbyChunks(PlayerEvent.PlayerLoggedInEvent event) {
+    if (!(event.getEntity() instanceof ServerPlayer player)) {
+      return;
+    }
+    ServerLevel level = player.serverLevel();
+    if (!level.dimensionType().hasSkyLight()) {
+      return;
+    }
+    level.getServer().tell(new TickTask(level.getServer().getTickCount() + 20, () -> {
+      if (!player.isAlive()) {
+        return;
+      }
+      scheduleSkylightRelight(level, chunkKeysAround(player.chunkPosition(), 8), player);
+    }));
+  }
+
+  private static List<Long> chunkKeysAround(ChunkPos center, int radius) {
+    List<Long> keys = new ArrayList<>((radius * 2 + 1) * (radius * 2 + 1));
+    for (int dx = -radius; dx <= radius; dx++) {
+      for (int dz = -radius; dz <= radius; dz++) {
+        keys.add(ChunkPos.asLong(center.x + dx, center.z + dz));
+      }
+    }
+    return keys;
+  }
+
+  /**
+   * Deferred skylight rebuild for fast-placed structures. Runs on later ticks so it never blocks
+   * item use; optionally pushes corrected light packets to one player.
+   */
+  public static void scheduleSkylightRelight(
+      ServerLevel level, Iterable<Long> chunkKeys, @Nullable ServerPlayer syncTo) {
+    if (!level.dimensionType().hasSkyLight()) {
+      return;
+    }
+    List<Long> chunks = new ArrayList<>();
+    for (long chunkKey : chunkKeys) {
+      chunks.add(chunkKey);
+    }
+    if (chunks.isEmpty()) {
+      return;
+    }
+    ThreadedLevelLightEngine lightEngine = level.getChunkSource().getLightEngine();
+    int baseTick = level.getServer().getTickCount();
+    int[] delays = {10, 50, 100};
+    for (int pass = 0; pass < delays.length; pass++) {
+      boolean finalPass = pass == delays.length - 1;
+      int delay = delays[pass];
+      level.getServer().tell(new TickTask(baseTick + delay, () -> {
+        CompletableFuture<?>[] futures = new CompletableFuture<?>[chunks.size()];
+        int index = 0;
+        for (long chunkKey : chunks) {
+          ChunkPos chunkPos = new ChunkPos(chunkKey);
+          ChunkAccess chunk = level.getChunk(chunkPos.x, chunkPos.z);
+          chunk.setLightCorrect(false);
+          futures[index++] = lightEngine.lightChunk(chunk, false);
+        }
+        lightEngine.tryScheduleUpdate();
+        if (finalPass && syncTo != null) {
+          CompletableFuture.allOf(futures).thenRun(() -> level.getServer().execute(() -> {
+            if (!syncTo.isAlive()) {
+              return;
+            }
+            for (long chunkKey : chunks) {
+              ChunkPos chunkPos = new ChunkPos(chunkKey);
+              syncTo.connection.send(
+                  new ClientboundLightUpdatePacket(chunkPos, lightEngine, null, null));
+              level.getChunk(chunkPos.x, chunkPos.z).setUnsaved(true);
+            }
+          }));
+        }
+      }));
     }
   }
 
@@ -7154,6 +7400,12 @@ private static void registerAllCritterCages() {
       return;
     }
     ResourceLocation key = EntityType.getKey(base.getType());
+    if (key != null && MODID.equals(key.getNamespace())) {
+      LivingEntity currentTarget = mob.getTarget();
+      if (currentTarget instanceof Player && !MyUtils.isValidAggroTarget(currentTarget)) {
+        mob.setTarget(null);
+      }
+    }
     boolean chaosHostileMob =
         key != null && MODID.equals(key.getNamespace()) && base instanceof Enemy;
     if (!this.isAlwaysHostileInLegacy(base.getClass()) && !chaosHostileMob) {
@@ -7609,6 +7861,202 @@ private static void registerAllCritterCages() {
         || pathLower.startsWith("lettuce_")
         || pathLower.startsWith("quinoa_")
         || "dungeonspawner".equals(pathLower);
+  }
+
+  /**
+   * 1.12 {@code GameRegistry} registration order for combat-tab weapons. Creative tabs showed items in
+   * registry order; alphabetical sorting broke sword/bow/ranged grouping.
+   */
+  private static final List<String> CHAOS_WEAPON_TAB_ORDER =
+      List.of(
+          "ultimatesword",
+          "nightmaresword",
+          "berthasmall",
+          "hammysmall",
+          "slicesmall",
+          "royalsmall",
+          "battleaxesmall",
+          "queenbattleaxesmall",
+          "chainsawsmall",
+          "emeraldsword",
+          "rosesword",
+          "experiencesword",
+          "poisonsword",
+          "ratsword",
+          "fairysword",
+          "mantisclaw",
+          "bighammer",
+          "crystalwoodsword",
+          "crystalpinksword",
+          "tigerseye_sword",
+          "crystalstonesword",
+          "rubysword",
+          "amethystsword",
+          "ultimatebow",
+          "skatebow",
+          "sunspoturchin",
+          "waterball",
+          "laserball",
+          "iceball",
+          "rocksmall",
+          "rock",
+          "rockred",
+          "rockcrystalred",
+          "rockcrystalgreen",
+          "rockcrystalblue",
+          "rockcrystaltnt",
+          "rockgreen",
+          "rockblue",
+          "rockpurple",
+          "rockspikey",
+          "rocktnt",
+          "acid",
+          "deadirukandji",
+          "irukandjiarrow",
+          "raygun",
+          "squidzookasmall",
+          "thunderstaff");
+
+  private static final Map<String, Integer> CHAOS_WEAPON_TAB_ORDER_INDEX = new HashMap<>();
+
+  static {
+    for (int i = 0; i < CHAOS_WEAPON_TAB_ORDER.size(); i++) {
+      CHAOS_WEAPON_TAB_ORDER_INDEX.put(CHAOS_WEAPON_TAB_ORDER.get(i), i);
+    }
+  }
+
+  private static Comparator<Item> chaosWeaponTabComparator() {
+    return Comparator.comparingInt(ChaosPersists::getChaosWeaponTabSortKey)
+        .thenComparingInt(item -> BuiltInRegistries.ITEM.getId(item));
+  }
+
+  /**
+   * 1.12 {@code GameRegistry} armor order: each set helmet, chestplate, leggings, boots.
+   */
+  private static final List<String> CHAOS_ARMOR_TAB_ORDER =
+      List.of(
+          "ultimate_helmet",
+          "ultimate_chest",
+          "ultimate_leggings",
+          "ultimate_boots",
+          "lavaeel_helmet",
+          "lavaeel_chest",
+          "lavaeel_leggings",
+          "lavaeel_boots",
+          "mothscale_helmet",
+          "mothscale_chest",
+          "mothscale_leggings",
+          "mothscale_boots",
+          "emerald_helmet",
+          "emerald_chest",
+          "emerald_leggings",
+          "emerald_boots",
+          "experience_helmet",
+          "experience_chest",
+          "experience_leggings",
+          "experience_boots",
+          "ruby_helmet",
+          "ruby_chest",
+          "ruby_leggings",
+          "ruby_boots",
+          "amethyst_helmet",
+          "amethyst_chest",
+          "amethyst_leggings",
+          "amethyst_boots",
+          "pink_helmet",
+          "pink_chest",
+          "pink_leggings",
+          "pink_boots",
+          "tigerseye_helmet",
+          "tigerseye_chest",
+          "tigerseye_leggings",
+          "tigerseye_boots",
+          "peacock_helmet",
+          "peacock_chest",
+          "peacock_leggings",
+          "peacock_boots",
+          "mobzilla_helmet",
+          "mobzilla_chest",
+          "mobzilla_leggings",
+          "mobzilla_boots",
+          "royal_helmet",
+          "royal_chest",
+          "royal_leggings",
+          "royal_boots",
+          "lapis_helmet",
+          "lapis_chest",
+          "lapis_leggings",
+          "lapis_boots",
+          "queen_helmet",
+          "queen_chest",
+          "queen_leggings",
+          "queen_boots");
+
+  private static final Map<String, Integer> CHAOS_ARMOR_TAB_ORDER_INDEX = new HashMap<>();
+
+  static {
+    for (int i = 0; i < CHAOS_ARMOR_TAB_ORDER.size(); i++) {
+      CHAOS_ARMOR_TAB_ORDER_INDEX.put(CHAOS_ARMOR_TAB_ORDER.get(i), i);
+    }
+  }
+
+  private static Comparator<Item> chaosArmorTabComparator() {
+    return Comparator.comparingInt(ChaosPersists::getChaosArmorTabSortKey)
+        .thenComparingInt(item -> BuiltInRegistries.ITEM.getId(item));
+  }
+
+  private static int getChaosArmorTabSortKey(Item item) {
+    ResourceLocation rl = BuiltInRegistries.ITEM.getKey(item);
+    if (rl != null) {
+      Integer index = CHAOS_ARMOR_TAB_ORDER_INDEX.get(rl.getPath());
+      if (index != null) {
+        return index;
+      }
+    }
+    return CHAOS_ARMOR_TAB_ORDER.size() + getChaosArmorFallbackSlot(item);
+  }
+
+  private static int getChaosArmorFallbackSlot(Item item) {
+    if (!(item instanceof ArmorItem armorItem)) {
+      return 99;
+    }
+    return switch (armorItem.getType()) {
+      case HELMET -> 0;
+      case CHESTPLATE -> 1;
+      case LEGGINGS -> 2;
+      case BOOTS -> 3;
+    };
+  }
+
+  private static int getChaosWeaponTabSortKey(Item item) {
+    ResourceLocation rl = BuiltInRegistries.ITEM.getKey(item);
+    if (rl != null) {
+      Integer index = CHAOS_WEAPON_TAB_ORDER_INDEX.get(rl.getPath());
+      if (index != null) {
+        return index;
+      }
+    }
+    return CHAOS_WEAPON_TAB_ORDER.size() + getChaosWeaponFallbackCategory(item) * 100;
+  }
+
+  /** Groups any future combat items after the legacy list, by weapon type. */
+  private static int getChaosWeaponFallbackCategory(Item item) {
+    if (item instanceof Bertha) {
+      return 0;
+    }
+    if (item instanceof UltimateSword) {
+      return 1;
+    }
+    if (item instanceof BigHammer) {
+      return 2;
+    }
+    if (item instanceof SwordItem) {
+      return 3;
+    }
+    if (item instanceof BowItem || item instanceof UltimateBow || item instanceof SkateBow) {
+      return 4;
+    }
+    return 5;
   }
 
   /** 1.12 items that used {@code CreativeTabs.COMBAT} but are plain {@link Item}, not {@link SwordItem}. */
@@ -8156,6 +8604,24 @@ private static void registerAllCritterCages() {
     if (a.e_featherfalling < e_feather / 2) a.e_featherfalling = (e_feather / 2);
 
     return a;
+  }
+
+  /** Fixes persisted 1.12 diamond-copy Amethyst stats (3/6/8/3) to OreSpawn wiki values (4/8/7/3). */
+  private static void migrateLegacyAmethystArmorConfig(Configuration config) {
+    String arm = "chaospersistsARMOR";
+    int head = config.get(arm, "Amethyst_head_damage_reduce", 4).getInt();
+    int chest = config.get(arm, "Amethyst_chest_damage_reduce", 8).getInt();
+    int leg = config.get(arm, "Amethyst_leggings_damage_reduce", 7).getInt();
+    int boots = config.get(arm, "Amethyst_boots_damage_reduce", 3).getInt();
+    int enchant = config.get(arm, "Amethyst_enchantability", 40).getInt();
+    if (head == 3 && chest == 6 && leg == 8 && boots == 3 && enchant == 10) {
+      config.get(arm, "Amethyst_head_damage_reduce", 4).set(4);
+      config.get(arm, "Amethyst_chest_damage_reduce", 8).set(8);
+      config.get(arm, "Amethyst_leggings_damage_reduce", 7).set(7);
+      config.get(arm, "Amethyst_boots_damage_reduce", 3).set(3);
+      config.get(arm, "Amethyst_enchantability", 40).set(40);
+      config.save();
+    }
   }
 
   private static WeaponStats get_weaponstats(

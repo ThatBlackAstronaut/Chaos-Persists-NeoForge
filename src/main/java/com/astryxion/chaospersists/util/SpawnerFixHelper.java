@@ -21,7 +21,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.ListTag;
 import net.minecraftforge.registries.ForgeRegistries;
 
 /**
@@ -243,7 +245,8 @@ public final class SpawnerFixHelper {
     }
 
     /**
-     * Reads the spawner's entity id from {@link BaseSpawner} spawn data NBT.
+     * Reads spawner entity id via public {@link BaseSpawner#save(CompoundTag)} NBT.
+     * Do not reflect into {@code nextSpawnData}; that field name is not stable at runtime.
      */
     public static ResourceLocation getMobSpawnerEntityId(BaseSpawner logic) {
         if (logic == null) {
@@ -258,37 +261,56 @@ public final class SpawnerFixHelper {
     }
 
     private static SpawnData readSpawnData(BaseSpawner logic) {
-        SpawnData next = ObfuscationReflectionHelper.getPrivateValue(BaseSpawner.class, logic, "nextSpawnData");
-        if (next != null) {
-            return next;
-        }
-        SimpleWeightedRandomList<SpawnData> potentials =
-                ObfuscationReflectionHelper.getPrivateValue(BaseSpawner.class, logic, "spawnPotentials");
-        if (potentials != null && !potentials.isEmpty()) {
-            Optional<WeightedEntry.Wrapper<SpawnData>> picked = potentials.getRandom(RandomSource.create());
-            if (picked.isPresent()) {
-                return picked.get().getData();
-            }
-        }
-        try {
-            return (SpawnData)
-                    ObfuscationReflectionHelper.findMethod(
-                                    BaseSpawner.class,
-                                    "getOrCreateNextSpawnData",
-                                    Level.class,
-                                    RandomSource.class,
-                                    BlockPos.class)
-                            .invoke(logic, null, RandomSource.create(), BlockPos.ZERO);
-        } catch (Exception e) {
+        if (logic == null) {
             return null;
         }
+        try {
+            CompoundTag tag = logic.save(new CompoundTag());
+            SpawnData spawnData = parseSpawnDataTag(tag);
+            if (spawnData != null) {
+                return spawnData;
+            }
+            return parseFirstSpawnPotential(tag);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static SpawnData parseSpawnDataTag(CompoundTag tag) {
+        if (tag == null || !tag.contains(BaseSpawner.SPAWN_DATA_TAG, 10)) {
+            return null;
+        }
+        return SpawnData.CODEC
+                .parse(NbtOps.INSTANCE, tag.getCompound(BaseSpawner.SPAWN_DATA_TAG))
+                .resultOrPartial(msg -> {})
+                .orElse(null);
+    }
+
+    private static SpawnData parseFirstSpawnPotential(CompoundTag tag) {
+        if (tag == null || !tag.contains("SpawnPotentials", 9)) {
+            return null;
+        }
+        ListTag list = tag.getList("SpawnPotentials", 10);
+        SimpleWeightedRandomList<SpawnData> potentials =
+                SpawnData.LIST_CODEC
+                        .parse(NbtOps.INSTANCE, list)
+                        .resultOrPartial(msg -> {})
+                        .orElse(SimpleWeightedRandomList.empty());
+        if (potentials.isEmpty()) {
+            return null;
+        }
+        return potentials.getRandom(RandomSource.create()).map(WeightedEntry.Wrapper::getData).orElse(null);
     }
 
     public static ResourceLocation getMobSpawnerEntityIdFromBlockEntity(SpawnerBlockEntity spawner) {
         if (spawner == null) {
             return null;
         }
-        return getMobSpawnerEntityId(spawner.getSpawner());
+        try {
+            return getMobSpawnerEntityId(spawner.getSpawner());
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     /** 1.12 {@code MobSpawnerLogic#setEntityId(ResourceLocation)} equivalent. */

@@ -45,7 +45,7 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
@@ -59,6 +59,7 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -96,6 +97,7 @@ public class Leon extends TamableAnimal {
     private int lastX = 0;
     private int lastZ = 0;
     private int unstick_timer = 0;
+    private int dismountCooldown = 0;
     private float moveSpeed = 0.25f;
     private float deltasmooth = 0.0f;
 
@@ -116,7 +118,7 @@ public class Leon extends TamableAnimal {
             this.targetSelector.addGoal(
                     1, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true, false));
         }
-        this.targetSelector.addGoal(2, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -135,6 +137,12 @@ public class Leon extends TamableAnimal {
     @Override
     public EntityDimensions getDimensions(Pose pose) {
         return EntityDimensions.scalable(3.5f, 8.25f);
+    }
+
+    @Override
+    public void onAddedToWorld() {
+        super.onAddedToWorld();
+        this.refreshDimensions();
     }
 
     public boolean shouldRiderSit() {
@@ -391,12 +399,26 @@ public class Leon extends TamableAnimal {
     protected void removePassenger(Entity passenger) {
         super.removePassenger(passenger);
         if (!this.level().isClientSide && this.getPassengers().isEmpty()) {
-            this.setNoGravity(false);
-            this.noPhysics = false;
-            this.setDeltaMovement(this.getDeltaMovement().x, 0.0, this.getDeltaMovement().z);
-            this.moveTo(this.getX(), this.getY(), this.getZ());
-            MyUtils.enforceDragonMountGroundSafety(this);
+            this.finishDismountLanding();
         }
+    }
+
+    private void finishDismountLanding() {
+        this.dismountCooldown = 80;
+        this.owner_flying = 0;
+        this.currentFlightTarget = null;
+        if (MyUtils.isPrinceAirborne(this)) {
+            this.setActivity(1);
+            this.setNoGravity(true);
+            this.noPhysics = true;
+            return;
+        }
+        this.setActivity(0);
+        this.setNoGravity(false);
+        this.noPhysics = false;
+        Vec3 dm = this.getDeltaMovement();
+        this.setDeltaMovement(dm.x, Math.min(dm.y, -0.25), dm.z);
+        MyUtils.enforceDragonMountGroundSafety(this);
     }
 
     @Override
@@ -584,6 +606,9 @@ public class Leon extends TamableAnimal {
         if (this.hurt_timer > 0) {
             return false;
         }
+        if (this.isInvulnerableTo(par1DamageSource)) {
+            return false;
+        }
         if (par1DamageSource.is(DamageTypes.IN_WALL)) {
             return ret;
         }
@@ -598,8 +623,10 @@ public class Leon extends TamableAnimal {
             return false;
         }
         ret = super.hurt(par1DamageSource, par2);
-        this.hurt_timer = 15;
-        if (e instanceof LivingEntity living && !this.level().isClientSide) {
+        if (ret) {
+            this.hurt_timer = 15;
+        }
+        if (e instanceof LivingEntity living && !this.level().isClientSide && MyUtils.isValidAggroTarget(living)) {
             if (this.isTame() && e instanceof Player) {
                 return false;
             }
@@ -665,13 +692,35 @@ public class Leon extends TamableAnimal {
             this.setActivity(1);
         }
         if (this.getRandom().nextInt(50) == 1
+                && this.dismountCooldown == 0
                 && !this.isInSittingPose()
                 && !this.target_in_sight
                 && this.getPassengers().isEmpty()) {
-            if (this.getRandom().nextInt(15) == 1) {
+            if (MyUtils.isPrinceAirborne(this)) {
                 this.setActivity(1);
+            } else if (this.getRandom().nextInt(15) == 1) {
+                this.setActivity(1);
+            } else {
+                this.setActivity(0);
             }
         }
+    }
+
+    private boolean shouldStopFlying() {
+        if (this.dismountCooldown > 0 || this.target_in_sight || this.owner_flying != 0) {
+            return false;
+        }
+        if (!MyUtils.isPrinceAirborne(this)) {
+            return true;
+        }
+        if (this.getOwner() == null) {
+            BlockPos feet = this.blockPosition();
+            int groundY = this.level().getHeight(Heightmap.Types.MOTION_BLOCKING, feet.getX(), feet.getZ());
+            if (this.getY() <= groundY + 4.0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void fly_with_rider() {
@@ -904,8 +953,18 @@ public class Leon extends TamableAnimal {
     @Override
     public void tick() {
         LivingEntity e;
+        if (this.dismountCooldown > 0) {
+            --this.dismountCooldown;
+        }
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
         this.noPhysics = false;
+        if (!this.level().isClientSide
+                && this.getPassengers().isEmpty()
+                && !this.isInSittingPose()
+                && this.getActivity() == 0
+                && MyUtils.isPrinceAirborne(this)) {
+            this.setActivity(1);
+        }
         if (!this.level().isClientSide
                 && this.getActivity() != 0
                 && this.getPassengers().isEmpty()
@@ -985,6 +1044,13 @@ public class Leon extends TamableAnimal {
             return;
         }
         if ((this.getPassengers().isEmpty() ? null : this.getPassengers().get(0)) != null) {
+            return;
+        }
+        if (this.shouldStopFlying()) {
+            this.setActivity(0);
+            this.setNoGravity(false);
+            this.noPhysics = false;
+            this.currentFlightTarget = null;
             return;
         }
         if (this.unstick_timer > 0) {
@@ -1143,7 +1209,7 @@ public class Leon extends TamableAnimal {
         this.zza = (float) (0.75 * speed_factor);
         this.setYRot(this.getYRot() + var8 / 4.0f);
         this.setDeltaMovement(mx, my, mz);
-        // Movement comes from vanilla travel() in the same tick (Prince pattern); extra move() here fought physics.
+        MyUtils.applyChaosFlightMovement(this);
     }
 
     @Override

@@ -275,7 +275,8 @@ public class Mantis extends Monster {
         if (this.getRandom().nextInt(100) == 1) {
             this.heal(1.0f);
         }
-    }
+        MyUtils.applyChaosFlightMovement(this);
+}
 
     @Override
     public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {

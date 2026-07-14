@@ -7,10 +7,14 @@ import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tier;
 
 public class RubySword extends SwordItem {
-    private static final int WEAPON_DAMAGE = 18;
+    private static final int WEAPON_DAMAGE = 20;
 
     public RubySword(Tier tier) {
-        super(tier, (int)(WEAPON_DAMAGE - tier.getAttackDamageBonus()), -2.4f, new Properties().stacksTo(1).durability(1500));
+        super(
+                tier,
+                ChaosWeaponDamage.modifierFor(tier, WEAPON_DAMAGE),
+                -2.4f,
+                new Properties().stacksTo(1).durability(1500));
     }
 
     public String getMaterialName() {

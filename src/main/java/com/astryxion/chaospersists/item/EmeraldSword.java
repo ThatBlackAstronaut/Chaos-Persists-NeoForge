@@ -7,10 +7,10 @@ import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tier;
 
 public class EmeraldSword extends SwordItem {
-    private static final int WEAPON_DAMAGE = 15;
+    private static final int WEAPON_DAMAGE = 10;
 
     public EmeraldSword(Tier tier) {
-        super(tier, (int)(WEAPON_DAMAGE - tier.getAttackDamageBonus()), -2.4f, new Properties().stacksTo(1).durability(1300));
+        super(tier, ChaosWeaponDamage.modifierFor(tier, WEAPON_DAMAGE), -2.4f, new Properties().stacksTo(1).durability(1300));
     }
 
     public String getMaterialName() {

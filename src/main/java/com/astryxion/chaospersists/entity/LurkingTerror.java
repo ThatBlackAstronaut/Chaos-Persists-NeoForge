@@ -220,7 +220,8 @@ public class LurkingTerror extends Monster {
         float var7 = (float) (Mth.atan2(motion.z, motion.x) * 180.0 / Math.PI) - 90.0f;
         float var8 = Mth.wrapDegrees(var7 - this.getYRot());
         this.setYRot(this.getYRot() + var8 / 4.0f);
-    }
+        MyUtils.applyChaosFlightMovement(this);
+}
 
     @Override
     public boolean causeFallDamage(float distance, float damageMultiplier, DamageSource source) {

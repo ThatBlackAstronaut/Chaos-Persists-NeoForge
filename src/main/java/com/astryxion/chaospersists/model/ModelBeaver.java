@@ -44,15 +44,15 @@ public class ModelBeaver extends EntityModel<Beaver> {
     public static MeshDefinition createMesh() {
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
-        partdefinition.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 3).mirror().addBox(0.0f, 0.0f, 0.0f, 6, 5, 5), PartPose.offset(0.0f, 15.0f, -8.0f));
-        partdefinition.addOrReplaceChild("nose", CubeListBuilder.create().texOffs(6, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 2, 1, 1), PartPose.offset(2.0f, 18.0f, -8.5f));
-        partdefinition.addOrReplaceChild("teeth", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 2, 2, 1), PartPose.offset(2.0f, 19.0f, -8.2f));
-        partdefinition.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 13).mirror().addBox(0.0f, 0.0f, 0.0f, 8, 8, 10), PartPose.offset(-1.0f, 14.0f, -3.0f));
-        partdefinition.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(22, 0).mirror().addBox(0.0f, -1.0f, 0.0f, 5, 1, 8), PartPose.offset(0.5f, 21.0f, 7.0f));
-        partdefinition.addOrReplaceChild("rff", CubeListBuilder.create().texOffs(22, 9).mirror().addBox(0.0f, 0.0f, 0.0f, 2, 2, 2), PartPose.offset(-0.5f, 22.0f, -2.5f));
-        partdefinition.addOrReplaceChild("lff", CubeListBuilder.create().texOffs(22, 9).mirror().addBox(0.0f, 0.0f, 0.0f, 2, 2, 2), PartPose.offset(4.5f, 22.0f, -2.5f));
-        partdefinition.addOrReplaceChild("rrf", CubeListBuilder.create().texOffs(22, 9).mirror().addBox(0.0f, 0.0f, 0.0f, 2, 2, 2), PartPose.offset(-0.5f, 22.0f, 4.5f));
-        partdefinition.addOrReplaceChild("lrf", CubeListBuilder.create().texOffs(22, 9).mirror().addBox(0.0f, 0.0f, 0.0f, 2, 2, 2), PartPose.offset(4.5f, 22.0f, 4.5f));
+        partdefinition.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 3).addBox(0.0f, 0.0f, 0.0f, 6, 5, 5), PartPose.offset(0.0f, 15.0f, -8.0f));
+        partdefinition.addOrReplaceChild("nose", CubeListBuilder.create().texOffs(6, 0).addBox(0.0f, 0.0f, 0.0f, 2, 1, 1), PartPose.offset(2.0f, 18.0f, -8.5f));
+        partdefinition.addOrReplaceChild("teeth", CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, 0.0f, 0.0f, 2, 2, 1), PartPose.offset(2.0f, 19.0f, -8.2f));
+        partdefinition.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 13).addBox(0.0f, 0.0f, 0.0f, 8, 8, 10), PartPose.offset(-1.0f, 14.0f, -3.0f));
+        partdefinition.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(22, 0).addBox(0.0f, -1.0f, 0.0f, 5, 1, 8), PartPose.offset(0.5f, 21.0f, 7.0f));
+        partdefinition.addOrReplaceChild("rff", CubeListBuilder.create().texOffs(22, 9).addBox(0.0f, 0.0f, 0.0f, 2, 2, 2), PartPose.offset(-0.5f, 22.0f, -2.5f));
+        partdefinition.addOrReplaceChild("lff", CubeListBuilder.create().texOffs(22, 9).addBox(0.0f, 0.0f, 0.0f, 2, 2, 2), PartPose.offset(4.5f, 22.0f, -2.5f));
+        partdefinition.addOrReplaceChild("rrf", CubeListBuilder.create().texOffs(22, 9).addBox(0.0f, 0.0f, 0.0f, 2, 2, 2), PartPose.offset(-0.5f, 22.0f, 4.5f));
+        partdefinition.addOrReplaceChild("lrf", CubeListBuilder.create().texOffs(22, 9).addBox(0.0f, 0.0f, 0.0f, 2, 2, 2), PartPose.offset(4.5f, 22.0f, 4.5f));
         return meshdefinition;
     }
 

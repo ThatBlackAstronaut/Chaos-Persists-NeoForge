@@ -47,17 +47,17 @@ public class ModelRobot5 extends EntityModel<Robot5> {
     private static MeshDefinition createMesh() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
-        root.addOrReplaceChild("lwheel1", CubeListBuilder.create().texOffs(0, 23).mirror().addBox(0.0f, -4.0f, -4.0f, 2, 8, 8), PartPose.offsetAndRotation(6.0f, 19.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        root.addOrReplaceChild("lwheel2", CubeListBuilder.create().texOffs(0, 43).mirror().addBox(0.0f, -4.0f, -4.0f, 2, 8, 8), PartPose.offsetAndRotation(6.0f, 19.0f, 0.0f, 0.7853982f, 0.0f, 0.0f));
-        root.addOrReplaceChild("rwheel1", CubeListBuilder.create().texOffs(0, 23).mirror().addBox(0.0f, -4.0f, -4.0f, 2, 8, 8), PartPose.offsetAndRotation(-8.0f, 19.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        root.addOrReplaceChild("rwheel2", CubeListBuilder.create().texOffs(0, 43).mirror().addBox(0.0f, -4.0f, -4.0f, 2, 8, 8), PartPose.offsetAndRotation(-8.0f, 19.0f, 0.0f, 0.7853982f, 0.0f, 0.0f));
-        root.addOrReplaceChild("axle", CubeListBuilder.create().texOffs(42, 0).mirror().addBox(-6.0f, -0.5f, -0.5f, 12, 1, 1), PartPose.offsetAndRotation(0.0f, 19.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        root.addOrReplaceChild("drivebox", CubeListBuilder.create().texOffs(47, 4).mirror().addBox(-2.0f, -1.5f, -1.5f, 4, 3, 3), PartPose.offsetAndRotation(0.0f, 19.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        root.addOrReplaceChild("stand", CubeListBuilder.create().texOffs(35, 0).mirror().addBox(-0.5f, 0.0f, -0.5f, 1, 18, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        root.addOrReplaceChild("swivel", CubeListBuilder.create().texOffs(22, 0).mirror().addBox(-1.0f, 0.0f, -1.0f, 2, 1, 2), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        root.addOrReplaceChild("barrel1", CubeListBuilder.create().texOffs(24, 25).mirror().addBox(-1.0f, -2.0f, -10.0f, 2, 2, 13), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        root.addOrReplaceChild("barrel2", CubeListBuilder.create().texOffs(27, 43).mirror().addBox(-0.5f, -1.5f, -19.0f, 1, 1, 9), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        root.addOrReplaceChild("ammobox", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-2.0f, -2.0f, 3.0f, 4, 3, 5), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("lwheel1", CubeListBuilder.create().texOffs(0, 23).addBox(0.0f, -4.0f, -4.0f, 2, 8, 8), PartPose.offsetAndRotation(6.0f, 19.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("lwheel2", CubeListBuilder.create().texOffs(0, 43).addBox(0.0f, -4.0f, -4.0f, 2, 8, 8), PartPose.offsetAndRotation(6.0f, 19.0f, 0.0f, 0.7853982f, 0.0f, 0.0f));
+        root.addOrReplaceChild("rwheel1", CubeListBuilder.create().texOffs(0, 23).addBox(0.0f, -4.0f, -4.0f, 2, 8, 8), PartPose.offsetAndRotation(-8.0f, 19.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("rwheel2", CubeListBuilder.create().texOffs(0, 43).addBox(0.0f, -4.0f, -4.0f, 2, 8, 8), PartPose.offsetAndRotation(-8.0f, 19.0f, 0.0f, 0.7853982f, 0.0f, 0.0f));
+        root.addOrReplaceChild("axle", CubeListBuilder.create().texOffs(42, 0).addBox(-6.0f, -0.5f, -0.5f, 12, 1, 1), PartPose.offsetAndRotation(0.0f, 19.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("drivebox", CubeListBuilder.create().texOffs(47, 4).addBox(-2.0f, -1.5f, -1.5f, 4, 3, 3), PartPose.offsetAndRotation(0.0f, 19.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("stand", CubeListBuilder.create().texOffs(35, 0).addBox(-0.5f, 0.0f, -0.5f, 1, 18, 1), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("swivel", CubeListBuilder.create().texOffs(22, 0).addBox(-1.0f, 0.0f, -1.0f, 2, 1, 2), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("barrel1", CubeListBuilder.create().texOffs(24, 25).addBox(-1.0f, -2.0f, -10.0f, 2, 2, 13), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("barrel2", CubeListBuilder.create().texOffs(27, 43).addBox(-0.5f, -1.5f, -19.0f, 1, 1, 9), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("ammobox", CubeListBuilder.create().texOffs(0, 0).addBox(-2.0f, -2.0f, 3.0f, 4, 3, 5), PartPose.offsetAndRotation(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f));
         return mesh;
     }
 

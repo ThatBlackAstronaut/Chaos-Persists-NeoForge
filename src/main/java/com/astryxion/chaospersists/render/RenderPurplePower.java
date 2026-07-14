@@ -3,11 +3,15 @@ package com.astryxion.chaospersists.render;
 import com.astryxion.chaospersists.item.PurplePower;
 import com.astryxion.chaospersists.model.ModelPurplePower;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 
-public class RenderPurplePower extends LivingEntityRenderer<PurplePower, ModelPurplePower> {
+public class RenderPurplePower extends EntityRenderer<PurplePower> {
     private static final ResourceLocation TEXTURE =
             ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/purplepowertexture.png");
     private static final ResourceLocation TEXTURE2 =
@@ -18,26 +22,48 @@ public class RenderPurplePower extends LivingEntityRenderer<PurplePower, ModelPu
             ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/purplepowertexture4.png");
     private static final ResourceLocation TEXTURE10 =
             ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/purplepowertexture10.png");
+
+    private final ModelPurplePower model;
     private final float scale;
 
     public RenderPurplePower(
             EntityRendererProvider.Context context, ModelPurplePower model, float shadow, float scale) {
-        super(context, model, shadow * scale);
+        super(context);
+        this.model = model;
         this.scale = scale;
+        this.shadowRadius = shadow * scale;
     }
 
     @Override
-    protected void scale(PurplePower entity, PoseStack poseStack, float partialTick) {
+    public void render(
+            PurplePower entity,
+            float entityYaw,
+            float partialTicks,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight) {
+        poseStack.pushPose();
+        poseStack.translate(0.0F, entity.getBbHeight() * 0.5F, 0.0F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - entityYaw));
+
         float localScale = this.scale;
         if (entity.getPurpleType() != 0) {
             localScale = 0.55f;
         }
         poseStack.scale(localScale, localScale, localScale);
-    }
 
-    @Override
-    protected boolean shouldShowName(PurplePower entity) {
-        return false;
+        float age = entity.tickCount + partialTicks;
+        this.model.setupAnim(entity, 0.0F, 0.0F, age, 0.0F, 0.0F);
+        this.model.renderToBuffer(
+                poseStack,
+                buffer.getBuffer(RenderType.entityTranslucent(this.getTextureLocation(entity))),
+                packedLight,
+                OverlayTexture.NO_OVERLAY,
+                1.0F,
+                1.0F,
+                1.0F,
+                1.0F);
+        poseStack.popPose();
     }
 
     @Override

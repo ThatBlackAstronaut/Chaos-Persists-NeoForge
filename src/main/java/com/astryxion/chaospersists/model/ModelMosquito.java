@@ -36,23 +36,23 @@ public class ModelMosquito extends EntityModel<EntityMosquito> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "body",
-                CubeListBuilder.create().texOffs(8, 18).mirror().addBox(0.0f, 0.0f, -2.0f, 1.0f, 1.0f, 8.0f),
+                CubeListBuilder.create().texOffs(8, 18).addBox(0.0f, 0.0f, -2.0f, 1.0f, 1.0f, 8.0f),
                 PartPose.offset(0.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "leftwing1",
-                CubeListBuilder.create().texOffs(16, 13).mirror().addBox(1.0f, 0.0f, -1.0f, 3.0f, 1.0f, 3.0f),
+                CubeListBuilder.create().texOffs(16, 13).addBox(1.0f, 0.0f, -1.0f, 3.0f, 1.0f, 3.0f),
                 PartPose.offset(1.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "rightwing1",
-                CubeListBuilder.create().texOffs(2, 13).mirror().addBox(-4.0f, 0.0f, -1.0f, 3.0f, 1.0f, 3.0f),
+                CubeListBuilder.create().texOffs(2, 13).addBox(-4.0f, 0.0f, -1.0f, 3.0f, 1.0f, 3.0f),
                 PartPose.offset(0.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "leftwing2",
-                CubeListBuilder.create().texOffs(15, 8).mirror().addBox(0.0f, 0.0f, 0.0f, 5.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(15, 8).addBox(0.0f, 0.0f, 0.0f, 5.0f, 1.0f, 1.0f),
                 PartPose.offset(1.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "rightwing2",
-                CubeListBuilder.create().texOffs(2, 8).mirror().addBox(-5.0f, 0.0f, 0.0f, 5.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(2, 8).addBox(-5.0f, 0.0f, 0.0f, 5.0f, 1.0f, 1.0f),
                 PartPose.offset(0.0f, 17.0f, 0.0f));
         return mesh;
     }

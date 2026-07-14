@@ -35,23 +35,23 @@ public class ModelElevator extends EntityModel<Elevator> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "shape2",
-                CubeListBuilder.create().texOffs(0, 18).mirror().addBox(-3.0f, 0.0f, -9.0f, 6, 1, 1),
+                CubeListBuilder.create().texOffs(0, 18).addBox(-3.0f, 0.0f, -9.0f, 6, 1, 1),
                 PartPose.ZERO);
         root.addOrReplaceChild(
                 "shape3",
-                CubeListBuilder.create().texOffs(0, 21).mirror().addBox(-1.0f, 0.0f, -10.0f, 2, 1, 1),
+                CubeListBuilder.create().texOffs(0, 21).addBox(-1.0f, 0.0f, -10.0f, 2, 1, 1),
                 PartPose.ZERO);
         root.addOrReplaceChild(
                 "shape4",
-                CubeListBuilder.create().texOffs(17, 18).mirror().addBox(-3.0f, 0.0f, 8.0f, 6, 1, 1),
+                CubeListBuilder.create().texOffs(17, 18).addBox(-3.0f, 0.0f, 8.0f, 6, 1, 1),
                 PartPose.ZERO);
         root.addOrReplaceChild(
                 "shape5",
-                CubeListBuilder.create().texOffs(17, 21).mirror().addBox(-1.0f, 0.0f, 9.0f, 2, 1, 1),
+                CubeListBuilder.create().texOffs(17, 21).addBox(-1.0f, 0.0f, 9.0f, 2, 1, 1),
                 PartPose.ZERO);
         root.addOrReplaceChild(
                 "shape1",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-4.0f, 0.0f, -8.0f, 8, 1, 16),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-4.0f, 0.0f, -8.0f, 8, 1, 16),
                 PartPose.ZERO);
         return mesh;
     }

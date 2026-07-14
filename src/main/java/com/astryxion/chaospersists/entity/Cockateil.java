@@ -261,7 +261,8 @@ public class Cockateil extends Animal {
         float var7 = (float) (Mth.atan2(motion.z, motion.x) * 180.0 / Math.PI) - 90.0f;
         float var8 = Mth.wrapDegrees(var7 - this.getYRot());
         this.setYRot(this.getYRot() + var8 / 3.0f);
-    }
+        MyUtils.applyChaosFlightMovement(this);
+}
 
     public static boolean checkBirdSpawnRules(
             EntityType<Cockateil> type,

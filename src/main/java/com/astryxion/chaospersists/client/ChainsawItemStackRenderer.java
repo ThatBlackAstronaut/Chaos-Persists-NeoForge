@@ -3,7 +3,6 @@ package com.astryxion.chaospersists.client;
 import com.astryxion.chaospersists.client.model.ModelChainsaw;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
@@ -47,73 +46,42 @@ public class ChainsawItemStackRenderer extends BlockEntityWithoutLevelRenderer {
             MultiBufferSource buffer,
             int packedLight,
             int packedOverlay) {
-        if (ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND) {
-            renderFirstPerson(ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND, poseStack, buffer, packedLight, packedOverlay);
-        } else if (ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND || ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-            renderThirdPerson(ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND, poseStack, buffer, packedLight, packedOverlay);
+        if (isHandContext(ctx)) {
+            renderHand(isFirstPerson(ctx), isLeftHand(ctx), poseStack, buffer, packedLight, packedOverlay);
         } else {
-            Minecraft.getInstance()
-                    .getItemRenderer()
-                    .render(stack, ctx, false, poseStack, buffer, packedLight, packedOverlay, this.flatModel);
+            FlatItemModelRenderer.render(flatModel, stack, poseStack, buffer, packedLight, packedOverlay);
         }
     }
 
-    /**
-     * Hand pose for first person (after vanilla in-hand matrix). Shared with {@link StaticBigWeaponItemStackRenderer}
-     * for non-sword weapons (axes, zooka, hammy, chainsaw).
-     */
-    public static void applyHandFirstPersonTransforms(PoseStack poseStack) {
-        poseStack.translate(0.8f, -0.2f, 0.2f);
-        poseStack.scale(0.18f, 0.18f, 0.18f);
-        poseStack.mulPose(Axis.XP.rotationDegrees(110.0f));
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
-    }
-
-    /**
-     * First person for Attitude Adjuster ({@link com.astryxion.chaospersists.model.ModelHammy}).
-     */
-    public static void applyHammyFirstPersonTransforms(PoseStack poseStack) {
-        poseStack.translate(0.36f, 0.02f, 0.1f);
-        poseStack.scale(0.09f, 0.09f, 0.09f);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-24.0f));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(48.0f));
-        poseStack.mulPose(Axis.XP.rotationDegrees(46.0f));
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
-    }
-
-    /**
-     * Hand pose for third person (after vanilla equipped matrix). Shared with {@link StaticBigWeaponItemStackRenderer}.
-     */
-    public static void applyHandThirdPersonTransforms(PoseStack poseStack) {
-        poseStack.translate(0.5f, -0.4f, 0.0f);
-        poseStack.scale(0.18f, 0.18f, 0.18f);
-        poseStack.mulPose(Axis.XP.rotationDegrees(-15.0f));
-        poseStack.mulPose(Axis.YP.rotationDegrees(-35.0f));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
-    }
-
-    private void renderFirstPerson(boolean leftHand, PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
+    private void renderHand(
+            boolean firstPerson,
+            boolean leftHand,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight,
+            int packedOverlay) {
         poseStack.pushPose();
-        if (leftHand) {
-            poseStack.scale(-1.0f, 1.0f, 1.0f);
-        }
-        applyHandFirstPersonTransforms(poseStack);
-        drawModel(poseStack, buffer, light, overlay);
-        poseStack.popPose();
-    }
-
-    private void renderThirdPerson(boolean leftHand, PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
-        poseStack.pushPose();
-        if (leftHand) {
-            poseStack.scale(-1.0f, 1.0f, 1.0f);
-        }
-        applyHandThirdPersonTransforms(poseStack);
-        drawModel(poseStack, buffer, light, overlay);
-        poseStack.popPose();
-    }
-
-    private void drawModel(PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        BigWeaponHandTransforms.apply(
+                poseStack, BigWeaponHandTransforms.Style.CHAINSAW, firstPerson, leftHand);
         VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
         this.modelChainsaw.render(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
+    }
+
+    private static boolean isHandContext(ItemDisplayContext ctx) {
+        return ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
+                || ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+                || ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND
+                || ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
+    }
+
+    private static boolean isFirstPerson(ItemDisplayContext ctx) {
+        return ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
+                || ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND;
+    }
+
+    private static boolean isLeftHand(ItemDisplayContext ctx) {
+        return ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
+                || ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
     }
 }

@@ -30,7 +30,7 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MoveThroughVillageGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Monster;
@@ -64,7 +64,7 @@ public class HerculesBeetle extends Monster {
         this.goalSelector.addGoal(2, new MyEntityAIWanderALot(this, 14, 1.0));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 8.0f));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -73,6 +73,11 @@ public class HerculesBeetle extends Monster {
                 .add(Attributes.MOVEMENT_SPEED, 0.25)
                 .add(Attributes.ATTACK_DAMAGE, (double) ChaosPersists.HerculesBeetle_stats.attack)
                 .add(Attributes.ARMOR, (double) ChaosPersists.HerculesBeetle_stats.defense);
+    }
+
+    @Override
+    public boolean fireImmune() {
+        return true;
     }
 
     @Override
@@ -369,13 +374,18 @@ public class HerculesBeetle extends Monster {
         if (this.hurt_timer > 0) {
             return false;
         }
+        if (this.isInvulnerableTo(par1DamageSource)) {
+            return false;
+        }
         if (par1DamageSource.getMsgId().equals("cactus")) {
             return false;
         }
         boolean ret = super.hurt(par1DamageSource, par2);
-        this.hurt_timer = 20;
+        if (ret) {
+            this.hurt_timer = 20;
+        }
         Entity e = par1DamageSource.getEntity();
-        if (e instanceof LivingEntity living) {
+        if (e instanceof LivingEntity living && MyUtils.isValidAggroTarget(living)) {
             this.setTarget(living);
             this.getNavigation().moveTo(living, 1.2);
         }

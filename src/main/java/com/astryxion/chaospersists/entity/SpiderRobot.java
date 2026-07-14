@@ -10,8 +10,6 @@ import java.util.List;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -116,9 +114,24 @@ public class SpiderRobot extends Mob {
             return;
         }
         if (this.getControllingPassenger() != null) {
+            if (this.getControllingPassenger() instanceof Player player) {
+                this.tickRidden(player, Vec3.ZERO);
+            }
+            ++this.attackAnim;
+            if (this.hurtTime > 0) {
+                --this.hurtTime;
+            }
+            this.updateSwingTime();
+            this.travel(Vec3.ZERO);
             return;
         }
         super.aiStep();
+    }
+
+    @Override
+    public boolean isControlledByLocalInstance() {
+        Entity rider = this.getControllingPassenger();
+        return rider instanceof Player player && player.isLocalPlayer();
     }
 
     private void initLegData() {
@@ -509,7 +522,17 @@ public class SpiderRobot extends Mob {
 
     @Override
     public boolean shouldRiderSit() {
-        return false;
+        return true;
+    }
+
+    @Override
+    public void addPassenger(Entity passenger) {
+        super.addPassenger(passenger);
+        if (passenger instanceof LivingEntity living) {
+            living.setDeltaMovement(Vec3.ZERO);
+            living.xxa = 0.0f;
+            living.zza = 0.0f;
+        }
     }
 
     public int getTrackingRange() {
@@ -566,6 +589,82 @@ public class SpiderRobot extends Mob {
     }
 
     @Override
+    protected void tickRidden(Player player, Vec3 travelVector) {
+        super.tickRidden(player, travelVector);
+        this.xxa = player.xxa;
+        this.zza = player.zza;
+    }
+
+    private double applyRiddenVerticalPhysics(double my, double horizontalVelocity) {
+        double gh = 4.25;
+        Block bid =
+                this.level()
+                        .getBlockState(
+                                BlockPos.containing(
+                                        this.getX(), this.getY() - gh, this.getZ()))
+                        .getBlock();
+        if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.LAVA) {
+            my += this.hasPlayerRider() ? 0.03 : 0.06;
+        } else {
+            my -= this.hasPlayerRider() ? 0.01 : 0.02;
+        }
+        double obstruction = 0.0;
+        int scanDepth = 3 + (int) (Math.max(0.0, horizontalVelocity) * 6.0);
+        if (scanDepth > 24) {
+            scanDepth = 24;
+        }
+        for (int k = 1; k < scanDepth; ++k) {
+            for (int i = 1; i < scanDepth * 3; ++i) {
+                for (int j = -90; j <= 90; j += 30) {
+                    double scanDx =
+                            (double) i
+                                    * Math.cos(
+                                            Math.toRadians(this.getYRot() + 90.0f + (float) j));
+                    double scanDz =
+                            (double) i
+                                    * Math.sin(
+                                            Math.toRadians(this.getYRot() + 90.0f + (float) j));
+                    bid =
+                            this.level()
+                                    .getBlockState(
+                                            BlockPos.containing(
+                                                    this.getX() + scanDx,
+                                                    this.getY() - k,
+                                                    this.getZ() + scanDz))
+                                    .getBlock();
+                    if (bid == Blocks.AIR || bid == Blocks.WATER || bid == Blocks.LAVA) {
+                        continue;
+                    }
+                    obstruction += 0.03;
+                }
+            }
+        }
+        return my + obstruction * 0.05;
+    }
+
+    private Vec3 clampRiddenMotion(double mx, double my, double mz) {
+        if (my > 0.8500000238418579) {
+            my = 0.8500000238418579;
+        }
+        if (my < -0.8500000238418579) {
+            my = -0.8500000238418579;
+        }
+        if (mx < -1.25) {
+            mx = -1.25;
+        }
+        if (mx > 1.25) {
+            mx = 1.25;
+        }
+        if (mz < -1.25) {
+            mz = -1.25;
+        }
+        if (mz > 1.25) {
+            mz = 1.25;
+        }
+        return new Vec3(mx, my, mz);
+    }
+
+    @Override
     public void travel(Vec3 travelVector) {
         if (!this.isVehicle()) {
             super.travel(travelVector);
@@ -576,6 +675,99 @@ public class SpiderRobot extends Mob {
             super.travel(travelVector);
             return;
         }
+        if (!(rider instanceof Player)) {
+            this.travelWithLivingRider(rider);
+            return;
+        }
+        float moveStrafe;
+        float moveForward;
+        if (this.level().isClientSide && rider instanceof LocalPlayer local) {
+            moveStrafe = local.input.leftImpulse;
+            moveForward = local.input.forwardImpulse;
+        } else {
+            moveStrafe = rider.xxa;
+            moveForward = rider.zza;
+        }
+        this.xxa = moveStrafe;
+        this.zza = moveForward;
+        Vec3 dm = this.getDeltaMovement();
+        double velocity = Math.sqrt(dm.x * dm.x + dm.z * dm.z);
+        double max_speed = 0.45;
+        double relative_g = 0.0;
+        double d4 = rider.getYRot();
+        d4 %= 360.0;
+        while (d4 < 0.0) {
+            d4 += 360.0;
+        }
+        double d5 = this.getYRot();
+        d5 %= 360.0;
+        while (d5 < 0.0) {
+            d5 += 360.0;
+        }
+        for (relative_g = (d4 - d5) % 180.0; relative_g < 0.0; relative_g += 180.0) {
+        }
+        if (relative_g > 90.0) {
+            relative_g -= 180.0;
+        }
+        float forwardInput = moveForward;
+        float strafeInput = moveStrafe;
+        boolean hasDriveInput =
+                Math.abs(forwardInput) > 0.001f || Math.abs(strafeInput) > 0.001f;
+        if (hasDriveInput || velocity > 0.05) {
+            if (velocity > 0.01) {
+                d4 = 1.85 - velocity;
+                if ((d4 = Math.abs(d4)) < 0.01) {
+                    d4 = 0.01;
+                }
+                if (d4 > 0.9) {
+                    d4 = 0.9;
+                }
+                this.setYRot(rider.getYRot() + (float) (relative_g * d4));
+            } else {
+                this.setYRot(rider.getYRot());
+            }
+        }
+        this.setXRot(0.0f);
+        this.setRot(this.getYRot(), this.getXRot());
+        if (forwardInput < 0.0f) {
+            max_speed = 0.25;
+        }
+        double steerYaw = hasDriveInput ? rider.getYRot() : this.getYRot();
+        double yawRad = Math.toRadians(steerYaw);
+        double sin = Math.sin(yawRad);
+        double cos = Math.cos(yawRad);
+        double vx = (-sin * (double) forwardInput + cos * (double) strafeInput * 0.5) * max_speed;
+        double vz = (cos * (double) forwardInput + sin * (double) strafeInput * 0.5) * max_speed;
+        double mx;
+        double mz;
+        if (hasDriveInput) {
+            mx = vx;
+            mz = vz;
+        } else {
+            mx = 0.0;
+            mz = 0.0;
+        }
+        double my = 0.0;
+        Vec3 motion = this.clampRiddenMotion(mx, my, mz);
+        mx = motion.x;
+        my = motion.y;
+        mz = motion.z;
+        boolean shouldApplyMovement =
+                this.isControlledByLocalInstance()
+                        || (!this.level().isClientSide && !(rider instanceof Player));
+        if (shouldApplyMovement) {
+            this.move(MoverType.SELF, new Vec3(mx, my, mz));
+            if (hasDriveInput) {
+                this.setDeltaMovement(mx * 0.98, my * 0.98, mz * 0.98);
+            } else {
+                this.setDeltaMovement(Vec3.ZERO);
+            }
+        } else {
+            this.setDeltaMovement(Vec3.ZERO);
+        }
+    }
+
+    private void travelWithLivingRider(LivingEntity rider) {
         float moveStrafe = rider.xxa;
         float moveForward = rider.zza;
         this.xxa = moveStrafe;
@@ -611,10 +803,6 @@ public class SpiderRobot extends Mob {
         } else {
             this.setYRot(rider.getYRot());
         }
-        relative_g = Math.abs(relative_g) * velocity;
-        if (relative_g > 50.0) {
-            relative_g = 0.0;
-        }
         this.setXRot(0.0f);
         this.setRot(this.getYRot(), this.getXRot());
         float forwardInput = moveForward;
@@ -639,23 +827,79 @@ public class SpiderRobot extends Mob {
         this.setDeltaMovement(mx, dm.y, mz);
     }
 
+    private boolean hasPlayerRider() {
+        return this.getControllingPassenger() instanceof Player;
+    }
+
+    private float getSeatForwardOffset() {
+        if (this.hasPlayerRider()) {
+            return -3.0f;
+        }
+        return -3.0f + (float) (Math.cos((float) this.rideTicker * 0.33f) * 0.05);
+    }
+
     @Override
     public double getPassengersRidingOffset() {
-        if (this.getControllingPassenger() != null && this.getControllingPassenger() instanceof SpiderDriver) {
+        if (this.getControllingPassenger() instanceof SpiderDriver) {
             return 2.0;
         }
-        return 2.625 + Math.cos((float)this.rideTicker * 0.19f) * 0.02;
+        if (this.hasPlayerRider()) {
+            return 3.0;
+        }
+        return 3.0 + Math.cos((float) this.rideTicker * 0.19f) * 0.02;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public void syncLocalPassengerAfterTick() {
+        if (!this.level().isClientSide || !this.isControlledByLocalInstance()) {
+            return;
+        }
+        Player rider = this.getRiderPlayer();
+        if (!(rider instanceof LocalPlayer local)) {
+            return;
+        }
+        if (Math.abs(local.input.forwardImpulse) > 0.001f
+                || Math.abs(local.input.leftImpulse) > 0.001f) {
+            return;
+        }
+        Vec3 dm = this.getDeltaMovement();
+        if (dm.horizontalDistanceSqr() > 0.0025) {
+            return;
+        }
+        this.positionRider(rider, Entity::moveTo);
+        rider.xo = rider.getX();
+        rider.yo = rider.getY();
+        rider.zo = rider.getZ();
+        rider.setDeltaMovement(Vec3.ZERO);
     }
 
     @Override
     protected void positionRider(Entity passenger, MoveFunction moveFunction) {
         if (this.hasPassenger(passenger)) {
-            float f = -3.0f;
-            f = (float) ((double) f + Math.cos((float) this.rideTicker * 0.33f) * 0.05);
+            float f = this.getSeatForwardOffset();
             double x = this.getX() - (double) f * Math.sin(Math.toRadians(this.getYRot()));
             double y = this.getY() + this.getPassengersRidingOffset() + passenger.getMyRidingOffset();
             double z = this.getZ() + (double) f * Math.cos(Math.toRadians(this.getYRot()));
             moveFunction.accept(passenger, x, y, z);
+            if (passenger instanceof LivingEntity living) {
+                living.setDeltaMovement(Vec3.ZERO);
+                living.xxa = 0.0f;
+                living.zza = 0.0f;
+            }
+        }
+    }
+
+    @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+        if (!this.isVehicle()) {
+            this.fallDistance = 0.0f;
+            this.setDeltaMovement(Vec3.ZERO);
+            if (this.level().isClientSide) {
+                this.boatPosRotationIncrements = 0;
+            } else {
+                this.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
+            }
         }
     }
 
@@ -695,7 +939,11 @@ public class SpiderRobot extends Mob {
     @OnlyIn(Dist.CLIENT)
     @Override
     public void lerpTo(double x, double y, double z, float yaw, float pitch, int steps, boolean interpolate) {
-        this.boatPosRotationIncrements = this.getControllingPassenger() != null ? steps + 8 : steps + 6;
+        if (this.isControlledByLocalInstance()) {
+            this.boatPosRotationIncrements = 0;
+            return;
+        }
+        this.boatPosRotationIncrements = this.isVehicle() ? steps + 8 : steps;
         this.boatX = x;
         this.boatY = y;
         this.boatZ = z;
@@ -706,7 +954,7 @@ public class SpiderRobot extends Mob {
     @OnlyIn(Dist.CLIENT)
     @Override
     public void lerpMotion(double x, double y, double z) {
-        if (this.getControllingPassenger() == null) {
+        if (!this.isControlledByLocalInstance()) {
             super.lerpMotion(x, y, z);
         }
     }
@@ -752,6 +1000,56 @@ public class SpiderRobot extends Mob {
         if (this.getRandom().nextInt(10) == 0) {
             this.level().addParticle(ParticleTypes.FIREWORK, this.getX() + (double)dx, this.getY() + 2.0, this.getZ() + (double)dz, (double)(dx / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f), (double)((this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 5.0f), (double)(dz / f + (this.getRandom().nextFloat() - this.getRandom().nextFloat()) / 20.0f));
         }
+
+        this.rideTicker++;
+        if (this.playing > 0) {
+            --this.playing;
+        }
+        if (this.getControllingPassenger() != null && this.playing == 0 && this.getRandom().nextInt(80) == 1) {
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), ChaosSounds.ROBOTSPIDER, SoundSource.NEUTRAL, 0.45f, 1.0f);
+            this.playing = 125;
+        }
+
+        if (this.hasPlayerRider()) {
+            if (this.level().isClientSide && !this.isControlledByLocalInstance() && this.boatPosRotationIncrements > 0) {
+                double d4 = this.getX() + (this.boatX - this.getX()) / (double) this.boatPosRotationIncrements;
+                double d5 = this.getY() + (this.boatY - this.getY()) / (double) this.boatPosRotationIncrements;
+                double d11 = this.getZ() + (this.boatZ - this.getZ()) / (double) this.boatPosRotationIncrements;
+                this.setPos(d4, d5, d11);
+                this.setYRot(
+                        (float)
+                                ((double) this.getYRot()
+                                        + (this.boatYaw - (double) this.getYRot())
+                                                / (double) this.boatPosRotationIncrements));
+                this.setRot(this.getYRot(), this.getXRot());
+                --this.boatPosRotationIncrements;
+            }
+            if (this.level().isClientSide) {
+                this.xo = this.getX();
+                this.yo = this.getY();
+                this.zo = this.getZ();
+                this.updateLegs();
+            }
+            return;
+        }
+
+        if (this.level().isClientSide && !this.isControlledByLocalInstance()) {
+            this.xo = this.getX();
+            this.yo = this.getY();
+            this.zo = this.getZ();
+            if (this.boatPosRotationIncrements > 0) {
+                double d4 = this.getX() + (this.boatX - this.getX()) / (double) this.boatPosRotationIncrements;
+                double d5 = this.getY() + (this.boatY - this.getY()) / (double) this.boatPosRotationIncrements;
+                double d11 = this.getZ() + (this.boatZ - this.getZ()) / (double) this.boatPosRotationIncrements;
+                this.setPos(d4, d5, d11);
+                double d10 = Mth.wrapDegrees(this.boatYaw - (double) this.getYRot());
+                this.setYRot((float) ((double) this.getYRot() + d10 / (double) this.boatPosRotationIncrements));
+                this.setRot(this.getYRot(), this.getXRot());
+                --this.boatPosRotationIncrements;
+            }
+            this.updateLegs();
+            return;
+        }
     
         Vec3 motion = this.getDeltaMovement();
         double mx = motion.x;
@@ -791,14 +1089,6 @@ public class SpiderRobot extends Mob {
         this.xo = this.getX();
         this.yo = this.getY();
         this.zo = this.getZ();
-        this.rideTicker += this.getRandom().nextInt(3);
-        if (this.playing > 0) {
-            --this.playing;
-        }
-        if (this.getControllingPassenger() != null && this.playing == 0 && this.getRandom().nextInt(80) == 1) {
-            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), ChaosSounds.ROBOTSPIDER, SoundSource.NEUTRAL, 0.45f, 1.0f);
-            this.playing = 125;
-        }
         if (this.level().isClientSide) {
             if (this.getControllingPassenger() == null) {
                 Block bid = this.level().getBlockState(new BlockPos((int)this.getX(), (int)((float)this.getY() - (float)gh + 1.0f), (int)this.getZ())).getBlock();
@@ -812,14 +1102,8 @@ public class SpiderRobot extends Mob {
                 } else {
                     my -= 0.002;
                 }
-            } else {
-                LocalPlayer pp = this.getRiderPlayerClient();
-                if (pp != null) {
-                pp.connection.send(new ServerboundMovePlayerPacket.Rot(pp.getYRot(), pp.getXRot(), pp.onGround()));
-                pp.connection.send(new ServerboundPlayerInputPacket(pp.xxa, pp.zza, pp.input.jumping, pp.input.shiftKeyDown));
-                }
             }
-            if (this.boatPosRotationIncrements > 0) {
+            if (this.boatPosRotationIncrements > 0 && !this.isControlledByLocalInstance()) {
                 double d4 = this.getX() + (this.boatX - this.getX()) / (double)this.boatPosRotationIncrements;
                 double d5 = this.getY() + (this.boatY - this.getY()) / (double)this.boatPosRotationIncrements;
                 double d11 = this.getZ() + (this.boatZ - this.getZ()) / (double)this.boatPosRotationIncrements;
@@ -837,6 +1121,11 @@ public class SpiderRobot extends Mob {
                 this.setYRot((float) ((double) this.getYRot() + d10 / (double) this.boatPosRotationIncrements));
                 this.setRot(this.getYRot(), this.getXRot());
                 --this.boatPosRotationIncrements;
+            } else if (this.isVehicle() && this.isControlledByLocalInstance()) {
+                this.move(MoverType.SELF, new Vec3(mx, my, mz));
+                mx *= 0.99;
+                my *= 0.95;
+                mz *= 0.99;
             } else {
                 double d4 = this.getX() + mx;
                 double d5 = this.getY() + my;
@@ -854,7 +1143,6 @@ public class SpiderRobot extends Mob {
                 bid = this.level().getBlockState(new BlockPos((int)this.getX(), (int)((float)this.getY() - (float)gh), (int)this.getZ())).getBlock();
                 if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.LAVA) {
                     my += 0.06;
-                    this.setPos(this.getX(), this.getY() + 0.03, this.getZ());
                 } else {
                     my -= 0.02;
                 }
@@ -871,10 +1159,8 @@ public class SpiderRobot extends Mob {
                     my -= 0.002;
                 }
             }
-            Player pp = this.getRiderPlayer();
-            if (pp != null && pp.isShiftKeyDown()) {
-                pp.stopRiding();
-                return;
+            if (this.getControllingPassenger() != null && this.getControllingPassenger().isRemoved()) {
+                this.ejectPassengers();
             }
             if (this.isVehicle()) {
                 obstruction_factor = 0.0;
@@ -894,7 +1180,6 @@ public class SpiderRobot extends Mob {
                     }
                 }
                 my += obstruction_factor * 0.05;
-                this.setPos(this.getX(), this.getY() + obstruction_factor * 0.05, this.getZ());
                 this.move(MoverType.SELF, new Vec3(mx, my, mz));
                 mx *= 0.98;
                 my *= 0.98;
@@ -905,11 +1190,8 @@ public class SpiderRobot extends Mob {
                 my *= 0.98;
                 mz *= 0.8;
             }
-            if (this.getControllingPassenger() != null && this.getControllingPassenger().isRemoved()) {
-                this.ejectPassengers();
-            }
         }
-    
+
         this.setDeltaMovement(mx, my, mz);
     }
 

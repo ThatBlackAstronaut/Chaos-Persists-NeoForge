@@ -12,6 +12,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 
 public class ItemSquidZooka extends Item {
 
@@ -92,6 +93,11 @@ public class ItemSquidZooka extends Item {
         stack.hurtAndBreak(1, player, p -> p.broadcastBreakEvent(hand));
 
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+    }
+
+    @Override
+    public void initializeClient(java.util.function.Consumer<IClientItemExtensions> consumer) {
+        com.astryxion.chaospersists.client.BigWeaponClientExtensions.register(consumer, this);
     }
 
     public static Entity spawnCreature(Level level, double x, double y, double z) {

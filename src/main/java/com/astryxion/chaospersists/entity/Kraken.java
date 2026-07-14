@@ -28,7 +28,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Squid;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -76,7 +76,7 @@ public class Kraken extends Monster {
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
         this.goalSelector.addGoal(1, new LookAtPlayerGoal(this, Player.class, 8.0f));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
         this.setNoGravity(true);
         this.applyKrakenDimensions();
     }
@@ -1168,7 +1168,8 @@ private void dropFewItems() {
         if (this.getY() > 256.0 && !this.isPersistenceRequired()) {
             this.discard();
         }
-    }
+        MyUtils.applyChaosFlightMovement(this);
+}
 
     private void attackWithSomething(LivingEntity par1) {
         if (this.caught != null) {
@@ -1313,8 +1314,13 @@ private void dropFewItems() {
         if (this.hurt_timer > 0) {
             return false;
         }
-        this.hurt_timer = 30;
+        if (this.isInvulnerableTo(par1DamageSource)) {
+            return false;
+        }
         ret = super.hurt(par1DamageSource, par2);
+        if (ret) {
+            this.hurt_timer = 30;
+        }
         if (this.getRandom().nextInt(2) == 1) {
             this.release = 1;
         }

@@ -42,15 +42,15 @@ public class ModelIrukandji extends EntityModel<Irukandji> {
     private static MeshDefinition createMesh() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
-        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 9).mirror().addBox(-2.0f, 0.0f, -2.0f, 4, 4, 4), PartPose.offset(0.0f, 6.0f, 0.0f));
-        root.addOrReplaceChild("t11", CubeListBuilder.create().texOffs(25, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(1.0f, 10.0f, -2.0f));
-        root.addOrReplaceChild("t12", CubeListBuilder.create().texOffs(5, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(1.0f, 17.0f, -2.0f));
-        root.addOrReplaceChild("t21", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(-2.0f, 10.0f, -2.0f));
-        root.addOrReplaceChild("t22", CubeListBuilder.create().texOffs(20, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(-2.0f, 17.0f, -2.0f));
-        root.addOrReplaceChild("t31", CubeListBuilder.create().texOffs(30, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(1.0f, 10.0f, 1.0f));
-        root.addOrReplaceChild("t32", CubeListBuilder.create().texOffs(10, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(1.0f, 17.0f, 1.0f));
-        root.addOrReplaceChild("t41", CubeListBuilder.create().texOffs(35, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(-2.0f, 10.0f, 1.0f));
-        root.addOrReplaceChild("t42", CubeListBuilder.create().texOffs(15, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(-2.0f, 17.0f, 1.0f));
+        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 9).addBox(-2.0f, 0.0f, -2.0f, 4, 4, 4), PartPose.offset(0.0f, 6.0f, 0.0f));
+        root.addOrReplaceChild("t11", CubeListBuilder.create().texOffs(25, 0).addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(1.0f, 10.0f, -2.0f));
+        root.addOrReplaceChild("t12", CubeListBuilder.create().texOffs(5, 0).addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(1.0f, 17.0f, -2.0f));
+        root.addOrReplaceChild("t21", CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(-2.0f, 10.0f, -2.0f));
+        root.addOrReplaceChild("t22", CubeListBuilder.create().texOffs(20, 0).addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(-2.0f, 17.0f, -2.0f));
+        root.addOrReplaceChild("t31", CubeListBuilder.create().texOffs(30, 0).addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(1.0f, 10.0f, 1.0f));
+        root.addOrReplaceChild("t32", CubeListBuilder.create().texOffs(10, 0).addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(1.0f, 17.0f, 1.0f));
+        root.addOrReplaceChild("t41", CubeListBuilder.create().texOffs(35, 0).addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(-2.0f, 10.0f, 1.0f));
+        root.addOrReplaceChild("t42", CubeListBuilder.create().texOffs(15, 0).addBox(0.0f, 0.0f, 0.0f, 1, 7, 1), PartPose.offset(-2.0f, 17.0f, 1.0f));
         return mesh;
     }
 

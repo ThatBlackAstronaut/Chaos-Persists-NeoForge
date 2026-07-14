@@ -40,14 +40,14 @@ public class ModelWormMedium extends EntityModel<WormMedium> {
     private static MeshDefinition createMesh() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
-        root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(24, 0).mirror().addBox(-1.5f, -12.0f, -1.5f, 3, 12, 3), PartPose.offset(0.0f, 1.0f, 0.0f));
-        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(37, 0).mirror().addBox(-1.5f, -12.0f, -1.5f, 3, 12, 3), PartPose.offset(0.0f, 13.0f, 0.0f));
-        root.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(50, 0).mirror().addBox(-1.5f, -12.0f, -1.5f, 3, 12, 3), PartPose.offset(0.0f, 25.0f, 0.0f));
-        root.addOrReplaceChild("tooth1", CubeListBuilder.create().texOffs(15, 0).mirror().addBox(-0.5f, -3.0f, -0.5f, 1, 3, 1), PartPose.offset(1.0f, -11.0f, 0.0f));
-        root.addOrReplaceChild("tooth2", CubeListBuilder.create().texOffs(5, 0).mirror().addBox(-0.5f, -3.0f, -0.5f, 1, 3, 1), PartPose.offset(-1.0f, -11.0f, 0.0f));
-        root.addOrReplaceChild("tooth3", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-0.5f, -3.0f, -0.5f, 1, 3, 1), PartPose.offset(0.0f, -11.0f, 1.0f));
-        root.addOrReplaceChild("tooth4", CubeListBuilder.create().texOffs(10, 0).mirror().addBox(-0.5f, -3.0f, -0.5f, 1, 3, 1), PartPose.offset(0.0f, -11.0f, -1.0f));
-        root.addOrReplaceChild("head2", CubeListBuilder.create().texOffs(0, 6).mirror().addBox(-2.0f, -8.0f, -2.0f, 4, 8, 4), PartPose.offset(0.0f, 0.0f, 0.0f));
+        root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(24, 0).addBox(-1.5f, -12.0f, -1.5f, 3, 12, 3), PartPose.offset(0.0f, 1.0f, 0.0f));
+        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(37, 0).addBox(-1.5f, -12.0f, -1.5f, 3, 12, 3), PartPose.offset(0.0f, 13.0f, 0.0f));
+        root.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(50, 0).addBox(-1.5f, -12.0f, -1.5f, 3, 12, 3), PartPose.offset(0.0f, 25.0f, 0.0f));
+        root.addOrReplaceChild("tooth1", CubeListBuilder.create().texOffs(15, 0).addBox(-0.5f, -3.0f, -0.5f, 1, 3, 1), PartPose.offset(1.0f, -11.0f, 0.0f));
+        root.addOrReplaceChild("tooth2", CubeListBuilder.create().texOffs(5, 0).addBox(-0.5f, -3.0f, -0.5f, 1, 3, 1), PartPose.offset(-1.0f, -11.0f, 0.0f));
+        root.addOrReplaceChild("tooth3", CubeListBuilder.create().texOffs(0, 0).addBox(-0.5f, -3.0f, -0.5f, 1, 3, 1), PartPose.offset(0.0f, -11.0f, 1.0f));
+        root.addOrReplaceChild("tooth4", CubeListBuilder.create().texOffs(10, 0).addBox(-0.5f, -3.0f, -0.5f, 1, 3, 1), PartPose.offset(0.0f, -11.0f, -1.0f));
+        root.addOrReplaceChild("head2", CubeListBuilder.create().texOffs(0, 6).addBox(-2.0f, -8.0f, -2.0f, 4, 8, 4), PartPose.offset(0.0f, 0.0f, 0.0f));
         return mesh;
     }
 

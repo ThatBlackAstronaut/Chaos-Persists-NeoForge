@@ -10,7 +10,7 @@ public class MantisClaw extends SwordItem {
     private static final int WEAPON_DAMAGE = 10;
 
     public MantisClaw(Tier tier) {
-        super(tier, (int)(WEAPON_DAMAGE - tier.getAttackDamageBonus()), -2.4f, new Properties().stacksTo(1).durability(1000));
+        super(tier, ChaosWeaponDamage.modifierFor(tier, WEAPON_DAMAGE), -2.4f, new Properties().stacksTo(1).durability(1000));
     }
 
     public String getMaterialName() {

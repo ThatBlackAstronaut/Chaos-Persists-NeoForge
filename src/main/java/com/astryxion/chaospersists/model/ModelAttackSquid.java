@@ -44,15 +44,15 @@ public class ModelAttackSquid extends EntityModel<AttackSquid> {
     private static MeshDefinition createMesh() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
-        root.addOrReplaceChild("tent1", CubeListBuilder.create().texOffs(0, 18).mirror().addBox(-1.0f, 0.0f, -1.0f, 2, 9, 2), PartPose.offsetAndRotation(5.0f, 15.0f, -1.0f, -0.9250245f, -1.745329f, 0.0f));
-        root.addOrReplaceChild("tent2", CubeListBuilder.create().texOffs(0, 18).mirror().addBox(-8.0f, -1.0f, -1.0f, 8, 2, 2), PartPose.offsetAndRotation(-2.0f, 15.0f, -3.0f, -0.1745329f, -0.6632251f, -0.2443461f));
-        root.addOrReplaceChild("tent3", CubeListBuilder.create().texOffs(0, 18).mirror().addBox(-1.0f, 0.0f, -1.0f, 2, 10, 2), PartPose.offsetAndRotation(1.0f, 15.0f, -4.0f, -1.134464f, 0.3316126f, 0.0f));
-        root.addOrReplaceChild("tent4", CubeListBuilder.create().texOffs(0, 18).mirror().addBox(-1.0f, 0.0f, -1.0f, 2, 10, 2), PartPose.offsetAndRotation(-3.0f, 15.0f, -1.0f, 0.5585054f, -1.692969f, 0.0f));
-        root.addOrReplaceChild("tent5", CubeListBuilder.create().texOffs(0, 18).mirror().addBox(-1.0f, 0.0f, -1.0f, 2, 10, 2), PartPose.offsetAndRotation(1.0f, 15.0f, 3.0f, 0.5410521f, 0.2268928f, 0.0f));
-        root.addOrReplaceChild("tent6", CubeListBuilder.create().texOffs(0, 18).mirror().addBox(-1.0f, -1.0f, 0.0f, 2, 2, 8), PartPose.offsetAndRotation(-2.0f, 15.0f, 2.0f, -0.418879f, -0.6806784f, 0.0f));
-        root.addOrReplaceChild("tent7", CubeListBuilder.create().texOffs(0, 18).mirror().addBox(0.0f, -1.0f, -1.0f, 8, 2, 2), PartPose.offsetAndRotation(3.0f, 15.0f, 1.0f, -0.1919862f, -0.6632251f, 0.418879f));
-        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-4.0f, -10.0f, -4.0f, 8, 10, 8), PartPose.offsetAndRotation(1.0f, 16.0f, -1.0f, -0.1919862f, -0.6806784f, 0.0f));
-        root.addOrReplaceChild("tent8", CubeListBuilder.create().texOffs(0, 18).mirror().addBox(-1.0f, -1.0f, -8.0f, 2, 2, 8), PartPose.offsetAndRotation(3.0f, 15.0f, -4.0f, 0.1919862f, -0.6806784f, 0.0f));
+        root.addOrReplaceChild("tent1", CubeListBuilder.create().texOffs(0, 18).addBox(-1.0f, 0.0f, -1.0f, 2, 9, 2), PartPose.offsetAndRotation(5.0f, 15.0f, -1.0f, -0.9250245f, -1.745329f, 0.0f));
+        root.addOrReplaceChild("tent2", CubeListBuilder.create().texOffs(0, 18).addBox(-8.0f, -1.0f, -1.0f, 8, 2, 2), PartPose.offsetAndRotation(-2.0f, 15.0f, -3.0f, -0.1745329f, -0.6632251f, -0.2443461f));
+        root.addOrReplaceChild("tent3", CubeListBuilder.create().texOffs(0, 18).addBox(-1.0f, 0.0f, -1.0f, 2, 10, 2), PartPose.offsetAndRotation(1.0f, 15.0f, -4.0f, -1.134464f, 0.3316126f, 0.0f));
+        root.addOrReplaceChild("tent4", CubeListBuilder.create().texOffs(0, 18).addBox(-1.0f, 0.0f, -1.0f, 2, 10, 2), PartPose.offsetAndRotation(-3.0f, 15.0f, -1.0f, 0.5585054f, -1.692969f, 0.0f));
+        root.addOrReplaceChild("tent5", CubeListBuilder.create().texOffs(0, 18).addBox(-1.0f, 0.0f, -1.0f, 2, 10, 2), PartPose.offsetAndRotation(1.0f, 15.0f, 3.0f, 0.5410521f, 0.2268928f, 0.0f));
+        root.addOrReplaceChild("tent6", CubeListBuilder.create().texOffs(0, 18).addBox(-1.0f, -1.0f, 0.0f, 2, 2, 8), PartPose.offsetAndRotation(-2.0f, 15.0f, 2.0f, -0.418879f, -0.6806784f, 0.0f));
+        root.addOrReplaceChild("tent7", CubeListBuilder.create().texOffs(0, 18).addBox(0.0f, -1.0f, -1.0f, 8, 2, 2), PartPose.offsetAndRotation(3.0f, 15.0f, 1.0f, -0.1919862f, -0.6632251f, 0.418879f));
+        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0f, -10.0f, -4.0f, 8, 10, 8), PartPose.offsetAndRotation(1.0f, 16.0f, -1.0f, -0.1919862f, -0.6806784f, 0.0f));
+        root.addOrReplaceChild("tent8", CubeListBuilder.create().texOffs(0, 18).addBox(-1.0f, -1.0f, -8.0f, 2, 2, 8), PartPose.offsetAndRotation(3.0f, 15.0f, -4.0f, 0.1919862f, -0.6806784f, 0.0f));
         return mesh;
     }
 

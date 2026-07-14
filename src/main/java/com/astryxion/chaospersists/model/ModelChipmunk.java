@@ -65,75 +65,75 @@ public class ModelChipmunk extends EntityModel<Chipmunk> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "cheek2",
-                CubeListBuilder.create().texOffs(14, 0).mirror().addBox(0.5f, -1.5f, -3.5f, 2.0f, 2.0f, 2.0f),
+                CubeListBuilder.create().texOffs(14, 0).addBox(0.5f, -1.5f, -3.5f, 2.0f, 2.0f, 2.0f),
                 PartPose.offset(0.0f, 20.0f, -3.0f));
         root.addOrReplaceChild(
                 "leg1",
-                CubeListBuilder.create().texOffs(22, 7).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(22, 7).addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f),
                 PartPose.offset(-2.0f, 23.0f, -4.0f));
         root.addOrReplaceChild(
                 "leg2",
-                CubeListBuilder.create().texOffs(22, 9).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(22, 9).addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f),
                 PartPose.offset(1.0f, 23.0f, -4.0f));
         root.addOrReplaceChild(
                 "leg3",
-                CubeListBuilder.create().texOffs(22, 11).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(22, 11).addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f),
                 PartPose.offset(1.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "leg4",
-                CubeListBuilder.create().texOffs(22, 13).mirror().addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(22, 13).addBox(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f),
                 PartPose.offset(-2.0f, 23.0f, 0.0f));
         root.addOrReplaceChild(
                 "tail2",
-                CubeListBuilder.create().texOffs(28, 15).mirror().addBox(-0.5f, 1.0f, 2.5f, 3.0f, 3.0f, 4.0f),
+                CubeListBuilder.create().texOffs(28, 15).addBox(-0.5f, 1.0f, 2.5f, 3.0f, 3.0f, 4.0f),
                 PartPose.offsetAndRotation(-1.0f, 20.0f, 1.0f, 0.7662421f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "neck",
-                CubeListBuilder.create().texOffs(26, 9).mirror().addBox(0.0f, 0.0f, 0.0f, 3.0f, 2.0f, 4.0f),
+                CubeListBuilder.create().texOffs(26, 9).addBox(0.0f, 0.0f, 0.0f, 3.0f, 2.0f, 4.0f),
                 PartPose.offsetAndRotation(-1.5f, 22.0f, -5.0f, 1.570796f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "head",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-2.0f, -3.0f, 0.0f, 4.0f, 4.0f, 3.0f),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-2.0f, -3.0f, 0.0f, 4.0f, 4.0f, 3.0f),
                 PartPose.offsetAndRotation(0.0f, 20.0f, -3.0f, 1.570796f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "mouth_under",
-                CubeListBuilder.create().texOffs(20, 4).mirror().addBox(-1.0f, -1.9f, -3.8f, 2.0f, 2.0f, 1.0f),
+                CubeListBuilder.create().texOffs(20, 4).addBox(-1.0f, -1.9f, -3.8f, 2.0f, 2.0f, 1.0f),
                 PartPose.offset(0.0f, 20.0f, -3.0f));
         root.addOrReplaceChild(
                 "cheek1",
-                CubeListBuilder.create().texOffs(22, 0).mirror().addBox(-2.5f, -1.5f, -3.5f, 2.0f, 2.0f, 2.0f),
+                CubeListBuilder.create().texOffs(22, 0).addBox(-2.5f, -1.5f, -3.5f, 2.0f, 2.0f, 2.0f),
                 PartPose.offset(0.0f, 20.0f, -3.0f));
         root.addOrReplaceChild(
                 "ear2",
-                CubeListBuilder.create().texOffs(18, 11).mirror().addBox(1.0f, 0.0f, 3.0f, 1.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(18, 11).addBox(1.0f, 0.0f, 3.0f, 1.0f, 1.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 20.0f, -3.0f, 1.570796f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "nose",
-                CubeListBuilder.create().texOffs(18, 7).mirror().addBox(-0.5f, -2.0f, -4.2f, 1.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(18, 7).addBox(-0.5f, -2.0f, -4.2f, 1.0f, 1.0f, 1.0f),
                 PartPose.offset(0.0f, 20.0f, -3.0f));
         root.addOrReplaceChild(
                 "ear1",
-                CubeListBuilder.create().texOffs(18, 9).mirror().addBox(-2.0f, 0.0f, 3.0f, 1.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(18, 9).addBox(-2.0f, 0.0f, 3.0f, 1.0f, 1.0f, 1.0f),
                 PartPose.offsetAndRotation(0.0f, 20.0f, -3.0f, 1.570796f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "body",
-                CubeListBuilder.create().texOffs(0, 7).mirror().addBox(0.0f, 0.0f, 0.0f, 4.0f, 3.0f, 5.0f),
+                CubeListBuilder.create().texOffs(0, 7).addBox(0.0f, 0.0f, 0.0f, 4.0f, 3.0f, 5.0f),
                 PartPose.offset(-2.0f, 20.0f, -4.0f));
         root.addOrReplaceChild(
                 "body_tail",
-                CubeListBuilder.create().texOffs(0, 15).mirror().addBox(0.0f, 0.0f, 0.0f, 5.0f, 4.0f, 3.0f),
+                CubeListBuilder.create().texOffs(0, 15).addBox(0.0f, 0.0f, 0.0f, 5.0f, 4.0f, 3.0f),
                 PartPose.offset(-2.5f, 19.0f, -1.0f));
         root.addOrReplaceChild(
                 "tail1",
-                CubeListBuilder.create().texOffs(16, 15).mirror().addBox(0.0f, 0.0f, 0.0f, 2.0f, 2.0f, 4.0f),
+                CubeListBuilder.create().texOffs(16, 15).addBox(0.0f, 0.0f, 0.0f, 2.0f, 2.0f, 4.0f),
                 PartPose.offsetAndRotation(-1.0f, 20.0f, 1.0f, 0.3064968f, 0.0f, 0.0f));
         root.addOrReplaceChild(
                 "hat1",
-                CubeListBuilder.create().texOffs(40, 0).mirror().addBox(-2.5f, -4.0f, -4.0f, 5.0f, 1.0f, 5.0f),
+                CubeListBuilder.create().texOffs(40, 0).addBox(-2.5f, -4.0f, -4.0f, 5.0f, 1.0f, 5.0f),
                 PartPose.offset(0.0f, 20.0f, -3.0f));
         root.addOrReplaceChild(
                 "hat2",
-                CubeListBuilder.create().texOffs(40, 0).mirror().addBox(-2.0f, -6.0f, -3.0f, 4.0f, 2.0f, 4.0f),
+                CubeListBuilder.create().texOffs(40, 0).addBox(-2.0f, -6.0f, -3.0f, 4.0f, 2.0f, 4.0f),
                 PartPose.offset(0.0f, 20.0f, -3.0f));
         return mesh;
     }

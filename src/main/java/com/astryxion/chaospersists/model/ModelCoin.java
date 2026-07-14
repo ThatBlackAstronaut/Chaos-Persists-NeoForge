@@ -31,7 +31,7 @@ public class ModelCoin extends EntityModel<Coin> {
         PartDefinition partdefinition = meshdefinition.getRoot();
         partdefinition.addOrReplaceChild(
                 "Shape1",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-128.0f, -128.0f, 0.0f, 256, 256, 1),
+                CubeListBuilder.create().texOffs(0, 0).addBox(-128.0f, -128.0f, 0.0f, 256, 256, 1),
                 PartPose.offsetAndRotation(0.0f, -109.0f, 0.0f, 0.0f, 0.0f, 0.0f));
         return meshdefinition;
     }

@@ -16,10 +16,14 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 
 public class UltimateAxe extends AxeItem {
-    private static final int WEAPON_DAMAGE = 15;
+    private static final int WEAPON_DAMAGE = 39;
 
     public UltimateAxe(Tier tier) {
-        super(tier, 8.0f + tier.getAttackDamageBonus(), -3.0f, new Properties().stacksTo(1).durability(3000));
+        super(
+                tier,
+                ChaosWeaponDamage.modifierFor(tier, WEAPON_DAMAGE),
+                -3.0f,
+                new Properties().stacksTo(1).durability(3000));
     }
 
     @Override

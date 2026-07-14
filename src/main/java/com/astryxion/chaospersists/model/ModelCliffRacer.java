@@ -42,14 +42,14 @@ public class ModelCliffRacer extends EntityModel<CliffRacer> {
     public static MeshDefinition createMesh() {
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
-        partdefinition.addOrReplaceChild("Body", CubeListBuilder.create().texOffs(0, 52).mirror().addBox(0.0f, 0.0f, 0.0f, 3, 1, 10), PartPose.offset(-1.0f, 15.0f, -4.0f));
-        partdefinition.addOrReplaceChild("Fins", CubeListBuilder.create().texOffs(0, 40).mirror().addBox(0.0f, -4.0f, 0.0f, 1, 6, 3), PartPose.offset(0.0f, 15.0f, -1.0f));
-        partdefinition.addOrReplaceChild("LWing", CubeListBuilder.create().texOffs(0, 31).mirror().addBox(0.0f, 0.0f, 0.0f, 7, 1, 6), PartPose.offset(2.0f, 15.0f, -2.0f));
-        partdefinition.addOrReplaceChild("RWing", CubeListBuilder.create().texOffs(39, 0).mirror().addBox(-7.0f, 0.0f, 0.0f, 7, 1, 6), PartPose.offset(-1.0f, 15.0f, -2.0f));
-        partdefinition.addOrReplaceChild("Tail", CubeListBuilder.create().texOffs(0, 16).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 1, 9), PartPose.offset(0.0f, 15.0f, 6.0f));
-        partdefinition.addOrReplaceChild("TailEnd", CubeListBuilder.create().texOffs(0, 10).mirror().addBox(0.0f, -1.0f, 9.0f, 2, 2, 2), PartPose.offset(-0.5f, 15.0f, 6.0f));
-        partdefinition.addOrReplaceChild("Head", CubeListBuilder.create().texOffs(28, 21).mirror().addBox(0.0f, 0.0f, 0.0f, 2, 2, 2), PartPose.offset(-0.5f, 14.0f, -6.0f));
-        partdefinition.addOrReplaceChild("Beak", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 1, 2), PartPose.offset(0.0f, 14.5f, -8.0f));
+        partdefinition.addOrReplaceChild("Body", CubeListBuilder.create().texOffs(0, 52).addBox(0.0f, 0.0f, 0.0f, 3, 1, 10), PartPose.offset(-1.0f, 15.0f, -4.0f));
+        partdefinition.addOrReplaceChild("Fins", CubeListBuilder.create().texOffs(0, 40).addBox(0.0f, -4.0f, 0.0f, 1, 6, 3), PartPose.offset(0.0f, 15.0f, -1.0f));
+        partdefinition.addOrReplaceChild("LWing", CubeListBuilder.create().texOffs(0, 31).addBox(0.0f, 0.0f, 0.0f, 7, 1, 6), PartPose.offset(2.0f, 15.0f, -2.0f));
+        partdefinition.addOrReplaceChild("RWing", CubeListBuilder.create().texOffs(39, 0).addBox(-7.0f, 0.0f, 0.0f, 7, 1, 6), PartPose.offset(-1.0f, 15.0f, -2.0f));
+        partdefinition.addOrReplaceChild("Tail", CubeListBuilder.create().texOffs(0, 16).addBox(0.0f, 0.0f, 0.0f, 1, 1, 9), PartPose.offset(0.0f, 15.0f, 6.0f));
+        partdefinition.addOrReplaceChild("TailEnd", CubeListBuilder.create().texOffs(0, 10).addBox(0.0f, -1.0f, 9.0f, 2, 2, 2), PartPose.offset(-0.5f, 15.0f, 6.0f));
+        partdefinition.addOrReplaceChild("Head", CubeListBuilder.create().texOffs(28, 21).addBox(0.0f, 0.0f, 0.0f, 2, 2, 2), PartPose.offset(-0.5f, 14.0f, -6.0f));
+        partdefinition.addOrReplaceChild("Beak", CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, 0.0f, 0.0f, 1, 1, 2), PartPose.offset(0.0f, 14.5f, -8.0f));
         return meshdefinition;
     }
 

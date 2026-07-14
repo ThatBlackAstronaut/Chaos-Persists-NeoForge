@@ -10,12 +10,12 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 
 public class EmeraldPickaxe extends PickaxeItem {
-    private static final int WEAPON_DAMAGE = 10;
+    private static final int WEAPON_DAMAGE = 8;
 
     public EmeraldPickaxe(Tier tier) {
         super(
                 tier,
-                (int)(WEAPON_DAMAGE - tier.getAttackDamageBonus()),
+                ChaosWeaponDamage.modifierFor(tier, WEAPON_DAMAGE),
                 -2.8f,
                 new Properties().stacksTo(1).durability(1300));
     }

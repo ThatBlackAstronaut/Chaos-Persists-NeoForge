@@ -52,20 +52,20 @@ public class ModelBrutalfly extends EntityModel<Brutalfly> {
     public static MeshDefinition createMesh() {
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
-        partdefinition.addOrReplaceChild("body", CubeListBuilder.create().texOffs(21, 19).mirror().addBox(0.0f, 0.0f, -4.0f, 1, 1, 8), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("leftwing", CubeListBuilder.create().texOffs(43, 24).mirror().addBox(0.0f, 0.0f, -4.0f, 1, 1, 5), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("rightwing", CubeListBuilder.create().texOffs(43, 17).mirror().addBox(-1.0f, 0.0f, -4.0f, 1, 1, 5), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("leftwing2", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(1.0f, 0.0f, -6.0f, 6, 1, 7), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("rightwing2", CubeListBuilder.create().texOffs(29, 0).mirror().addBox(-7.0f, 0.0f, -6.0f, 6, 1, 7), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("leftwing3", CubeListBuilder.create().texOffs(0, 9).mirror().addBox(0.0f, 0.0f, 1.0f, 5, 1, 5), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("rightwing3", CubeListBuilder.create().texOffs(27, 9).mirror().addBox(-5.0f, 0.0f, 1.0f, 5, 1, 5), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("head", CubeListBuilder.create().texOffs(21, 11).mirror().addBox(0.0f, 0.0f, -6.0f, 1, 1, 1), PartPose.offsetAndRotation(0.0f, 17.0f, 1.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("leftwing4", CubeListBuilder.create().texOffs(2, 24).mirror().addBox(0.0f, 0.0f, 6.0f, 2, 1, 7), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("rightwing4", CubeListBuilder.create().texOffs(2, 16).mirror().addBox(-2.0f, 0.0f, 6.0f, 2, 1, 7), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("leftwing5", CubeListBuilder.create().texOffs(21, 16).mirror().addBox(1.0f, 0.0f, -7.0f, 1, 1, 1), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("leftwing6", CubeListBuilder.create().texOffs(50, 10).mirror().addBox(7.0f, 0.0f, -6.0f, 2, 1, 1), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("rightwing5", CubeListBuilder.create().texOffs(27, 16).mirror().addBox(-2.0f, 0.0f, -7.0f, 1, 1, 1), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("rightwing6", CubeListBuilder.create().texOffs(50, 13).mirror().addBox(-9.0f, 0.0f, -6.0f, 2, 1, 1), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("body", CubeListBuilder.create().texOffs(21, 19).addBox(0.0f, 0.0f, -4.0f, 1, 1, 8), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("leftwing", CubeListBuilder.create().texOffs(43, 24).addBox(0.0f, 0.0f, -4.0f, 1, 1, 5), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("rightwing", CubeListBuilder.create().texOffs(43, 17).addBox(-1.0f, 0.0f, -4.0f, 1, 1, 5), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("leftwing2", CubeListBuilder.create().texOffs(0, 0).addBox(1.0f, 0.0f, -6.0f, 6, 1, 7), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("rightwing2", CubeListBuilder.create().texOffs(29, 0).addBox(-7.0f, 0.0f, -6.0f, 6, 1, 7), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("leftwing3", CubeListBuilder.create().texOffs(0, 9).addBox(0.0f, 0.0f, 1.0f, 5, 1, 5), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("rightwing3", CubeListBuilder.create().texOffs(27, 9).addBox(-5.0f, 0.0f, 1.0f, 5, 1, 5), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("head", CubeListBuilder.create().texOffs(21, 11).addBox(0.0f, 0.0f, -6.0f, 1, 1, 1), PartPose.offsetAndRotation(0.0f, 17.0f, 1.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("leftwing4", CubeListBuilder.create().texOffs(2, 24).addBox(0.0f, 0.0f, 6.0f, 2, 1, 7), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("rightwing4", CubeListBuilder.create().texOffs(2, 16).addBox(-2.0f, 0.0f, 6.0f, 2, 1, 7), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("leftwing5", CubeListBuilder.create().texOffs(21, 16).addBox(1.0f, 0.0f, -7.0f, 1, 1, 1), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("leftwing6", CubeListBuilder.create().texOffs(50, 10).addBox(7.0f, 0.0f, -6.0f, 2, 1, 1), PartPose.offsetAndRotation(1.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("rightwing5", CubeListBuilder.create().texOffs(27, 16).addBox(-2.0f, 0.0f, -7.0f, 1, 1, 1), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("rightwing6", CubeListBuilder.create().texOffs(50, 13).addBox(-9.0f, 0.0f, -6.0f, 2, 1, 1), PartPose.offsetAndRotation(0.0f, 17.0f, 0.0f, 0.0f, 0.0f, 0.0f));
         return meshdefinition;
     }
     @Override

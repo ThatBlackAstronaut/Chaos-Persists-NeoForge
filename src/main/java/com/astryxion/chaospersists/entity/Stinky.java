@@ -826,7 +826,8 @@ public class Stinky extends TamableAnimal {
         float var8 = Mth.wrapDegrees(var7 - this.getYRot());
         this.setZza((float) (0.75 * speed_factor));
         this.setYRot(this.getYRot() + var8 / 3.0f);
-    }
+        MyUtils.applyChaosFlightMovement(this);
+}
 
     private boolean isSuitableTarget(LivingEntity par1EntityLiving, boolean par2) {
         if (this.level().getDifficulty() == Difficulty.PEACEFUL) {

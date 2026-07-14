@@ -48,43 +48,43 @@ public class ModelButterfly extends EntityModel<EntityButterfly> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild(
                 "body",
-                CubeListBuilder.create().texOffs(21, 19).mirror().addBox(0.0f, 0.0f, -4.0f, 1.0f, 1.0f, 8.0f),
+                CubeListBuilder.create().texOffs(21, 19).addBox(0.0f, 0.0f, -4.0f, 1.0f, 1.0f, 8.0f),
                 PartPose.offset(0.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "leftwing",
-                CubeListBuilder.create().texOffs(43, 24).mirror().addBox(0.0f, 0.0f, -4.0f, 5.0f, 1.0f, 5.0f),
+                CubeListBuilder.create().texOffs(43, 24).addBox(0.0f, 0.0f, -4.0f, 5.0f, 1.0f, 5.0f),
                 PartPose.offset(1.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "rightwing",
-                CubeListBuilder.create().texOffs(43, 17).mirror().addBox(-5.0f, 0.0f, -4.0f, 5.0f, 1.0f, 5.0f),
+                CubeListBuilder.create().texOffs(43, 17).addBox(-5.0f, 0.0f, -4.0f, 5.0f, 1.0f, 5.0f),
                 PartPose.offset(0.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "leftwing2",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(1.0f, 0.0f, -6.0f, 6.0f, 1.0f, 7.0f),
+                CubeListBuilder.create().texOffs(0, 0).addBox(1.0f, 0.0f, -6.0f, 6.0f, 1.0f, 7.0f),
                 PartPose.offset(1.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "rightwing2",
-                CubeListBuilder.create().texOffs(29, 0).mirror().addBox(-7.0f, 0.0f, -6.0f, 6.0f, 1.0f, 7.0f),
+                CubeListBuilder.create().texOffs(29, 0).addBox(-7.0f, 0.0f, -6.0f, 6.0f, 1.0f, 7.0f),
                 PartPose.offset(0.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "leftwing3",
-                CubeListBuilder.create().texOffs(0, 9).mirror().addBox(0.0f, 0.0f, 1.0f, 5.0f, 1.0f, 5.0f),
+                CubeListBuilder.create().texOffs(0, 9).addBox(0.0f, 0.0f, 1.0f, 5.0f, 1.0f, 5.0f),
                 PartPose.offset(1.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "rightwing3",
-                CubeListBuilder.create().texOffs(27, 9).mirror().addBox(-5.0f, 0.0f, 1.0f, 5.0f, 1.0f, 5.0f),
+                CubeListBuilder.create().texOffs(27, 9).addBox(-5.0f, 0.0f, 1.0f, 5.0f, 1.0f, 5.0f),
                 PartPose.offset(0.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "head",
-                CubeListBuilder.create().texOffs(21, 11).mirror().addBox(0.0f, 0.0f, -6.0f, 1.0f, 1.0f, 1.0f),
+                CubeListBuilder.create().texOffs(21, 11).addBox(0.0f, 0.0f, -6.0f, 1.0f, 1.0f, 1.0f),
                 PartPose.offset(0.0f, 17.0f, 1.0f));
         root.addOrReplaceChild(
                 "leftwing4",
-                CubeListBuilder.create().texOffs(2, 24).mirror().addBox(0.0f, 0.0f, 6.0f, 1.0f, 1.0f, 7.0f),
+                CubeListBuilder.create().texOffs(2, 24).addBox(0.0f, 0.0f, 6.0f, 1.0f, 1.0f, 7.0f),
                 PartPose.offset(1.0f, 17.0f, 0.0f));
         root.addOrReplaceChild(
                 "rightwing4",
-                CubeListBuilder.create().texOffs(2, 16).mirror().addBox(-1.0f, 0.0f, 6.0f, 1.0f, 1.0f, 7.0f),
+                CubeListBuilder.create().texOffs(2, 16).addBox(-1.0f, 0.0f, 6.0f, 1.0f, 1.0f, 7.0f),
                 PartPose.offset(0.0f, 17.0f, 0.0f));
         return mesh;
     }

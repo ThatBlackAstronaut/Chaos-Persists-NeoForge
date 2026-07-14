@@ -52,10 +52,15 @@ public class EnumHelper {
         prot.put(ArmorItem.Type.HELMET, protection[0]);
         final SoundEvent sound = equipSound == null ? SoundEvents.ARMOR_EQUIP_IRON : equipSound;
         final String materialName = modId + ":" + name.toLowerCase(Locale.ROOT);
+        final EnumMap<ArmorItem.Type, Integer> durabilityForType = new EnumMap<>(ArmorItem.Type.class);
+        durabilityForType.put(ArmorItem.Type.BOOTS, 13);
+        durabilityForType.put(ArmorItem.Type.LEGGINGS, 15);
+        durabilityForType.put(ArmorItem.Type.CHESTPLATE, 16);
+        durabilityForType.put(ArmorItem.Type.HELMET, 11);
         return new ArmorMaterial() {
             @Override
             public int getDurabilityForType(ArmorItem.Type type) {
-                return durability;
+                return durabilityForType.getOrDefault(type, 1) * durability;
             }
 
             @Override

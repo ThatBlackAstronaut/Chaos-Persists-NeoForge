@@ -4,12 +4,12 @@ import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.Tier;
 
 public class EmeraldShovel extends ShovelItem {
-    private static final float WEAPON_DAMAGE = 5.0f;
+    private static final float WEAPON_DAMAGE = 7.0f;
 
     public EmeraldShovel(Tier tier) {
         super(
                 tier,
-                (int)(WEAPON_DAMAGE - tier.getAttackDamageBonus()),
+                ChaosWeaponDamage.modifierFor(tier, WEAPON_DAMAGE),
                 -3.0f,
                 new Properties().stacksTo(1).durability(1300));
     }

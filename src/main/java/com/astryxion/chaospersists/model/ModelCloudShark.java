@@ -42,14 +42,14 @@ public class ModelCloudShark extends EntityModel<CloudShark> {
     public static MeshDefinition createMesh() {
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
-        partdefinition.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 6, 8, 15), PartPose.offset(-4.0f, 11.0f, 0.0f));
-        partdefinition.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 51).mirror().addBox(-2.5f, 0.0f, -8.0f, 5, 5, 8), PartPose.offset(-1.0f, 11.0f, 0.0f));
-        partdefinition.addOrReplaceChild("jaw", CubeListBuilder.create().texOffs(42, 0).mirror().addBox(-2.5f, 0.0f, -6.0f, 5, 2, 6), PartPose.offsetAndRotation(-1.0f, 15.0f, 0.0f, 0.5056291f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("topfin", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 1, 3, 6), PartPose.offsetAndRotation(-1.5f, 11.0f, 5.0f, 0.935765f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("bbody", CubeListBuilder.create().texOffs(0, 9).mirror().addBox(-2.0f, 0.0f, 0.0f, 4, 8, 6), PartPose.offset(-1.0f, 11.0f, 15.0f));
-        partdefinition.addOrReplaceChild("fins", CubeListBuilder.create().texOffs(0, 24).mirror().addBox(0.0f, 0.0f, 0.0f, 0, 10, 10), PartPose.offsetAndRotation(-1.0f, 16.0f, 16.0f, 0.9220296f, 0.0f, 0.0f));
-        partdefinition.addOrReplaceChild("leftfin", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 0, 3, 7), PartPose.offsetAndRotation(2.0f, 16.0f, 6.0f, -0.6108652f, 1.134464f, -0.6108652f));
-        partdefinition.addOrReplaceChild("rightfin", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(0.0f, 0.0f, 0.0f, 0, 3, 7), PartPose.offsetAndRotation(-4.0f, 16.0f, 6.0f, -0.6283185f, -1.134464f, 0.6108652f));
+        partdefinition.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, 0.0f, 0.0f, 6, 8, 15), PartPose.offset(-4.0f, 11.0f, 0.0f));
+        partdefinition.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 51).addBox(-2.5f, 0.0f, -8.0f, 5, 5, 8), PartPose.offset(-1.0f, 11.0f, 0.0f));
+        partdefinition.addOrReplaceChild("jaw", CubeListBuilder.create().texOffs(42, 0).addBox(-2.5f, 0.0f, -6.0f, 5, 2, 6), PartPose.offsetAndRotation(-1.0f, 15.0f, 0.0f, 0.5056291f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("topfin", CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, 0.0f, 0.0f, 1, 3, 6), PartPose.offsetAndRotation(-1.5f, 11.0f, 5.0f, 0.935765f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("bbody", CubeListBuilder.create().texOffs(0, 9).addBox(-2.0f, 0.0f, 0.0f, 4, 8, 6), PartPose.offset(-1.0f, 11.0f, 15.0f));
+        partdefinition.addOrReplaceChild("fins", CubeListBuilder.create().texOffs(0, 24).addBox(0.0f, 0.0f, 0.0f, 0, 10, 10), PartPose.offsetAndRotation(-1.0f, 16.0f, 16.0f, 0.9220296f, 0.0f, 0.0f));
+        partdefinition.addOrReplaceChild("leftfin", CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, 0.0f, 0.0f, 0, 3, 7), PartPose.offsetAndRotation(2.0f, 16.0f, 6.0f, -0.6108652f, 1.134464f, -0.6108652f));
+        partdefinition.addOrReplaceChild("rightfin", CubeListBuilder.create().texOffs(0, 0).addBox(0.0f, 0.0f, 0.0f, 0, 3, 7), PartPose.offsetAndRotation(-4.0f, 16.0f, 6.0f, -0.6283185f, -1.134464f, 0.6108652f));
         return meshdefinition;
     }
 

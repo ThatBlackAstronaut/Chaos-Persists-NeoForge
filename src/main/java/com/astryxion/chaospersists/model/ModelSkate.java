@@ -30,9 +30,9 @@ public class ModelSkate extends EntityModel<Skate> {
     private static MeshDefinition createMesh() {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
-        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 13).mirror().addBox(-3.0f, 0.0f, -3.0f, 6, 1, 6), PartPose.offsetAndRotation(0.0f, 22.0f, 0.0f, 0.0f, 0.7853982f, 0.0f));
-        root.addOrReplaceChild("tail1", CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-0.5f, 0.0f, 0.0f, 1, 1, 11), PartPose.offset(0.0f, 22.0f, 3.0f));
-        root.addOrReplaceChild("Shape1", CubeListBuilder.create().texOffs(0, 21).mirror().addBox(-0.5f, 0.0f, 0.0f, 1, 1, 4), PartPose.offsetAndRotation(0.0f, 22.0f, 5.0f, 0.7853982f, 0.0f, 0.0f));
+        root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 13).addBox(-3.0f, 0.0f, -3.0f, 6, 1, 6), PartPose.offsetAndRotation(0.0f, 22.0f, 0.0f, 0.0f, 0.7853982f, 0.0f));
+        root.addOrReplaceChild("tail1", CubeListBuilder.create().texOffs(0, 0).addBox(-0.5f, 0.0f, 0.0f, 1, 1, 11), PartPose.offset(0.0f, 22.0f, 3.0f));
+        root.addOrReplaceChild("Shape1", CubeListBuilder.create().texOffs(0, 21).addBox(-0.5f, 0.0f, 0.0f, 1, 1, 4), PartPose.offsetAndRotation(0.0f, 22.0f, 5.0f, 0.7853982f, 0.0f, 0.0f));
         return mesh;
     }
 

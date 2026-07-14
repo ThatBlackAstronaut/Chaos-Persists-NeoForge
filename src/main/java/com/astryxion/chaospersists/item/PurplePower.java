@@ -29,7 +29,6 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
@@ -52,6 +51,7 @@ public class PurplePower extends LivingEntity {
         this.fireImmune();
         this.targetSorter = new GenericTargetSorter(this);
         this.noPhysics = true;
+        this.refreshDimensions();
     }
 
     @Override
@@ -280,22 +280,13 @@ public class PurplePower extends LivingEntity {
     }
 
     @Override
+    public boolean isPickable() {
+        return false;
+    }
+
+    @Override
     public boolean hurt(DamageSource par1DamageSource, float par2) {
-        boolean ret = false;
-        Entity e = par1DamageSource.getEntity();
-        float dm = par2;
-        if (par1DamageSource.getDirectEntity() instanceof AbstractArrow) {
-            return false;
-        }
-        if (dm > 10.0f) {
-            dm = 10.0f;
-        }
-        ret = super.hurt(par1DamageSource, dm);
-        if (e != null && this.currentFlightTarget != null) {
-            this.currentFlightTarget =
-                    new BlockPos((int) e.getX(), (int) (e.getY() + (double) (e.getBbHeight() / 2.0f)), (int) e.getZ());
-        }
-        return ret;
+        return false;
     }
 
     public boolean checkSpawnRules(net.minecraft.world.level.LevelAccessor level, net.minecraft.world.entity.MobSpawnType spawnReason) {

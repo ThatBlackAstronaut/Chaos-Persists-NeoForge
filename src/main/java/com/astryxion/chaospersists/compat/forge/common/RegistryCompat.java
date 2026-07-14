@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.TrapDoorBlock;
@@ -123,6 +124,17 @@ public final class RegistryCompat {
           .setValue(TrapDoorBlock.HALF, (meta & 8) != 0 ? Half.TOP : Half.BOTTOM)
           .setValue(TrapDoorBlock.POWERED, false)
           .setValue(BlockStateProperties.WATERLOGGED, false);
+    }
+
+    // 1.7.10 log metadata: 0/3 = Y (trunk), 1 = X, 2 = Z. 1.20 indexes states as X,Y,Z so meta 0 was sideways.
+    if (block instanceof RotatedPillarBlock) {
+      Direction.Axis axis =
+          switch (meta & 3) {
+            case 1 -> Direction.Axis.X;
+            case 2 -> Direction.Axis.Z;
+            default -> Direction.Axis.Y;
+          };
+      return block.defaultBlockState().setValue(BlockStateProperties.AXIS, axis);
     }
 
     if (meta == 0) {
