@@ -12,18 +12,28 @@ import org.joml.Vector3f;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class BlockExtremeTorch extends ChaosDirectionalTorchBlock {
+
+    /** OreSpawn 1.7.10 used light level 15; extend reach with a hidden light halo. */
+    private static final int HALO_RADIUS = 3;
+    private static final int HALO_TICK_RATE = 40;
+    private static final BlockState HALO_LIGHT =
+            Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15);
 
     private static final DustParticleOptions RED_DUST =
             new DustParticleOptions(new Vector3f(1.0f, 0.0f, 0.0f), 1.0f);
@@ -32,6 +42,81 @@ public class BlockExtremeTorch extends ChaosDirectionalTorchBlock {
         super(
                 net.minecraft.world.level.block.Block.Properties.of().noCollission().instabreak().lightLevel(state -> 15).sound(net.minecraft.world.level.block.SoundType.WOOD),
                 ParticleTypes.FLAME);
+    }
+
+    @Override
+    public int getLightEmission(BlockState state, BlockGetter level, BlockPos pos) {
+        return 15;
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        if (!level.isClientSide) {
+            maintainLightHalo(level, pos);
+            level.scheduleTick(pos, this, HALO_TICK_RATE);
+        }
+    }
+
+    @Override
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (level.getBlockState(pos).is(this)) {
+            maintainLightHalo(level, pos);
+            level.scheduleTick(pos, this, HALO_TICK_RATE);
+        }
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock()) && !level.isClientSide) {
+            clearLightHalo(level, pos);
+        }
+        super.onRemove(state, level, pos, newState, isMoving);
+    }
+
+    private void maintainLightHalo(LevelAccessor level, BlockPos origin) {
+        BlockPos.betweenClosedStream(
+                        origin.offset(-HALO_RADIUS, -1, -HALO_RADIUS),
+                        origin.offset(HALO_RADIUS, 1, HALO_RADIUS))
+                .filter(target -> !target.equals(origin))
+                .forEach(target -> {
+                    BlockState current = level.getBlockState(target);
+                    if (current.isAir() || current.is(Blocks.LIGHT)) {
+                        if (!current.equals(HALO_LIGHT)) {
+                            level.setBlock(target, HALO_LIGHT, Block.UPDATE_CLIENTS);
+                        }
+                    }
+                });
+    }
+
+    private void clearLightHalo(Level level, BlockPos removedTorch) {
+        BlockPos.betweenClosedStream(
+                        removedTorch.offset(-HALO_RADIUS, -1, -HALO_RADIUS),
+                        removedTorch.offset(HALO_RADIUS, 1, HALO_RADIUS))
+                .forEach(target -> {
+                    if (!level.getBlockState(target).is(Blocks.LIGHT)) {
+                        return;
+                    }
+                    if (isSupportedByExtremeTorch(level, target, removedTorch)) {
+                        return;
+                    }
+                    level.removeBlock(target, false);
+                });
+    }
+
+    private boolean isSupportedByExtremeTorch(Level level, BlockPos lightPos, BlockPos ignoreTorch) {
+        BlockPos min = lightPos.offset(-HALO_RADIUS, -1, -HALO_RADIUS);
+        BlockPos max = lightPos.offset(HALO_RADIUS, 1, HALO_RADIUS);
+        for (BlockPos torchPos : BlockPos.betweenClosed(min, max)) {
+            if (torchPos.equals(ignoreTorch)) {
+                continue;
+            }
+            if (level.getBlockState(torchPos).is(this)
+                    && lightPos.distManhattan(torchPos) <= HALO_RADIUS + 1) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

@@ -10,6 +10,7 @@ import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIFollowOwner;
 import com.astryxion.chaospersists.util.MyEntityAIWander;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.RoyalPetFollowHelper;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -226,6 +227,25 @@ public class ThePrincess extends TamableAnimal {
     }
 
     @Override
+    public void setOrderedToSit(boolean orderedToSit) {
+        super.setOrderedToSit(orderedToSit);
+        this.setInSittingPose(orderedToSit);
+        if (!this.level().isClientSide) {
+            if (orderedToSit) {
+                this.setActivity(1);
+                this.setAttacking(0);
+                this.setTarget(null);
+                this.setLastHurtByMob(null);
+                MyUtils.clearChaosFlight(this);
+                this.setNoGravity(false);
+                this.noPhysics = false;
+                this.getNavigation().stop();
+                this.setDeltaMovement(Vec3.ZERO);
+            }
+        }
+    }
+
+    @Override
     public InteractionResult mobInteract(Player par1EntityPlayer, InteractionHand hand) {
         ItemStack var2 = par1EntityPlayer.getItemInHand(hand);
         if (var2.isEmpty()) {
@@ -332,13 +352,10 @@ public class ThePrincess extends TamableAnimal {
         if (this.isTame()
                 && par1EntityPlayer.distanceToSqr(this) < 16.0
                 && this.isOwnedBy(par1EntityPlayer)) {
-            if (!this.isInSittingPose()) {
-                this.setOrderedToSit(true);
-                this.setActivity(1);
-            } else {
-                this.setOrderedToSit(false);
+            if (!this.level().isClientSide) {
+                this.setOrderedToSit(!this.isOrderedToSit());
             }
-            return InteractionResult.SUCCESS;
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
         return super.mobInteract(par1EntityPlayer, hand);
     }
@@ -465,6 +482,9 @@ public class ThePrincess extends TamableAnimal {
         int i;
         super.tick();
         this.noPhysics = this.getActivity() == 2;
+        if (!this.level().isClientSide) {
+            this.setNoGravity(this.getActivity() == 2);
+        }
         if (this.getRandom().nextInt(10) == 1) {
             i = this.getRandom().nextInt(3);
             if (i == 0) {
@@ -547,6 +567,12 @@ public class ThePrincess extends TamableAnimal {
     public void aiStep() {
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
         super.aiStep();
+        if (this.isOrderedToSit() || this.isInSittingPose()) {
+            this.getNavigation().stop();
+            if (!this.level().isClientSide) {
+                this.setDeltaMovement(Vec3.ZERO);
+            }
+        }
         if (this.isInWater()) {
             this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.07, 0.0));
         }
@@ -570,9 +596,20 @@ public class ThePrincess extends TamableAnimal {
     }
 
     @Override
+    public void travel(Vec3 travelVector) {
+        if (MyUtils.usesChaosFlight(this)) {
+            return;
+        }
+        super.travel(travelVector);
+    }
+    @Override
     protected void customServerAiStep() {
         if (this.isDeadOrDying()) {
             return;
+        }
+
+        if (this.isTame() && !RoyalPetFollowHelper.isStayingPut(this)) {
+            RoyalPetFollowHelper.syncDimensionOnly(this);
         }
 
         if (this.getRandom().nextInt(200) == 1) {
@@ -746,7 +783,7 @@ public class ThePrincess extends TamableAnimal {
             this.attack_level = 1;
         }
 
-        if (!this.isInSittingPose()) {
+        if (!this.isOrderedToSit() && !this.isInSittingPose()) {
             if (this.activity == 0) {
                 this.setActivity(1);
             }
@@ -754,8 +791,14 @@ public class ThePrincess extends TamableAnimal {
             if (this.getRandom().nextInt(100) == 1) {
                 if (this.getRandom().nextInt(20) == 1) {
                     this.setActivity(2);
-                } else {
-                    this.setActivity(1);
+                } else if (this.onGround() || this.getActivity() != 2) {
+                    boolean ownerFlying =
+                            this.isTame()
+                                    && this.getOwner() instanceof Player owner
+                                    && owner.getAbilities().flying;
+                    if (!ownerFlying) {
+                        this.setActivity(1);
+                    }
                 }
             }
 
@@ -776,12 +819,6 @@ public class ThePrincess extends TamableAnimal {
             }
 
             this.doMovement();
-        } else if (this.isTame() && this.getOwner() != null) {
-            LivingEntity e = this.getOwner();
-            if (this.distanceToSqr(e) > 256.0) {
-                this.setOrderedToSit(false);
-                this.setActivity(2);
-            }
         }
 
         if (this.is_day == 0) {
@@ -925,6 +962,7 @@ public class ThePrincess extends TamableAnimal {
             this.setAttacking(0);
         }
         if (this.activity == 1) {
+            MyUtils.clearChaosFlight(this);
             return;
         }
         if (this.currentFlightTarget.distToCenterSqr(this.getX(), this.getY(), this.getZ()) < 2.1) {

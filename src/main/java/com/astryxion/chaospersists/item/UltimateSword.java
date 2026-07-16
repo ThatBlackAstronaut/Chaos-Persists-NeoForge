@@ -29,13 +29,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 
 public class UltimateSword extends SwordItem {
-    private static final int WEAPON_DAMAGE = 40;
-
     private int swingtimer = 0;
     private boolean leaf = false;
 
     public UltimateSword(Tier tier) {
-        super(tier, ChaosWeaponDamage.modifierFor(tier, WEAPON_DAMAGE), -2.4f, new Properties().stacksTo(1).durability(3000));
+        super(tier, ChaosWeaponDamage.TIER_SWORD_MODIFIER, -2.4f, new Properties().stacksTo(1).durability(3000));
     }
 
     @Override

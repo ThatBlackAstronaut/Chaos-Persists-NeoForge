@@ -43,6 +43,21 @@ public final class BigWeaponHandTransforms {
             applyThirdPersonSwordEdgeRoll(poseStack);
             applyThirdPersonHammyGripShift(poseStack, teisrScale);
         }
+        if (style == Style.SQUID_ZOOKA && !firstPerson) {
+            applyThirdPersonSquidZookaLift(poseStack, teisrScale);
+        }
+        if (style == Style.CHAINSAW && firstPerson) {
+            applyFirstPersonChainsawPose(poseStack, teisrScale);
+        }
+        if (style == Style.SQUID_ZOOKA && firstPerson) {
+            applyFirstPersonSquidZookaPose(poseStack, teisrScale, leftHand);
+        }
+        if (style == Style.CHAINSAW && !firstPerson) {
+            applyThirdPersonSwordEdgeRoll(poseStack);
+            applyThirdPersonSwordGripShift(poseStack, teisrScale);
+            poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f));
+            poseStack.translate(-0.5f * teisrScale, 0.0f, -2.5f * teisrScale);
+        }
         float modelScale = TEXEL_TO_LEGACY_UNIT * teisrScale;
         poseStack.scale(modelScale, modelScale, modelScale);
     }
@@ -74,9 +89,37 @@ public final class BigWeaponHandTransforms {
         poseStack.mulPose(Axis.ZP.rotationDegrees(lean));
     }
 
+    /** 1.12.2 {@code ChainsawItemStackRenderer#applyHandFirstPersonTransforms}. */
+    private static void applyFirstPersonChainsawPose(PoseStack poseStack, float teisrScale) {
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
+        poseStack.mulPose(Axis.XP.rotationDegrees(110.0f));
+        poseStack.translate(0.8f * teisrScale, -0.2f * teisrScale, 0.2f * teisrScale);
+    }
+
+    /**
+     * OreSpawn 1.7.10 {@code RenderSquidZooka#renderSword}: Y-30 with translate (4,2,2) at scale 0.35.
+     * 1.20.1 hand matrix needs tail flip and pitch, but Y-X-Y stacking rolls the barrel — collapse to one yaw + one pitch.
+     */
+    private static void applyFirstPersonSquidZookaPose(PoseStack poseStack, float teisrScale, boolean leftHand) {
+        float oreSpawnScale = 0.35f;
+        float modelScale = TEXEL_TO_LEGACY_UNIT * teisrScale;
+        float unit = oreSpawnScale / modelScale;
+
+        // OreSpawn uses one FP transform; 1.20.1 left-hand context mirrors the hand matrix.
+        poseStack.mulPose(Axis.YP.rotationDegrees(118.0f));
+        poseStack.mulPose(Axis.XP.rotationDegrees(20.0f));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(-6.0f));
+        poseStack.translate(6.5f * unit, 4.5f * unit, 5.5f * unit);
+    }
+
     /** Grip-only offset after battle-axe CA rotation + edge roll; keeps palm alignment on the long handle. */
     private static void applyThirdPersonHammyGripShift(PoseStack poseStack, float teisrScale) {
         poseStack.translate(0.5f * teisrScale, -10.4f * teisrScale, 0.0f);
+    }
+
+    /** CA third-person Squid Zooka sits low on the texel model; nudge up into the hand. */
+    private static void applyThirdPersonSquidZookaLift(PoseStack poseStack, float teisrScale) {
+        poseStack.translate(0.0f, 4.5f * teisrScale, 0.0f);
     }
 
     /**

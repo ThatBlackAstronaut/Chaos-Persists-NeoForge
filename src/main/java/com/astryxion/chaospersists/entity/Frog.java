@@ -49,6 +49,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 public class Frog extends Animal {
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> SINGING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Frog.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> JUMPING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Frog.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     private final GenericTargetSorter targetSorter;
     public double moveSpeed = 0.10000000149011612;
     private int singing = 0;
@@ -74,6 +76,7 @@ public class Frog extends Animal {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(SINGING, 0);
+        this.entityData.define(JUMPING, 0);
     }
 
     @Override
@@ -97,6 +100,14 @@ public class Frog extends Animal {
         this.entityData.set(SINGING, par1);
     }
 
+    public int getJumping() {
+        return this.entityData.get(JUMPING);
+    }
+
+    public void setJumping(int par1) {
+        this.entityData.set(JUMPING, par1);
+    }
+
     private void jumpAround() {
         Vec3 motion = this.getDeltaMovement();
         this.setDeltaMovement(
@@ -105,6 +116,7 @@ public class Frog extends Animal {
                 motion.z + (0.7f + Math.abs(this.getRandom().nextFloat() * 0.75f)) * Math.cos(Math.toRadians(this.getYRot())));
         this.setPos(this.getX(), this.getY() + 0.3499999940395355, this.getZ());
         this.setOnGround(false);
+        this.setJumping(30);
     }
 
     @Override
@@ -124,6 +136,14 @@ public class Frog extends Animal {
             if (this.jumpcount == 0 && this.getRandom().nextInt(70) == 1) {
                 this.jumpAround();
                 this.jumpcount = 50;
+            }
+            int jumping = this.getJumping();
+            if (jumping > 0) {
+                if (this.onGround()) {
+                    this.setJumping(0);
+                } else {
+                    this.setJumping(jumping - 1);
+                }
             }
         }
     }

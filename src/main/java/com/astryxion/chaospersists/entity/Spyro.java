@@ -588,6 +588,13 @@ public class Spyro extends TamableAnimal {
     }
 
     @Override
+    public void travel(Vec3 travelVector) {
+        if (MyUtils.usesChaosFlight(this)) {
+            return;
+        }
+        super.travel(travelVector);
+    }
+    @Override
     protected void customServerAiStep() {
         if (this.isDeadOrDying()) {
             return;

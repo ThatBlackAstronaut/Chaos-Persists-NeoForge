@@ -329,6 +329,9 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
         if (ChaosPersists.valentines_day != 0 && this.feelingBetter != 0) {
             this.refreshDimensions();
         }
+        if (this.getMainHandItem().is(Items.DIAMOND)) {
+            this.setOrderedToSit(true);
+        }
     }
 
     @Override
@@ -407,7 +410,6 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
                 this.entityData.set(VOICE_ENABLE, this.voice_enable);
                 this.entityData.set(IS_PRINCESS, this.is_princess);
                 this.entityData.set(FEELING_BETTER, this.feelingBetter);
-                this.setOrderedToSit(this.isInSittingPose());
             } else {
                 this.voice = this.getVoice();
                 this.voice_enable = this.entityData.get(VOICE_ENABLE);
@@ -420,6 +422,22 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
         }
         if (!this.level().isClientSide) {
             this.customCombatAiStep();
+        }
+        if (this.isOrderedToSit() || this.isInSittingPose()) {
+            this.getNavigation().stop();
+            this.setDeltaMovement(Vec3.ZERO);
+        }
+    }
+
+    @Override
+    public void setOrderedToSit(boolean orderedToSit) {
+        super.setOrderedToSit(orderedToSit);
+        this.setInSittingPose(orderedToSit);
+        if (!this.level().isClientSide && orderedToSit) {
+            this.getNavigation().stop();
+            this.setTarget(null);
+            this.setLastHurtByMob(null);
+            this.setDeltaMovement(Vec3.ZERO);
         }
     }
 
@@ -434,6 +452,11 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
         }
         if (this.level().getRandom().nextInt(200) == 1) {
             this.setTarget(null);
+        }
+        if (victim != null
+                && (MyUtils.isProtectedCompanion(this, victim) || !MyUtils.isHostileMobTarget(victim))) {
+            this.setTarget(null);
+            victim = null;
         }
         if (!stack.isEmpty() && !this.isInSittingPose()) {
             if (victim != null) {
@@ -833,11 +856,13 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
                     this.level().broadcastEntityEvent(this, (byte) 7);
                 }
                 ItemStack var3 = this.getMainHandItem();
-                this.setItemSlot(EquipmentSlot.MAINHAND, var2);
-                if (var2.is(Items.DIAMOND)) {
-                    this.setOrderedToSit(true);
-                } else {
-                    this.setOrderedToSit(false);
+                if (!this.level().isClientSide) {
+                    this.setItemSlot(EquipmentSlot.MAINHAND, var2);
+                    if (var2.is(Items.DIAMOND)) {
+                        this.setOrderedToSit(true);
+                    } else {
+                        this.setOrderedToSit(false);
+                    }
                 }
                 if (!var3.isEmpty()) {
                     player.setItemInHand(InteractionHand.MAIN_HAND, var3);

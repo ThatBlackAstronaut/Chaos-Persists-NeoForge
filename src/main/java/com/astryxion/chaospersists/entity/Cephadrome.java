@@ -69,7 +69,6 @@ import com.astryxion.chaospersists.entity.WaterDragon;
 import com.astryxion.chaospersists.item.ItemChaosArmor;
 import com.astryxion.chaospersists.render.RenderInfo;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
-import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
 import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
@@ -95,6 +94,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -102,7 +102,9 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
+import com.astryxion.chaospersists.util.ChaosMountHelper;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.EnderDragonPart;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -151,6 +153,10 @@ public class Cephadrome extends PathfinderMob {
     private int hit_by_player = 0;
     private int badmood = 0;
     private float moveSpeed = 0.25f;
+    private int dismountCooldown = 0;
+    private int groundWanderTicks = 0;
+    private int groundIdleTicks = 0;
+    private float groundWanderYaw = 0.0f;
 
         public Cephadrome(EntityType<? extends Cephadrome> type, Level level) {
         super(type, level);
@@ -158,10 +164,10 @@ public class Cephadrome extends PathfinderMob {
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new MyEntityAIWanderALot(this, 16, 1.0));
-        this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 9.0f));
-        this.goalSelector.addGoal(3, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(1, new LookAtPlayerGoal(this, Player.class, 9.0f));
+        this.goalSelector.addGoal(2, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new ChaosHurtByTargetGoal(this));
+        this.moveControl = new ChaosChaseMoveControl(this);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -169,11 +175,43 @@ public class Cephadrome extends PathfinderMob {
                 .add(Attributes.MAX_HEALTH, 300.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.25)
                 .add(Attributes.ATTACK_DAMAGE, 70.0)
-                .add(Attributes.ARMOR, 16.0);
+                .add(Attributes.ARMOR, 16.0)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.0);
     }
 
     public boolean shouldRiderSit() {
         return true;
+    }
+
+    @Override
+    public float getPickRadius() {
+        return 2.5f;
+    }
+
+    @Override
+    public boolean isControlledByLocalInstance() {
+        Entity rider = this.getControllingPassenger();
+        return rider instanceof Player player && player.isLocalPlayer();
+    }
+
+    private void resetClientInterpolation() {
+        this.boatPosRotationIncrements = 0;
+        this.boatX = this.getX();
+        this.boatY = this.getY();
+        this.boatZ = this.getZ();
+        this.boatYaw = this.getYRot();
+        this.boatPitch = this.getXRot();
+        this.boatYawHead = this.getYRot();
+    }
+
+    @Override
+    public void addPassenger(Entity passenger) {
+        super.addPassenger(passenger);
+        this.resetClientInterpolation();
+        if (passenger != null && this.hasPassenger(passenger)) {
+            this.setActivity(1);
+            this.positionRider(passenger, Entity::moveTo);
+        }
     }
 
     @Override
@@ -184,7 +222,7 @@ public class Cephadrome extends PathfinderMob {
 
     @Override
     public double getPassengersRidingOffset() {
-        return 2.5;
+        return 2.2;
     }
 
     @Override
@@ -203,14 +241,25 @@ public class Cephadrome extends PathfinderMob {
     @Override
     protected void removePassenger(Entity passenger) {
         super.removePassenger(passenger);
-        if (!this.level().isClientSide && this.getPassengers().isEmpty()) {
-            this.setActivity(0);
-            Vec3 dm = this.getDeltaMovement();
-            this.setDeltaMovement(dm.x, 0.0, dm.z);
+        this.resetClientInterpolation();
+        if (this.getPassengers().isEmpty()) {
             this.noPhysics = false;
             this.setNoGravity(false);
-            this.moveTo(this.getX(), this.getY(), this.getZ());
-            MyUtils.enforceDragonMountGroundSafety(this);
+            MyUtils.clearChaosFlight(this);
+            if (!this.level().isClientSide && this.getPassengers().isEmpty()) {
+                this.setActivity(0);
+                this.dismountCooldown = ChaosMountHelper.GROUND_DISMOUNT_COOLDOWN_TICKS;
+                this.getNavigation().stop();
+                this.setNoGravity(false);
+                this.noPhysics = false;
+                MyUtils.clearChaosFlight(this);
+                if (this.lacksGroundSupport()) {
+                    Vec3 motion = this.getDeltaMovement();
+                    this.setDeltaMovement(motion.x * 0.5, -0.55, motion.z * 0.5);
+                } else {
+                    ChaosMountHelper.finishDismountLanding(this);
+                }
+            }
         }
     }
 
@@ -225,7 +274,10 @@ public class Cephadrome extends PathfinderMob {
         double mx = dm.x;
         double my = dm.y;
         double mz = dm.z;
-        if (this.isVehicle() && this.getControllingPassenger() instanceof Player && this.getActivity() != 0) {
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player) {
+            if (!this.level().isClientSide && this.getActivity() == 0) {
+                this.setActivity(1);
+            }
             Player pp = (Player)this.getControllingPassenger();
             if (pp.isDeadOrDying()) {
                 this.ejectPassengers();
@@ -234,6 +286,11 @@ public class Cephadrome extends PathfinderMob {
                 return;
             }
             this.setNoGravity(true);
+            boolean riderJumping =
+                    pp instanceof LocalPlayer lp && lp.input.jumping
+                            || ChaosPersists.flyup_keystate != 0;
+            boolean riderDescending =
+                    pp instanceof LocalPlayer lp && lp.input.shiftKeyDown;
             double obstruction_factor = 0.0;
             double relative_g = 0.0;
             double max_speed = 1.15;
@@ -264,7 +321,7 @@ public class Cephadrome extends PathfinderMob {
             if (!ground.isAir()) {
                 my += 0.07;
                 this.setPos(this.getX(), this.getY() + 0.1, this.getZ());
-            } else {
+            } else if (!riderJumping && ChaosPersists.flyup_keystate == 0) {
                 my -= 0.018;
             }
             obstruction_factor = 0.0;
@@ -317,8 +374,8 @@ public class Cephadrome extends PathfinderMob {
             if (relative_g > 90.0) {
                 relative_g -= 180.0;
             }
-            if (velocity > 0.1) {
-                d4 = 1.5 - velocity;
+            if (velocity > 0.01) {
+                d4 = 1.85 - velocity;
                 if ((d4 = Math.abs(d4)) < 0.01) {
                     d4 = 0.01;
                 }
@@ -333,8 +390,9 @@ public class Cephadrome extends PathfinderMob {
             if (relative_g > 50.0) {
                 relative_g = 0.0;
             }
-            this.setXRot(my > 0.0 ? 360.0f - 2.0f * (float) velocity : 2.0f * (float) velocity);
+            this.setXRot(2.0f * (float) velocity);
             this.setRot(this.getYRot(), this.getXRot());
+            this.setYHeadRot(this.getYRot());
             double newvelocity = Math.sqrt(mx * mx + mz * mz);
             double rhm = Math.atan2(mz, mx);
             double rhdir = Math.toRadians((pp.getYRot() + 90.0f) % 360.0f);
@@ -342,9 +400,18 @@ public class Cephadrome extends PathfinderMob {
             pi = 3.1415926545;
             deltav = 0.0;
             double im = pp.zza;
+            if (this.level().isClientSide && pp instanceof LocalPlayer local) {
+                im = local.input.forwardImpulse;
+            }
             if (ChaosPersists.flyup_keystate != 0) {
                 my += 0.04;
                 my += velocity * 0.05;
+            } else if (riderJumping) {
+                my += 0.035;
+                my += velocity * 0.038;
+            }
+            if (riderDescending) {
+                my -= 0.06;
             }
             if ((rdv = Math.abs(rhm - rhdir) % (pi * 2.0)) > pi) {
                 rdv -= pi * 2.0;
@@ -750,6 +817,14 @@ public class Cephadrome extends PathfinderMob {
     @Override
     public boolean hurt(DamageSource par1DamageSource, float par2) {
         if (this.hurt_timer > 0) {
+            Entity attacker = par1DamageSource.getEntity();
+            if (attacker != null) {
+                double dx = attacker.getX() - this.getX();
+                double dz = attacker.getZ() - this.getZ();
+                if (dx * dx + dz * dz > 1.0E-4) {
+                    this.knockback(0.35, dx, dz);
+                }
+            }
             return false;
         }
         if (this.isInvulnerableTo(par1DamageSource)) {
@@ -760,14 +835,11 @@ public class Cephadrome extends PathfinderMob {
         }
         boolean ret = super.hurt(par1DamageSource, par2);
         if (ret) {
-            this.hurt_timer = 25;
+            this.hurt_timer = 12;
         }
         Entity e = par1DamageSource.getEntity();
         if (!this.level().isClientSide && e instanceof LivingEntity living && MyUtils.isValidAggroTarget(living)) {
             this.setTarget(living);
-            if (this.getActivity() == 0) {
-                this.getNavigation().moveTo(living, 1.2);
-            }
         }
         if (e != null && e instanceof Player && this.getHealth() < this.getMaxHealth() * 9.0f / 10.0f) {
             this.hit_by_player = 1;
@@ -781,10 +853,143 @@ public class Cephadrome extends PathfinderMob {
         return d0 * d0 + d2 * d2;
     }
 
+    /** Wide mobs fail 1-block pathfinding; steer via {@link #travel} instead. */
+    private void planGroundWander() {
+        if (!this.getPassengers().isEmpty() || this.getTarget() != null || this.getActivity() != 0) {
+            return;
+        }
+        this.getNavigation().stop();
+
+        if (this.groundWanderTicks > 0) {
+            --this.groundWanderTicks;
+            if (this.groundWanderTicks == 0) {
+                this.groundIdleTicks = 50 + this.getRandom().nextInt(70);
+                Vec3 motion = this.getDeltaMovement();
+                this.setDeltaMovement(0.0, motion.y, 0.0);
+            }
+            return;
+        }
+
+        if (this.groundIdleTicks > 0) {
+            --this.groundIdleTicks;
+            return;
+        }
+
+        if (this.getRandom().nextInt(30) != 0) {
+            return;
+        }
+
+        this.groundWanderTicks = 35 + this.getRandom().nextInt(55);
+        float angle = this.getRandom().nextFloat() * ((float) Math.PI * 2.0f);
+        this.groundWanderYaw =
+                (float) Math.toDegrees(Math.atan2(-Math.cos(angle), Math.sin(angle)));
+    }
+
+    /** Wide ceph hitbox: bypass 1-block pathfinding and slide on the ground directly. */
+    private void applyGroundWalkMovement() {
+        if (this.level().isClientSide) {
+            return;
+        }
+        if (!this.getPassengers().isEmpty() || this.getActivity() != 0 || this.getTarget() != null) {
+            return;
+        }
+        if (this.groundWanderTicks <= 0 || this.lacksGroundSupport()) {
+            return;
+        }
+        this.setYRot(Mth.rotateIfNecessary(this.getYRot(), this.groundWanderYaw, 12.0f));
+        this.yBodyRot = this.getYRot();
+        float yawRad = (float) Math.toRadians(this.getYRot());
+        double speed = (double) this.moveSpeed * 1.35;
+        double mx = -Math.sin(yawRad) * speed;
+        double mz = Math.cos(yawRad) * speed;
+        Vec3 motion = this.getDeltaMovement();
+        this.setDeltaMovement(mx, motion.y, mz);
+        this.move(MoverType.SELF, new Vec3(mx, 0.0, mz));
+    }
+
+    private void applyChaseMovement(LivingEntity target) {
+        if (this.level().isClientSide || this.lacksGroundSupport()) {
+            return;
+        }
+        double dx = target.getX() - this.getX();
+        double dz = target.getZ() - this.getZ();
+        double dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < 0.05) {
+            return;
+        }
+        double speed = (double) this.moveSpeed * 1.7;
+        double mx = (dx / dist) * speed;
+        double mz = (dz / dist) * speed;
+        this.setYRot((float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0));
+        this.yBodyRot = this.getYRot();
+        Vec3 motion = this.getDeltaMovement();
+        this.setDeltaMovement(mx, motion.y, mz);
+        this.move(MoverType.SELF, new Vec3(mx, 0.0, mz));
+    }
+
+    private void tickCombat() {
+        if (this.level().isClientSide
+                || this.getActivity() != 0
+                || this.level().getDifficulty() == Difficulty.PEACEFUL) {
+            return;
+        }
+        LivingEntity target = this.getTarget();
+        if (target != null && !target.isAlive()) {
+            this.setTarget(null);
+            MyUtils.setChaseTarget(this, null);
+            target = null;
+        }
+        if (target == null) {
+            if (this.getAttacking() != 0) {
+                this.setAttacking(0);
+            }
+            if (this.getRandom().nextInt(7) == 1) {
+                target = this.findSomethingToAttack();
+                if (target != null) {
+                    this.setTarget(target);
+                }
+            }
+            return;
+        }
+        this.getNavigation().stop();
+        MyUtils.setChaseTarget(this, target);
+        MyUtils.faceEntity(this, target, 10.0f, 10.0f);
+        this.applyChaseMovement(target);
+        this.setAttacking(1);
+        double maxdist = 6.0;
+        double reach = maxdist + (double) target.getBbWidth() / 2.0;
+        if (this.distanceToSqr(target) < reach * reach) {
+            this.doHurtTarget(target);
+        } else if (target instanceof Kraken
+                && this.getHorizontalDistanceSqToEntity(target) < reach * reach) {
+            this.doHurtTarget(target);
+        }
+    }
+
+    private boolean lacksGroundSupport() {
+        if (this.isNoGravity()) {
+            return true;
+        }
+        Level level = this.level();
+        if (level == null) {
+            return !this.onGround();
+        }
+        double minY = this.getBoundingBox().minY - 0.05;
+        double half = this.getBbWidth() * 0.35;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (double xOff : new double[] {0.0, half, -half}) {
+            for (double zOff : new double[] {0.0, half, -half}) {
+                pos.set(this.getX() + xOff, minY, this.getZ() + zOff);
+                if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     @Override
     protected void customServerAiStep() {
-        LivingEntity e = null;
-        double maxdist = 10.0;
         if (this.isDeadOrDying()) {
             return;
         }
@@ -805,34 +1010,12 @@ public class Cephadrome extends PathfinderMob {
         if (this.getRandom().nextInt(100) == 1 && this.getHealth() < (float)this.mygetMaxHealth()) {
             this.heal(2.0f);
         }
-        if (this.getActivity() == 0) {
-            super.customServerAiStep();
+        super.customServerAiStep();
+        if (this.getActivity() == 0 && this.getTarget() == null) {
+            this.planGroundWander();
+            this.applyGroundWalkMovement();
         }
-        if (this.getRandom().nextInt(7) == 1 && this.level().getDifficulty() != Difficulty.PEACEFUL) {
-            e = this.getTarget();
-            if (e != null && !e.isAlive()) {
-                this.setTarget(null);
-                e = null;
-            }
-            if (e == null) {
-                e = this.findSomethingToAttack();
-            }
-            if (e != null) {
-                if (this.getActivity() == 0) {
-                    this.getNavigation().moveTo(e, 1.7);
-                    maxdist = 6.0;
-                }
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
-                this.setAttacking(1);
-                if (this.distanceToSqr(e) < (maxdist + (double)(e.getBbWidth() / 2.0f)) * (maxdist + (double)(e.getBbWidth() / 2.0f))) {
-                    this.doHurtTarget((Entity)e);
-                } else if (e instanceof Kraken && this.getHorizontalDistanceSqToEntity((Entity)e) < (maxdist + (double)(e.getBbWidth() / 2.0f)) * (maxdist + (double)(e.getBbWidth() / 2.0f))) {
-                    this.doHurtTarget((Entity)e);
-                }
-            } else if (this.getAttacking() != 0) {
-                this.setAttacking(0);
-            }
-        }
+        this.tickCombat();
     }
 
     private boolean isSuitableTarget(LivingEntity par1EntityLiving, boolean par2) {
@@ -982,7 +1165,15 @@ public class Cephadrome extends PathfinderMob {
     @OnlyIn(Dist.CLIENT)
     @Override
     public void lerpTo(double par1, double par3, double par5, float par7, float par8, int par9, boolean p_19902_) {
-        //(par1, par3, par5, par7, par8, par9, true);
+        if (this.isControlledByLocalInstance()) {
+            this.boatPosRotationIncrements = 0;
+            return;
+        }
+        if (this.getPassengers().isEmpty()) {
+            super.lerpTo(par1, par3, par5, par7, par8, par9, p_19902_);
+            this.resetClientInterpolation();
+            return;
+        }
         this.boatPosRotationIncrements = par9;
         this.boatX = par1;
         this.boatY = par3;
@@ -995,14 +1186,31 @@ public class Cephadrome extends PathfinderMob {
     @Override
     @OnlyIn(Dist.CLIENT)
     public void lerpMotion(double par1, double par3, double par5) {
-        super.lerpMotion(par1, par3, par5);
+        if (!this.isControlledByLocalInstance()) {
+            super.lerpMotion(par1, par3, par5);
+        }
     }
 
     @Override
     public void tick() {
+        if (this.dismountCooldown > 0) {
+            --this.dismountCooldown;
+        }
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double)this.moveSpeed);
+        if (this.getPassengers().isEmpty()) {
+            this.noPhysics = false;
+            this.setNoGravity(false);
+            MyUtils.clearChaosFlight(this);
+            if (!this.level().isClientSide) {
+                this.setActivity(0);
+            }
+        } else {
+            if (!this.level().isClientSide) {
+                this.setActivity(1);
+            }
+            this.noPhysics = true;
+        }
         super.tick();
-        this.noPhysics = this.getActivity() != 0;
         if (this.getActivity() == 1) {
             ++this.wing_sound;
             if (this.wing_sound > 22) {
@@ -1021,15 +1229,41 @@ public class Cephadrome extends PathfinderMob {
                 this.wing_sound = 0;
             }
         }
-        if (ChaosPersists.PlayNicely == 0) {
-            this.wasfed = 1;
-        }
-        if (!this.level().isClientSide) {
+        if (!this.level().isClientSide && this.getPassengers().isEmpty() && !this.lacksGroundSupport()) {
             MyUtils.enforceDragonMountGroundSafety(this);
-            if (this.getPassengers().isEmpty()) {
-                this.moveTo(this.getX(), this.getY(), this.getZ());
+        }
+    }
+
+    private void tickUnmountedPhysics() {
+        if (!this.getPassengers().isEmpty()) {
+            return;
+        }
+        this.noPhysics = false;
+        if (this.isNoGravity()) {
+            this.setNoGravity(false);
+        }
+        MyUtils.clearChaosFlight(this);
+        if (this.lacksGroundSupport()) {
+            Vec3 motion = this.getDeltaMovement();
+            double vy = Math.min(motion.y - 0.08, -0.22);
+            this.setDeltaMovement(motion.x * 0.98, vy, motion.z * 0.98);
+            if (!this.level().isClientSide) {
+                this.move(MoverType.SELF, new Vec3(0.0, vy, 0.0));
             }
         }
+    }
+
+    @Override
+    protected void tickRidden(Player player, Vec3 travelVector) {
+        super.tickRidden(player, travelVector);
+        this.xxa = player.xxa;
+        this.zza = player.zza;
+        if (this.level().isClientSide && player instanceof LocalPlayer local) {
+            this.xxa = local.input.leftImpulse;
+            this.zza = local.input.forwardImpulse;
+        }
+        this.setRot(player.getYRot(), player.getXRot() * 0.5f);
+        this.yRotO = this.yBodyRot = this.yHeadRot = this.getYRot();
     }
 
     @Override
@@ -1038,18 +1272,11 @@ public class Cephadrome extends PathfinderMob {
             super.aiStep();
             return;
         }
-        super.aiStep();
-        if (this.level().isClientSide) {
-            if (this.getActivity() != 0 && !this.getPassengers().isEmpty()) {
-                Entity rider = this.getPassengers().get(0);
-                if (rider instanceof LocalPlayer pp) {
-                    pp.connection.send(new ServerboundMovePlayerPacket.Rot(pp.getYRot(), pp.getXRot(), pp.onGround()));
-                    pp.connection.send(
-                            new ServerboundPlayerInputPacket(
-                                    pp.xxa, pp.zza, pp.input.jumping, pp.input.shiftKeyDown));
-                }
-            }
-            if (this.boatPosRotationIncrements > 0 && this.getActivity() != 0) {
+        if (this.level().isClientSide && this.isVehicle() && !this.isControlledByLocalInstance()) {
+            this.xo = this.getX();
+            this.yo = this.getY();
+            this.zo = this.getZ();
+            if (this.boatPosRotationIncrements > 0) {
                 double d4 = this.getX() + (this.boatX - this.getX()) / (double) this.boatPosRotationIncrements;
                 double d5 = this.getY() + (this.boatY - this.getY()) / (double) this.boatPosRotationIncrements;
                 double d11 = this.getZ() + (this.boatZ - this.getZ()) / (double) this.boatPosRotationIncrements;
@@ -1060,14 +1287,27 @@ public class Cephadrome extends PathfinderMob {
                                         + (this.boatPitch - (double) this.getXRot())
                                                 / (double) this.boatPosRotationIncrements));
                 double d10 = Mth.wrapDegrees(this.boatYaw - (double) this.getYRot());
-                if (!this.getPassengers().isEmpty()) {
+                if (this.getControllingPassenger() != null) {
                     d10 =
                             Mth.wrapDegrees(
-                                    (double) this.getPassengers().get(0).getYRot() - (double) this.getYRot());
+                                    (double) this.getControllingPassenger().getYRot() - (double) this.getYRot());
                 }
                 this.setYRot((float) ((double) this.getYRot() + d10 / (double) this.boatPosRotationIncrements));
                 this.setRot(this.getYRot(), this.getXRot());
                 --this.boatPosRotationIncrements;
+            }
+        }
+        super.aiStep();
+        this.tickUnmountedPhysics();
+        if (this.level().isClientSide) {
+            if (this.isVehicle() && this.boatPosRotationIncrements > 0 && this.isControlledByLocalInstance()) {
+                --this.boatPosRotationIncrements;
+            }
+            if (this.getActivity() != 0 && this.getControllingPassenger() instanceof LocalPlayer pp) {
+                pp.connection.send(new ServerboundMovePlayerPacket.Rot(pp.getYRot(), pp.getXRot(), pp.onGround()));
+                pp.connection.send(
+                        new ServerboundPlayerInputPacket(
+                                pp.xxa, pp.zza, pp.input.jumping, pp.input.shiftKeyDown));
             }
         }
     }
@@ -1100,12 +1340,28 @@ public class Cephadrome extends PathfinderMob {
     @Override
     public InteractionResult mobInteract(Player par1Player, InteractionHand hand) {
         ItemStack var2 = par1Player.getItemInHand(hand);
-        if (var2.isEmpty()) {
-            var2 = ItemStack.EMPTY;
-        }
         if (!var2.isEmpty() && var2.getCount() <= 0) {
             par1Player.setItemInHand(hand, ItemStack.EMPTY);
             var2 = ItemStack.EMPTY;
+        }
+        if (var2.isEmpty()) {
+            if (this.getFirstPassenger() instanceof Player rider && rider != par1Player) {
+                return InteractionResult.SUCCESS;
+            }
+            if (ChaosMountHelper.canPlayerMount(par1Player, this, this.dismountCooldown)) {
+                if (!this.level().isClientSide) {
+                    if (this.wasfed == 0) {
+                        this.setTarget(par1Player);
+                        this.shouldattack = 1;
+                        return InteractionResult.FAIL;
+                    }
+                    par1Player.startRiding(this);
+                    ChaosMountHelper.onPlayerMounted(this);
+                    this.wasfed = 0;
+                }
+                return InteractionResult.sidedSuccess(this.level().isClientSide);
+            }
+            return InteractionResult.PASS;
         }
         if (!var2.isEmpty()
                 && (var2.is(Items.BEEF) || var2.is(Items.CHICKEN) || var2.is(Items.PORKCHOP))
@@ -1124,22 +1380,7 @@ public class Cephadrome extends PathfinderMob {
             }
             return InteractionResult.SUCCESS;
         }
-        if (this.getFirstPassenger() != null
-                && this.getFirstPassenger() instanceof Player
-                && this.getFirstPassenger() != par1Player) {
-            return InteractionResult.SUCCESS;
-        }
-        if (var2.isEmpty() && par1Player.distanceToSqr(this) < 25.0 && !this.level().isClientSide) {
-            if (this.wasfed == 0) {
-                this.getNavigation().moveTo(par1Player, 1.2);
-                this.shouldattack = 1;
-                return InteractionResult.FAIL;
-            }
-            par1Player.startRiding(this);
-            this.wasfed = 0;
-            this.setActivity(1);
-        }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.PASS;
     }
 
     public int getAttacking() {

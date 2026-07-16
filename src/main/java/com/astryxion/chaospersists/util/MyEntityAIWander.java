@@ -21,13 +21,14 @@ public class MyEntityAIWander extends Goal {
 
     @Override
     public boolean canUse() {
-        if (this.entity.getRandom().nextInt(90) != 0) {
+        if (this.entity.getRandom().nextInt(60) != 0) {
             return false;
         }
-        if (this.entity instanceof TamableAnimal tamable && tamable.isInSittingPose()) {
+        if (this.entity instanceof TamableAnimal tamable
+                && (tamable.isInSittingPose() || tamable.isOrderedToSit())) {
             return false;
         }
-        Vec3 var1 = DefaultRandomPos.getPos(this.entity, 10, 7);
+        Vec3 var1 = DefaultRandomPos.getPos(this.entity, 12, 10);
         if (var1 == null) {
             return false;
         }

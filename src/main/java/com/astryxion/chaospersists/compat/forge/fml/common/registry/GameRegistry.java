@@ -25,11 +25,12 @@ import net.minecraftforge.registries.RegisterEvent;
 @Mod.EventBusSubscriber(modid = "chaospersists", bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class GameRegistry {
 
-  static final List<RecipeEntry> PENDING_RECIPES = new ArrayList<>();
-  static final List<SmeltEntry> PENDING_SMELTING = new ArrayList<>();
+  static final List<RecipeEntry> REGISTERED_RECIPES = new ArrayList<>();
+  static final List<SmeltEntry> REGISTERED_SMELTING = new ArrayList<>();
+  static final List<RecipeEntry> PENDING_RECIPES = REGISTERED_RECIPES;
+  static final List<SmeltEntry> PENDING_SMELTING = REGISTERED_SMELTING;
   private static final List<Block> PENDING_BLOCKS = new ArrayList<>();
   private static int smeltRecipeCounter = 0;
-  private static boolean recipesInjected = false;
 
   private GameRegistry() {}
 
@@ -137,16 +138,13 @@ public final class GameRegistry {
 
     @SubscribeEvent
     public static void onServerStarting(ServerStartingEvent event) {
-      if (recipesInjected || (PENDING_RECIPES.isEmpty() && PENDING_SMELTING.isEmpty())) {
+      if (REGISTERED_RECIPES.isEmpty() && REGISTERED_SMELTING.isEmpty()) {
         return;
       }
       List<Recipe<?>> built =
           LegacyRecipeInjector.drainPending(
-              new ArrayList<>(PENDING_RECIPES), new ArrayList<>(PENDING_SMELTING));
-      PENDING_RECIPES.clear();
-      PENDING_SMELTING.clear();
+              new ArrayList<>(REGISTERED_RECIPES), new ArrayList<>(REGISTERED_SMELTING));
       LegacyRecipeInjector.inject(event.getServer().getRecipeManager(), built);
-      recipesInjected = true;
     }
   }
 

@@ -38,6 +38,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public class LeafMonster extends Monster {
     private static final EntityDataAccessor<Byte> ATTACKING =
@@ -92,17 +93,32 @@ public class LeafMonster extends Monster {
     public void tick() {
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
         super.tick();
+        int py = Mth.floor(this.getY());
+        if (this.getY() != py) {
+            this.setPos(this.getX(), py, this.getZ());
+        }
+        Vec3 motion = this.getDeltaMovement();
+        if (motion.y != 0.0) {
+            this.setDeltaMovement(motion.x, 0.0, motion.z);
+        }
         if (this.getAttacking() == 0) {
-            int px = Mth.floor(this.getX());
-            int py = Mth.floor(this.getY());
-            int pz = Mth.floor(this.getZ());
-            this.setPos(px + (this.getX() > 0.0 ? 0.5 : -0.5), py, pz + (this.getZ() > 0.0 ? 0.5 : -0.5));
+            this.snapToBlockCenter();
             this.setXRot(0.0f);
             int head = Mth.floor(this.getYRot());
             head = head / 90 * 90;
             this.setYRot(head);
             this.yHeadRot = head;
+            this.setDeltaMovement(Vec3.ZERO);
+            this.getNavigation().stop();
         }
+    }
+
+    @Override
+    public void travel(Vec3 travelVector) {
+        if (this.getAttacking() == 0) {
+            return;
+        }
+        super.travel(travelVector);
     }
 
     @Override
@@ -177,19 +193,75 @@ public class LeafMonster extends Monster {
         if (this.getRandom().nextInt(100) == 1) {
             this.setLastHurtByMob(null);
         }
-        if (this.getRandom().nextInt(4) == 1) {
-            LivingEntity e = this.findSomethingToAttack();
-            if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
-                this.setAttacking(1);
-                this.getNavigation().moveTo(e, 1.25);
-                if (this.distanceToSqr(e) < 25.0
-                        && (this.getRandom().nextInt(8) == 0 || this.getRandom().nextInt(10) == 1)) {
-                    this.doHurtTarget(e);
-                }
-            } else {
-                this.setAttacking(0);
+        LivingEntity target = this.findSomethingToAttack();
+        LivingEntity revenge = this.getLastHurtByMob();
+        if (revenge != null && this.isSuitableTarget(revenge, false)) {
+            target = revenge;
+        }
+        if (target != null) {
+            MyUtils.faceEntity(this, target, 10.0f, 10.0f);
+            this.setAttacking(1);
+            this.moveAlongGridToward(target);
+            if (this.distanceToSqr(target) < 25.0
+                    && (this.getRandom().nextInt(8) == 0 || this.getRandom().nextInt(10) == 1)) {
+                this.doHurtTarget(target);
             }
+        } else {
+            this.setAttacking(0);
+            this.getNavigation().stop();
+        }
+    }
+
+    private void moveAlongGridToward(LivingEntity target) {
+        int targetX = Mth.floor(target.getX());
+        int targetZ = Mth.floor(target.getZ());
+        int currentX = Mth.floor(this.getX());
+        int currentZ = Mth.floor(this.getZ());
+        if (currentX == targetX && currentZ == targetZ) {
+            this.snapToBlockCenter();
+            this.setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+        int nextX = currentX;
+        int nextZ = currentZ;
+        double deltaX = target.getX() - this.getX();
+        double deltaZ = target.getZ() - this.getZ();
+        if (Math.abs(deltaX) >= Math.abs(deltaZ)) {
+            nextX += Integer.compare(targetX, currentX);
+            this.setCardinalFacing(nextX - currentX, 0);
+        } else {
+            nextZ += Integer.compare(targetZ, currentZ);
+            this.setCardinalFacing(0, nextZ - currentZ);
+        }
+        double destX = nextX + 0.5;
+        double destZ = nextZ + 0.5;
+        Vec3 step = new Vec3(destX - this.getX(), 0.0, destZ - this.getZ());
+        if (step.lengthSqr() < 0.0025) {
+            this.snapToBlockCenter();
+            this.setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+        this.setDeltaMovement(step.normalize().scale(this.moveSpeed));
+        this.setXRot(0.0f);
+        this.yHeadRot = this.getYRot();
+    }
+
+    private void snapToBlockCenter() {
+        int px = Mth.floor(this.getX());
+        int py = Mth.floor(this.getY());
+        int pz = Mth.floor(this.getZ());
+        this.setPos(px + 0.5, py, pz + 0.5);
+    }
+
+    private void setCardinalFacing(int stepX, int stepZ) {
+        if (stepX > 0) {
+            this.setYRot(270.0f);
+        } else if (stepX < 0) {
+            this.setYRot(90.0f);
+        } else if (stepZ > 0) {
+            this.setYRot(0.0f);
+        } else if (stepZ < 0) {
+            this.setYRot(180.0f);
         }
     }
 

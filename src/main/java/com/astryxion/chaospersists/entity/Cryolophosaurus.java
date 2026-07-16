@@ -152,6 +152,9 @@ public class Cryolophosaurus extends Monster {
         if (!par1EntityLiving.isAlive()) {
             return false;
         }
+        if (MyUtils.isIgnoreable(par1EntityLiving)) {
+            return false;
+        }
         if (!this.hasLineOfSight(par1EntityLiving)) {
             return false;
         }

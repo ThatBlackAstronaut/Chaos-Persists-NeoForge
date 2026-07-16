@@ -1,6 +1,7 @@
 package com.astryxion.chaospersists.world.ore;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.util.MiningDropHelper;
 import java.util.Collections;
 import java.util.List;
 import net.minecraft.core.BlockPos;

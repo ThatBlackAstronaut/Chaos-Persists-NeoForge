@@ -17,10 +17,14 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 /**
  * Same behavior as OreSpawn 1.7.10: left-click specific robots to dismantle and drop a damaged kit.
  */
+@Mod.EventBusSubscriber(modid = ChaosPersists.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ItemWrench extends Item {
     private static final DustParticleOptions RED_DUST =
             new DustParticleOptions(new Vector3f(1.0f, 0.0f, 0.0f), 1.0f);
@@ -31,44 +35,74 @@ public class ItemWrench extends Item {
 
     @Override
     public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
-        if (entity == null || entity instanceof Player) {
+        return tryDismantle(player, entity, stack, InteractionHand.MAIN_HAND);
+    }
+
+    @SubscribeEvent
+    public static void onAttackEntity(AttackEntityEvent event) {
+        Player player = event.getEntity();
+        Entity target = event.getTarget();
+        if (player.level().isClientSide) {
+            return;
+        }
+        for (InteractionHand hand : InteractionHand.values()) {
+            ItemStack stack = player.getItemInHand(hand);
+            if (stack.is(ChaosPersists.MyWrench) && tryDismantle(player, target, stack, hand)) {
+                event.setCanceled(true);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Dismantles a spider or ant robot. Wild ants must be at or below 50% health (1.7.10 parity).
+     *
+     * @return true when the interaction should cancel vanilla attack / count as handled
+     */
+    public static boolean tryDismantle(
+            Player player, Entity entity, ItemStack stack, InteractionHand hand) {
+        if (entity == null || entity instanceof Player || entity.isRemoved()) {
+            return false;
+        }
+        if (!stack.is(ChaosPersists.MyWrench)) {
             return false;
         }
 
         boolean spider = entity instanceof SpiderRobot && entity.getPassengers().isEmpty();
         boolean ant = entity instanceof AntRobot && entity.getPassengers().isEmpty();
-
         if (!spider && !ant) {
             return false;
         }
 
         if (ant) {
-            AntRobot e = (AntRobot) entity;
-            if (e.getOwned() == 0 && e.getHealth() / e.getMaxHealth() > 0.5f) {
+            AntRobot antRobot = (AntRobot) entity;
+            if (antRobot.getOwned() == 0
+                    && antRobot.getHealth() > antRobot.getMaxHealth() * 0.5f) {
                 return false;
             }
         }
 
         Level level = player.level();
-        if (!level.isClientSide) {
-            if (ant) {
-                AntRobot e = (AntRobot) entity;
-                if (e.getOwned() == 0) {
-                    e.setOwned();
-                }
-            }
-            LivingEntity e = (LivingEntity) entity;
-            float damageTaken = e.getMaxHealth() - e.getHealth();
-            e.discard();
-            if (spider) {
-                dropKit(level, e, ChaosPersists.SpiderRobotKit, damageTaken);
-            } else {
-                dropKit(level, e, ChaosPersists.AntRobotKit, damageTaken);
-            }
-            stack.hurtAndBreak(2, player, p -> p.broadcastBreakEvent(InteractionHand.MAIN_HAND));
-            clearSlotIfBroken(player, stack);
+        if (level.isClientSide) {
+            return true;
         }
 
+        if (ant) {
+            AntRobot antRobot = (AntRobot) entity;
+            if (antRobot.getOwned() == 0) {
+                antRobot.setOwned();
+            }
+        }
+        LivingEntity living = (LivingEntity) entity;
+        float damageTaken = living.getMaxHealth() - living.getHealth();
+        living.discard();
+        if (spider) {
+            dropKit(level, living, ChaosPersists.SpiderRobotKit, damageTaken);
+        } else {
+            dropKit(level, living, ChaosPersists.AntRobotKit, damageTaken);
+        }
+        stack.hurtAndBreak(2, player, p -> p.broadcastBreakEvent(hand));
+        clearSlotIfBroken(player, stack, hand);
         playDismantleEffects(level, entity);
         return true;
     }
@@ -138,16 +172,10 @@ public class ItemWrench extends Item {
         level.addFreshEntity(new ItemEntity(level, e.getX(), e.getY() + 1.0, e.getZ(), drop));
     }
 
-    private static void clearSlotIfBroken(Player player, ItemStack stack) {
+    private static void clearSlotIfBroken(Player player, ItemStack stack, InteractionHand hand) {
         if (!stack.isEmpty()) {
             return;
         }
-        if (player.getMainHandItem() == stack) {
-            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-        } else if (player.getOffhandItem() == stack) {
-            player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
-        } else {
-            player.getInventory().setItem(player.getInventory().selected, ItemStack.EMPTY);
-        }
+        player.setItemInHand(hand, ItemStack.EMPTY);
     }
 }

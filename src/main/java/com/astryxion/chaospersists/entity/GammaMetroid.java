@@ -6,6 +6,7 @@ import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIFollowOwner;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
@@ -59,6 +60,7 @@ public class GammaMetroid extends TamableAnimal {
 
     public GammaMetroid(EntityType<? extends GammaMetroid> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 20;
         this.targetSorter = new GenericTargetSorter(this);
         this.goalSelector.addGoal(0, new FloatGoal(this));
@@ -255,8 +257,9 @@ public class GammaMetroid extends TamableAnimal {
         if (this.level().getDifficulty() != Difficulty.PEACEFUL
                 && this.getRandom().nextInt(5) == 0
                 && (target = this.findSomethingToAttack()) != null) {
-            this.getLookControl().setLookAt(target, 10.0f, 10.0f);
+            this.setTarget(target);
             if (this.distanceToSqr(target) <= 9.0) {
+                MyUtils.faceEntity(this, target, 10.0f, 10.0f);
                 if (this.getRandom().nextInt(4) == 0 || this.getRandom().nextInt(5) == 1) {
                     this.doHurtTarget(target);
                 }

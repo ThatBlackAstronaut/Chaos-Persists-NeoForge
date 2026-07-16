@@ -45,6 +45,7 @@ import net.minecraft.world.entity.projectile.SmallFireball;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
@@ -58,6 +59,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class WaterDragon extends TamableAnimal {
+    private static final Ingredient TAMING_FISH =
+            Ingredient.of(Items.COD, Items.SALMON, Items.TROPICAL_FISH, Items.PUFFERFISH);
     private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> ATTACKING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(
                     WaterDragon.class, net.minecraft.network.syncher.EntityDataSerializers.BYTE);
@@ -78,10 +81,11 @@ public class WaterDragon extends TamableAnimal {
         this.fireImmune();
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
+        this.getNavigation().setCanFloat(true);
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new BreedGoal(this, 1.0));
         this.goalSelector.addGoal(2, new MyEntityAIFollowOwner(this, 2.0f, 10.0f, 2.0f));
-        this.goalSelector.addGoal(3, new TemptGoal(this, 1.2000000476837158, Ingredient.of(Items.COD), false));
+        this.goalSelector.addGoal(3, new TemptGoal(this, 1.2000000476837158, TAMING_FISH, false));
         this.goalSelector.addGoal(4, new MyEntityAIWanderALot(this, 16, 1.0));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0f));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
@@ -123,7 +127,7 @@ public class WaterDragon extends TamableAnimal {
         if (super.mobInteract(par1EntityPlayer, hand) == InteractionResult.SUCCESS) {
             return InteractionResult.SUCCESS;
         }
-        if (!var2.isEmpty() && var2.is(Items.COD) && par1EntityPlayer.distanceToSqr(this) < 25.0) {
+        if (!var2.isEmpty() && isTamingFish(var2) && par1EntityPlayer.distanceToSqr(this) < 25.0) {
             if (!this.isTame()) {
                 if (!this.level().isClientSide) {
                     if (this.getRandom().nextInt(3) == 0) {
@@ -574,21 +578,36 @@ public class WaterDragon extends TamableAnimal {
         return ret;
     }
 
+    private boolean isWaterBlock(Block block) {
+        return block == Blocks.WATER;
+    }
+
+    private boolean isWaterState(BlockState state) {
+        return state.getFluidState().is(FluidTags.WATER);
+    }
+
+    private boolean isTamingFish(ItemStack stack) {
+        return !stack.isEmpty() && TAMING_FISH.test(stack);
+    }
+
     private boolean scan_it(int x, int y, int z, int dx, int dy, int dz) {
         int found = 0;
         for (int i = -dy; i <= dy; ++i) {
             for (int j = -dz; j <= dz; ++j) {
-                Block bid = this.level().getBlockState(new BlockPos(x + dx, y + i, z + j)).getBlock();
+                BlockState state = this.level().getBlockState(new BlockPos(x + dx, y + i, z + j));
+                Block bid = state.getBlock();
                 int d = dx * dx + j * j + i * i;
-                if (bid == Blocks.WATER && d < this.closest) {
+                if ((this.isWaterBlock(bid) || this.isWaterState(state)) && d < this.closest) {
                     this.closest = d;
                     this.tx = x + dx;
                     this.ty = y + i;
                     this.tz = z + j;
                     ++found;
                 }
-                bid = this.level().getBlockState(new BlockPos(x - dx, y + i, z + j)).getBlock();
-                if (bid == Blocks.WATER && (d = dx * dx + j * j + i * i) < this.closest) {
+                state = this.level().getBlockState(new BlockPos(x - dx, y + i, z + j));
+                bid = state.getBlock();
+                d = dx * dx + j * j + i * i;
+                if ((this.isWaterBlock(bid) || this.isWaterState(state)) && d < this.closest) {
                     this.closest = d;
                     this.tx = x - dx;
                     this.ty = y + i;
@@ -599,17 +618,20 @@ public class WaterDragon extends TamableAnimal {
         }
         for (int i = -dx; i <= dx; ++i) {
             for (int j = -dz; j <= dz; ++j) {
-                Block bid = this.level().getBlockState(new BlockPos(x + i, y + dy, z + j)).getBlock();
+                BlockState state = this.level().getBlockState(new BlockPos(x + i, y + dy, z + j));
+                Block bid = state.getBlock();
                 int d = dy * dy + j * j + i * i;
-                if (bid == Blocks.WATER && d < this.closest) {
+                if ((this.isWaterBlock(bid) || this.isWaterState(state)) && d < this.closest) {
                     this.closest = d;
                     this.tx = x + i;
                     this.ty = y + dy;
                     this.tz = z + j;
                     ++found;
                 }
-                bid = this.level().getBlockState(new BlockPos(x + i, y - dy, z + j)).getBlock();
-                if (bid == Blocks.WATER && (d = dy * dy + j * j + i * i) < this.closest) {
+                state = this.level().getBlockState(new BlockPos(x + i, y - dy, z + j));
+                bid = state.getBlock();
+                d = dy * dy + j * j + i * i;
+                if ((this.isWaterBlock(bid) || this.isWaterState(state)) && d < this.closest) {
                     this.closest = d;
                     this.tx = x + i;
                     this.ty = y - dy;
@@ -620,17 +642,20 @@ public class WaterDragon extends TamableAnimal {
         }
         for (int i = -dx; i <= dx; ++i) {
             for (int j = -dy; j <= dy; ++j) {
-                Block bid = this.level().getBlockState(new BlockPos(x + i, y + j, z + dz)).getBlock();
+                BlockState state = this.level().getBlockState(new BlockPos(x + i, y + j, z + dz));
+                Block bid = state.getBlock();
                 int d = dz * dz + j * j + i * i;
-                if (bid == Blocks.WATER && d < this.closest) {
+                if ((this.isWaterBlock(bid) || this.isWaterState(state)) && d < this.closest) {
                     this.closest = d;
                     this.tx = x + i;
                     this.ty = y + j;
                     this.tz = z + dz;
                     ++found;
                 }
-                bid = this.level().getBlockState(new BlockPos(x + i, y + j, z - dz)).getBlock();
-                if (bid == Blocks.WATER && (d = dz * dz + j * j + i * i) < this.closest) {
+                state = this.level().getBlockState(new BlockPos(x + i, y + j, z - dz));
+                bid = state.getBlock();
+                d = dz * dz + j * j + i * i;
+                if ((this.isWaterBlock(bid) || this.isWaterState(state)) && d < this.closest) {
                     this.closest = d;
                     this.tx = x + i;
                     this.ty = y + j;
@@ -674,7 +699,7 @@ public class WaterDragon extends TamableAnimal {
                 this.getNavigation().moveTo((double) this.tx, (double) (this.ty - 1), (double) this.tz, 1.33);
             } else {
                 if (this.getRandom().nextInt(50) == 1) {
-                    this.hurt(this.damageSources().generic(), 1.0f);
+                    this.heal(-1.0f);
                 }
                 if (this.getHealth() <= 0.0f) {
                     this.discard();
@@ -704,7 +729,7 @@ public class WaterDragon extends TamableAnimal {
             if (e != null) {
                 this.getNavigation().moveTo(e, 1.0);
                 if (this.combat_tick % 5 == 0) {
-                    this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                    MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                     if (this.distanceToSqr(e)
                             < (double)
                                     ((4.0f + e.getBbWidth() / 2.0f)
@@ -995,7 +1020,7 @@ public class WaterDragon extends TamableAnimal {
     }
 
     public boolean isWheat(ItemStack par1ItemStack) {
-        return !par1ItemStack.isEmpty() && par1ItemStack.is(Items.COD);
+        return isTamingFish(par1ItemStack);
     }
 
     public boolean isBreedingItem(ItemStack par1ItemStack) {

@@ -62,6 +62,14 @@ public abstract class MyEntityAITarget extends Goal {
                 && other.isTame()) {
             return false;
         }
+        if (MyUtils.isProtectedCompanion(this.taskOwner, var1)) {
+            this.taskOwner.setTarget(null);
+            return false;
+        }
+        if (!MyUtils.isHostileMobTarget(var1) && !(var1 instanceof Creeper) && !(var1 instanceof Ghast)) {
+            this.taskOwner.setTarget(null);
+            return false;
+        }
         if (this.shouldCheckSight) {
             if (this.taskOwner.hasLineOfSight(var1)) {
                 this.field_75298_g = 0;
@@ -94,6 +102,9 @@ public abstract class MyEntityAITarget extends Goal {
         if (!par1EntityLiving.isAlive()) {
             return false;
         }
+        if (MyUtils.isIgnoreable(par1EntityLiving)) {
+            return false;
+        }
         if (this.taskOwner instanceof TamableAnimal tame && tame.isTame()) {
             if (par1EntityLiving instanceof TamableAnimal other && other.isTame()) {
                 return false;
@@ -101,6 +112,9 @@ public abstract class MyEntityAITarget extends Goal {
             if (par1EntityLiving == tame.getOwner()) {
                 return false;
             }
+        }
+        if (MyUtils.isProtectedCompanion(this.taskOwner, par1EntityLiving)) {
+            return false;
         }
         if (par1EntityLiving instanceof Player) {
             if (ChaosPersists.valentines_day != 0) {
@@ -137,7 +151,7 @@ public abstract class MyEntityAITarget extends Goal {
                 return false;
             }
         }
-        return true;
+        return MyUtils.isHostileMobTarget(par1EntityLiving);
     }
 
     private boolean canEasilyReach(LivingEntity par1EntityLiving) {

@@ -6,6 +6,7 @@ import com.astryxion.chaospersists.render.RenderInfo;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
@@ -50,6 +51,7 @@ public class Robot2 extends Monster {
 
     public Robot2(EntityType<? extends Robot2> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 100;
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
@@ -291,7 +293,7 @@ public class Robot2 extends Monster {
                     rdd -= pi * 2.0;
                 }
                 rdd = Math.abs(rdd);
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                 if (rdd < 1.25) {
                     float reach = 5.0f + e.getBbWidth() / 2.0f;
                     if (this.distanceToSqr(e) < (double) (reach * reach)) {

@@ -2,14 +2,12 @@ package com.astryxion.chaospersists.util;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.entity.Girlfriend;
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 public class MyEntityAIFollowOwner extends Goal {
     private final TamableAnimal thePet;
     private LivingEntity theOwner;
@@ -30,6 +28,10 @@ public class MyEntityAIFollowOwner extends Goal {
         this.setFlags(java.util.EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
+    private boolean isPetStaying() {
+        return this.thePet.isInSittingPose() || this.thePet.isOrderedToSit();
+    }
+
     @Override
     public boolean canUse() {
         LivingEntity var1 = this.thePet.getOwner();
@@ -37,7 +39,7 @@ public class MyEntityAIFollowOwner extends Goal {
             return false;
         }
         this.theOwner = var1;
-        if (this.thePet.isInSittingPose()) {
+        if (this.isPetStaying()) {
             return false;
         }
         if (MyUtils.isPrinceFlying(this.thePet)) {
@@ -47,8 +49,8 @@ public class MyEntityAIFollowOwner extends Goal {
             return false;
         }
         double distSq = this.thePet.distanceToSqr(this.theOwner);
-        if (!(this.thePet.getY() >= 60.0 && MyUtils.isDay(this.theWorld))
-                && distSq <= (double) (this.maxDist / 2.0f * (this.maxDist / 2.0f))) {
+        if (!(this.thePet.getY() >= 60.0 && MyUtils.isDay(this.theWorld)
+                || distSq <= (double) (this.maxDist / 2.0f * (this.maxDist / 2.0f)))) {
             return true;
         }
         if (distSq < (double) (this.maxDist * this.maxDist)) {
@@ -59,24 +61,30 @@ public class MyEntityAIFollowOwner extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        if (this.thePet.isInSittingPose()) {
+        if (this.isPetStaying()) {
             return false;
         }
         if (MyUtils.isPrinceFlying(this.thePet)) {
             return false;
         }
-        if (this.petPathfinder.isDone()) {
+        LivingEntity owner = this.thePet.getOwner();
+        if (owner == null) {
             return false;
         }
-        LivingEntity var1 = this.thePet.getOwner();
-        if (var1 != null
-                && (int) this.thePet.getZ() == (int) var1.getZ()
-                && (int) this.thePet.getX() == (int) var1.getX()
-                && (int) this.thePet.getY() < (int) var1.getY() + 2
-                && (int) this.thePet.getY() > (int) var1.getY() - 2) {
+        this.theOwner = owner;
+        if ((int) this.thePet.getZ() == (int) owner.getZ()
+                && (int) this.thePet.getX() == (int) owner.getX()
+                && (int) this.thePet.getY() < (int) owner.getY() + 2
+                && (int) this.thePet.getY() > (int) owner.getY() - 2) {
             return false;
         }
-        return this.thePet.distanceToSqr(this.theOwner) > (double) (this.minDist * this.minDist);
+        if (this.thePet.distanceToSqr(this.theOwner) <= (double) (this.minDist * this.minDist)) {
+            return false;
+        }
+        if (this.thePet.distanceToSqr(this.theOwner) >= 144.0) {
+            return true;
+        }
+        return !this.petPathfinder.isDone();
     }
 
     @Override
@@ -92,41 +100,20 @@ public class MyEntityAIFollowOwner extends Goal {
 
     @Override
     public void tick() {
-        this.thePet.getLookControl().setLookAt(this.theOwner, 10.0f, (float) this.thePet.getMaxHeadXRot());
-        if (!this.thePet.isInSittingPose() && --this.field_75343_h <= 0) {
+        MyUtils.setChaseTarget(this.thePet, this.theOwner);
+        if (this.isPetStaying()) {
+            return;
+        }
+        if (this.theOwner.level() != this.thePet.level()) {
+            RoyalPetFollowHelper.tryFollowTeleport(this.thePet, this.theOwner);
+            return;
+        }
+        if (--this.field_75343_h <= 0) {
             this.field_75343_h = 10;
             if (!this.petPathfinder.moveTo(this.theOwner, (double) this.field_75336_f)
                     && this.thePet.distanceToSqr(this.theOwner) >= 144.0
                     && !MyUtils.shouldPrinceSkipFollowTeleport(this.thePet, this.theOwner)) {
-                int var1 = Mth.floor(this.theOwner.getX()) - 2;
-                int var2 = Mth.floor(this.theOwner.getZ()) - 2;
-                int var3 = Mth.floor(this.theOwner.getBoundingBox().minY);
-                for (int var4 = 0; var4 <= 4; ++var4) {
-                    for (int var5 = 0; var5 <= 4; ++var5) {
-                        BlockPos bp = new BlockPos(var1 + var4, var3, var2 + var5);
-                        BlockPos bpDown = new BlockPos(var1 + var4, var3 - 1, var2 + var5);
-                        if (var4 >= 1 && var5 >= 1 && var4 <= 3 && var5 <= 3) {
-                            continue;
-                        }
-                        BlockState down = this.theWorld.getBlockState(bpDown);
-                        BlockState here = this.theWorld.getBlockState(bp);
-                        BlockPos abovePos = new BlockPos(var1 + var4, var3 + 1, var2 + var5);
-                        BlockState above = this.theWorld.getBlockState(abovePos);
-                        if (!down.isFaceSturdy(this.theWorld, bpDown, net.minecraft.core.Direction.UP)
-                                || !here.getCollisionShape(this.theWorld, bp).isEmpty()
-                                || !above.getCollisionShape(this.theWorld, abovePos).isEmpty()) {
-                            continue;
-                        }
-                        this.thePet.moveTo(
-                                (double) ((float) (var1 + var4) + 0.5f),
-                                (double) var3,
-                                (double) ((float) (var2 + var5) + 0.5f),
-                                this.thePet.getYRot(),
-                                this.thePet.getXRot());
-                        this.petPathfinder.stop();
-                        return;
-                    }
-                }
+                RoyalPetFollowHelper.tryFollowTeleport(this.thePet, this.theOwner);
             }
         }
     }

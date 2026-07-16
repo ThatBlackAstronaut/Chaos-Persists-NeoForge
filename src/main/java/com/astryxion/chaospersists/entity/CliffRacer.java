@@ -95,6 +95,13 @@ public class CliffRacer extends AmbientCreature {
     }
 
     @Override
+    public void travel(Vec3 travelVector) {
+        if (MyUtils.usesChaosFlight(this)) {
+            return;
+        }
+        super.travel(travelVector);
+    }
+    @Override
     protected void customServerAiStep() {
         int xdir = 1;
         int zdir = 1;

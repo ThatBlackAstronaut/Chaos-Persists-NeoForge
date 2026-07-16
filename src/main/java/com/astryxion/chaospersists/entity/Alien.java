@@ -1,5 +1,6 @@
 package com.astryxion.chaospersists.entity;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.core.ChaosSounds;
@@ -62,6 +63,7 @@ public class Alien extends Monster {
 
     public Alien(EntityType<? extends Alien> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 100;
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
@@ -367,8 +369,9 @@ public class Alien extends Monster {
         if (this.getRandom().nextInt(8) == 0) {
             LivingEntity e = this.findSomethingToAttack();
             if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                this.setTarget(e);
                 if (this.distanceToSqr(e) < 16.0) {
+                    MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                     this.setAttacking(1);
                     if (this.getRandom().nextInt(4) == 0 || this.getRandom().nextInt(5) == 1) {
                         this.doHurtTarget(e);

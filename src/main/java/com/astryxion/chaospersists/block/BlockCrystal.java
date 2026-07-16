@@ -1,6 +1,10 @@
 package com.astryxion.chaospersists.block;
 
+import com.astryxion.chaospersists.util.MiningDropHelper;
+import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
@@ -16,6 +20,11 @@ public class BlockCrystal extends Block {
                 .requiresCorrectToolForDrops()
                 .lightLevel(state -> 6)
                 .noOcclusion());
+    }
+
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        return MiningDropHelper.selfDrops(this, builder);
     }
 
     @Override

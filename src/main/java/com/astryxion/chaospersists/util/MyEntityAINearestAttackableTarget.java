@@ -46,7 +46,8 @@ public class MyEntityAINearestAttackableTarget extends MyEntityAITarget {
         this.targetDistance = par3;
         this.targetChance = par4;
         this.theNearestAttackableTargetSorter = new MyEntityAINearestAttackableTargetSorter(this, par1);
-        this.targetEntitySelector = par7IEntitySelector != null ? par7IEntitySelector : entity -> true;
+        this.targetEntitySelector =
+                par7IEntitySelector != null ? par7IEntitySelector : MyUtils::isHostileMobTarget;
         this.setFlags(EnumSet.of(Flag.TARGET));
     }
 
@@ -61,10 +62,16 @@ public class MyEntityAINearestAttackableTarget extends MyEntityAITarget {
         if (this.taskOwner instanceof Girlfriend gf && gf.isInSittingPose()) {
             return false;
         }
+        if (this.taskOwner instanceof Girlfriend gf && gf.isOrderedToSit()) {
+            return false;
+        }
         if (this.taskOwner instanceof Boyfriend bf && !bf.isTame()) {
             return false;
         }
         if (this.taskOwner instanceof Boyfriend bf && bf.isInSittingPose()) {
+            return false;
+        }
+        if (this.taskOwner instanceof Boyfriend bf && bf.isOrderedToSit()) {
             return false;
         }
         if (this.targetChance > 0 && this.taskOwner.getRandom().nextInt(100) > this.targetChance) {

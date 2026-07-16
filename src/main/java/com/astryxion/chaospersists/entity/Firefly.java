@@ -97,6 +97,13 @@ public class Firefly extends AmbientCreature {
     }
 
     @Override
+    public void travel(Vec3 travelVector) {
+        if (MyUtils.usesChaosFlight(this)) {
+            return;
+        }
+        super.travel(travelVector);
+    }
+    @Override
     protected void customServerAiStep() {
         int keep_trying = 25;
         if (this.isDeadOrDying()) {

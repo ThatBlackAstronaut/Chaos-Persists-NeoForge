@@ -131,6 +131,7 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
+import com.astryxion.chaospersists.util.RoyalPetFollowHelper;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import com.astryxion.chaospersists.compat.forge.fml.common.registry.EntityRegistry;
@@ -491,6 +492,7 @@ import com.astryxion.chaospersists.entity.WormSmall;
 import com.astryxion.chaospersists.entity.WormMedium;
 import com.astryxion.chaospersists.entity.WormLarge;
 import com.astryxion.chaospersists.entity.Cassowary;
+import com.astryxion.chaospersists.entity.ChaosSpawnPlacements;
 import com.astryxion.chaospersists.entity.CloudShark;
 import com.astryxion.chaospersists.entity.GoldFish;
 import com.astryxion.chaospersists.entity.LeafMonster;
@@ -829,9 +831,9 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<Lizard>> ENTITY_TYPE_LIZARD = ENTITY_TYPES.register("lizard",
       () -> EntityType.Builder.<Lizard>of(Lizard::new, MobCategory.MONSTER).sized(1.5f, 1.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("lizard"));
   public static final RegistryObject<EntityType<Cephadrome>> ENTITY_TYPE_CEPHADROME = ENTITY_TYPES.register("cephadrome",
-      () -> EntityType.Builder.<Cephadrome>of(Cephadrome::new, MobCategory.MISC).sized(2.5f, 2.25f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("cephadrome"));
+      () -> EntityType.Builder.<Cephadrome>of(Cephadrome::new, MobCategory.MISC).sized(2.5f, 2.25f).clientTrackingRange(128).updateInterval(3).setShouldReceiveVelocityUpdates(true).build("cephadrome"));
   public static final RegistryObject<EntityType<Dragon>> ENTITY_TYPE_DRAGON = ENTITY_TYPES.register("dragon",
-      () -> EntityType.Builder.<Dragon>of(Dragon::new, MobCategory.CREATURE).sized(0.25f, 0.25f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("dragon"));
+      () -> EntityType.Builder.<Dragon>of(Dragon::new, MobCategory.CREATURE).sized(1.5f, 1.25f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("dragon"));
   public static final RegistryObject<EntityType<Chipmunk>> ENTITY_TYPE_CHIPMUNK = ENTITY_TYPES.register("chipmunk",
       () -> EntityType.Builder.<Chipmunk>of(Chipmunk::new, MobCategory.CREATURE).sized(0.35f, 0.35f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("chipmunk"));
   public static final RegistryObject<EntityType<Gazelle>> ENTITY_TYPE_GAZELLE = ENTITY_TYPES.register("gazelle",
@@ -973,7 +975,7 @@ public class ChaosPersists
   public static final RegistryObject<EntityType<ThePrincess>> ENTITY_TYPE_THE_PRINCESS = ENTITY_TYPES.register("the_princess",
       () -> EntityType.Builder.<ThePrincess>of(ThePrincess::new, MobCategory.MONSTER).sized(0.75f, 1.25f).clientTrackingRange(64).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_princess"));
   public static final RegistryObject<EntityType<Frog>> ENTITY_TYPE_FROG = ENTITY_TYPES.register("frog",
-      () -> EntityType.Builder.<Frog>of(Frog::new, MobCategory.WATER_CREATURE).sized(0.75f, 0.75f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("frog"));
+      () -> EntityType.Builder.<Frog>of(Frog::new, MobCategory.WATER_CREATURE).sized(0.75f, 0.75f).clientTrackingRange(32).updateInterval(1).setShouldReceiveVelocityUpdates(true).build("frog"));
   public static final RegistryObject<EntityType<ThePrinceAdult>> ENTITY_TYPE_THE_YOUNG_ADULT_PRINCE = ENTITY_TYPES.register("the_young_adult_prince",
       () -> EntityType.Builder.<ThePrinceAdult>of(ThePrinceAdult::new, MobCategory.MONSTER).sized(0.6f, 1.8f).clientTrackingRange(128).updateInterval(1).setShouldReceiveVelocityUpdates(false).build("the_young_adult_prince"));
   public static final RegistryObject<EntityType<SpiderRobot>> ENTITY_TYPE_SPIDER_ROBOT = ENTITY_TYPES.register("robot_spider",
@@ -1618,6 +1620,7 @@ private static void registerAllCritterCages() {
     ITEMS.register("eggspiderrobot", () -> new ItemSpawnEgg(0, 380));
     ITEMS.register("eggspiderdriver", () -> new ItemSpawnEgg(0, 381));
     ITEMS.register("eggcrab", () -> new ItemSpawnEgg(0, 383));
+    ITEMS.register("eggrock", () -> new ItemSpawnEgg(0, 385, 1118481, 16777215));
   }
 
   private static void registerAllWeaponsAndArmor() {
@@ -2605,6 +2608,8 @@ private static void registerAllCritterCages() {
     final ResourceLocation texIceBall = ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/iceball.png");
     final ResourceLocation texAcid = ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/acid.png");
     final ResourceLocation texDeadIruk = ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/item/deadirukandji.png");
+    final ResourceLocation texThunderBolt =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/thunder_bolt.png");
     final ResourceLocation texArrow =
             ResourceLocation.withDefaultNamespace("textures/entity/projectiles/arrow.png");
     event.registerEntityRenderer(ENTITY_TYPE_ACID.get(), ctx -> new RenderThrowableBillboard(ctx, texAcid));
@@ -2741,7 +2746,7 @@ private static void registerAllCritterCages() {
     event.registerEntityRenderer(ENTITY_TYPE_THE_YOUNG_ADULT_PRINCE.get(), ctx -> new RenderThePrinceAdult(ctx, new ModelThePrinceAdult(0.65f), 1.2f, 1.0f));
     event.registerEntityRenderer(ENTITY_TYPE_THE_YOUNG_PRINCE.get(), ctx -> new RenderThePrinceTeen(ctx, new ModelThePrinceTeen(0.65f), 1.0f, 1.25f));
     event.registerEntityRenderer(ENTITY_TYPE_THROWN_ROCK.get(), ctx -> new RenderThrownRock(ctx));
-    event.registerEntityRenderer(ENTITY_TYPE_THUNDER_BOLT.get(), ctx -> new RenderThrowableBillboard(ctx, texLaserBall));
+    event.registerEntityRenderer(ENTITY_TYPE_THUNDER_BOLT.get(), ctx -> new RenderThrowableBillboard(ctx, texThunderBolt));
     event.registerEntityRenderer(ENTITY_TYPE_TRIFFID.get(), ctx -> new RenderTriffid(ctx, new ModelTriffid(1.0f), 0.3f, 1.0f));
     event.registerEntityRenderer(ENTITY_TYPE_TROOPER_BUG.get(), ctx -> new RenderTrooperBug(ctx, new ModelTrooperBug(0.22f), 0.95f, 1.1f));
     event.registerEntityRenderer(ENTITY_TYPE_TSHIRT.get(), ctx -> new RenderTshirt(ctx, new ModelTshirt(0.22f), 1.0f, 0.33f));
@@ -3582,6 +3587,7 @@ private static void registerAllCritterCages() {
   public static Item SpiderRobotEgg;
   public static Item SpiderDriverEgg;
   public static Item CrabEgg;
+  public static Item RockEgg;
   public static Item MyStrawberry;
   public static Item MyCrystalApple;
   public static Item MyLove;
@@ -5067,6 +5073,7 @@ private static void registerAllCritterCages() {
     GameRegistry.findRegistry(Item.class).register(SpiderRobotEgg);
     GameRegistry.findRegistry(Item.class).register(SpiderDriverEgg);
     GameRegistry.findRegistry(Item.class).register(CrabEgg);
+    GameRegistry.findRegistry(Item.class).register(RockEgg);
 
     GameRegistry.findRegistry(Item.class).register(CageEmpty);
     GameRegistry.findRegistry(Item.class).register(CagedSpider);
@@ -6992,6 +6999,8 @@ private static void registerAllCritterCages() {
     NetworkRegistry.INSTANCE.registerGuiHandler(this, new ChaosGUIHandler());
 
     DoDispenserRegistrations();
+
+    ChaosSpawnPlacements.registerAllAfterLegacySpawns();
   }
 
   @SubscribeEvent
@@ -7276,6 +7285,14 @@ private static void registerAllCritterCages() {
     }));
   }
 
+  @SubscribeEvent
+  public void onPlayerChangedDimensionBringRoyalPets(PlayerEvent.PlayerChangedDimensionEvent event) {
+    if (!(event.getEntity() instanceof ServerPlayer player)) {
+      return;
+    }
+    RoyalPetFollowHelper.bringRoyalPetsToPlayer(player);
+  }
+
   private static List<Long> chunkKeysAround(ChunkPos center, int radius) {
     List<Long> keys = new ArrayList<>((radius * 2 + 1) * (radius * 2 + 1));
     for (int dx = -radius; dx <= radius; dx++) {
@@ -7402,7 +7419,7 @@ private static void registerAllCritterCages() {
     ResourceLocation key = EntityType.getKey(base.getType());
     if (key != null && MODID.equals(key.getNamespace())) {
       LivingEntity currentTarget = mob.getTarget();
-      if (currentTarget instanceof Player && !MyUtils.isValidAggroTarget(currentTarget)) {
+      if (currentTarget != null && !MyUtils.isValidAggroTarget(currentTarget)) {
         mob.setTarget(null);
       }
     }
@@ -7678,6 +7695,7 @@ private static void registerAllCritterCages() {
     SpiderRobotEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggspiderrobot"));
     SpiderDriverEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggspiderdriver"));
     CrabEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggcrab"));
+    RockEgg = (ItemSpawnEgg) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "eggrock"));
   }
 
   private void DoDispenserRegistrations()
@@ -7794,6 +7812,7 @@ private static void registerAllCritterCages() {
     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(SpiderRobotEgg, new DispenserBehaviorChaosEgg());
     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(SpiderDriverEgg, new DispenserBehaviorChaosEgg());
     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(CrabEgg, new DispenserBehaviorChaosEgg());
+    BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(RockEgg, new DispenserBehaviorChaosEgg());
 
     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(MyIrukandjiArrow, new MyDispenserBehaviorArrow());
     BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(MyWaterBall, new MyDispenserBehaviorWDCharge());
@@ -8388,23 +8407,22 @@ private static void registerAllCritterCages() {
       world.updateNeighborsAt(pos, placedBlock);
     }
     if (isCrossConnectBlock(placedBlock)) {
-      refreshCrossConnectBlockState(world, chunk, pos);
+      refreshCrossConnectBlockState(world, pos);
+      // Earlier fast-placed bars miss deferred neighbor updates; refresh adjacent panes/fences now.
+      for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
+        BlockPos neighborPos = pos.relative(direction);
+        if (isCrossConnectBlock(world.getBlockState(neighborPos).getBlock())) {
+          refreshCrossConnectBlockState(world, neighborPos);
+        }
+      }
     }
   }
 
-  private static void refreshCrossConnectBlockState(Level world, LevelChunk chunk, BlockPos pos) {
+  private static void refreshCrossConnectBlockState(Level world, BlockPos pos) {
     BlockState state = world.getBlockState(pos);
-    BlockState newState = state;
-    for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
-      BlockPos neighborPos = pos.relative(direction);
-      BlockState neighborState = world.getBlockState(neighborPos);
-      BlockState updated =
-          newState.updateShape(direction, neighborState, world, pos, neighborPos);
-      if (updated != newState) {
-        newState = updated;
-      }
-    }
+    BlockState newState = Block.updateFromNeighbourShapes(state, world, pos);
     if (newState != state) {
+      LevelChunk chunk = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
       chunk.setBlockState(
           new BlockPos(pos.getX() & 15, pos.getY(), pos.getZ() & 15),
           prepareBlockStateForWorldGen(newState),

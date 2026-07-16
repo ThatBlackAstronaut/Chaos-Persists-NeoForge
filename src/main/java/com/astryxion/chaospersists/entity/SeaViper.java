@@ -6,6 +6,7 @@ import com.astryxion.chaospersists.render.RenderInfo;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
@@ -63,6 +64,7 @@ public class SeaViper extends Monster {
 
     public SeaViper(EntityType<? extends SeaViper> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 120;
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
@@ -537,11 +539,11 @@ public class SeaViper extends Monster {
                 }
             }
             if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
                 if (this.distanceToSqr(e)
                         < (double)
                                 ((4.5f + e.getBbWidth() / 2.0f)
                                         * (4.5f + e.getBbWidth() / 2.0f))) {
+                    MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                     this.setAttacking(1);
                     if (this.getRandom().nextInt(2) == 0 || this.getRandom().nextInt(4) == 1) {
                         this.doHurtTarget(e);

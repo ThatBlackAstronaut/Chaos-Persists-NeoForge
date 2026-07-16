@@ -72,13 +72,26 @@ import com.astryxion.chaospersists.entity.ThePrinceTeen;
 import com.astryxion.chaospersists.entity.ThePrincess;
 import com.astryxion.chaospersists.entity.TheQueen;
 import com.astryxion.chaospersists.entity.WaterDragon;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.animal.WaterAnimal;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.WorldGenRegion;
@@ -88,13 +101,17 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 /*
  * Exception performing whole class analysis ignored.
  */
 public class MyUtils {
+    private static final Map<Mob, LivingEntity> chaseTargets = new WeakHashMap<>();
+    private static final Set<LivingEntity> CHAOS_FLIGHT_ENTITIES =
+            Collections.newSetFromMap(new WeakHashMap<>());
+
     public MyUtils() {
     }
 
@@ -116,15 +133,59 @@ public class MyUtils {
         }
     }
 
-    /** Returns false for creative/spectator players; true for all other living entities. */
+    /** Returns false for creative/spectator players and armor stands. */
     public static boolean isValidAggroTarget(@Nullable LivingEntity target) {
         if (target == null) {
+            return false;
+        }
+        if (target instanceof ArmorStand) {
             return false;
         }
         if (target instanceof Player player) {
             return !player.isCreative() && !player.isSpectator();
         }
         return true;
+    }
+
+    /** 1.7.10 {@code IMob.mobSelector} parity for girlfriend/boyfriend target search. */
+    public static boolean isHostileMobTarget(LivingEntity entity) {
+        return entity instanceof Enemy || entity instanceof Mothra;
+    }
+
+    /** Villagers, farm animals, golems, and the owner's other tamed pets must not be attacked. */
+    public static boolean isProtectedCompanion(Mob attacker, LivingEntity candidate) {
+        if (candidate instanceof Villager) {
+            return true;
+        }
+        if (candidate instanceof IronGolem) {
+            return true;
+        }
+        if (candidate instanceof Animal) {
+            return true;
+        }
+        if (candidate instanceof WaterAnimal) {
+            return true;
+        }
+        if (!(attacker instanceof TamableAnimal tame) || !tame.isTame()) {
+            return false;
+        }
+        LivingEntity owner = tame.getOwner();
+        if (owner != null) {
+            if (candidate == owner) {
+                return true;
+            }
+            if (candidate instanceof TamableAnimal other && other.isTame() && other.isOwnedBy(owner)) {
+                return true;
+            }
+        }
+        UUID ownerUuid = tame.getOwnerUUID();
+        if (ownerUuid != null && candidate instanceof OwnableEntity ownable) {
+            UUID candidateOwner = ownable.getOwnerUUID();
+            if (candidateOwner != null && ownerUuid.equals(candidateOwner)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Re-applies boss max HP when vanilla's 1024 attribute cap was in effect at spawn. */
@@ -223,6 +284,9 @@ public class MyUtils {
     }
 
     public static boolean isIgnoreable(LivingEntity par1EntityLiving) {
+        if (par1EntityLiving instanceof ArmorStand) {
+            return true;
+        }
         if (par1EntityLiving instanceof RockBase) {
             return true;
         }
@@ -287,6 +351,15 @@ public class MyUtils {
         if (!pet.getPassengers().isEmpty()) {
             return true;
         }
+        if (pet instanceof Dragon dragon && (dragon.getActivity() != 0 || !dragon.onGround())) {
+            return true;
+        }
+        if (pet instanceof ThePrince prince && prince.getActivity() == 2) {
+            return true;
+        }
+        if (pet instanceof ThePrincess princess && princess.getActivity() == 2) {
+            return true;
+        }
         if (pet instanceof ThePrinceTeen teen) {
             if (teen.getActivity() == 0) {
                 return false;
@@ -317,10 +390,19 @@ public class MyUtils {
     /** Skip follow-owner teleport while a prince is flying nearby; still allow catch-up when far away. */
     public static boolean shouldPrinceSkipFollowTeleport(net.minecraft.world.entity.TamableAnimal pet, LivingEntity owner) {
         if (pet.getPassengers().isEmpty() && owner != null) {
+            if (pet instanceof ThePrince prince && prince.getActivity() == 2) {
+                return pet.distanceToSqr(owner) < 625.0;
+            }
+            if (pet instanceof ThePrincess princess && princess.getActivity() == 2) {
+                return pet.distanceToSqr(owner) < 625.0;
+            }
             if (pet instanceof ThePrinceTeen teen && teen.getActivity() != 0) {
                 return pet.distanceToSqr(owner) < 625.0;
             }
             if (pet instanceof ThePrinceAdult adult && adult.getActivity() != 0) {
+                return pet.distanceToSqr(owner) < 625.0;
+            }
+            if (pet instanceof Dragon dragon && dragon.getActivity() != 0) {
                 return pet.distanceToSqr(owner) < 625.0;
             }
         }
@@ -356,17 +438,22 @@ public class MyUtils {
         if (entity instanceof Leon leon && leon.getActivity() != 0) {
             return;
         }
+        if (entity instanceof Dragon dragon && dragon.getActivity() != 0) {
+            return;
+        }
         entity.noPhysics = false;
         entity.setNoGravity(false);
+        clearChaosFlight(entity);
         int n = 0;
-        while (entity.isInWall() && n++ < 48) {
+        while (entity.isInWall() && !entity.onGround() && n++ < 48) {
             entity.setPos(entity.getX(), Math.min(252.0, entity.getY() + 0.5), entity.getZ());
         }
     }
 
     /**
-     * Apply 3-axis flight velocity from chaos AI. In 1.7.10 motionX/Y/Z moved the entity directly;
-     * vanilla 1.20 {@code travel()} only uses {@code zza} horizontally and ignores Y from {@code setDeltaMovement}.
+     * Apply 3-axis flight velocity from chaos AI. In 1.7.10 motionX/Y/Z moved the entity once per tick.
+     * On 1.20.1 {@link net.minecraft.world.entity.LivingEntity#travel(Vec3)} also runs before
+     * {@code customServerAiStep}; skipping vanilla travel for flagged mobs avoids ~2x flight speed.
      */
     public static void applyChaosFlightMovement(LivingEntity entity) {
         if (entity.level().isClientSide || entity.isDeadOrDying()) {
@@ -374,7 +461,21 @@ public class MyUtils {
         }
         entity.setNoGravity(true);
         entity.noPhysics = true;
+        CHAOS_FLIGHT_ENTITIES.add(entity);
         entity.move(MoverType.SELF, entity.getDeltaMovement());
+    }
+
+    /** Skip vanilla {@code travel()} when chaos flight AI already moved this mob on the server. */
+    public static boolean usesChaosFlight(LivingEntity entity) {
+        if (!entity.isNoGravity()) {
+            CHAOS_FLIGHT_ENTITIES.remove(entity);
+            return false;
+        }
+        return CHAOS_FLIGHT_ENTITIES.contains(entity);
+    }
+
+    public static void clearChaosFlight(LivingEntity entity) {
+        CHAOS_FLIGHT_ENTITIES.remove(entity);
     }
 
     /** Avoid {@link WorldGenRegion} out-of-bounds chunk access during natural spawn in chunk generation. */
@@ -404,6 +505,52 @@ public class MyUtils {
             return null;
         }
         return level.getBlockEntity(pos);
+    }
+
+    /**
+     * 1.7.10 {@code EntityLiving#faceEntity} parity for melee range only. Do not call while
+     * pathing — assign {@link ChaosChaseMoveControl} in the mob constructor instead.
+     */
+    public static void faceEntity(LivingEntity mob, Entity target, float maxYawIncrease, float maxPitchIncrease) {
+        if (target == null) {
+            return;
+        }
+        double dx = target.getX() - mob.getX();
+        double dz = target.getZ() - mob.getZ();
+        float desiredYaw = (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0f;
+        float yaw =
+                mob.getYRot()
+                        + Mth.clamp(
+                                Mth.wrapDegrees(desiredYaw - mob.getYRot()),
+                                -maxYawIncrease,
+                                maxYawIncrease);
+        mob.setYRot(yaw);
+        mob.yHeadRot = yaw;
+        mob.yBodyRot = yaw;
+
+        double dy = target.getEyeY() - mob.getEyeY();
+        double horizDist = Math.sqrt(dx * dx + dz * dz);
+        float desiredPitch = (float) (-(Mth.atan2(dy, horizDist) * (180.0 / Math.PI)));
+        float pitch =
+                mob.getXRot()
+                        + Mth.clamp(
+                                Mth.wrapDegrees(desiredPitch - mob.getXRot()),
+                                -maxPitchIncrease,
+                                maxPitchIncrease);
+        mob.setXRot(pitch);
+    }
+
+    public static void setChaseTarget(Mob mob, @Nullable LivingEntity target) {
+        if (target == null) {
+            chaseTargets.remove(mob);
+        } else {
+            chaseTargets.put(mob, target);
+        }
+    }
+
+    @Nullable
+    public static LivingEntity getChaseTarget(Mob mob) {
+        return chaseTargets.get(mob);
     }
 }
 

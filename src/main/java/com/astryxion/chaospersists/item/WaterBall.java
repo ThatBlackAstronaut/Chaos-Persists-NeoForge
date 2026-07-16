@@ -10,17 +10,15 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
 
-public class WaterBall extends Projectile {
+public class WaterBall extends ThrowableProjectile {
     private float my_rotation = 0.0f;
     private int my_index = 49;
 
@@ -29,8 +27,7 @@ public class WaterBall extends Projectile {
     }
 
     public WaterBall(EntityType<? extends WaterBall> type, LivingEntity thrower, Level level) {
-        super(type, level);
-        this.setOwner(thrower);
+        super(type, thrower, level);
     }
 
     public WaterBall(Level level) {
@@ -42,21 +39,11 @@ public class WaterBall extends Projectile {
     }
 
     public WaterBall(EntityType<? extends WaterBall> type, double x, double y, double z, Level level) {
-        super(type, level);
-        this.setPos(x, y, z);
+        super(type, x, y, z, level);
     }
 
     public WaterBall(Level level, double x, double y, double z) {
         this(ChaosPersists.ENTITY_TYPE_WATER_BALL.get(), x, y, z, level);
-    }
-
-    public void shoot(double xd, double yd, double zd, float velocity, float inaccuracy) {
-        Vec3 vec3 = new Vec3(xd, yd, zd).normalize().scale(velocity);
-        vec3 = vec3.add(
-                this.random.triangle(0.0, inaccuracy * 0.0075),
-                this.random.triangle(0.0, inaccuracy * 0.0075),
-                this.random.triangle(0.0, inaccuracy * 0.0075));
-        this.setDeltaMovement(vec3);
     }
 
     public int getWaterBallIndex() {
@@ -86,11 +73,6 @@ public class WaterBall extends Projectile {
                             0.0,
                             0.0);
         }
-        HitResult hit = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
-        if (hit.getType() != HitResult.Type.MISS) {
-            this.onHit(hit);
-        }
-        this.checkInsideBlocks();
     }
 
     private static boolean isLegacyDragon(Entity entity) {
@@ -110,7 +92,6 @@ public class WaterBall extends Projectile {
 
     @Override
     protected void onHit(HitResult result) {
-        super.onHit(result);
         if (result.getType() == HitResult.Type.ENTITY) {
             Entity entity = ((EntityHitResult) result).getEntity();
             float damage = 2.0f;

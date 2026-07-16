@@ -97,6 +97,7 @@ public class ItemRock extends Item {
         if (!world.isClientSide) {
             EntityThrownRock rock =
                     new EntityThrownRock(ChaosPersists.ENTITY_TYPE_THROWN_ROCK.get(), player, world, type);
+            rock.setRockType(type);
             rock.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0f, 1.5f, 1.0f);
             world.addFreshEntity(rock);
         }

@@ -4,6 +4,7 @@ import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.core.ChaosSounds;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -46,6 +47,7 @@ public class Kyuubi extends Monster {
 
     public Kyuubi(EntityType<? extends Kyuubi> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 30;
         this.fireImmune();
         this.targetSorter = new GenericTargetSorter(this);
@@ -210,7 +212,7 @@ public class Kyuubi extends Monster {
         super.customServerAiStep();
         LivingEntity target;
         if (this.getRandom().nextInt(10) == 1 && (target = this.findSomethingToAttack()) != null) {
-            this.getLookControl().setLookAt(target, 10.0f, 10.0f);
+            this.setTarget(target);
             this.getNavigation().moveTo(target, 1.25);
             if (this.distanceToSqr(target) < 64.0
                     && (this.getRandom().nextInt(6) == 0 || this.getRandom().nextInt(8) == 1)) {

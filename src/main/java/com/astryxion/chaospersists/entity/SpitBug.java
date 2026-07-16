@@ -7,6 +7,7 @@ import com.astryxion.chaospersists.render.RenderInfo;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
@@ -57,6 +58,7 @@ public class SpitBug extends Monster {
 
     public SpitBug(EntityType<? extends SpitBug> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 50;
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
@@ -279,10 +281,10 @@ public class SpitBug extends Monster {
                 }
             }
             if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
                 if (this.getRandom().nextInt(15) == 1 && this.onGround()) {
                     this.jumpAtEntity(e);
                 } else if (this.distanceToSqr(e) < 9.0) {
+                    MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                     this.setAttacking(1);
                     if (this.getRandom().nextInt(6) == 0 || this.getRandom().nextInt(7) == 1) {
                         this.doHurtTarget(e);

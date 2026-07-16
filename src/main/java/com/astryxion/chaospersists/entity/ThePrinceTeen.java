@@ -10,6 +10,7 @@ import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIFollowOwner;
 import com.astryxion.chaospersists.util.MyEntityAIWander;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.RoyalPetFollowHelper;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -160,6 +161,27 @@ public class ThePrinceTeen extends TamableAnimal {
 
     public boolean shouldRiderSit() {
         return true;
+    }
+
+    @Override
+    public void setOrderedToSit(boolean orderedToSit) {
+        super.setOrderedToSit(orderedToSit);
+        this.setInSittingPose(orderedToSit);
+        if (!this.level().isClientSide) {
+            if (orderedToSit) {
+                this.setActivity(0);
+                this.setAttacking(0);
+                this.setTarget(null);
+                this.setLastHurtByMob(null);
+                MyUtils.clearChaosFlight(this);
+                this.setNoGravity(false);
+                this.noPhysics = false;
+                if (this.getNavigation() != null) {
+                    this.getNavigation().stop();
+                }
+                this.setDeltaMovement(Vec3.ZERO);
+            }
+        }
     }
 
     public int getTrackingRange() {
@@ -642,7 +664,7 @@ public class ThePrinceTeen extends TamableAnimal {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        if (this.isInSittingPose()) {
+        if (RoyalPetFollowHelper.isStayingPut(this)) {
             return null;
         }
         if (this.getActivity() == 1 && !this.onGround() && this.getPassengers().isEmpty()) {
@@ -791,11 +813,14 @@ public class ThePrinceTeen extends TamableAnimal {
 
     @Override
     protected void customServerAiStep() {
+        if (this.isTame() && !RoyalPetFollowHelper.isStayingPut(this)) {
+            RoyalPetFollowHelper.syncDimensionOnly(this);
+        }
         LivingEntity e;
         if (this.getActivity() == 0 && this.getPassengers().isEmpty()) {
             super.customServerAiStep();
         }
-        if (!this.isInSittingPose()
+        if (!RoyalPetFollowHelper.isStayingPut(this)
                 && this.dismountCooldown == 0
                 && this.getActivity() == 0
                 && this.getPassengers().isEmpty()
@@ -849,7 +874,7 @@ public class ThePrinceTeen extends TamableAnimal {
         if (this.getRandom().nextInt(250) == 0) {
             this.setTarget(null);
         }
-        if (this.isInSittingPose()) {
+        if (RoyalPetFollowHelper.isStayingPut(this)) {
             if (!this.level().isClientSide) {
                 this.setNoGravity(false);
                 this.noPhysics = false;
@@ -863,14 +888,14 @@ public class ThePrinceTeen extends TamableAnimal {
         if (this.isTame()
                 && this.getOwner() != null
                 && this.getPassengers().isEmpty()
-                && !this.isInSittingPose()
+                && !RoyalPetFollowHelper.isStayingPut(this)
                 && this.getOwner() instanceof Player owner
                 && owner.getAbilities().flying) {
             this.owner_flying = 1;
             this.setActivity(1);
         }
         if (this.getRandom().nextInt(50) == 1
-                && !this.isInSittingPose()
+                && !RoyalPetFollowHelper.isStayingPut(this)
                 && !this.target_in_sight
                 && this.getPassengers().isEmpty()) {
             if (MyUtils.isPrinceAirborne(this)) {
@@ -888,7 +913,7 @@ public class ThePrinceTeen extends TamableAnimal {
         if (this.isDeadOrDying()) {
             return;
         }
-        if (this.isInSittingPose()) {
+        if (RoyalPetFollowHelper.isStayingPut(this)) {
             return;
         }
         if (this.level().isClientSide) {
@@ -1034,7 +1059,7 @@ public class ThePrinceTeen extends TamableAnimal {
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
         if (!this.level().isClientSide
                 && this.getPassengers().isEmpty()
-                && !this.isInSittingPose()
+                && !RoyalPetFollowHelper.isStayingPut(this)
                 && this.getActivity() == 0
                 && MyUtils.isPrinceAirborne(this)) {
             this.setActivity(1);
@@ -1042,7 +1067,7 @@ public class ThePrinceTeen extends TamableAnimal {
         if (!this.level().isClientSide
                 && this.getPassengers().isEmpty()
                 && this.getActivity() == 0
-                && !this.isInSittingPose()) {
+                && !RoyalPetFollowHelper.isStayingPut(this)) {
             this.setNoGravity(false);
             this.noPhysics = false;
             if (!this.onGround()) {
@@ -1051,7 +1076,7 @@ public class ThePrinceTeen extends TamableAnimal {
             }
         }
         super.tick();
-        if (this.isInSittingPose() && this.getPassengers().isEmpty()) {
+        if (RoyalPetFollowHelper.isStayingPut(this) && this.getPassengers().isEmpty()) {
             this.noPhysics = false;
             if (!this.level().isClientSide) {
                 this.setNoGravity(false);
@@ -1156,7 +1181,7 @@ public class ThePrinceTeen extends TamableAnimal {
                 && this.getActivity() == 0
                 && this.isTame()
                 && this.getOwner() != null
-                && !this.isInSittingPose()
+                && !RoyalPetFollowHelper.isStayingPut(this)
                 && this.getPassengers().isEmpty()
                 && this.distanceToSqr((e = this.getOwner())) > 400.0) {
             this.setActivity(1);
@@ -1195,7 +1220,7 @@ public class ThePrinceTeen extends TamableAnimal {
         if (!this.getPassengers().isEmpty()) {
             return;
         }
-        if (this.isInSittingPose()) {
+        if (RoyalPetFollowHelper.isStayingPut(this)) {
             return;
         }
         if (this.getY() < (double) this.currentFlightTarget.getY() + 2.0) {
@@ -1218,7 +1243,7 @@ public class ThePrinceTeen extends TamableAnimal {
                 this.currentFlightTarget = BlockPos.containing(ox, oy + 2.0, oz);
                 do_new = false;
             }
-            if (this.distanceToSqr(e) > 400.0) {
+            if (this.distanceToSqr(e) > 400.0 && !RoyalPetFollowHelper.isStayingPut(this)) {
                 toofar = true;
                 this.target_in_sight = false;
                 this.setAttacking(0);
@@ -1425,7 +1450,7 @@ public class ThePrinceTeen extends TamableAnimal {
                     if (rider != null && !rider.isAlive()) {
                         this.ejectPassengers();
                     }
-                } else if (!this.isInSittingPose()) {
+                } else if (!RoyalPetFollowHelper.isStayingPut(this)) {
                     this.fly_without_rider();
                 }
             }
@@ -1442,19 +1467,7 @@ public class ThePrinceTeen extends TamableAnimal {
 
     private InteractionResult toggleSitStay(Player player) {
         if (!this.level().isClientSide) {
-            if (!this.isInSittingPose()) {
-                this.setOrderedToSit(true);
-                this.setActivity(0);
-                if (this.getNavigation() != null) {
-                    this.getNavigation().stop();
-                }
-                this.setNoGravity(false);
-                this.noPhysics = false;
-                this.setDeltaMovement(Vec3.ZERO);
-            } else {
-                this.setOrderedToSit(false);
-                this.setActivity(0);
-            }
+            this.setOrderedToSit(!this.isOrderedToSit());
         }
         return InteractionResult.sidedSuccess(this.level().isClientSide);
     }
@@ -1493,21 +1506,21 @@ public class ThePrinceTeen extends TamableAnimal {
                 return super.mobInteract(par1EntityPlayer, hand);
             }
             if (var2.isEmpty()) {
-                if (this.isInSittingPose()
+                if (RoyalPetFollowHelper.isStayingPut(this)
                         && this.isPlayerWithinPrinceReach(par1EntityPlayer, 64.0, 3.0)) {
                     return this.toggleSitStay(par1EntityPlayer);
                 }
                 if (par1EntityPlayer.isShiftKeyDown()
-                        && this.isPlayerWithinPrinceReach(par1EntityPlayer, 64.0, 3.0)) {
-                    return this.toggleSitStay(par1EntityPlayer);
-                }
-                if (this.isPlayerWithinPrinceReach(par1EntityPlayer, 25.0, 1.5)) {
+                        && this.isPlayerWithinPrinceReach(par1EntityPlayer, 25.0, 1.5)) {
                     if (!this.level().isClientSide) {
                         par1EntityPlayer.startRiding(this);
                         this.setActivity(1);
                         this.setOrderedToSit(false);
                     }
                     return InteractionResult.sidedSuccess(this.level().isClientSide);
+                }
+                if (this.isPlayerWithinPrinceReach(par1EntityPlayer, 64.0, 3.0)) {
+                    return this.toggleSitStay(par1EntityPlayer);
                 }
             }
             if (!var2.isEmpty() && var2.is(Items.BEEF) && par1EntityPlayer.distanceToSqr(this) < 25.0) {
@@ -1647,7 +1660,7 @@ public class ThePrinceTeen extends TamableAnimal {
             return;
         }
         if (par1 == 0
-                && !this.isInSittingPose()
+                && !RoyalPetFollowHelper.isStayingPut(this)
                 && this.getNavigation() != null
                 && MyUtils.isPrinceAirborne(this)) {
             par1 = 1;

@@ -36,7 +36,8 @@ public class MyEntityAIWanderALot extends Goal {
         if (this.entity.getRandom().nextInt(30) != 0) {
             return false;
         }
-        if (this.entity instanceof TamableAnimal tamable && tamable.isInSittingPose()) {
+        if (this.entity instanceof TamableAnimal tamable
+                && (tamable.isInSittingPose() || tamable.isOrderedToSit())) {
             return false;
         }
         Vec3 var1 = DefaultRandomPos.getPos(this.entity, this.xzRange, 7);

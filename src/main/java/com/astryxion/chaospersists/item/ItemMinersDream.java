@@ -27,6 +27,7 @@ import com.astryxion.chaospersists.core.ChaosPersists;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -45,6 +46,67 @@ public class ItemMinersDream extends Item {
 
     private static Block modBlock(Object block) {
         return (Block) block;
+    }
+
+    /** Stone/dirt/gravel-like blocks cleared to expose ore; ores and special blocks are left intact. */
+    private static boolean isMinersDreamRemovableBlock(BlockState state) {
+        if (state.is(BlockTags.STONE_ORE_REPLACEABLES)
+                || state.is(BlockTags.DEEPSLATE_ORE_REPLACEABLES)
+                || state.is(BlockTags.DIRT)
+                || state.is(BlockTags.BASE_STONE_OVERWORLD)) {
+            return true;
+        }
+        Block block = state.getBlock();
+        return block == Blocks.DIRT
+                || block == Blocks.GRAVEL
+                || block == Blocks.WATER
+                || block == Blocks.LAVA
+                || block == Blocks.NETHERRACK
+                || block == Blocks.END_STONE
+                || block == Blocks.STONE
+                || block == Blocks.GRANITE
+                || block == Blocks.DIORITE
+                || block == Blocks.ANDESITE
+                || block == Blocks.TUFF
+                || block == Blocks.DEEPSLATE
+                || block == Blocks.COBBLED_DEEPSLATE
+                || block == Blocks.CALCITE
+                || block == Blocks.GRASS_BLOCK
+                || block == Blocks.COARSE_DIRT
+                || block == Blocks.PODZOL
+                || block == Blocks.ROOTED_DIRT
+                || block == Blocks.MUD
+                || block == modBlock(ChaosPersists.CrystalStone);
+    }
+
+    private static boolean isMinersDreamTorchFloorBlock(BlockState state) {
+        if (state.is(BlockTags.STONE_ORE_REPLACEABLES)
+                || state.is(BlockTags.DEEPSLATE_ORE_REPLACEABLES)
+                || state.is(BlockTags.BASE_STONE_OVERWORLD)) {
+            return true;
+        }
+        Block block = state.getBlock();
+        return block == Blocks.STONE
+                || block == Blocks.DIRT
+                || block == Blocks.GRAVEL
+                || block == Blocks.NETHERRACK
+                || block == Blocks.END_STONE
+                || block == Blocks.BEDROCK
+                || block == Blocks.GRANITE
+                || block == Blocks.DIORITE
+                || block == Blocks.ANDESITE
+                || block == Blocks.TUFF
+                || block == Blocks.DEEPSLATE
+                || block == Blocks.COBBLED_DEEPSLATE
+                || block == Blocks.CALCITE
+                || block == Blocks.GRASS_BLOCK
+                || block == Blocks.COARSE_DIRT;
+    }
+
+    private static void clearIfRemovable(Level world, BlockPos pos) {
+        if (isMinersDreamRemovableBlock(world.getBlockState(pos))) {
+            world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+        }
     }
 
     @Override
@@ -81,8 +143,11 @@ public class ItemMinersDream extends Item {
             Block bid;
             int k;
             int x = cposx;
-            int y = pposy;
+            int y = Math.min(pposy, cposy);
             int z = cposz;
+            if (cposy > pposy) {
+                height += cposy - pposy;
+            }
             if (x - pposx < 0) {
                 deltax = -1;
             }
@@ -117,22 +182,17 @@ public class ItemMinersDream extends Item {
                     solid_count = 0;
                     for (j = -width; j <= width; ++j) {
                         BlockPos minePos = new BlockPos(x + k * deltax + j * deltaz, y + i, z + k * deltaz + j * deltax);
-                        bid = world.getBlockState(minePos).getBlock();
-                        if (bid == Blocks.STONE
-                                || bid == Blocks.DIRT
-                                || bid == Blocks.GRAVEL
-                                || bid == Blocks.WATER
-                                || bid == Blocks.LAVA
-                                || bid == Blocks.NETHERRACK
-                                || bid == Blocks.END_STONE
-                                || bid == modBlock(ChaosPersists.CrystalStone)) {
-                            world.setBlock(minePos, Blocks.AIR.defaultBlockState(), 2);
-                        }
+                        clearIfRemovable(world, minePos);
                         if (i != height - 1) {
                             continue;
                         }
                         BlockPos ceilingPos = new BlockPos(x + k * deltax + j * deltaz, y + i + 1, z + k * deltaz + j * deltax);
-                        bid = world.getBlockState(ceilingPos).getBlock();
+                        BlockState ceilingState = world.getBlockState(ceilingPos);
+                        if (isMinersDreamRemovableBlock(ceilingState)) {
+                            world.setBlock(ceilingPos, Blocks.AIR.defaultBlockState(), 3);
+                            continue;
+                        }
+                        bid = ceilingState.getBlock();
                         if (bid != Blocks.AIR) {
                             ++solid_count;
                         }
@@ -163,23 +223,24 @@ public class ItemMinersDream extends Item {
                     }
                 }
             }
+            for (k = 0; k < length; ++k) {
+                for (int j = -width; j <= width; ++j) {
+                    clearIfRemovable(
+                            world,
+                            new BlockPos(x + k * deltax + j * deltaz, y - 1, z + k * deltaz + j * deltax));
+                }
+            }
             for (k = 0; k < length; k += torches) {
                 BlockPos floorPos = new BlockPos(x + k * deltax, y - 1, z + k * deltaz);
                 BlockPos torchPos = new BlockPos(x + k * deltax, y, z + k * deltaz);
-                bid = world.getBlockState(floorPos).getBlock();
-                if ((bid == Blocks.STONE
-                                || bid == Blocks.DIRT
-                                || bid == Blocks.GRAVEL
-                                || bid == Blocks.NETHERRACK
-                                || bid == Blocks.END_STONE
-                                || bid == Blocks.BEDROCK)
-                        && world.getBlockState(torchPos).isAir()) {
+                BlockState floorState = world.getBlockState(floorPos);
+                if (isMinersDreamTorchFloorBlock(floorState) && world.getBlockState(torchPos).isAir()) {
                     world.setBlock(
                             torchPos,
                             modBlock(ChaosPersists.ExtremeTorch).defaultBlockState(),
                             2);
                 }
-                if (bid != modBlock(ChaosPersists.CrystalStone) || !world.getBlockState(torchPos).isAir()) {
+                if (floorState.getBlock() != modBlock(ChaosPersists.CrystalStone) || !world.getBlockState(torchPos).isAir()) {
                     continue;
                 }
                 world.setBlock(

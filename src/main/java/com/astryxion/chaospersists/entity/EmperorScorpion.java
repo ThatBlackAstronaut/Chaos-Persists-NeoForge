@@ -6,6 +6,7 @@ import com.astryxion.chaospersists.render.RenderInfo;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
@@ -18,6 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -50,6 +52,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class EmperorScorpion extends Monster {
@@ -62,6 +65,7 @@ public class EmperorScorpion extends Monster {
 
     public EmperorScorpion(EntityType<? extends EmperorScorpion> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 200;
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
@@ -470,9 +474,9 @@ public class EmperorScorpion extends Monster {
                 }
             }
             if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
                 float reach = 6.0f + e.getBbWidth() / 2.0f;
                 if (this.distanceToSqr(e) < (double) (reach * reach)) {
+                    MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                     this.setAttacking(1);
                     if (this.getRandom().nextInt(4) == 0 || this.getRandom().nextInt(6) == 1) {
                         this.doHurtTarget(e);
@@ -621,8 +625,42 @@ public class EmperorScorpion extends Monster {
             ServerLevelAccessor level,
             MobSpawnType spawnType,
             BlockPos pos,
-            net.minecraft.util.RandomSource random) {
-        return Monster.checkMonsterSpawnRules(type, level, spawnType, pos, random);
+            RandomSource random) {
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
+        for (int k = -2; k < 2; ++k) {
+            for (int j = -2; j < 2; ++j) {
+                for (int i = 2; i < 5; ++i) {
+                    checkPos.set(pos.getX() + j, pos.getY() + i, pos.getZ() + k);
+                    BlockState state = MyUtils.getBlockStateForSpawnRules(level, checkPos);
+                    if (state.getBlock() == Blocks.SPAWNER) {
+                        if (!(MyUtils.getBlockEntityForSpawnRules(level, checkPos)
+                                instanceof SpawnerBlockEntity spawner)) {
+                            continue;
+                        }
+                        ResourceLocation id = SpawnerFixHelper.getMobSpawnerEntityIdFromBlockEntity(spawner);
+                        if (id != null && "Emperor Scorpion".equals(id.getPath())) {
+                            return true;
+                        }
+                    }
+                    if (!state.isAir()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        if (!Monster.checkMonsterSpawnRules(type, level, spawnType, pos, random)) {
+            return false;
+        }
+        if (level instanceof Level world && world.isDay()) {
+            return false;
+        }
+        if (pos.getY() < 50) {
+            return false;
+        }
+        List<EmperorScorpion> others =
+                level.getEntitiesOfClass(
+                        EmperorScorpion.class, new AABB(pos).inflate(20.0, 6.0, 20.0));
+        return others.isEmpty();
     }
 
     @Override

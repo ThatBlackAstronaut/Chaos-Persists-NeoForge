@@ -104,8 +104,6 @@ public final class BigWeaponModelHandler {
                                 texture("squidzookatexture.png"),
                                 StaticBigWeaponItemStackRenderer.Style.SQUID_ZOOKA,
                                 squidModel::render));
-
-        wrapTeisrHandItem(event, item("bighammer"), BigHammerItemStackRenderer::new);
     }
 
     private static Item item(String path) {

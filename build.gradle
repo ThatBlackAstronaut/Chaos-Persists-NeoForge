@@ -34,8 +34,8 @@ minecraft {
 
     // When true, this property will have all Eclipse/IntelliJ IDEA run configurations run the "prepareX" task for the given run configuration before launching the game.
     // In most cases, it is not necessary to enable.
-    // enableEclipsePrepareRuns = true
-    // enableIdeaPrepareRuns = true
+    enableEclipsePrepareRuns = true
+    enableIdeaPrepareRuns = true
 
     // This property allows configuring Gradle's ProcessResources task(s) to run on IDE output locations before launching the game.
     // It is REQUIRED to be set to true for this template to function.
@@ -222,4 +222,18 @@ publishing {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
     options.compilerArgs.addAll(['-Xmaxerrs', '100000', '-Xmaxwarns', '100000'])
+}
+
+// FML crashes with "build/resources/main has mods that were not found" if the client
+// starts while only resources exist (e.g. after clean or a partial OneDrive sync).
+afterEvaluate {
+    if (tasks.findByName('prepareRuns') != null) {
+        tasks.named('prepareRuns').configure { dependsOn 'classes' }
+    }
+    ['runClient', 'runServer', 'runData', 'runGameTestServer',
+     'prepareRunClient', 'prepareRunServer', 'prepareRunData', 'prepareRunGameTestServer'].each { taskName ->
+        if (tasks.findByName(taskName) != null) {
+            tasks.named(taskName).configure { dependsOn 'classes' }
+        }
+    }
 }

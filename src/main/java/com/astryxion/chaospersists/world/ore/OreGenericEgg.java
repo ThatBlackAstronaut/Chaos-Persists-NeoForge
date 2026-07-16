@@ -1,11 +1,15 @@
 package com.astryxion.chaospersists.world.ore;
 
+import com.astryxion.chaospersists.util.MiningDropHelper;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
 
 public class OreGenericEgg extends FallingBlock {
 
@@ -18,6 +22,11 @@ public class OreGenericEgg extends FallingBlock {
                 .strength(0.6f, 3.0f)
                 .sound(SoundType.GRAVEL)
                 .noOcclusion());
+    }
+
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        return MiningDropHelper.selfDrops(this, builder);
     }
 
     @Override

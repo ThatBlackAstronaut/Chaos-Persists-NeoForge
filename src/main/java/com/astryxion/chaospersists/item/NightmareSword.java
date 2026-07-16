@@ -12,10 +12,8 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 
 public class NightmareSword extends SwordItem {
-    private static final int WEAPON_DAMAGE = 20;
-
     public NightmareSword(Tier tier) {
-        super(tier, ChaosWeaponDamage.modifierFor(tier, WEAPON_DAMAGE), -2.4f, new Properties().stacksTo(1).durability(1200));
+        super(tier, ChaosWeaponDamage.TIER_SWORD_MODIFIER, -2.4f, new Properties().stacksTo(1).durability(1200));
     }
 
     @Override

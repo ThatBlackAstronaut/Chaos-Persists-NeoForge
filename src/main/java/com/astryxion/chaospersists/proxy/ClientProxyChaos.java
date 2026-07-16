@@ -33,6 +33,7 @@ import com.astryxion.chaospersists.block.KingSpawnerBlock;
 import com.astryxion.chaospersists.block.KrakenRepellent;
 import com.astryxion.chaospersists.block.QueenSpawnerBlock;
 import com.astryxion.chaospersists.item.CreeperRepellent;
+import com.astryxion.chaospersists.item.ItemSpawnEgg;
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.core.ChaosSounds;
 import com.astryxion.chaospersists.util.MyBlockFlower;
@@ -195,6 +196,12 @@ public class ClientProxyChaos extends CommonProxyChaos {
                 EnumHelper.getItemFromBlock(ChaosPersists.MyScaryLeaves),
                 EnumHelper.getItemFromBlock(ChaosPersists.MyCherryLeaves),
                 EnumHelper.getItemFromBlock(ChaosPersists.MyPeachLeaves));
+
+        if (ChaosPersists.RockEgg instanceof ItemSpawnEgg rockEgg && rockEgg.hasSpawnEggColors()) {
+            itemColors.register(
+                    (stack, tintIndex) -> tintIndex == 0 ? rockEgg.backgroundColor : rockEgg.highlightColor,
+                    rockEgg);
+        }
     }
 
     @Override

@@ -23,6 +23,9 @@ public class MyEntityAIJealousy extends MyEntityAINearestAttackableTarget {
         if (this.theTameable.isInSittingPose()) {
             return false;
         }
+        if (this.theTameable.isOrderedToSit()) {
+            return false;
+        }
         if (!super.canUse()) {
             return false;
         }

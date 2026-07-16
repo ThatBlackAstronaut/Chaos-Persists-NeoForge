@@ -193,6 +193,11 @@ public class TheKing extends Monster {
         return false;
     }
 
+    @Override
+    public boolean fireImmune() {
+        return true;
+    }
+
     public int mygetMaxHealth() {
         return ChaosPersists.TheKing_stats.health;
     }
@@ -438,6 +443,13 @@ public class TheKing extends Monster {
     }
 
     @Override
+    public void travel(Vec3 travelVector) {
+        if (MyUtils.usesChaosFlight(this)) {
+            return;
+        }
+        super.travel(travelVector);
+    }
+    @Override
     protected void customServerAiStep() {
         int xdir = 1;
         int zdir = 1;
@@ -471,7 +483,7 @@ public class TheKing extends Monster {
             }
             p = this.findNearestPlayer();
             if (p != null) {
-                this.getLookControl().setLookAt(p, 10.0f, 10.0f);
+                MyUtils.faceEntity(this, p, 10.0f, 10.0f);
                 p.setDeltaMovement(0.0, 0.0, 0.0);
                 double dd0 = this.getX() - p.getX();
                 double dd1 = this.getZ() - p.getZ();

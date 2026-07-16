@@ -208,6 +208,11 @@ public class TheQueen extends Monster {
         return false;
     }
 
+    @Override
+    public boolean fireImmune() {
+        return true;
+    }
+
     public int mygetMaxHealth() {
         return ChaosPersists.TheQueen_stats.health;
     }
@@ -410,6 +415,13 @@ public class TheQueen extends Monster {
         return d1 > 120.0f;
     }
 
+    @Override
+    public void travel(Vec3 travelVector) {
+        if (MyUtils.usesChaosFlight(this)) {
+            return;
+        }
+        super.travel(travelVector);
+    }
     @Override
     protected void customServerAiStep() {
         int xdir = 1;

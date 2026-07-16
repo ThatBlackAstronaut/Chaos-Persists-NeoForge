@@ -159,6 +159,9 @@ public class CreepingHorror extends Monster {
         if (!par1EntityLiving.isAlive()) {
             return false;
         }
+        if (MyUtils.isIgnoreable(par1EntityLiving)) {
+            return false;
+        }
         if (!this.getSensing().hasLineOfSight(par1EntityLiving)) {
             return false;
         }

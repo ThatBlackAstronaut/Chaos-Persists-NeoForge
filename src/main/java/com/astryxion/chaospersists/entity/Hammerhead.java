@@ -5,6 +5,7 @@ import com.astryxion.chaospersists.core.ChaosSounds;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
@@ -51,6 +52,7 @@ public class Hammerhead extends Monster {
 
     public Hammerhead(EntityType<? extends Hammerhead> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 350;
         this.targetSorter = new GenericTargetSorter(this);
         this.goalSelector.addGoal(0, new FloatGoal(this));
@@ -211,9 +213,10 @@ public class Hammerhead extends Monster {
                 e = this.findSomethingToAttack();
             }
             if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                this.setTarget(e);
                 float reach = 7.0f + e.getBbWidth() / 2.0f;
                 if (this.distanceToSqr(e) < (double) (reach * reach)) {
+                    MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                     this.setAttacking(1);
                     if (this.getRandom().nextInt(3) == 1 || this.getRandom().nextInt(4) == 1) {
                         this.doHurtTarget(e);
@@ -222,6 +225,7 @@ public class Hammerhead extends Monster {
                     this.getNavigation().moveTo(e, 1.25);
                 }
             } else {
+                this.setTarget(null);
                 this.setAttacking(0);
             }
         }

@@ -4,6 +4,7 @@ import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIWander;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -30,6 +31,7 @@ public class SpiderDriver extends Spider {
 
     public SpiderDriver(EntityType<? extends SpiderDriver> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.targetSorter = new GenericTargetSorter(this);
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new PanicGoal(this, 1.5));
@@ -63,7 +65,7 @@ public class SpiderDriver extends Spider {
                 && this.getVehicle() == null) {
             LivingEntity e = this.findSpiderRobot();
             if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                this.setTarget(e);
                 if (this.distanceToSqr(e)
                         < (double) ((4.0f + e.getBbWidth() / 2.0f) * (4.0f + e.getBbWidth() / 2.0f))) {
                     this.startRiding(e);
@@ -77,7 +79,7 @@ public class SpiderDriver extends Spider {
                 && this.getVehicle() != null) {
             LivingEntity e = this.findSomethingToAttack();
             if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                 if (this.distanceToSqr(e)
                                 >= (double)
                                         ((11.0f + e.getBbWidth() / 2.0f) * (11.0f + e.getBbWidth() / 2.0f))

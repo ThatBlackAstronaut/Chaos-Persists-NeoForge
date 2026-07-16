@@ -7,6 +7,7 @@ import com.astryxion.chaospersists.render.RenderInfo;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -17,6 +18,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -81,6 +83,7 @@ public class Godzilla extends Monster {
 
     public Godzilla(EntityType<? extends Godzilla> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 10000;
         this.noPhysics = false;
         this.targetSorter = new GenericTargetSorter(this);
@@ -235,6 +238,11 @@ public class Godzilla extends Monster {
     @Override
     protected void checkFallDamage(double y, boolean onGroundIn, BlockState state, BlockPos pos) {
         this.fallDistance = 0.0f;
+    }
+
+    @Override
+    protected float getDamageAfterArmorAbsorb(DamageSource damageSource, float damageAmount) {
+        return Math.min(super.getDamageAfterArmorAbsorb(damageSource, damageAmount), 120.0f);
     }
 
     @Override
@@ -408,13 +416,9 @@ public class Godzilla extends Monster {
                     bid = this.level().getBlockState(crushPos).getBlock();
                     if (this.isCrushable(bid)) {
                         this.level().setBlock(crushPos, Blocks.AIR.defaultBlockState(), 3);
-                        if (this.getRandom().nextInt(15) != 1) {
-                            continue;
-                        }
-                        this.dropItemRand(bid.asItem(), 1);
                         continue;
                     }
-                    if (bid == Blocks.GRASS
+                    if (bid == Blocks.GRASS_BLOCK
                             && this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
                         this.level().setBlock(crushPos, Blocks.DIRT.defaultBlockState(), 3);
                     }
@@ -436,13 +440,9 @@ public class Godzilla extends Monster {
                     bid = this.level().getBlockState(crushPos).getBlock();
                     if (this.isCrushable(bid)) {
                         this.level().setBlock(crushPos, Blocks.AIR.defaultBlockState(), 3);
-                        if (this.getRandom().nextInt(15) != 1) {
-                            continue;
-                        }
-                        this.dropItemRandAt(bid.asItem(), 1, dx, dz);
                         continue;
                     }
-                    if (bid == Blocks.GRASS
+                    if (bid == Blocks.GRASS_BLOCK
                             && this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
                         this.level().setBlock(crushPos, Blocks.DIRT.defaultBlockState(), 3);
                     }
@@ -497,7 +497,6 @@ public class Godzilla extends Monster {
             }
             if (e != null) {
                 this.wander.setBusy(1);
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
                 if (this.getRandom().nextInt(65) == 1 && this.MygetDistanceSqToEntity(e) > 300.0) {
                     this.doLightningAttack(e);
                 } else if (this.getRandom().nextInt(20 - this.large_unknown_detected * 5) == 1
@@ -830,7 +829,7 @@ public class Godzilla extends Monster {
         if (!this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
             return false;
         }
-        if (bid == Blocks.GRASS) {
+        if (bid == Blocks.GRASS_BLOCK) {
             return false;
         }
         if (bid == Blocks.DIRT) {
@@ -1014,7 +1013,10 @@ public class Godzilla extends Monster {
         if (this.isInvulnerableTo(par1DamageSource)) {
             return false;
         }
-        if (dm > 120.0f) {
+        if (dm > 750.0f) {
+            dm = 750.0f;
+        }
+        if (dm > 120.0f && par1DamageSource.is(DamageTypeTags.BYPASSES_ARMOR)) {
             dm = 120.0f;
         }
         if ((e = par1DamageSource.getEntity()) instanceof LivingEntity enl) {

@@ -41,8 +41,17 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import java.util.Map;
+import java.util.WeakHashMap;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraft.world.InteractionHand;
 
+@Mod.EventBusSubscriber(modid = ChaosPersists.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class Slice extends SwordItem {
+    private static final Map<Player, Integer> SUPPRESS_INTERACT_SWING_TICK = new WeakHashMap<>();
 
     public Slice(Tier par2EnumToolMaterial) {
         super(par2EnumToolMaterial, 3, -2.4f, new Properties().stacksTo(1).durability(2600));
@@ -75,22 +84,71 @@ public class Slice extends SwordItem {
 
     @Override
     public boolean onEntitySwing(ItemStack stack, LivingEntity entityLiving) {
-        if (entityLiving != null && entityLiving instanceof Player p) {
-            double xzoff = 2.0;
-            double yoff = 1.55;
-            BerthaHit lb = new BerthaHit(ChaosPersists.ENTITY_TYPE_BERTHA_HIT.get(), p, p.level());
-            lb.setPos(
-                    p.getX() - xzoff * Mth.sin((float) Math.toRadians(p.getYHeadRot())),
-                    p.getY() + yoff,
-                    p.getZ() + xzoff * Mth.cos((float) Math.toRadians(p.getYHeadRot())));
-            lb.setYRot(p.getYHeadRot());
-            lb.setXRot(p.getXRot());
-            Vec3 motion = lb.getDeltaMovement();
-            lb.setDeltaMovement(motion.x * 2.0, motion.y * 2.0, motion.z * 2.0);
-            p.level().addFreshEntity(lb);
-            stack.hurtAndBreak(1, p, e -> e.broadcastBreakEvent(EquipmentSlot.MAINHAND));
+        if (entityLiving instanceof Player player && !player.level().isClientSide) {
+            Integer suppressTick = SUPPRESS_INTERACT_SWING_TICK.get(player);
+            if (suppressTick == null || suppressTick != player.tickCount) {
+                InteractionHand hand = InteractionHand.MAIN_HAND;
+                if (ItemStack.isSameItemSameTags(stack, player.getOffhandItem())) {
+                    hand = InteractionHand.OFF_HAND;
+                }
+                spawnProjectile(player, stack, hand);
+            }
         }
         return false;
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (!event.getLevel().isClientSide) {
+            suppressInteractSwing(event.getEntity());
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (!event.getLevel().isClientSide) {
+            suppressInteractSwing(event.getEntity());
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (!event.getLevel().isClientSide) {
+            suppressInteractSwing(event.getEntity());
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onEntityInteractSpecific(PlayerInteractEvent.EntityInteractSpecific event) {
+        if (!event.getLevel().isClientSide) {
+            suppressInteractSwing(event.getEntity());
+        }
+    }
+
+    private static void suppressInteractSwing(Player player) {
+        SUPPRESS_INTERACT_SWING_TICK.put(player, player.tickCount);
+    }
+
+    private static void spawnProjectile(Player player, ItemStack stack, InteractionHand hand) {
+        if (!(stack.getItem() instanceof Slice)) {
+            return;
+        }
+        double xzoff = 2.0;
+        double yoff = 1.55;
+        BerthaHit lb = new BerthaHit(ChaosPersists.ENTITY_TYPE_BERTHA_HIT.get(), player, player.level());
+        lb.setPos(
+                player.getX() - xzoff * Mth.sin((float) Math.toRadians(player.getYHeadRot())),
+                player.getY() + yoff,
+                player.getZ() + xzoff * Mth.cos((float) Math.toRadians(player.getYHeadRot())));
+        lb.setYRot(player.getYHeadRot());
+        lb.setXRot(player.getXRot());
+        Vec3 motion = lb.getDeltaMovement();
+        lb.setDeltaMovement(motion.x * 2.0, motion.y * 2.0, motion.z * 2.0);
+        if (!lb.tryHitAlongPath()) {
+            player.level().addFreshEntity(lb);
+        }
+        EquipmentSlot slot = hand == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND;
+        stack.hurtAndBreak(1, player, e -> e.broadcastBreakEvent(slot));
     }
 
     public String getMaterialName() {

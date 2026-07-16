@@ -157,7 +157,11 @@ float h3;
                 float hf = 0.0f;
         float newangle = 0.0f;
         int current_activity = entity.getActivity();
-                newangle = (double)limbSwingAmount > 0.1 || entity.getAttacking() != 0 ? Mth.cos((float)(ageInTicks * 2.3f * this.wingspeed)) * 3.1415927f * 0.4f * limbSwingAmount : Mth.cos((float)(ageInTicks * 0.3f * this.wingspeed)) * 3.1415927f * 0.04f;
+        float flapDrive = limbSwingAmount;
+        if (current_activity == 2 && flapDrive <= 0.1f) {
+            flapDrive = 0.75f;
+        }
+                newangle = (double)flapDrive > 0.1 || entity.getAttacking() != 0 ? Mth.cos((float)(ageInTicks * 2.3f * this.wingspeed)) * 3.1415927f * 0.4f * flapDrive : Mth.cos((float)(ageInTicks * 0.3f * this.wingspeed)) * 3.1415927f * 0.04f;
         this.Rwing.zRot = newangle - 0.4f;
         this.Rwing2.zRot = newangle - 0.6f;
         this.Rwing3.zRot = newangle - 0.2f;

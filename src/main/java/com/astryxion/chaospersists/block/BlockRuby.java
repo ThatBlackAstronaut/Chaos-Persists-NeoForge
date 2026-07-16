@@ -1,7 +1,11 @@
 package com.astryxion.chaospersists.block;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
+import com.astryxion.chaospersists.util.MiningDropHelper;
+import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -20,6 +24,11 @@ public class BlockRuby extends Block {
                 .requiresCorrectToolForDrops()
                 .lightLevel(state -> 8)
                 .noOcclusion());
+    }
+
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        return MiningDropHelper.selfDrops(this, builder);
     }
 
     @Override

@@ -1,9 +1,13 @@
 package com.astryxion.chaospersists.world.ore;
 
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.MiningDropHelper;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
+import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -42,6 +46,11 @@ public class OreBasicStone extends Block {
             properties = properties.noOcclusion();
         }
         return properties;
+    }
+
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        return MiningDropHelper.selfDrops(this, builder);
     }
 
     @Override

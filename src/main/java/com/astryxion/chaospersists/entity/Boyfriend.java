@@ -62,6 +62,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.phys.Vec3;
 
 public class Boyfriend extends TamableAnimal implements RangedAttackMob {
     private static final EntityDataAccessor<Integer> WHICH_GUY =
@@ -280,6 +281,9 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
         this.entityData.set(VOICE_ENABLE, this.voice_enable);
         this.is_prince = tag.getInt("IsPrince");
         this.entityData.set(IS_PRINCE, this.is_prince);
+        if (this.getMainHandItem().is(Items.DIAMOND)) {
+            this.setOrderedToSit(true);
+        }
     }
 
     private void syncArmorFromEquipment() {
@@ -349,7 +353,6 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
                 this.entityData.set(VOICE, this.voice);
                 this.entityData.set(VOICE_ENABLE, this.voice_enable);
                 this.entityData.set(IS_PRINCE, this.is_prince);
-                this.setOrderedToSit(this.isInSittingPose());
             } else {
                 this.voice = this.getVoice();
                 this.voice_enable = this.entityData.get(VOICE_ENABLE);
@@ -359,12 +362,33 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
         if (!this.level().isClientSide) {
             this.customCombatAiStep();
         }
+        if (this.isOrderedToSit() || this.isInSittingPose()) {
+            this.getNavigation().stop();
+            this.setDeltaMovement(Vec3.ZERO);
+        }
+    }
+
+    @Override
+    public void setOrderedToSit(boolean orderedToSit) {
+        super.setOrderedToSit(orderedToSit);
+        this.setInSittingPose(orderedToSit);
+        if (!this.level().isClientSide && orderedToSit) {
+            this.getNavigation().stop();
+            this.setTarget(null);
+            this.setLastHurtByMob(null);
+            this.setDeltaMovement(Vec3.ZERO);
+        }
     }
 
     private void customCombatAiStep() {
         ItemStack stack = this.getMainHandItem();
         LivingEntity victim = this.getTarget();
         if (ChaosPersists.PlayNicely != 0) {
+            victim = null;
+        }
+        if (victim != null
+                && (MyUtils.isProtectedCompanion(this, victim) || !MyUtils.isHostileMobTarget(victim))) {
+            this.setTarget(null);
             victim = null;
         }
         if (this.level().getRandom().nextInt(100) == 1) {
@@ -749,11 +773,13 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
                     this.level().broadcastEntityEvent(this, (byte) 7);
                 }
                 ItemStack var3 = this.getMainHandItem();
-                this.setItemSlot(EquipmentSlot.MAINHAND, var2);
-                if (var2.is(Items.DIAMOND)) {
-                    this.setOrderedToSit(true);
-                } else {
-                    this.setOrderedToSit(false);
+                if (!this.level().isClientSide) {
+                    this.setItemSlot(EquipmentSlot.MAINHAND, var2);
+                    if (var2.is(Items.DIAMOND)) {
+                        this.setOrderedToSit(true);
+                    } else {
+                        this.setOrderedToSit(false);
+                    }
                 }
                 if (!var3.isEmpty()) {
                     player.setItemInHand(InteractionHand.MAIN_HAND, var3);

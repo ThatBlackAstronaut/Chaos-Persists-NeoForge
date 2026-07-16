@@ -13,6 +13,14 @@ import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
 
 public class ModelFrog extends EntityModel<Frog> {
+    private static final float LLEG1_X = 3.0f;
+    private static final float LLEG1_Y = 24.0f;
+    private static final float LLEG2_BASE_X = 5.0f;
+    private static final float LLEG2_BASE_Y = 15.0f;
+    private static final float RLEG1_X = -3.0f;
+    private static final float RLEG1_Y = 24.0f;
+    private static final float RLEG2_BASE_X = -5.0f;
+    private static final float RLEG2_BASE_Y = 15.0f;
     private final float wingspeed;
     private final ModelPart body;
     private final ModelPart jaw;
@@ -104,18 +112,24 @@ public class ModelFrog extends EntityModel<Frog> {
                         ? Mth.cos(ageInTicks * 0.85f * this.wingspeed) * ((float) Math.PI * 0.15f)
                         : 0.0f;
         this.jaw.xRot = newangle + 1.22f;
-        double motionY = entity.getDeltaMovement().y;
-        if (motionY > 0.10000000149011612 || motionY < -0.10000000149011612) {
+        boolean leaping = entity.getJumping() > 0;
+        if (leaping) {
             this.lleg1.zRot = 2.44f;
             this.rleg1.zRot = -2.44f;
         } else {
             this.lleg1.zRot = 0.227f;
             this.rleg1.zRot = -0.227f;
         }
-        this.lleg2.y = this.lleg1.y - (float) Math.cos(this.lleg1.zRot) * 9.0f;
-        this.lleg2.x = this.lleg1.x + (float) Math.sin(this.lleg1.zRot) * 9.0f;
-        this.rleg2.y = this.rleg1.y - (float) Math.cos(this.rleg1.zRot) * 9.0f;
-        this.rleg2.x = this.rleg1.x + (float) Math.sin(this.rleg1.zRot) * 9.0f;
+        this.lleg2.y = LLEG1_Y - (float) Math.cos(this.lleg1.zRot) * 9.0f;
+        this.lleg2.x = LLEG1_X + (float) Math.sin(this.lleg1.zRot) * 9.0f;
+        this.rleg2.y = RLEG1_Y - (float) Math.cos(this.rleg1.zRot) * 9.0f;
+        this.rleg2.x = RLEG1_X + (float) Math.sin(this.rleg1.zRot) * 9.0f;
+        if (!leaping) {
+            this.lleg2.x = LLEG2_BASE_X;
+            this.lleg2.y = LLEG2_BASE_Y;
+            this.rleg2.x = RLEG2_BASE_X;
+            this.rleg2.y = RLEG2_BASE_Y;
+        }
     }
 
     @Override

@@ -1,7 +1,11 @@
 package com.astryxion.chaospersists.world.ore;
 
 import com.astryxion.chaospersists.entity.EntityAnt;
+import com.astryxion.chaospersists.util.MiningDropHelper;
+import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -15,6 +19,11 @@ public class OreSalt extends Block {
                 .strength(5.0f, 2.0f)
                 .sound(SoundType.STONE)
                 .requiresCorrectToolForDrops());
+    }
+
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        return MiningDropHelper.selfDrops(this, builder);
     }
 
     @Override

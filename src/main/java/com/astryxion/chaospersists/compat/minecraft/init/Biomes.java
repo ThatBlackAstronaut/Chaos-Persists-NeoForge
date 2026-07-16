@@ -11,7 +11,7 @@ public final class Biomes {
   private static final Map<String, String> PATH_ALIASES = new HashMap<>();
 
   static {
-    PATH_ALIASES.put("extreme_hills", "windswept_hills");
+    PATH_ALIASES.put("desert_hills", "desert");
     PATH_ALIASES.put("extreme_hills_edge", "windswept_gravelly_hills");
     PATH_ALIASES.put("extreme_hills_with_trees", "windswept_forest");
     PATH_ALIASES.put("forest_hills", "forest");

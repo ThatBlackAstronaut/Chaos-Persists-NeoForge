@@ -222,7 +222,10 @@ public class ModelCephadrome extends EntityModel<Cephadrome> {
         float tailspeed = 0.76f;
         float tailamp = 0.1f;
         float neckYaw = netHeadYaw;
-        boolean useFlightPose = e.getActivity() != 0 && !cephGroundedForPose(e);
+        boolean useFlightPose =
+                !e.getPassengers().isEmpty()
+                        ? e.isNoGravity()
+                        : e.getActivity() != 0 && !cephGroundedForPose(e);
         if ((double) limbSwingAmount > 0.001) {
             lspeed =
                     (float)

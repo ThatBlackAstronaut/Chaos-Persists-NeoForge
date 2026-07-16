@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
@@ -167,6 +168,23 @@ public final class EntityRegistry {
    * 1.7.10 registered hostile mobs like {@code Bee} on the ambient spawn list. Use legacy category
    * for spawn placement when it differs from the entity type's {@link MobCategory}.
    */
+  public static Map<Class<?>, ResourceLocation> getEntityClassIds() {
+    return Collections.unmodifiableMap(ENTITY_CLASS_IDS);
+  }
+
+  @Nullable
+  public static Class<?> getEntityClass(ResourceLocation entityId) {
+    if (entityId == null) {
+      return null;
+    }
+    for (Map.Entry<Class<?>, ResourceLocation> entry : ENTITY_CLASS_IDS.entrySet()) {
+      if (entityId.equals(entry.getValue())) {
+        return entry.getKey();
+      }
+    }
+    return null;
+  }
+
   public static MobCategory getLegacyPlacementCategory(EntityType<?> type) {
     if (type == null) {
       return MobCategory.MONSTER;

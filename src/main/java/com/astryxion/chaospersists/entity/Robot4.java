@@ -7,6 +7,7 @@ import com.astryxion.chaospersists.render.RenderInfo;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import com.astryxion.chaospersists.util.SpawnerFixHelper;
 import java.util.Collections;
 import java.util.Iterator;
@@ -60,6 +61,7 @@ public class Robot4 extends Monster {
 
     public Robot4(EntityType<? extends Robot4> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 120;
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
@@ -166,9 +168,10 @@ public class Robot4 extends Monster {
                                 0.0);
             }
             if (this.getAttacking() != 0) {
+                float shade = this.getRandom().nextFloat();
                 this.level()
                         .addParticle(
-                                new DustParticleOptions(new Vector3f(1.0F, 0.0F, 0.0F), 1.0F),
+                                new DustParticleOptions(new Vector3f(1.0F, shade, 0.0F), 1.0F),
                                 this.getX()
                                         - 1.55
                                                 * Math.sin(Math.toRadians(this.getYRot() + 35.0f)),
@@ -177,7 +180,7 @@ public class Robot4 extends Monster {
                                         + 1.55
                                                 * Math.cos(Math.toRadians(this.getYRot() + 35.0f)),
                                 0.0,
-                                (double) this.getRandom().nextFloat(),
+                                0.0,
                                 0.0);
             }
         }
@@ -318,7 +321,7 @@ public class Robot4 extends Monster {
                 }
             }
             if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                 if (this.distanceToSqr(e) < 256.0) {
                     float reach = 3.0f + e.getBbWidth() / 2.0f;
                     if (this.distanceToSqr(e) < (double) (reach * reach)) {

@@ -117,7 +117,7 @@ public class EnderKnight extends Monster {
         }
         LivingEntity target = this.getTarget();
         if (target != null) {
-            this.getLookControl().setLookAt(target, 100.0f, 100.0f);
+            MyUtils.faceEntity(this, target, 100.0f, 100.0f);
         }
         if (!this.level().isClientSide && this.isAlive()) {
             if (target != null) {

@@ -154,8 +154,8 @@ public class ModelOstrich extends EntityModel<Ostrich> {
         float lspeed =
                 (float)
                         Math.sqrt(
-                                (e.xOld - e.getX()) * (e.xOld - e.getX())
-                                        + (e.zOld - e.getZ()) * (e.zOld - e.getZ()));
+                                (e.xo - e.getX()) * (e.xo - e.getX())
+                                        + (e.zo - e.getZ()) * (e.zo - e.getZ()));
         newangle = Mth.cos((float)(ageInTicks * 1.25f * this.wingspeed)) * 3.1415927f * lspeed * 0.4f;
         if ((double)newangle > 0.5) {
             newangle = 0.75f;

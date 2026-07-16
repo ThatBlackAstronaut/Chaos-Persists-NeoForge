@@ -9,7 +9,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 
 public class ItemThunderStaff extends Item {
 
@@ -30,14 +29,32 @@ public class ItemThunderStaff extends Item {
         if (!level.isClientSide) {
             ThunderBolt lb =
                     new ThunderBolt(ChaosPersists.ENTITY_TYPE_THUNDER_BOLT.get(), player, level);
-            Vec3 look = player.getLookAngle();
-            double spawnDist = 0.65;
-            double px = player.getX() + look.x * spawnDist;
-            double py = player.getY() + player.getEyeHeight() + look.y * spawnDist;
-            double pz = player.getZ() + look.z * spawnDist;
+            // Match OreSpawn 1.7.10 spawn offset (ItemThunderStaff.onItemRightClick).
+            double xzoff = 1.0;
+            double yoff = 1.55;
+            float yawHead = player.getYHeadRot();
+            double px =
+                    player.getX()
+                            - xzoff * Math.sin(Math.toRadians(yawHead + 45.0f));
+            double py = player.getY() + yoff;
+            double pz =
+                    player.getZ()
+                            + xzoff * Math.cos(Math.toRadians(yawHead + 45.0f));
             lb.setPos(px, py, pz);
-            double speed = 1.85;
-            lb.setDeltaMovement(look.x * speed, look.y * speed, look.z * speed);
+            lb.setYRot(player.getYRot());
+            lb.setXRot(player.getXRot());
+            // EntityThrowable base throw speed 0.4F, then OreSpawn triples it.
+            float yaw = player.getYRot();
+            float pitch = player.getXRot();
+            double throwSpeed = 0.4 * 3.0;
+            lb.setDeltaMovement(
+                    -Mth.sin(yaw * Mth.DEG_TO_RAD)
+                            * Mth.cos(pitch * Mth.DEG_TO_RAD)
+                            * throwSpeed,
+                    -Mth.sin(pitch * Mth.DEG_TO_RAD) * throwSpeed,
+                    Mth.cos(yaw * Mth.DEG_TO_RAD)
+                            * Mth.cos(pitch * Mth.DEG_TO_RAD)
+                            * throwSpeed);
             level.addFreshEntity(lb);
         }
 

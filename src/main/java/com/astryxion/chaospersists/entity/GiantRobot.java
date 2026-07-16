@@ -7,6 +7,7 @@ import com.astryxion.chaospersists.render.RenderGiantRobotInfo;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -49,6 +50,7 @@ public class GiantRobot extends Monster {
 
     public GiantRobot(EntityType<? extends GiantRobot> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = ChaosPersists.Jeffery_stats.health / 2;
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderGiantRobotInfo();
@@ -245,7 +247,7 @@ public class GiantRobot extends Monster {
                 e = this.findSomethingToAttack();
             }
             if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                 if (this.distanceToSqr(e) < 256.0) {
                     double rr = Math.atan2(e.getZ() - this.getZ(), e.getX() - this.getX());
                     double rhdir = Math.toRadians((this.getYHeadRot() + 90.0f) % 360.0f);

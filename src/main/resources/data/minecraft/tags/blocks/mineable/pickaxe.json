@@ -1,0 +1,23 @@
+{
+  "replace": false,
+  "values": [
+    "chaospersists:oreamethyst",
+    "chaospersists:oreruby",
+    "chaospersists:oresalt",
+    "chaospersists:oretitanium",
+    "chaospersists:oreuranium",
+    "chaospersists:blockamethyst",
+    "chaospersists:blockruby",
+    "chaospersists:blocktitanium",
+    "chaospersists:blockuranium",
+    "chaospersists:blockmobzillascale",
+    "chaospersists:crystalpink_block",
+    "chaospersists:tigerseye_block",
+    "chaospersists:crystalcoal",
+    "chaospersists:crystalcrystal",
+    "chaospersists:crystalstone",
+    "chaospersists:crystalfairy",
+    "chaospersists:crystalrat",
+    "chaospersists:tigerseye"
+  ]
+}

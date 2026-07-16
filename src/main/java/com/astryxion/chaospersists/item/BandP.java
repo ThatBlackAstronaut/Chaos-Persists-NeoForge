@@ -1,6 +1,7 @@
 package com.astryxion.chaospersists.item;
 
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.entity.Boyfriend;
@@ -64,6 +65,7 @@ public class BandP extends Monster {
 
     public BandP(EntityType<? extends BandP> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 1000;
         this.targetSorter = new GenericTargetSorter(this);
         this.goalSelector.addGoal(0, new MoveThroughVillageGoal(this, 0.5, false, 4, () -> false));
@@ -209,8 +211,9 @@ public class BandP extends Monster {
         if (this.getRandom().nextInt(12) == 1) {
             LivingEntity e = this.findSomethingToAttack();
             if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                this.setTarget(e);
                 if (this.distanceToSqr(e) < 9.0) {
+                    MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                     this.doHurtTarget(e);
                     if (e instanceof Player p) {
                         int k = -1;

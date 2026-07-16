@@ -43,7 +43,9 @@ public final class DimensionSpawnPopulation {
                     level, miningBiome, chunk.getPos(), level.getRandom());
             return;
         }
-        if (LegacyOverworldSpawnPopulation.usesLegacyVanillaBiomeSpawns(level.dimension())) {
+        // Overworld spawns are injected once via LegacyOverworldSpawnBiomeModifier; re-merging here
+        // tripled spawn rates and caused mid-air chunk-gen spawning on floating structures.
+        if (level.dimension().equals(Level.NETHER) || level.dimension().equals(Level.END)) {
             BlockPos pos = chunk.getPos().getWorldPosition();
             Holder<Biome> biome =
                     LegacyOverworldSpawnPopulation.mergeLegacySpawnsIntoBiome(
@@ -76,7 +78,8 @@ public final class DimensionSpawnPopulation {
             BiomeMiningDimension.applyPotentialSpawns(event, level.registryAccess());
             return;
         }
-        if (LegacyOverworldSpawnPopulation.usesLegacyVanillaBiomeSpawns(dimension)) {
+        // Overworld uses biome modifiers only; runtime PotentialSpawns injection duplicated entries.
+        if (dimension.equals(Level.NETHER) || dimension.equals(Level.END)) {
             LegacyOverworldSpawnPopulation.applyPotentialSpawns(event, level);
         }
     }

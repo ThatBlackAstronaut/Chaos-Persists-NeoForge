@@ -25,10 +25,22 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 public class ItemSpawnEgg extends Item {
     public int my_id = 0;
+    public final int backgroundColor;
+    public final int highlightColor;
 
     public ItemSpawnEgg(int i, int j) {
+        this(i, j, -1, -1);
+    }
+
+    public ItemSpawnEgg(int i, int j, int backgroundColor, int highlightColor) {
         super(new Properties().stacksTo(64));
         this.my_id = j;
+        this.backgroundColor = backgroundColor;
+        this.highlightColor = highlightColor;
+    }
+
+    public boolean hasSpawnEggColors() {
+        return this.backgroundColor >= 0 && this.highlightColor >= 0;
     }
 
     @Override
@@ -532,6 +544,10 @@ public class ItemSpawnEgg extends Item {
             }
             case 383: {
                 name = "crab";
+                break;
+            }
+            case 385: {
+                name = "rock";
                 break;
             }
         }

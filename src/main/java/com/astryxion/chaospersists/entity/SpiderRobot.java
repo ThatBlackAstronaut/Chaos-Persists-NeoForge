@@ -3,10 +3,12 @@ package com.astryxion.chaospersists.entity;
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.core.ChaosSounds;
 import com.astryxion.chaospersists.render.RenderSpiderRobotInfo;
+import com.astryxion.chaospersists.util.ChaosMountHelper;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyUtils;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -26,6 +28,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -60,6 +63,8 @@ public class SpiderRobot extends Mob {
     private RenderSpiderRobotInfo renderdata = new RenderSpiderRobotInfo();
     private int didonce = 0;
     private int rideTicker = 0;
+    private int dismountCooldown = 0;
+    private UUID lastRiderId = null;
 
     public SpiderRobot(EntityType<? extends SpiderRobot> type, Level level) {
         super(type, level);
@@ -108,24 +113,39 @@ public class SpiderRobot extends Mob {
         return ChaosPersists.SpiderRobot_stats.defense;
     }
 
+    /** 1.7/1.12 updateAITasks — no look/wander AI while any passenger is mounted. */
+    @Override
+    protected void updateControlFlags() {
+        if (this.getControllingPassenger() != null) {
+            this.goalSelector.setControlFlag(Goal.Flag.MOVE, false);
+            this.goalSelector.setControlFlag(Goal.Flag.JUMP, false);
+            this.goalSelector.setControlFlag(Goal.Flag.LOOK, false);
+            return;
+        }
+        super.updateControlFlags();
+    }
+
     @Override
     public void aiStep() {
         if (this.isRemoved()) {
             return;
         }
         if (this.getControllingPassenger() != null) {
-            if (this.getControllingPassenger() instanceof Player player) {
-                this.tickRidden(player, Vec3.ZERO);
-            }
-            ++this.attackAnim;
-            if (this.hurtTime > 0) {
-                --this.hurtTime;
-            }
-            this.updateSwingTime();
-            this.travel(Vec3.ZERO);
-            return;
+            this.goalSelector.setControlFlag(Goal.Flag.MOVE, false);
+            this.goalSelector.setControlFlag(Goal.Flag.JUMP, false);
+            this.goalSelector.setControlFlag(Goal.Flag.LOOK, false);
         }
         super.aiStep();
+    }
+
+    @Override
+    protected float tickHeadTurn(float yRot, float animStep) {
+        if (this.getControllingPassenger() != null) {
+            this.yBodyRot = this.getYRot();
+            this.yHeadRot = this.getYRot();
+            return animStep;
+        }
+        return super.tickHeadTurn(yRot, animStep);
     }
 
     @Override
@@ -221,6 +241,72 @@ public class SpiderRobot extends Mob {
             this.renderdata.pairedwith[i] = 6;
             this.renderdata.yoff[i] = -0.1f;
         }
+        this.snapLegsToGround();
+    }
+
+    private void snapLegsToGround() {
+        if (this.level() == null) {
+            return;
+        }
+        for (int i = 0; i < 8; ++i) {
+            if (this.renderdata.legoff[i] <= 0.0f) {
+                continue;
+            }
+            this.renderdata.realposx[i] =
+                    (float)
+                            (this.getX()
+                                    - (double) this.renderdata.legoff[i]
+                                            * Math.sin(
+                                                    Math.toRadians(
+                                                            Mth.wrapDegrees(
+                                                                    (double) (this.getYRot() + 90.0f)))
+                                                            + (double) this.renderdata.ymid[i]));
+            this.renderdata.realposz[i] =
+                    (float)
+                            (this.getZ()
+                                    + (double) this.renderdata.legoff[i]
+                                            * Math.cos(
+                                                    Math.toRadians(
+                                                            Mth.wrapDegrees(
+                                                                    (double) (this.getYRot() + 90.0f)))
+                                                            + (double) this.renderdata.ymid[i]));
+            this.renderdata.realposy[i] = (float) this.getY() + this.renderdata.yoff[i];
+            this.findNewFooting(i);
+        }
+    }
+
+    private void resetLegPose() {
+        for (int i = 0; i < 8; ++i) {
+            this.renderdata.p1xangle[i] = 0.7853981633974483;
+            this.renderdata.p2xangle[i] = 0.0;
+            this.renderdata.p3xangle[i] = -0.7853981633974483;
+            this.renderdata.pxvelocity[i] = 0.0f;
+            this.renderdata.udcurrentangle[i] = 0.0f;
+            this.renderdata.udwantedangle[i] = 0.0f;
+            this.renderdata.uddisplayangle[i] = 0.0f;
+            this.renderdata.udvelocity[i] = 0.0f;
+            this.renderdata.footup[i] = 1;
+            this.renderdata.uppoint[i] = 0.0f;
+            this.renderdata.footingticker[i] = 0;
+        }
+        this.snapLegsToGround();
+    }
+
+    private boolean isNearGround(double gh) {
+        int x = Mth.floor(this.getX());
+        int z = Mth.floor(this.getZ());
+        Block bid =
+                this.level()
+                        .getBlockState(
+                                new BlockPos(x, Mth.floor((float) this.getY() - (float) gh + 1.0f), z))
+                        .getBlock();
+        if (bid == Blocks.AIR) {
+            bid =
+                    this.level()
+                            .getBlockState(new BlockPos(x, Mth.floor((float) this.getY() - (float) gh), z))
+                            .getBlock();
+        }
+        return bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.LAVA;
     }
 
     private float getNewVelocity(float v, float diff, float curval) {
@@ -267,6 +353,9 @@ public class SpiderRobot extends Mob {
     public void updateLegs() {
         if (!this.level().isClientSide) {
             return;
+        }
+        if (this.hurtTime > 0 && this.hurtTime >= this.hurtDuration - 1) {
+            this.resetLegPose();
         }
         float legYaw = this.getYRot();
         legYaw %= 360.0f;
@@ -527,11 +616,21 @@ public class SpiderRobot extends Mob {
 
     @Override
     public void addPassenger(Entity passenger) {
+        if (passenger instanceof LivingEntity living) {
+            this.setYRot(living.getYRot());
+            this.yRotO = this.getYRot();
+            this.yBodyRot = living.getYRot();
+            this.yHeadRot = living.getYRot();
+        }
         super.addPassenger(passenger);
+        this.boatPosRotationIncrements = 0;
         if (passenger instanceof LivingEntity living) {
             living.setDeltaMovement(Vec3.ZERO);
             living.xxa = 0.0f;
             living.zza = 0.0f;
+        }
+        if (this.hasPassenger(passenger)) {
+            this.positionRider(passenger, Entity::setPos);
         }
     }
 
@@ -713,19 +812,18 @@ public class SpiderRobot extends Mob {
         float strafeInput = moveStrafe;
         boolean hasDriveInput =
                 Math.abs(forwardInput) > 0.001f || Math.abs(strafeInput) > 0.001f;
-        if (hasDriveInput || velocity > 0.05) {
-            if (velocity > 0.01) {
-                d4 = 1.85 - velocity;
-                if ((d4 = Math.abs(d4)) < 0.01) {
-                    d4 = 0.01;
-                }
-                if (d4 > 0.9) {
-                    d4 = 0.9;
-                }
-                this.setYRot(rider.getYRot() + (float) (relative_g * d4));
-            } else {
-                this.setYRot(rider.getYRot());
+        float yawDelta = Math.abs(Mth.wrapDegrees(rider.getYRot() - this.getYRot()));
+        if (velocity <= 0.01 || yawDelta > 2.0f) {
+            this.setYRot(rider.getYRot());
+        } else {
+            d4 = 1.85 - velocity;
+            if ((d4 = Math.abs(d4)) < 0.01) {
+                d4 = 0.01;
             }
+            if (d4 > 0.9) {
+                d4 = 0.9;
+            }
+            this.setYRot(rider.getYRot() + (float) (relative_g * d4));
         }
         this.setXRot(0.0f);
         this.setRot(this.getYRot(), this.getXRot());
@@ -849,43 +947,14 @@ public class SpiderRobot extends Mob {
         return 3.0 + Math.cos((float) this.rideTicker * 0.19f) * 0.02;
     }
 
-    @OnlyIn(Dist.CLIENT)
-    public void syncLocalPassengerAfterTick() {
-        if (!this.level().isClientSide || !this.isControlledByLocalInstance()) {
-            return;
-        }
-        Player rider = this.getRiderPlayer();
-        if (!(rider instanceof LocalPlayer local)) {
-            return;
-        }
-        if (Math.abs(local.input.forwardImpulse) > 0.001f
-                || Math.abs(local.input.leftImpulse) > 0.001f) {
-            return;
-        }
-        Vec3 dm = this.getDeltaMovement();
-        if (dm.horizontalDistanceSqr() > 0.0025) {
-            return;
-        }
-        this.positionRider(rider, Entity::moveTo);
-        rider.xo = rider.getX();
-        rider.yo = rider.getY();
-        rider.zo = rider.getZ();
-        rider.setDeltaMovement(Vec3.ZERO);
-    }
-
     @Override
     protected void positionRider(Entity passenger, MoveFunction moveFunction) {
         if (this.hasPassenger(passenger)) {
             float f = this.getSeatForwardOffset();
             double x = this.getX() - (double) f * Math.sin(Math.toRadians(this.getYRot()));
-            double y = this.getY() + this.getPassengersRidingOffset() + passenger.getMyRidingOffset();
+            double y = ChaosMountHelper.riderSeatY(this, passenger, this.getPassengersRidingOffset());
             double z = this.getZ() + (double) f * Math.cos(Math.toRadians(this.getYRot()));
             moveFunction.accept(passenger, x, y, z);
-            if (passenger instanceof LivingEntity living) {
-                living.setDeltaMovement(Vec3.ZERO);
-                living.xxa = 0.0f;
-                living.zza = 0.0f;
-            }
         }
     }
 
@@ -893,14 +962,25 @@ public class SpiderRobot extends Mob {
     protected void removePassenger(Entity passenger) {
         super.removePassenger(passenger);
         if (!this.isVehicle()) {
+            if (passenger instanceof Player player) {
+                this.lastRiderId = player.getUUID();
+            }
+            this.dismountCooldown = ChaosMountHelper.GROUND_DISMOUNT_COOLDOWN_TICKS;
             this.fallDistance = 0.0f;
-            this.setDeltaMovement(Vec3.ZERO);
-            if (this.level().isClientSide) {
-                this.boatPosRotationIncrements = 0;
-            } else {
+            this.boatPosRotationIncrements = 0;
+            if (!this.level().isClientSide) {
+                ChaosMountHelper.finishDismountLanding(this);
                 this.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
+            } else {
+                this.setDeltaMovement(Vec3.ZERO);
             }
         }
+    }
+
+    @Override
+    public void onAddedToWorld() {
+        super.onAddedToWorld();
+        this.initLegData();
     }
 
     @Override
@@ -961,6 +1041,9 @@ public class SpiderRobot extends Mob {
 
     @Override
     public void tick() {
+        if (this.dismountCooldown > 0) {
+            --this.dismountCooldown;
+        }
         super.tick();
         this.clearFire();
         if (this.level().getDifficulty() != Difficulty.PEACEFUL && !this.level().isClientSide && this.getControllingPassenger() != null && this.getRandom().nextInt(40) == 0) {
@@ -1016,18 +1099,22 @@ public class SpiderRobot extends Mob {
                 double d5 = this.getY() + (this.boatY - this.getY()) / (double) this.boatPosRotationIncrements;
                 double d11 = this.getZ() + (this.boatZ - this.getZ()) / (double) this.boatPosRotationIncrements;
                 this.setPos(d4, d5, d11);
+                double d10 =
+                        Mth.wrapDegrees(
+                                (double) this.getControllingPassenger().getYRot()
+                                        - (double) this.getYRot());
                 this.setYRot(
                         (float)
-                                ((double) this.getYRot()
-                                        + (this.boatYaw - (double) this.getYRot())
-                                                / (double) this.boatPosRotationIncrements));
+                                ((double) this.getYRot() + d10 / (double) this.boatPosRotationIncrements));
                 this.setRot(this.getYRot(), this.getXRot());
                 --this.boatPosRotationIncrements;
             }
             if (this.level().isClientSide) {
-                this.xo = this.getX();
-                this.yo = this.getY();
-                this.zo = this.getZ();
+                if (!this.isControlledByLocalInstance()) {
+                    this.xo = this.getX();
+                    this.yo = this.getY();
+                    this.zo = this.getZ();
+                }
                 this.updateLegs();
             }
             return;
@@ -1091,16 +1178,12 @@ public class SpiderRobot extends Mob {
         this.zo = this.getZ();
         if (this.level().isClientSide) {
             if (this.getControllingPassenger() == null) {
-                Block bid = this.level().getBlockState(new BlockPos((int)this.getX(), (int)((float)this.getY() - (float)gh + 1.0f), (int)this.getZ())).getBlock();
-                if (bid == Blocks.AIR) {
-                    bid = this.level().getBlockState(new BlockPos((int)this.getX(), (int)((float)this.getY() - (float)gh), (int)this.getZ())).getBlock();
-                }
-                if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.LAVA) {
+                if (this.isNearGround(gh)) {
                     my += 0.12;
                     this.setPos(this.getX(), this.getY() + 0.12, this.getZ());
                     this.boatY += 0.12;
                 } else {
-                    my -= 0.002;
+                    my -= 0.08;
                 }
             }
             if (this.boatPosRotationIncrements > 0 && !this.isControlledByLocalInstance()) {
@@ -1144,19 +1227,15 @@ public class SpiderRobot extends Mob {
                 if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.LAVA) {
                     my += 0.06;
                 } else {
-                    my -= 0.02;
+                    my -= 0.08;
                 }
             } else {
-                bid = this.level().getBlockState(new BlockPos((int)this.getX(), (int)((float)this.getY() - (float)gh + 1.0f), (int)this.getZ())).getBlock();
-                if (bid == Blocks.AIR) {
-                    bid = this.level().getBlockState(new BlockPos((int)this.getX(), (int)((float)this.getY() - (float)gh), (int)this.getZ())).getBlock();
-                }
-                if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.LAVA) {
+                if (this.isNearGround(gh)) {
                     my += 0.15;
                     this.setPos(this.getX(), this.getY() + 0.15, this.getZ());
                     this.boatY += 0.15;
                 } else {
-                    my -= 0.002;
+                    my -= 0.08;
                 }
             }
             if (this.getControllingPassenger() != null && this.getControllingPassenger().isRemoved()) {
@@ -1229,24 +1308,29 @@ public class SpiderRobot extends Mob {
         }
         if (this.getControllingPassenger() instanceof Player rider
                 && rider != par1EntityPlayer) {
-            return InteractionResult.SUCCESS;
+            return InteractionResult.PASS;
         }
-        if (!this.level().isClientSide
-                && this.getControllingPassenger() == null
-                && par1EntityPlayer.distanceToSqr(this) < 16.0) {
-            par1EntityPlayer.startRiding(this);
-            this.level()
-                    .playSound(
-                            null,
-                            this.getX(),
-                            this.getY(),
-                            this.getZ(),
-                            ChaosSounds.ROBOTSPIDERMOUNT,
-                            SoundSource.NEUTRAL,
-                            0.65f,
-                            1.0f);
+        if (var2.isEmpty()
+                && ChaosMountHelper.canPlayerMount(par1EntityPlayer, this, this.dismountCooldown)) {
+            if (!this.level().isClientSide) {
+                par1EntityPlayer.startRiding(this);
+                ChaosMountHelper.onPlayerMounted(this);
+                this.positionRider(par1EntityPlayer, Entity::setPos);
+                this.lastRiderId = null;
+                this.level()
+                        .playSound(
+                                null,
+                                this.getX(),
+                                this.getY(),
+                                this.getZ(),
+                                ChaosSounds.ROBOTSPIDERMOUNT,
+                                SoundSource.NEUTRAL,
+                                0.65f,
+                                1.0f);
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.PASS;
     }
 
     private void feetFindSomethingToHit() {
@@ -1288,6 +1372,12 @@ public class SpiderRobot extends Mob {
             return false;
         }
         if (par1EntityLiving == this.getControllingPassenger()) {
+            return false;
+        }
+        if (par1EntityLiving instanceof Player player
+                && this.lastRiderId != null
+                && player.getUUID().equals(this.lastRiderId)
+                && this.dismountCooldown > 0) {
             return false;
         }
         float d1 = (float)(par1EntityLiving.getX() - this.getX());

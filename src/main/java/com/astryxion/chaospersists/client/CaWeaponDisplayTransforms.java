@@ -24,7 +24,7 @@ public final class CaWeaponDisplayTransforms {
             PoseStack poseStack, BigWeaponHandTransforms.Style style, boolean firstPerson, boolean leftHand) {
         ItemTransform transform = get(style, firstPerson, leftHand);
         float teisrScale = TeisrHandScales.get(style, firstPerson);
-        applyPositioning(poseStack, transform, leftHand, teisrScale);
+        applyPositioning(poseStack, transform, style, firstPerson, leftHand, teisrScale);
     }
 
     public static ItemTransform get(BigWeaponHandTransforms.Style style, boolean firstPerson, boolean leftHand) {
@@ -34,11 +34,28 @@ public final class CaWeaponDisplayTransforms {
         return leftHand ? thirdPersonLeft(style) : thirdPersonRight(style);
     }
 
-    private static void applyPositioning(PoseStack poseStack, ItemTransform transform, boolean leftHand, float teisrScale) {
+    private static boolean usesCustomFirstPersonPose(BigWeaponHandTransforms.Style style, boolean firstPerson) {
+        return firstPerson && (style == BigWeaponHandTransforms.Style.CHAINSAW
+                || style == BigWeaponHandTransforms.Style.SQUID_ZOOKA);
+    }
+
+    /** Squid Zooka left hand uses custom Java poses; generic CA left mirror breaks both FP and TP. */
+    private static boolean skipLeftHandMirror(
+            BigWeaponHandTransforms.Style style, boolean firstPerson, boolean leftHand) {
+        return leftHand && style == BigWeaponHandTransforms.Style.SQUID_ZOOKA;
+    }
+
+    private static void applyPositioning(
+            PoseStack poseStack,
+            ItemTransform transform,
+            BigWeaponHandTransforms.Style style,
+            boolean firstPerson,
+            boolean leftHand,
+            float teisrScale) {
         if (transform == ItemTransform.NO_TRANSFORM) {
             return;
         }
-        if (leftHand) {
+        if (leftHand && !usesCustomFirstPersonPose(style, firstPerson) && !skipLeftHandMirror(style, firstPerson, leftHand)) {
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
             poseStack.scale(-1.0f, 1.0f, 1.0f);
         }
@@ -108,6 +125,14 @@ public final class CaWeaponDisplayTransforms {
         return new float[] {rot[0], rot[1], rot[2] + 180.0f};
     }
 
+    /** OreSpawn texel chainsaw faces opposite CA Blockbench blade; flip X in FP and Z in TP. */
+    private static float[] chainsawRotation(boolean firstPerson, float[] rot) {
+        if (firstPerson) {
+            return new float[] {rot[0] + 180.0f, rot[1], rot[2]};
+        }
+        return new float[] {rot[0], rot[1], rot[2] + 180.0f};
+    }
+
     private static ItemTransform thirdPersonRight(BigWeaponHandTransforms.Style style) {
         return switch (style) {
             case BERTHA -> t(swordRotation(style, false, new float[] {-6, -90, 0}), new float[] {0, 21.25f, -7.25f}, new float[] {1.5f, 1.5f, 1.5f});
@@ -116,7 +141,7 @@ public final class CaWeaponDisplayTransforms {
             case HAMMY -> t(hammyRotation(style, false, new float[] {20, 0, 0}), new float[] {-0.5f, 24, 1.25f}, new float[] {1, 1.3f, 1});
             case BATTLE_AXE -> t(battleAxeRotation(style, false, new float[] {20, 0, 0}), new float[] {-0.5f, 24, 1.25f}, new float[] {1, 1.3f, 1});
             case QUEEN_BATTLE_AXE -> t(battleAxeRotation(style, false, new float[] {20, 0, 0}), new float[] {-0.5f, 39, 0.75f}, new float[] {1.5f, 2, 1.5f});
-            case CHAINSAW -> t(new float[] {0, 0, 0}, new float[] {0, 19.75f, 0.25f}, new float[] {0.62f, 1, 0.97f});
+            case CHAINSAW -> t(chainsawRotation(false, new float[] {-6, -90, 0}), new float[] {0, 21.25f, -7.25f}, new float[] {1.5f, 1.5f, 1.5f});
             case SQUID_ZOOKA -> t(new float[] {68.25f, 0, 0}, new float[] {0, 2.5f, 6.25f}, new float[] {1, 1, 1.35938f});
         };
     }
@@ -129,8 +154,8 @@ public final class CaWeaponDisplayTransforms {
             case HAMMY -> t(hammyRotation(style, false, new float[] {20, 0, 0}), new float[] {0.5f, 24.25f, 1.25f}, new float[] {1, 1.3f, 1});
             case BATTLE_AXE -> t(battleAxeRotation(style, false, new float[] {20, 0, 0}), new float[] {0.5f, 24.25f, 1.25f}, new float[] {1, 1.3f, 1});
             case QUEEN_BATTLE_AXE -> t(battleAxeRotation(style, false, new float[] {20, 0, 0}), new float[] {0.5f, 39.25f, 0.75f}, new float[] {1.5f, 2, 1.5f});
-            case CHAINSAW -> t(new float[] {1, 1, 0}, new float[] {0, 20.75f, 0}, new float[] {0.62f, 1, 0.97f});
-            case SQUID_ZOOKA -> thirdPersonRight(style);
+            case CHAINSAW -> t(chainsawRotation(false, new float[] {-6, -90, 0}), new float[] {0, 21.25f, 7.25f}, new float[] {1.5f, 1.5f, 1.5f});
+            case SQUID_ZOOKA -> t(new float[] {68.25f, 0, 0}, new float[] {0, 2.5f, -6.25f}, new float[] {1, 1, 1.35938f});
         };
     }
 
@@ -142,8 +167,8 @@ public final class CaWeaponDisplayTransforms {
             case HAMMY -> t(hammyRotation(style, true, new float[] {-8, 0, -7}), new float[] {0, 0, 0});
             case BATTLE_AXE -> t(battleAxeRotation(style, true, new float[] {-7, 0, 0}), new float[] {1.5f, 9.75f, -9.75f});
             case QUEEN_BATTLE_AXE -> t(battleAxeRotation(style, true, new float[] {-7, 0, 0}), new float[] {1.5f, 9.75f, -9.75f});
-            case CHAINSAW -> t(new float[] {0, 0, 0}, new float[] {13, 19.5f, -13}, new float[] {1.28f, 1.43f, 0.89f});
-            case SQUID_ZOOKA -> t(new float[] {0, 0, 0}, new float[] {0, 0, -1.25f});
+            case CHAINSAW -> t(new float[] {0, 0, 0}, new float[] {0, 0, 0});
+            case SQUID_ZOOKA -> t(new float[] {0, 0, 0}, new float[] {0, 0, 0});
         };
     }
 
@@ -155,8 +180,8 @@ public final class CaWeaponDisplayTransforms {
             case HAMMY -> t(hammyRotation(style, true, new float[] {-5, 0, -5}), new float[] {0, 0, 0});
             case BATTLE_AXE -> t(battleAxeRotation(style, true, new float[] {-7, 0, 0}), new float[] {6, 10, -10.25f});
             case QUEEN_BATTLE_AXE -> t(battleAxeRotation(style, true, new float[] {-7, 0, 0}), new float[] {6, 10, -10.25f});
-            case CHAINSAW -> t(new float[] {0, -180, 0}, new float[] {13, 15.5f, -14}, new float[] {1.28f, 1.43f, 0.89f});
-            case SQUID_ZOOKA -> firstPersonRight(style);
+            case CHAINSAW -> t(new float[] {0, 0, 0}, new float[] {0, 0, 0});
+            case SQUID_ZOOKA -> t(new float[] {0, 0, 0}, new float[] {0, 0, 0});
         };
     }
 }

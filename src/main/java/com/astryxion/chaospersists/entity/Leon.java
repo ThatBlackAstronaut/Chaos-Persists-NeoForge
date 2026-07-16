@@ -200,6 +200,9 @@ public class Leon extends TamableAnimal {
      */
     @Override
     public void travel(Vec3 travelVector) {
+        if (MyUtils.usesChaosFlight(this)) {
+            return;
+        }
         Vec3 dm = this.getDeltaMovement();
         double mx = dm.x;
         double my = dm.y;

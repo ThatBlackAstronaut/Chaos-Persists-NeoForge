@@ -7,6 +7,7 @@ import com.astryxion.chaospersists.render.RenderInfo;
 import com.astryxion.chaospersists.util.GenericTargetSorter;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.util.MyUtils;
+import com.astryxion.chaospersists.util.ChaosChaseMoveControl;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -51,6 +52,7 @@ public class Robot3 extends Monster {
 
     public Robot3(EntityType<? extends Robot3> type, Level level) {
         super(type, level);
+        this.moveControl = new ChaosChaseMoveControl(this);
         this.xpReward = 60;
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
@@ -235,7 +237,7 @@ public class Robot3 extends Monster {
             }
             this.reload_ticker = 35;
             if (e != null) {
-                this.getLookControl().setLookAt(e, 10.0f, 10.0f);
+                MyUtils.faceEntity(this, e, 10.0f, 10.0f);
                 if (this.distanceToSqr(e) < 256.0) {
                     double rr = Math.atan2(e.getZ() - this.getZ(), e.getX() - this.getX());
                     double rhdir = Math.toRadians((this.getYHeadRot() + 90.0f) % 360.0f);
