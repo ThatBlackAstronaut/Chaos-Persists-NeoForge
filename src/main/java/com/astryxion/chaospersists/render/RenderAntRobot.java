@@ -21,6 +21,8 @@ public class RenderAntRobot extends MobRenderer<AntRobot, ModelAntRobot> {
     @Override
     protected void scale(AntRobot entity, PoseStack poseStack, float partialTick) {
         poseStack.scale(this.scale, this.scale, this.scale);
+        // Match 1.7 custom doRender (no LivingEntityRenderer -1.501 humanoid offset).
+        poseStack.translate(0.0F, 1.501F, 0.0F);
     }
 
     @Override

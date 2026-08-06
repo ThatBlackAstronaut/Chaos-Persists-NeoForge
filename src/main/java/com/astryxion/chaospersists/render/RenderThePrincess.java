@@ -10,6 +10,8 @@ import net.minecraft.resources.ResourceLocation;
 public class RenderThePrincess extends MobRenderer<ThePrincess, ModelThePrincess> {
     private static final ResourceLocation TEXTURE =
             ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/theprincesstexture.png");
+    private static final ResourceLocation TEXTURE_ATTACK =
+            ResourceLocation.fromNamespaceAndPath("chaospersists", "textures/entity/theprincesstexture2.png");
     private final float scale;
 
     public RenderThePrincess(
@@ -25,6 +27,9 @@ public class RenderThePrincess extends MobRenderer<ThePrincess, ModelThePrincess
 
     @Override
     public ResourceLocation getTextureLocation(ThePrincess entity) {
+        if (entity.getAttacking() != 0) {
+            return TEXTURE_ATTACK;
+        }
         return TEXTURE;
     }
 }

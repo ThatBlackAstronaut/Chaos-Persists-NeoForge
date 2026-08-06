@@ -46,6 +46,7 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoublePlantBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -495,48 +496,7 @@ public class TheQueen extends Monster {
                             if (this.level().getBlockState(above).getBlock() != Blocks.AIR) {
                                 continue blockGrief;
                             }
-                            which = this.getRandom().nextInt(8);
-                            if (which == 0) {
-                                this.level().setBlock(above, Blocks.POPPY.defaultBlockState(), 3);
-                            } else if (which == 1) {
-                                this.level().setBlock(above, Blocks.DANDELION.defaultBlockState(), 3);
-                            } else if (which == 2) {
-                                this.level()
-                                        .setBlock(
-                                                above,
-                                                ChaosPersists.MyFlowerBlueBlock.defaultBlockState(),
-                                                3);
-                            } else if (which == 3) {
-                                this.level()
-                                        .setBlock(
-                                                above,
-                                                ChaosPersists.MyFlowerPinkBlock.defaultBlockState(),
-                                                3);
-                            } else if (which == 4) {
-                                this.level()
-                                        .setBlock(
-                                                above,
-                                                ChaosPersists.CrystalFlowerRedBlock.defaultBlockState(),
-                                                3);
-                            } else if (which == 5) {
-                                this.level()
-                                        .setBlock(
-                                                above,
-                                                ChaosPersists.CrystalFlowerGreenBlock.defaultBlockState(),
-                                                3);
-                            } else if (which == 6) {
-                                this.level()
-                                        .setBlock(
-                                                above,
-                                                ChaosPersists.CrystalFlowerBlueBlock.defaultBlockState(),
-                                                3);
-                            } else if (which == 7) {
-                                this.level()
-                                        .setBlock(
-                                                above,
-                                                ChaosPersists.CrystalFlowerYellowBlock.defaultBlockState(),
-                                                3);
-                            }
+                            this.placeQueenGardenFlower(above);
                             continue blockGrief;
                         }
                         if (bid == Blocks.DIRT
@@ -1356,5 +1316,68 @@ public class TheQueen extends Monster {
                 var4.push(Math.cos(f3) * ks, inair, Math.sin(f3) * ks);
             }
         }
+    }
+
+    /**
+     * Peaceful garden decorate while summoning butterflies/birds. Keeps OreSpawn flowers and adds
+     * modern vanilla blooms (tulips, cornflower, allium, lilac, etc.).
+     */
+    private void placeQueenGardenFlower(BlockPos above) {
+        BlockState flower = this.pickQueenGardenFlower(true);
+        if (flower.getBlock() instanceof DoublePlantBlock) {
+            if (!this.level().getBlockState(above.above()).isAir()) {
+                flower = this.pickQueenGardenFlower(false);
+            } else {
+                DoublePlantBlock.placeAt(this.level(), flower, above, 3);
+                return;
+            }
+        }
+        this.level().setBlock(above, flower, 3);
+    }
+
+    private BlockState pickQueenGardenFlower(boolean allowTall) {
+        // Prefer modern vanilla flowers; keep OreSpawn / crystal blooms in the mix.
+        Block[] singles =
+                new Block[] {
+                    Blocks.POPPY,
+                    Blocks.DANDELION,
+                    Blocks.BLUE_ORCHID,
+                    Blocks.ALLIUM,
+                    Blocks.AZURE_BLUET,
+                    Blocks.RED_TULIP,
+                    Blocks.ORANGE_TULIP,
+                    Blocks.WHITE_TULIP,
+                    Blocks.PINK_TULIP,
+                    Blocks.OXEYE_DAISY,
+                    Blocks.CORNFLOWER,
+                    Blocks.LILY_OF_THE_VALLEY,
+                    Blocks.TORCHFLOWER,
+                    ChaosPersists.MyFlowerBlueBlock,
+                    ChaosPersists.MyFlowerPinkBlock,
+                    ChaosPersists.MyFlowerBlackBlock,
+                    ChaosPersists.MyFlowerScaryBlock,
+                    ChaosPersists.CrystalFlowerRedBlock,
+                    ChaosPersists.CrystalFlowerGreenBlock,
+                    ChaosPersists.CrystalFlowerBlueBlock,
+                    ChaosPersists.CrystalFlowerYellowBlock
+                };
+        Block[] tall =
+                new Block[] {
+                    Blocks.LILAC, Blocks.ROSE_BUSH, Blocks.PEONY, Blocks.SUNFLOWER
+                };
+
+        if (allowTall && this.getRandom().nextInt(5) == 0) {
+            Block tallFlower = tall[this.getRandom().nextInt(tall.length)];
+            if (tallFlower != null) {
+                return tallFlower.defaultBlockState();
+            }
+        }
+
+        Block pick = singles[this.getRandom().nextInt(singles.length)];
+        // OreSpawn flower fields can be null briefly during early load; fall back to poppy.
+        if (pick == null) {
+            pick = Blocks.POPPY;
+        }
+        return pick.defaultBlockState();
     }
 }

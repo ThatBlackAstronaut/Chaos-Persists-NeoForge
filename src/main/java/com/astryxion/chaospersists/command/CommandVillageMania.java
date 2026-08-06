@@ -30,20 +30,24 @@ public final class CommandVillageMania {
         }
         ResourceKey<Level> villageKey = ChaosPersists.getVillageDimensionKey();
         if (player.level().dimension().equals(villageKey)) {
-            player.sendSystemMessage(
+            player.displayClientMessage(
                     Component.literal("You are already in the Village Mania dimension.")
-                            .withStyle(ChatFormatting.YELLOW));
+                            .withStyle(ChatFormatting.YELLOW),
+                    true);
             return 0;
         }
         ServerLevel world = player.server.getLevel(villageKey);
         if (world == null) {
-            player.sendSystemMessage(
-                    Component.literal("Village Mania dimension is not available.").withStyle(ChatFormatting.RED));
+            player.displayClientMessage(
+                    Component.literal("Village Mania dimension is not available.")
+                            .withStyle(ChatFormatting.RED),
+                    true);
             return 0;
         }
         VillageTeleporter teleporter = new VillageTeleporter(player.getX(), player.getZ());
         player.changeDimension(world, teleporter);
-        player.sendSystemMessage(Component.literal("Teleported to Village Mania.").withStyle(ChatFormatting.GREEN));
+        player.displayClientMessage(
+                Component.literal("Teleported to Village Mania.").withStyle(ChatFormatting.GREEN), true);
         return 1;
     }
 }

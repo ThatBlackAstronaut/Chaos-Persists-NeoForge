@@ -694,6 +694,7 @@ public class SpiderRobot extends Mob {
         this.zza = player.zza;
     }
 
+    /** OreSpawn 1.7.10 ridden hover + terrain climb (server onLivingUpdate when ridden). */
     private double applyRiddenVerticalPhysics(double my, double horizontalVelocity) {
         double gh = 4.25;
         Block bid =
@@ -703,9 +704,10 @@ public class SpiderRobot extends Mob {
                                         this.getX(), this.getY() - gh, this.getZ()))
                         .getBlock();
         if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.LAVA) {
-            my += this.hasPlayerRider() ? 0.03 : 0.06;
+            my += 0.06;
+            this.setPos(this.getX(), this.getY() + 0.03, this.getZ());
         } else {
-            my -= this.hasPlayerRider() ? 0.01 : 0.02;
+            my -= 0.02;
         }
         double obstruction = 0.0;
         int scanDepth = 3 + (int) (Math.max(0.0, horizontalVelocity) * 6.0);
@@ -738,7 +740,11 @@ public class SpiderRobot extends Mob {
                 }
             }
         }
-        return my + obstruction * 0.05;
+        my += obstruction * 0.05;
+        if (obstruction != 0.0) {
+            this.setPos(this.getX(), this.getY() + obstruction * 0.05, this.getZ());
+        }
+        return my;
     }
 
     private Vec3 clampRiddenMotion(double mx, double my, double mz) {
@@ -842,10 +848,11 @@ public class SpiderRobot extends Mob {
             mx = vx;
             mz = vz;
         } else {
-            mx = 0.0;
-            mz = 0.0;
+            mx = dm.x * 0.85;
+            mz = dm.z * 0.85;
         }
-        double my = 0.0;
+        // Player-ridden tick() skips living bounce; apply 1.7.10 climb here on controlling side.
+        double my = this.applyRiddenVerticalPhysics(dm.y, velocity);
         Vec3 motion = this.clampRiddenMotion(mx, my, mz);
         mx = motion.x;
         my = motion.y;
@@ -855,11 +862,7 @@ public class SpiderRobot extends Mob {
                         || (!this.level().isClientSide && !(rider instanceof Player));
         if (shouldApplyMovement) {
             this.move(MoverType.SELF, new Vec3(mx, my, mz));
-            if (hasDriveInput) {
-                this.setDeltaMovement(mx * 0.98, my * 0.98, mz * 0.98);
-            } else {
-                this.setDeltaMovement(Vec3.ZERO);
-            }
+            this.setDeltaMovement(mx * 0.98, my * 0.98, mz * 0.98);
         } else {
             this.setDeltaMovement(Vec3.ZERO);
         }
@@ -930,21 +933,17 @@ public class SpiderRobot extends Mob {
     }
 
     private float getSeatForwardOffset() {
-        if (this.hasPlayerRider()) {
-            return -3.0f;
-        }
+        // 1.7 updateRiderPosition: f = -3 + cos bob for all riders
         return -3.0f + (float) (Math.cos((float) this.rideTicker * 0.33f) * 0.05);
     }
 
     @Override
     public double getPassengersRidingOffset() {
+        // 1.7 getMountedYOffset: SpiderDriver 2.0, otherwise 2.625 + bob
         if (this.getControllingPassenger() instanceof SpiderDriver) {
             return 2.0;
         }
-        if (this.hasPlayerRider()) {
-            return 3.0;
-        }
-        return 3.0 + Math.cos((float) this.rideTicker * 0.19f) * 0.02;
+        return 2.625 + Math.cos((float) this.rideTicker * 0.19f) * 0.02;
     }
 
     @Override

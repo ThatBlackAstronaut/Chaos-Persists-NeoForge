@@ -5,6 +5,10 @@
     "chaospersists:oreruby",
     "chaospersists:oresalt",
     "chaospersists:oreuranium",
+    "chaospersists:deepslate_oreamethyst",
+    "chaospersists:deepslate_oreruby",
+    "chaospersists:deepslate_oresalt",
+    "chaospersists:deepslate_oreuranium",
     "chaospersists:blockamethyst",
     "chaospersists:blockruby",
     "chaospersists:blockuranium",
@@ -14,6 +18,10 @@
     "chaospersists:crystalcoal",
     "chaospersists:crystalstone",
     "chaospersists:crystalfairy",
-    "chaospersists:crystalrat"
+    "chaospersists:crystalrat",
+    "chaospersists:redanttroll",
+    "chaospersists:termitetroll",
+    "chaospersists:deepslate_redanttroll",
+    "chaospersists:deepslate_termitetroll"
   ]
 }

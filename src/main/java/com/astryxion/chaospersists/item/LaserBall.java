@@ -233,7 +233,8 @@ public class LaserBall extends ThrowableProjectile {
             if (this.is_iceball != 0) {
                 continue;
             }
-            ParticleOptions dust = new DustParticleOptions(new Vector3f(1.0f, 0.0f, 0.0f), 1.0f);
+            // 1.7.10 reddust with gaussian/10 RGB reads near-black; do not use DustParticleOptions.REDSTONE.
+            ParticleOptions dust = new DustParticleOptions(new Vector3f(0.0f, 0.0f, 0.0f), 1.0f);
             this.level()
                     .addParticle(
                             dust,

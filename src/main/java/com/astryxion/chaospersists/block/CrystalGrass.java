@@ -18,6 +18,7 @@ public class CrystalGrass extends Block {
                 .mapColor(net.minecraft.world.level.material.MapColor.COLOR_LIGHT_BLUE)
                 .strength(hardness, resistance)
                 .sound(SoundType.GRASS)
+                .forceSolidOn()
                 .noOcclusion()
                 .isValidSpawn((state, level, pos, entityType) -> Blocks.GRASS.defaultBlockState().isValidSpawn(level, pos, entityType))
                 .isSuffocating((state, level, pos) -> false)

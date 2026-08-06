@@ -30,19 +30,23 @@ public final class CommandUtopia {
         }
         ResourceKey<Level> utopiaKey = ChaosPersists.getUtopiaDimensionKey();
         if (player.level().dimension().equals(utopiaKey)) {
-            player.sendSystemMessage(
-                    Component.literal("You are already in the Utopia dimension.").withStyle(ChatFormatting.YELLOW));
+            player.displayClientMessage(
+                    Component.literal("You are already in the Utopia dimension.")
+                            .withStyle(ChatFormatting.YELLOW),
+                    true);
             return 0;
         }
         ServerLevel world = player.server.getLevel(utopiaKey);
         if (world == null) {
-            player.sendSystemMessage(
-                    Component.literal("Utopia dimension is not available.").withStyle(ChatFormatting.RED));
+            player.displayClientMessage(
+                    Component.literal("Utopia dimension is not available.").withStyle(ChatFormatting.RED),
+                    true);
             return 0;
         }
         UtopiaTeleporter teleporter = new UtopiaTeleporter(player.getX(), player.getZ());
         player.changeDimension(world, teleporter);
-        player.sendSystemMessage(Component.literal("Teleported to Utopia.").withStyle(ChatFormatting.GREEN));
+        player.displayClientMessage(
+                Component.literal("Teleported to Utopia.").withStyle(ChatFormatting.GREEN), true);
         return 1;
     }
 }

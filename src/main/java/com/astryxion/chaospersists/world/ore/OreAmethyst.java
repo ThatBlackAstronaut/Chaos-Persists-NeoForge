@@ -18,13 +18,17 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 public class OreAmethyst extends Block {
 
     public OreAmethyst() {
-        this(0);
+        this(SoundType.STONE);
     }
 
     public OreAmethyst(int i) {
+        this(SoundType.STONE);
+    }
+
+    public OreAmethyst(SoundType sound) {
         super(Block.Properties.of()
                 .strength(10.0f, 4.0f)
-                .sound(SoundType.STONE)
+                .sound(sound)
                 .requiresCorrectToolForDrops());
     }
 

@@ -488,8 +488,34 @@ public class ChunkOreGenerator {
                 randPosX = 3 + chunkX + random.nextInt(10);
                 randPosY = random.nextInt(128);
                 randPosZ = 3 + chunkZ + random.nextInt(10);
-                if (randPosY > ChaosPersists.Uranium_stats.maxdepth || randPosY < ChaosPersists.Uranium_stats.mindepth) continue;
-                this.generateBlockOre(world, random, randPosX, randPosY, randPosZ, chunk, ChaosPersists.MyOreUraniumBlock, ChaosPersists.Uranium_stats.clumpsize);
+                if (randPosY <= 0
+                        || randPosY > ChaosPersists.Uranium_stats.maxdepth
+                        || randPosY < ChaosPersists.Uranium_stats.mindepth) continue;
+                this.generateBlockOre(
+                        world,
+                        random,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        chunk,
+                        ChaosPersists.MyOreUraniumBlock,
+                        ChaosPersists.Uranium_stats.clumpsize,
+                        Blocks.STONE);
+            }
+            for (i = 0; i < patchy; ++i) {
+                randPosX = 3 + chunkX + random.nextInt(10);
+                randPosY = -63 + random.nextInt(63); // deepslate: Y -63..-1
+                randPosZ = 3 + chunkZ + random.nextInt(10);
+                this.generateBlockOre(
+                        world,
+                        random,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        chunk,
+                        ChaosPersists.MyDeepslateOreUraniumBlock,
+                        ChaosPersists.Uranium_stats.clumpsize,
+                        Blocks.DEEPSLATE);
             }
         }
         if (ChaosPersists.Titanium_stats.rate > 0) {
@@ -501,8 +527,34 @@ public class ChunkOreGenerator {
                 randPosX = 3 + chunkX + random.nextInt(10);
                 randPosY = random.nextInt(128);
                 randPosZ = 3 + chunkZ + random.nextInt(10);
-                if (randPosY > ChaosPersists.Titanium_stats.maxdepth || randPosY < ChaosPersists.Titanium_stats.mindepth) continue;
-                this.generateBlockOre(world, random, randPosX, randPosY, randPosZ, chunk, ChaosPersists.MyOreTitaniumBlock, ChaosPersists.Titanium_stats.clumpsize);
+                if (randPosY <= 0
+                        || randPosY > ChaosPersists.Titanium_stats.maxdepth
+                        || randPosY < ChaosPersists.Titanium_stats.mindepth) continue;
+                this.generateBlockOre(
+                        world,
+                        random,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        chunk,
+                        ChaosPersists.MyOreTitaniumBlock,
+                        ChaosPersists.Titanium_stats.clumpsize,
+                        Blocks.STONE);
+            }
+            for (i = 0; i < patchy; ++i) {
+                randPosX = 3 + chunkX + random.nextInt(10);
+                randPosY = -63 + random.nextInt(63); // deepslate: Y -63..-1
+                randPosZ = 3 + chunkZ + random.nextInt(10);
+                this.generateBlockOre(
+                        world,
+                        random,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        chunk,
+                        ChaosPersists.MyDeepslateOreTitaniumBlock,
+                        ChaosPersists.Titanium_stats.clumpsize,
+                        Blocks.DEEPSLATE);
             }
         }
         if (ChaosPersists.Amethyst_stats.rate > 0) {
@@ -514,8 +566,34 @@ public class ChunkOreGenerator {
                 randPosX = 3 + chunkX + random.nextInt(10);
                 randPosY = random.nextInt(128);
                 randPosZ = 3 + chunkZ + random.nextInt(10);
-                if (randPosY > ChaosPersists.Amethyst_stats.maxdepth || randPosY < ChaosPersists.Amethyst_stats.mindepth) continue;
-                this.generateBlockOre(world, random, randPosX, randPosY, randPosZ, chunk, ChaosPersists.MyOreAmethystBlock, ChaosPersists.Amethyst_stats.clumpsize);
+                if (randPosY <= 0
+                        || randPosY > ChaosPersists.Amethyst_stats.maxdepth
+                        || randPosY < ChaosPersists.Amethyst_stats.mindepth) continue;
+                this.generateBlockOre(
+                        world,
+                        random,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        chunk,
+                        ChaosPersists.MyOreAmethystBlock,
+                        ChaosPersists.Amethyst_stats.clumpsize,
+                        Blocks.STONE);
+            }
+            for (i = 0; i < patchy; ++i) {
+                randPosX = 3 + chunkX + random.nextInt(10);
+                randPosY = -63 + random.nextInt(63); // deepslate: Y -63..-1
+                randPosZ = 3 + chunkZ + random.nextInt(10);
+                this.generateBlockOre(
+                        world,
+                        random,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        chunk,
+                        ChaosPersists.MyDeepslateOreAmethystBlock,
+                        ChaosPersists.Amethyst_stats.clumpsize,
+                        Blocks.DEEPSLATE);
             }
         }
         if (ChaosPersists.Salt_stats.rate > 0) {
@@ -527,8 +605,34 @@ public class ChunkOreGenerator {
                 randPosX = 3 + chunkX + random.nextInt(10);
                 randPosY = random.nextInt(128);
                 randPosZ = 3 + chunkZ + random.nextInt(10);
-                if (randPosY > ChaosPersists.Salt_stats.maxdepth || randPosY < ChaosPersists.Salt_stats.mindepth) continue;
-                this.generateBlockOre(world, random, randPosX, randPosY, randPosZ, chunk, ChaosPersists.MyOreSaltBlock, ChaosPersists.Salt_stats.clumpsize);
+                if (randPosY <= 0
+                        || randPosY > ChaosPersists.Salt_stats.maxdepth
+                        || randPosY < ChaosPersists.Salt_stats.mindepth) continue;
+                this.generateBlockOre(
+                        world,
+                        random,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        chunk,
+                        ChaosPersists.MyOreSaltBlock,
+                        ChaosPersists.Salt_stats.clumpsize,
+                        Blocks.STONE);
+            }
+            for (i = 0; i < patchy; ++i) {
+                randPosX = 3 + chunkX + random.nextInt(10);
+                randPosY = -63 + random.nextInt(63); // deepslate: Y -63..-1
+                randPosZ = 3 + chunkZ + random.nextInt(10);
+                this.generateBlockOre(
+                        world,
+                        random,
+                        randPosX,
+                        randPosY,
+                        randPosZ,
+                        chunk,
+                        ChaosPersists.MyDeepslateOreSaltBlock,
+                        ChaosPersists.Salt_stats.clumpsize,
+                        Blocks.DEEPSLATE);
             }
         }
         patchy = 4 + random.nextInt(4);
@@ -537,10 +641,10 @@ public class ChunkOreGenerator {
         }
         for (i = 0; i < patchy; ++i) {
             randPosX = 3 + chunkX + random.nextInt(10);
-            randPosY = random.nextInt(128);
+            randPosY = 1 + random.nextInt(50); // stone trolls: Y 1..50
             randPosZ = 3 + chunkZ + random.nextInt(10);
-            if (randPosY > 50 || randPosY < 5) continue;
-            this.generateBlockOre(world, random, randPosX, randPosY, randPosZ, chunk, ChaosPersists.RedAntTroll, 4);
+            this.generateBlockOre(
+                    world, random, randPosX, randPosY, randPosZ, chunk, ChaosPersists.RedAntTroll, 4, Blocks.STONE);
         }
         patchy = 4 + random.nextInt(4);
         if (ChaosPersists.LessOre != 0) {
@@ -548,10 +652,48 @@ public class ChunkOreGenerator {
         }
         for (i = 0; i < patchy; ++i) {
             randPosX = 3 + chunkX + random.nextInt(10);
-            randPosY = random.nextInt(128);
+            randPosY = -63 + random.nextInt(64); // deepslate trolls: Y -63..0
             randPosZ = 3 + chunkZ + random.nextInt(10);
-            if (randPosY > 50 || randPosY < 5) continue;
-            this.generateBlockOre(world, random, randPosX, randPosY, randPosZ, chunk, ChaosPersists.TermiteTroll, 4);
+            this.generateBlockOre(
+                    world,
+                    random,
+                    randPosX,
+                    randPosY,
+                    randPosZ,
+                    chunk,
+                    ChaosPersists.DeepslateRedAntTroll,
+                    4,
+                    Blocks.DEEPSLATE);
+        }
+        patchy = 4 + random.nextInt(4);
+        if (ChaosPersists.LessOre != 0) {
+            patchy /= 2;
+        }
+        for (i = 0; i < patchy; ++i) {
+            randPosX = 3 + chunkX + random.nextInt(10);
+            randPosY = 1 + random.nextInt(50);
+            randPosZ = 3 + chunkZ + random.nextInt(10);
+            this.generateBlockOre(
+                    world, random, randPosX, randPosY, randPosZ, chunk, ChaosPersists.TermiteTroll, 4, Blocks.STONE);
+        }
+        patchy = 4 + random.nextInt(4);
+        if (ChaosPersists.LessOre != 0) {
+            patchy /= 2;
+        }
+        for (i = 0; i < patchy; ++i) {
+            randPosX = 3 + chunkX + random.nextInt(10);
+            randPosY = -63 + random.nextInt(64);
+            randPosZ = 3 + chunkZ + random.nextInt(10);
+            this.generateBlockOre(
+                    world,
+                    random,
+                    randPosX,
+                    randPosY,
+                    randPosZ,
+                    chunk,
+                    ChaosPersists.DeepslateTermiteTroll,
+                    4,
+                    Blocks.DEEPSLATE);
         }
         if (ChaosPersists.LessOre == 0) {
             if (ChaosPersists.Diamond_stats.rate > 0) {

@@ -1,1 +1,6 @@
-{"parent":"block/cube_all","textures":{"all":"chaospersists:block/redanttroll"}}
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "minecraft:block/diamond_ore"
+  }
+}

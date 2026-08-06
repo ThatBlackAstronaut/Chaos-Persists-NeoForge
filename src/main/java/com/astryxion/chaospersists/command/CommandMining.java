@@ -30,19 +30,23 @@ public final class CommandMining {
         }
         ResourceKey<Level> miningKey = ChaosPersists.getMiningDimensionKey();
         if (player.level().dimension().equals(miningKey)) {
-            player.sendSystemMessage(
-                    Component.literal("You are already in the Mining dimension.").withStyle(ChatFormatting.YELLOW));
+            player.displayClientMessage(
+                    Component.literal("You are already in the Mining dimension.")
+                            .withStyle(ChatFormatting.YELLOW),
+                    true);
             return 0;
         }
         ServerLevel world = player.server.getLevel(miningKey);
         if (world == null) {
-            player.sendSystemMessage(
-                    Component.literal("Mining dimension is not available.").withStyle(ChatFormatting.RED));
+            player.displayClientMessage(
+                    Component.literal("Mining dimension is not available.").withStyle(ChatFormatting.RED),
+                    true);
             return 0;
         }
         MiningTeleporter teleporter = new MiningTeleporter(player.getX(), player.getZ());
         player.changeDimension(world, teleporter);
-        player.sendSystemMessage(Component.literal("Teleported to Mining.").withStyle(ChatFormatting.GREEN));
+        player.displayClientMessage(
+                Component.literal("Teleported to Mining.").withStyle(ChatFormatting.GREEN), true);
         return 1;
     }
 }

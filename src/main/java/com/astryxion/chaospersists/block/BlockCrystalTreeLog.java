@@ -18,6 +18,7 @@ public class BlockCrystalTreeLog extends RotatedPillarBlock {
         super(BlockBehaviour.Properties.of().sound(SoundType.WOOD).noOcclusion());
     }
 
+    @Override
     public boolean isFlammable(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, Direction direction) {
         return true;
     }

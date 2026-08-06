@@ -111,6 +111,11 @@ public class ThePrince extends TamableAnimal {
     }
 
     @Override
+    public boolean fireImmune() {
+        return true;
+    }
+
+    @Override
     public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob partner) {
         return null;
     }
@@ -225,7 +230,9 @@ public class ThePrince extends TamableAnimal {
                 this.setNoGravity(false);
                 this.noPhysics = false;
                 this.getNavigation().stop();
-                this.setDeltaMovement(Vec3.ZERO);
+                // Clear flight XZ; keep downward motion so midair stay falls (OreSpawn 1.7.10).
+                Vec3 dm = this.getDeltaMovement();
+                this.setDeltaMovement(0.0, Math.min(dm.y, 0.0), 0.0);
             }
         }
     }
@@ -292,7 +299,8 @@ public class ThePrince extends TamableAnimal {
                 spawnTamingParticles(true);
                 this.level().broadcastEntityEvent(this, (byte) 6);
                 this.setSpyroFire(0);
-                par1EntityPlayer.sendSystemMessage(Component.literal("Prince fireballs extinguished."));
+                par1EntityPlayer.displayClientMessage(
+                        Component.literal("Prince fireballs extinguished."), true);
             }
             if (!par1EntityPlayer.getAbilities().instabuild) {
                 var2.shrink(1);
@@ -311,7 +319,8 @@ public class ThePrince extends TamableAnimal {
                 spawnTamingParticles(true);
                 this.level().broadcastEntityEvent(this, (byte) 6);
                 this.setSpyroFire(1);
-                par1EntityPlayer.sendSystemMessage(Component.literal("Prince fireballs lit!"));
+                par1EntityPlayer.displayClientMessage(
+                        Component.literal("Prince fireballs lit!"), true);
             }
             if (!par1EntityPlayer.getAbilities().instabuild) {
                 var2.shrink(1);
@@ -563,7 +572,8 @@ public class ThePrince extends TamableAnimal {
         super.aiStep();
         if (this.isOrderedToSit() || this.isInSittingPose()) {
             this.getNavigation().stop();
-            if (!this.level().isClientSide) {
+            // OreSpawn 1.7.10 does not zero motion while sitting — only stop AI so midair stay can fall.
+            if (!this.level().isClientSide && this.onGround()) {
                 this.setDeltaMovement(Vec3.ZERO);
             }
         }
@@ -634,16 +644,12 @@ public class ThePrince extends TamableAnimal {
             }
 
             if (this.getRandom().nextInt(100) == 1) {
+                // 1.7.10: randomly land (activity 1) even while airborne. A prior 1.20 guard
+                // required onGround while flying, so after attacking birds they never landed.
                 if (this.getRandom().nextInt(20) == 1) {
                     this.setActivity(2);
-                } else if (this.onGround() || this.getActivity() != 2) {
-                    boolean ownerFlying =
-                            this.isTame()
-                                    && this.getOwner() instanceof Player owner
-                                    && owner.getAbilities().flying;
-                    if (!ownerFlying) {
-                        this.setActivity(1);
-                    }
+                } else {
+                    this.setActivity(1);
                 }
             }
 

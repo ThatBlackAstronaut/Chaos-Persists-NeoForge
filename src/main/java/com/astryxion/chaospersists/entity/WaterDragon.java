@@ -32,11 +32,11 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.BreedGoal;
-import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
 import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
+import com.astryxion.chaospersists.util.SurfaceWaterFloat;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.npc.Villager;
@@ -46,6 +46,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
@@ -55,7 +56,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class WaterDragon extends TamableAnimal {
@@ -82,7 +85,7 @@ public class WaterDragon extends TamableAnimal {
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();
         this.getNavigation().setCanFloat(true);
-        this.goalSelector.addGoal(0, new FloatGoal(this));
+        // Surface skim via SurfaceWaterFloat — FloatGoal hop-jumps with swim speed.
         this.goalSelector.addGoal(1, new BreedGoal(this, 1.0));
         this.goalSelector.addGoal(2, new MyEntityAIFollowOwner(this, 2.0f, 10.0f, 2.0f));
         this.goalSelector.addGoal(3, new TemptGoal(this, 1.2000000476837158, TAMING_FISH, false));
@@ -97,7 +100,18 @@ public class WaterDragon extends TamableAnimal {
                 .add(Attributes.MAX_HEALTH, (double) ChaosPersists.WaterDragon_stats.health)
                 .add(Attributes.MOVEMENT_SPEED, (double) 0.25f)
                 .add(Attributes.ATTACK_DAMAGE, (double) ChaosPersists.WaterDragon_stats.attack)
-                .add(Attributes.ARMOR, (double) ChaosPersists.WaterDragon_stats.defense);
+                .add(Attributes.ARMOR, (double) ChaosPersists.WaterDragon_stats.defense)
+                // 1.13+ water travel ignores MOVEMENT_SPEED; Forge swim speed is the only multiplier.
+                .add(ForgeMod.SWIM_SPEED.get(), 4.0D);
+    }
+
+    /**
+     * Forge multiplies liquid jumps by {@link ForgeMod#SWIM_SPEED}; keep vanilla 0.04 upward
+     * so any jump (pathing, etc.) does not become a surface hop.
+     */
+    @Override
+    protected void jumpInLiquid(TagKey<Fluid> fluidTag) {
+        this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.04, 0.0));
     }
 
     @Override
@@ -192,14 +206,18 @@ public class WaterDragon extends TamableAnimal {
             return InteractionResult.SUCCESS;
         }
         if (this.isTame() && this.isOwnedBy(par1EntityPlayer) && par1EntityPlayer.distanceToSqr(this) < 25.0) {
-            if (!this.isInSittingPose()) {
-                this.setOrderedToSit(true);
-            } else {
-                this.setOrderedToSit(false);
-            }
+            // OreSpawn 1.7.10 setSitting toggled one flag; on 1.20 ordered-sit and pose are separate.
+            this.setOrderedToSit(!this.isOrderedToSit());
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
+    }
+
+    /** Keep sitting pose in sync with stay order (1.7.10 EntityTameable.setSitting parity). */
+    @Override
+    public void setOrderedToSit(boolean orderedToSit) {
+        super.setOrderedToSit(orderedToSit);
+        this.setInSittingPose(orderedToSit);
     }
 
     @Override
@@ -222,6 +240,12 @@ public class WaterDragon extends TamableAnimal {
         this.moveSpeed = this.isInWater() ? 0.55f : 0.25f;
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
         super.tick();
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        SurfaceWaterFloat.keepOnSurface(this);
     }
 
     public int mygetMaxHealth() {

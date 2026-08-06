@@ -663,6 +663,10 @@ public class Stinky extends TamableAnimal {
             }
 
             this.doMovement();
+        } else {
+            // Sitting: drop chaos flight so mid-air sit falls (OreSpawn gravity).
+            MyUtils.clearChaosFlight(this);
+            this.setNoGravity(false);
         }
     }
 
@@ -730,6 +734,9 @@ public class Stinky extends TamableAnimal {
             }
         }
         if (this.activity == 1) {
+            // Leaving flight (activity 2): restore gravity or Stinky freezes mid-air.
+            MyUtils.clearChaosFlight(this);
+            this.setNoGravity(false);
             if (this.getRandom().nextInt(50) == 0 && ChaosPersists.PlayNicely == 0) {
                 this.closest = 99999;
                 this.tz = 0;

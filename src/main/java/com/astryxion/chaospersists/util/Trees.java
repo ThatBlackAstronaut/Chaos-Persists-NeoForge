@@ -512,7 +512,6 @@ public class Trees {
     }
 
     public void FairyTree(net.minecraft.world.level.Level level, int x, int y, int z) {
-        ChaosPersists.clearStructureVolume(level, x - 14, y - 1, z - 14, x + 14, y + 28, z + 14);
         int i;
         int k;
         int j;
@@ -713,7 +712,6 @@ public class Trees {
     }
 
     public void FairyCastleTree(net.minecraft.world.level.Level level, int x, int y, int z) {
-        ChaosPersists.clearStructureVolume(level, x - 18, y - 1, z - 18, x + 18, y + 32, z + 18);
         net.minecraft.util.RandomSource rnd = level.getRandom();
         Block crystalLog = ChaosPersists.MyCrystalTreeLog;
         Block crystalTorch = ChaosPersists.CrystalTorch;

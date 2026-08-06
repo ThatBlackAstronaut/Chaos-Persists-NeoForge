@@ -15,9 +15,13 @@ import net.minecraft.world.level.block.state.BlockState;
 public class OreSalt extends Block {
 
     public OreSalt() {
+        this(SoundType.STONE);
+    }
+
+    public OreSalt(SoundType sound) {
         super(Block.Properties.of()
                 .strength(5.0f, 2.0f)
-                .sound(SoundType.STONE)
+                .sound(sound)
                 .requiresCorrectToolForDrops());
     }
 

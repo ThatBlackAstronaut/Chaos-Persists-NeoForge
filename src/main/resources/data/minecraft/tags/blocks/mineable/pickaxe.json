@@ -6,6 +6,11 @@
     "chaospersists:oresalt",
     "chaospersists:oretitanium",
     "chaospersists:oreuranium",
+    "chaospersists:deepslate_oreamethyst",
+    "chaospersists:deepslate_oreruby",
+    "chaospersists:deepslate_oresalt",
+    "chaospersists:deepslate_oretitanium",
+    "chaospersists:deepslate_oreuranium",
     "chaospersists:blockamethyst",
     "chaospersists:blockruby",
     "chaospersists:blocktitanium",
@@ -18,6 +23,10 @@
     "chaospersists:crystalstone",
     "chaospersists:crystalfairy",
     "chaospersists:crystalrat",
-    "chaospersists:tigerseye"
+    "chaospersists:tigerseye",
+    "chaospersists:redanttroll",
+    "chaospersists:termitetroll",
+    "chaospersists:deepslate_redanttroll",
+    "chaospersists:deepslate_termitetroll"
   ]
 }

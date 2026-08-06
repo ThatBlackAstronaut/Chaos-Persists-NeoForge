@@ -131,8 +131,7 @@ public class Bertha extends SwordItem {
                 player.getZ() + xzoff * Mth.cos(player.getYHeadRot() * Mth.DEG_TO_RAD),
                 player.getYHeadRot(),
                 player.getXRot());
-        var dm = lb.getDeltaMovement();
-        lb.setDeltaMovement(dm.x * 2.0, dm.y * 2.0, dm.z * 2.0);
+        lb.aimFromShooter(player, 2.0);
         if (this == ChaosPersists.MyRoyal) {
             lb.setHitType(2);
         }

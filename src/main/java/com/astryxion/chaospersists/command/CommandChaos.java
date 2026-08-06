@@ -30,19 +30,23 @@ public final class CommandChaos {
         }
         ResourceKey<Level> chaosKey = ChaosPersists.getChaosDimensionKey();
         if (player.level().dimension().equals(chaosKey)) {
-            player.sendSystemMessage(
-                    Component.literal("You are already in the Chaos dimension.").withStyle(ChatFormatting.YELLOW));
+            player.displayClientMessage(
+                    Component.literal("You are already in the Chaos dimension.")
+                            .withStyle(ChatFormatting.YELLOW),
+                    true);
             return 0;
         }
         ServerLevel world = player.server.getLevel(chaosKey);
         if (world == null) {
-            player.sendSystemMessage(
-                    Component.literal("Chaos dimension is not available.").withStyle(ChatFormatting.RED));
+            player.displayClientMessage(
+                    Component.literal("Chaos dimension is not available.").withStyle(ChatFormatting.RED),
+                    true);
             return 0;
         }
         ChaosTeleporter teleporter = new ChaosTeleporter(player.getX(), player.getZ());
         player.changeDimension(world, teleporter);
-        player.sendSystemMessage(Component.literal("Teleported to Chaos.").withStyle(ChatFormatting.GREEN));
+        player.displayClientMessage(
+                Component.literal("Teleported to Chaos.").withStyle(ChatFormatting.GREEN), true);
         return 1;
     }
 }

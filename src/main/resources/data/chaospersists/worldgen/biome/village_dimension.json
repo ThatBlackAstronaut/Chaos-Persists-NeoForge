@@ -5,7 +5,7 @@
   "effects": {
     "fog_color": 12638463,
     "sky_color": 7907327,
-    "water_color": 353825,
+    "water_color": 4159204,
     "water_fog_color": 329011,
     "grass_color_modifier": "none"
   },
@@ -64,7 +64,10 @@
       "minecraft:ore_lapis",
       "minecraft:ore_lapis_buried",
       "minecraft:ore_copper",
-      "minecraft:ore_emerald"
+      "minecraft:ore_emerald",
+      "minecraft:disk_sand",
+      "minecraft:disk_clay",
+      "minecraft:disk_gravel"
     ],
     [
       "minecraft:spring_lava"

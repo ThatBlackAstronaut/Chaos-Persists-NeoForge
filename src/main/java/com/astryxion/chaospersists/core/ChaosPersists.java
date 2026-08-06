@@ -133,6 +133,7 @@ import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import com.astryxion.chaospersists.util.RoyalPetFollowHelper;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import com.astryxion.chaospersists.compat.forge.fml.common.registry.EntityRegistry;
 import com.astryxion.chaospersists.compat.forge.fml.common.registry.GameRegistry;
@@ -568,6 +569,7 @@ import com.astryxion.chaospersists.command.CommandChaos;
 import com.astryxion.chaospersists.command.CommandCrystal;
 import com.astryxion.chaospersists.command.CommandDanger;
 import com.astryxion.chaospersists.command.CommandMining;
+import com.astryxion.chaospersists.command.CommandOverworld;
 import com.astryxion.chaospersists.command.CommandUtopia;
 import com.astryxion.chaospersists.command.CommandVillageMania;
 import com.astryxion.chaospersists.block.AntBlock;
@@ -1158,6 +1160,11 @@ private static void registerAllCritterCages() {
     BLOCKS.register("oresalt", OreSalt::new);
     BLOCKS.register("oretitanium", OreTitanium::new);
     BLOCKS.register("oreuranium", OreUranium::new);
+    BLOCKS.register("deepslate_oreamethyst", () -> new OreAmethyst(SoundType.DEEPSLATE));
+    BLOCKS.register("deepslate_oreruby", () -> new OreRuby(SoundType.DEEPSLATE));
+    BLOCKS.register("deepslate_oresalt", () -> new OreSalt(SoundType.DEEPSLATE));
+    BLOCKS.register("deepslate_oretitanium", () -> new OreTitanium(SoundType.DEEPSLATE));
+    BLOCKS.register("deepslate_oreuranium", () -> new OreUranium(SoundType.DEEPSLATE));
     BLOCKS.register("pizza", BlockPizza::new);
     BLOCKS.register("queenspawner", () -> new QueenSpawnerBlock());
     BLOCKS.register("quinoa_0", BlockQuinoa::new);
@@ -1168,9 +1175,11 @@ private static void registerAllCritterCages() {
     BLOCKS.register("rainbowantblock", () -> new AntBlock(0));
     BLOCKS.register("redantblock", () -> new AntBlock(0));
     BLOCKS.register("redanttroll", () -> new OreBasicStone(2.5F, 14.0F));
+    BLOCKS.register("deepslate_redanttroll", () -> new OreBasicStone(4.5F, 14.0F));
     BLOCKS.register("rice_plant", BlockRice::new);
     BLOCKS.register("termiteblock", () -> new AntBlock(0));
     BLOCKS.register("termitetroll", () -> new OreBasicStone(2.5F, 14.0F));
+    BLOCKS.register("deepslate_termitetroll", () -> new OreBasicStone(4.5F, 14.0F));
     BLOCKS.register("tigerseye", () -> new OreCrystalCrystal(0.5F, 15.0F, 60.0F));
     BLOCKS.register("tigerseye_block", BlockCrystal::new);
     BLOCKS.register("tomato_plant0", BlockTomato::new);
@@ -1819,10 +1828,12 @@ private static void registerAllCritterCages() {
     IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
     modBus.addListener(this::commonSetup);
     modBus.addListener(this::onEntityAttributeCreation);
-    modBus.addListener(this::registerEntityRenderers);
     modBus.addListener(this::buildCreativeModeTabContents);
-    modBus.addListener(this::clientInit);
-    modBus.addListener(com.astryxion.chaospersists.client.BigWeaponModelHandler::onModifyBakingResult);
+    // Never bind client-only listeners on dedicated server — @OnlyIn methods are stripped and
+    // resolving them causes NoSuchMethodError (registerEntityRenderers crash).
+    if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+      com.astryxion.chaospersists.client.ClientModBusEvents.register(modBus, this);
+    }
     MinecraftForge.EVENT_BUS.register(this);
     ensureEarlyConfigLoaded();
   }
@@ -2298,7 +2309,9 @@ private static void registerAllCritterCages() {
     postInit(new FMLPostInitializationEvent());
   }
 
-  private void clientInit(final net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
+  /** Client-only FMLClientSetup; bound from {@link com.astryxion.chaospersists.client.ClientModBusEvents}. */
+  @OnlyIn(Dist.CLIENT)
+  public void clientInit(final net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
     event.enqueueWork(
         () -> {
           proxy.registerBlockRenderLayers();
@@ -2317,6 +2330,7 @@ private static void registerAllCritterCages() {
     CommandDanger.register(event.getDispatcher());
     CommandCrystal.register(event.getDispatcher());
     CommandChaos.register(event.getDispatcher());
+    CommandOverworld.register(event.getDispatcher());
     serverStarting(new FMLServerStartingEvent(event));
   }
 
@@ -2707,7 +2721,8 @@ private static void registerAllCritterCages() {
     event.registerEntityRenderer(ENTITY_TYPE_OSTRICH.get(), ctx -> new RenderOstrich(ctx, new ModelOstrich(0.65f), 0.55f, 1.0f));
     event.registerEntityRenderer(ENTITY_TYPE_PEACOCK.get(), ctx -> new RenderPeacock(ctx, new ModelPeacock(0.75f), 0.25f, 1.0f));
     event.registerEntityRenderer(ENTITY_TYPE_POINTYSAURUS.get(), ctx -> new RenderPointysaurus(ctx, new ModelPointysaurus(1.0f), 1.0f, 1.0f));
-    event.registerEntityRenderer(ENTITY_TYPE_PURPLE_POWER.get(), ctx -> new RenderPurplePower(ctx, new ModelPurplePower(1.0f), 0.3f, 2.75f));
+    // 1.7 registered 2.75 but never wired preRenderCallback, so beams drew at scale 1.0.
+    event.registerEntityRenderer(ENTITY_TYPE_PURPLE_POWER.get(), ctx -> new RenderPurplePower(ctx, new ModelPurplePower(1.0f), 0.3f, 1.0f));
     event.registerEntityRenderer(ENTITY_TYPE_QUEEN_HEAD.get(), ctx -> new RenderQueenHead(ctx));
     event.registerEntityRenderer(ENTITY_TYPE_RAINBOW_ANT.get(), ctx -> new RenderAnt(ctx, new ModelAnt(), 0.1f, 0.25f));
     event.registerEntityRenderer(ENTITY_TYPE_RAT.get(), ctx -> new RenderRat(ctx, new ModelRat(1.0f), 0.1f, 0.75f));
@@ -3061,7 +3076,9 @@ private static void registerAllCritterCages() {
   public static OreGenericEgg MySpiderDriverSpawnBlock;
   public static OreGenericEgg MyCrabSpawnBlock;
   public static Block MyOreUraniumBlock;
+  public static Block MyDeepslateOreUraniumBlock;
   public static Block MyOreTitaniumBlock;
+  public static Block MyDeepslateOreTitaniumBlock;
   public static Item MyIngotUranium;
   public static Item MyIngotTitanium;
   public static Block MyBlockUraniumBlock;
@@ -3324,6 +3341,7 @@ private static void registerAllCritterCages() {
   public static ItemChaosArmor QueenLegs;
   public static ItemChaosArmor QueenBoots;
   public static Block MyOreSaltBlock;
+  public static Block MyDeepslateOreSaltBlock;
   public static Block MyRTPBlock;
   public static Block MyMoleDirtBlock;
   public static Item MySalt;
@@ -3338,6 +3356,7 @@ private static void registerAllCritterCages() {
   public static Item MyRawPeacock;
   public static Item MyElevator;
   public static Block MyOreRubyBlock;
+  public static Block MyDeepslateOreRubyBlock;
   public static Item MyRuby;
   public static Item MyBacon;
   public static Item MyRawBacon;
@@ -3345,6 +3364,7 @@ private static void registerAllCritterCages() {
   public static Item MyRawCrabMeat;
   public static Item MyButterCandy;
   public static Block MyOreAmethystBlock;
+  public static Block MyDeepslateOreAmethystBlock;
   public static Item MyAmethyst;
   public static Item UraniumNugget;
   public static Item TitaniumNugget;
@@ -3359,6 +3379,8 @@ private static void registerAllCritterCages() {
   public static Block CrystalCrystal;
   public static Block RedAntTroll;
   public static Block TermiteTroll;
+  public static Block DeepslateRedAntTroll;
+  public static Block DeepslateTermiteTroll;
   public static Item CageEmpty;
   public static Item CagedSpider;
   public static Item CagedBat;
@@ -4098,7 +4120,11 @@ private static void registerAllCritterCages() {
     laySomeEggs();
 
     MyOreUraniumBlock = (OreUranium) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "oreuranium"));
+    MyDeepslateOreUraniumBlock =
+        BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_oreuranium"));
     MyOreTitaniumBlock = (OreTitanium) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "oretitanium"));
+    MyDeepslateOreTitaniumBlock =
+        BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_oretitanium"));
     MyIngotUranium = (IngotUranium) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ingoturanium"));
     MyIngotTitanium = (IngotTitanium) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ingottitanium"));
     MyBlockUraniumBlock = (BlockUranium) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "blockuranium"));
@@ -4365,6 +4391,8 @@ private static void registerAllCritterCages() {
     QueenBoots = (ItemChaosArmor) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "queen_boots"));
 
     MyOreSaltBlock = (OreSalt) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "oresalt"));
+    MyDeepslateOreSaltBlock =
+        BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_oresalt"));
     MySalt = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "salt"));
     MyPopcorn = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "popcorn"));
     MyButteredPopcorn = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "popcorn_buttered"));
@@ -4383,8 +4411,12 @@ private static void registerAllCritterCages() {
     MyBLT = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "blt_sandwich"));
     MyCrabbyPatty = (ItemPopcorn) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "crabbypatty"));
     MyOreRubyBlock = (OreRuby) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "oreruby"));
+    MyDeepslateOreRubyBlock =
+        BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_oreruby"));
     MyRuby = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "ruby"));
     MyOreAmethystBlock = (OreAmethyst) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "oreamethyst"));
+    MyDeepslateOreAmethystBlock =
+        BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_oreamethyst"));
     MyAmethyst = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "amethyst"));
     UraniumNugget = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "uranium_nugget"));
     TitaniumNugget = (ItemSalt) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "titanium_nugget"));
@@ -4402,6 +4434,14 @@ private static void registerAllCritterCages() {
     CrystalFairy = (OreBasicStone) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "crystalfairy"));
     RedAntTroll = (OreBasicStone) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "redanttroll"));
     TermiteTroll = (OreBasicStone) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "termitetroll"));
+    DeepslateRedAntTroll =
+        (OreBasicStone)
+            BuiltInRegistries.BLOCK.get(
+                ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_redanttroll"));
+    DeepslateTermiteTroll =
+        (OreBasicStone)
+            BuiltInRegistries.BLOCK.get(
+                ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_termitetroll"));
 
     MyRTPBlock = (RTPBlock) BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "blockteleport"));
     MyStepUp = (StepUp) BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(MODID, "step_up"));
@@ -4732,6 +4772,8 @@ private static void registerAllCritterCages() {
     GameRegistry.findRegistry(Block.class).register(CrystalRat);
     GameRegistry.findRegistry(Block.class).register(RedAntTroll);
     GameRegistry.findRegistry(Block.class).register(TermiteTroll);
+    GameRegistry.findRegistry(Block.class).register(DeepslateRedAntTroll);
+    GameRegistry.findRegistry(Block.class).register(DeepslateTermiteTroll);
     GameRegistry.findRegistry(Block.class).register(CrystalFairy);
     GameRegistry.findRegistry(Block.class).register(CrystalCoal);
     GameRegistry.findRegistry(Block.class).register(CrystalGrass);
@@ -5656,6 +5698,26 @@ private static void registerAllCritterCages() {
     GameRegistry.addSmelting(MyOreRubyBlock, new ItemStack(MyRuby, 1), 1.0F);
     GameRegistry.addSmelting(MyOreAmethystBlock, new ItemStack(MyAmethyst, 1), 1.0F);
     GameRegistry.addSmelting(MyOreSaltBlock, new ItemStack(MySalt, 8), 0.1F);
+    GameRegistry.addSmelting(
+        BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_oreuranium")),
+        new ItemStack(UraniumNugget),
+        0.3F);
+    GameRegistry.addSmelting(
+        BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_oretitanium")),
+        new ItemStack(TitaniumNugget),
+        0.3F);
+    GameRegistry.addSmelting(
+        BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_oreruby")),
+        new ItemStack(MyRuby, 1),
+        1.0F);
+    GameRegistry.addSmelting(
+        BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_oreamethyst")),
+        new ItemStack(MyAmethyst, 1),
+        1.0F);
+    GameRegistry.addSmelting(
+        BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(MODID, "deepslate_oresalt")),
+        new ItemStack(MySalt, 8),
+        0.1F);
     GameRegistry.addSmelting(MyCornCob, new ItemStack(MyPopcorn), 0.1F);
     GameRegistry.addSmelting(MyRawCornDog, new ItemStack(MyCornDog), 0.4F);
     GameRegistry.addSmelting(MyRawBacon, new ItemStack(MyBacon), 0.2F);
@@ -7293,6 +7355,21 @@ private static void registerAllCritterCages() {
     RoyalPetFollowHelper.bringRoyalPetsToPlayer(player);
   }
 
+  /** Keep loaded ground pets catching up onto solid ground (never midair) when the owner moves far. */
+  @SubscribeEvent
+  public void onPlayerTickBringGroundPets(TickEvent.PlayerTickEvent event) {
+    if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide) {
+      return;
+    }
+    if (!(event.player instanceof ServerPlayer player)) {
+      return;
+    }
+    if (player.tickCount % 20 != 0) {
+      return;
+    }
+    RoyalPetFollowHelper.bringGroundFollowPetsToPlayer(player);
+  }
+
   private static List<Long> chunkKeysAround(ChunkPos center, int radius) {
     List<Long> keys = new ArrayList<>((radius * 2 + 1) * (radius * 2 + 1));
     for (int dx = -radius; dx <= radius; dx++) {
@@ -8285,6 +8362,11 @@ private static void registerAllCritterCages() {
     return pointedAt;
   }
 
+  /**
+   * Fast worldgen/structure write via direct chunk setBlockState. Skips full {@link Level#setBlock}
+   * (lighting + neighbor storms) during populate — that path melted TPS when used for every tree/ore.
+   * Client sync uses {@link Level#sendBlockUpdated} only when not mid-populate feature.
+   */
   public static boolean setBlockFast(Level world, int par1, int par2, int par3, Block par4, int par5, int par6)
   {
     if ((par1 >= -30000000) && (par3 >= -30000000) && (par1 < 30000000) && (par3 < 30000000))
@@ -8512,6 +8594,10 @@ private static void registerAllCritterCages() {
     return Blocks.AIR;
   }
 
+  /**
+   * In-chunk worldgen write used by {@link com.astryxion.chaospersists.block.CrystalMaze} and ores.
+   * Direct {@link LevelChunk#setBlockState} — do not route through {@link Level#setBlock} (TPS killer).
+   */
   public static boolean setBlockIDWithMetadataInChunk(
       LevelChunk chunk, int par1, int par2, int par3, Block par4, int par5) {
     if (par1 >= -30000000 && par3 >= -30000000 && par1 < 30000000 && par3 < 30000000) {

@@ -8,14 +8,15 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 /**
- * Utopia giant trees using vanilla logs/leaves (1.12 {@link Trees#SkyTree} / {@link Trees#WindTree} layout).
+ * Utopia giant trees matching OreSpawn 1.7.10 {@code Trees#SkyTree} / {@code Trees#WindTree}:
+ * sky trees use {@code MySkyTreeLog}; wind trees use oak logs/leaves.
  */
 public final class UtopiaBigTrees {
     private UtopiaBigTrees() {}
 
     private static void skyTreeBranch(Level level, int x, int y, int z, int length, int dirx, int dirz) {
         for (int i = 1; i < length; ++i) {
-            ChaosPersists.setBlockFast(level, x + i * dirx, y, z + i * dirz, Blocks.OAK_LOG, 0, 2);
+            ChaosPersists.setBlockFast(level, x + i * dirx, y, z + i * dirz, ChaosPersists.MySkyTreeLog, 0, 2);
             BlockPos above = new BlockPos(x + i * dirx, y + 1, z + i * dirz);
             if (level.getBlockState(above).isAir()) {
                 ChaosPersists.setBlockFast(level, x + i * dirx, y + 1, z + i * dirz, Blocks.OAK_LEAVES, 0, 2);
@@ -35,8 +36,11 @@ public final class UtopiaBigTrees {
         }
     }
 
-    /** Tall spreading canopy tree (1.12 SkyTree, vanilla oak). */
+    /** Tall spreading canopy tree (1.7.10 SkyTree — sky wood trunk). */
     public static void skyTree(Level level, int x, int y, int z) {
+        if (ChaosPersists.MySkyTreeLog == null) {
+            return;
+        }
         Block ground = level.getBlockState(new BlockPos(x, y, z)).getBlock();
         if (ground != Blocks.GRASS_BLOCK && ground != Blocks.DIRT) {
             return;
@@ -48,7 +52,7 @@ public final class UtopiaBigTrees {
         }
         int width = random.nextInt(10) + 25;
         for (int j = y; j <= height; ++j) {
-            ChaosPersists.setBlockFast(level, x, j, z, Blocks.OAK_LOG, 0, 2);
+            ChaosPersists.setBlockFast(level, x, j, z, ChaosPersists.MySkyTreeLog, 0, 2);
         }
         ChaosPersists.setBlockFast(level, x, height + 1, z, Blocks.OAK_LEAVES, 0, 2);
         skyTreeBranch(level, x, height, z, width, 1, 0);

@@ -71,14 +71,6 @@ public class DungeonSpawnerBlock extends Block {
         int clickedX = pos.getX();
         int clickedY = pos.getY();
         int clickedZ = pos.getZ();
-        ChaosPersists.clearStructureVolume(
-                world,
-                clickedX - 55,
-                clickedY - 2,
-                clickedZ - 55,
-                clickedX + 55,
-                clickedY + 72,
-                clickedZ + 55);
         int type = world.random.nextInt(50);
         if (type == 0) {
             ChaosPersists.chaospersistsTrees.FairyTree(world, clickedX, clickedY, clickedZ);

@@ -43,18 +43,9 @@ public class ItemThunderStaff extends Item {
             lb.setPos(px, py, pz);
             lb.setYRot(player.getYRot());
             lb.setXRot(player.getXRot());
-            // EntityThrowable base throw speed 0.4F, then OreSpawn triples it.
-            float yaw = player.getYRot();
-            float pitch = player.getXRot();
-            double throwSpeed = 0.4 * 3.0;
-            lb.setDeltaMovement(
-                    -Mth.sin(yaw * Mth.DEG_TO_RAD)
-                            * Mth.cos(pitch * Mth.DEG_TO_RAD)
-                            * throwSpeed,
-                    -Mth.sin(pitch * Mth.DEG_TO_RAD) * throwSpeed,
-                    Mth.cos(yaw * Mth.DEG_TO_RAD)
-                            * Mth.cos(pitch * Mth.DEG_TO_RAD)
-                            * throwSpeed);
+            // Match OreSpawn 1.7.10: EntityThrowable shoots at 1.5F, then motion *= 3.0.
+            lb.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
+            lb.setDeltaMovement(lb.getDeltaMovement().scale(3.0));
             level.addFreshEntity(lb);
         }
 

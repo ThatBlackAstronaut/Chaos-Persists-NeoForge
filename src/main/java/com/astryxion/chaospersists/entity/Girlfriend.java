@@ -102,6 +102,8 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
     private int had_target = 0;
     private int voice = 0;
     private int is_princess = 0;
+    /** True after NBT restore or finalizeSpawn assigned a permanent skin. */
+    private boolean skinInitialized = false;
     public MyEntityAIDance Dance = null;
     private float moveSpeed = 0.3f;
     private int voice_enable = 1;
@@ -235,9 +237,6 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
 
     public Girlfriend(EntityType<? extends Girlfriend> type, Level level) {
         super(type, level);
-        this.which_girl = this.getRandom().nextInt(41);
-        this.which_wet_girl = this.getRandom().nextInt(18);
-        this.voice = this.getRandom().nextInt(10);
         this.setOrderedToSit(false);
         this.goalSelector.addGoal(1, new MyEntityAIFollowOwner(this, 1.4f, 12.0f, 1.5f));
         this.goalSelector.addGoal(2, new TemptGoal(this, 1.25, Ingredient.of(Items.POPPY), false));
@@ -282,13 +281,11 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.which_girl = this.getRandom().nextInt(41);
-        this.entityData.define(WHICH_GIRL, this.which_girl);
+        // Defaults only — randomize in finalizeSpawn so chunk reload does not re-roll skins.
+        this.entityData.define(WHICH_GIRL, 0);
         this.wet_count = 0;
-        this.which_wet_girl = this.getRandom().nextInt(18);
-        this.entityData.define(WHICH_WET_GIRL, this.which_wet_girl);
-        this.voice = this.getRandom().nextInt(10);
-        this.entityData.define(VOICE, this.voice);
+        this.entityData.define(WHICH_WET_GIRL, 0);
+        this.entityData.define(VOICE, 0);
         this.entityData.define(VOICE_ENABLE, this.voice_enable);
         this.entityData.define(IS_PRINCESS, this.is_princess);
         this.entityData.define(FEELING_BETTER, this.feelingBetter);
@@ -309,23 +306,35 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
         tag.putInt("GirlVoiceEnable", this.entityData.get(VOICE_ENABLE));
         tag.putInt("IsPrincess", this.entityData.get(IS_PRINCESS));
         tag.putInt("feelingBetter", this.entityData.get(FEELING_BETTER));
+        tag.putBoolean("GirlSkinInitialized", true);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.which_girl = tag.getInt("GirlType");
-        this.setTameSkin(this.which_girl);
-        this.which_wet_girl = tag.getInt("WetGirlType");
-        this.setWetTameSkin(this.which_wet_girl);
-        this.voice = tag.getInt("GirlVoice");
-        this.entityData.set(VOICE, this.voice);
-        this.voice_enable = tag.getInt("GirlVoiceEnable");
-        this.entityData.set(VOICE_ENABLE, this.voice_enable);
-        this.is_princess = tag.getInt("IsPrincess");
-        this.entityData.set(IS_PRINCESS, this.is_princess);
-        this.feelingBetter = tag.getInt("feelingBetter");
-        this.entityData.set(FEELING_BETTER, this.feelingBetter);
+        if (tag.contains("GirlType")) {
+            this.setTameSkin(tag.getInt("GirlType"));
+        }
+        if (tag.contains("WetGirlType")) {
+            this.setWetTameSkin(tag.getInt("WetGirlType"));
+        }
+        if (tag.contains("GirlVoice")) {
+            this.voice = tag.getInt("GirlVoice");
+            this.entityData.set(VOICE, this.voice);
+        }
+        if (tag.contains("GirlVoiceEnable")) {
+            this.voice_enable = tag.getInt("GirlVoiceEnable");
+            this.entityData.set(VOICE_ENABLE, this.voice_enable);
+        }
+        if (tag.contains("IsPrincess")) {
+            this.is_princess = tag.getInt("IsPrincess");
+            this.entityData.set(IS_PRINCESS, this.is_princess);
+        }
+        if (tag.contains("feelingBetter")) {
+            this.feelingBetter = tag.getInt("feelingBetter");
+            this.entityData.set(FEELING_BETTER, this.feelingBetter);
+        }
+        this.skinInitialized = tag.contains("GirlType") || tag.getBoolean("GirlSkinInitialized");
         if (ChaosPersists.valentines_day != 0 && this.feelingBetter != 0) {
             this.refreshDimensions();
         }
@@ -406,13 +415,20 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
         if (this.force_sync <= 0) {
             this.force_sync = 20;
             if (!this.level().isClientSide) {
+                this.ensureSkinInitialized();
+                // Force-dirty skin like Stinky so clients keep the saved appearance after relog.
+                this.setTameSkin(this.which_girl);
+                this.setWetTameSkin(this.which_wet_girl);
                 this.entityData.set(VOICE, this.voice);
                 this.entityData.set(VOICE_ENABLE, this.voice_enable);
                 this.entityData.set(IS_PRINCESS, this.is_princess);
                 this.entityData.set(FEELING_BETTER, this.feelingBetter);
             } else {
+                this.which_girl = this.getTameSkin();
+                this.which_wet_girl = this.getWetTameSkin();
                 this.voice = this.getVoice();
                 this.voice_enable = this.entityData.get(VOICE_ENABLE);
+                this.is_princess = this.entityData.get(IS_PRINCESS);
                 int nowfeeling = this.entityData.get(FEELING_BETTER);
                 if (nowfeeling != this.feelingBetter && nowfeeling != 0) {
                     this.feelingBetter = nowfeeling;
@@ -625,8 +641,11 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
     }
 
     public void setTameSkin(int par1) {
+        // Double-set forces SynchedEntityData dirty (same pattern as Stinky.setSkin).
+        this.entityData.set(WHICH_GIRL, par1 == 0 ? 1 : 0);
         this.entityData.set(WHICH_GIRL, par1);
         this.which_girl = par1;
+        this.skinInitialized = true;
     }
 
     public int getWetTameSkin() {
@@ -634,6 +653,7 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
     }
 
     public void setWetTameSkin(int par1) {
+        this.entityData.set(WHICH_WET_GIRL, par1 == 0 ? 1 : 0);
         this.entityData.set(WHICH_WET_GIRL, par1);
         this.which_wet_girl = par1;
     }
@@ -1282,6 +1302,18 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
         return super.checkSpawnRules(level, spawnReason);
     }
 
+    /** Assign a permanent random skin once for new spawns (OreSpawn entityInit parity). */
+    private void ensureSkinInitialized() {
+        if (this.skinInitialized || this.level().isClientSide) {
+            return;
+        }
+        this.setTameSkin(this.getRandom().nextInt(41));
+        this.setWetTameSkin(this.getRandom().nextInt(18));
+        this.voice = this.getRandom().nextInt(10);
+        this.entityData.set(VOICE, this.voice);
+        this.skinInitialized = true;
+    }
+
     @Override
     public SpawnGroupData finalizeSpawn(
             ServerLevelAccessor level,
@@ -1289,6 +1321,7 @@ public class Girlfriend extends TamableAnimal implements RangedAttackMob {
             MobSpawnType reason,
             SpawnGroupData spawnData,
             CompoundTag dataTag) {
+        this.ensureSkinInitialized();
         this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double) this.mygetMaxHealth());
         return super.finalizeSpawn(level, difficulty, reason, spawnData, dataTag);
     }

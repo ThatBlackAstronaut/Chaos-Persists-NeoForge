@@ -5,8 +5,8 @@ import com.google.common.collect.Sets;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.Util;
-import net.minecraft.core.Holder;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
@@ -18,12 +18,17 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.levelgen.Beardifier;
+import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.NoiseSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -36,6 +41,8 @@ import java.util.function.Predicate;
 
 /**
  * Twilight Forest-style terrain for Utopia and Village: zeroed noise router plus classic rolling-hill warp.
+ * Adds a short-wavelength surface ripple so flats keep 1.7-style 1-up/1-down micro-bumps without
+ * changing the large hill shapes.
  */
 public class ChaosPlainsChunkGenerator extends ChaosChunkGeneratorWrapper {
 
@@ -79,6 +86,10 @@ public class ChaosPlainsChunkGenerator extends ChaosChunkGeneratorWrapper {
     private final BlockState defaultBlock;
     private final BlockState defaultFluid;
     private final Optional<ChaosPlainsTerrainWarp> warper;
+
+    /** Lazy per-world micro-bump sampler — not part of the rolling-hill warp. */
+    private ImprovedNoise microBumpNoise;
+    private int microBumpOwner = 0;
 
     public ChaosPlainsChunkGenerator(
             ChunkGenerator delegate,
@@ -137,6 +148,11 @@ public class ChaosPlainsChunkGenerator extends ChaosChunkGeneratorWrapper {
     @Override
     public void addDebugScreenInfo(List<String> lines, RandomState random, BlockPos pos) {
         this.delegate.addDebugScreenInfo(lines, random, pos);
+    }
+
+    @Override
+    public int getSeaLevel() {
+        return this.noiseGeneratorSettings.value().seaLevel();
     }
 
     @Override
@@ -214,6 +230,7 @@ public class ChaosPlainsChunkGenerator extends ChaosChunkGeneratorWrapper {
             for (int height = cellHeight - 1; height >= 0; height--) {
                 double cellFraction = height / (double) cellHeight;
                 double noiseVal = Mth.lerp3(cellFraction, xMin, zMin, d00, d01, d20, d21, d10, d11, d30, d31);
+                noiseVal += this.sampleMicroBump(random, x, z);
                 int layer = cell * cellHeight + height;
                 int blockY = layer + min * cellHeight;
                 BlockState state = this.generateBaseState(noiseVal, blockY);
@@ -272,7 +289,9 @@ public class ChaosPlainsChunkGenerator extends ChaosChunkGeneratorWrapper {
             sections.add(section);
         }
 
-        return CompletableFuture.supplyAsync(() -> this.doFill(random, chunkAccess, minCell, maxCell), Util.backgroundExecutor())
+        return CompletableFuture.supplyAsync(
+                        () -> this.doFill(random, structureManager, chunkAccess, minCell, maxCell),
+                        Util.backgroundExecutor())
                 .whenCompleteAsync(
                         (chunk, throwable) -> {
                             for (LevelChunkSection section : sections) {
@@ -282,7 +301,12 @@ public class ChaosPlainsChunkGenerator extends ChaosChunkGeneratorWrapper {
                         executor);
     }
 
-    private ChunkAccess doFill(RandomState random, ChunkAccess access, int min, int max) {
+    private ChunkAccess doFill(
+            RandomState random,
+            StructureManager structureManager,
+            ChunkAccess access,
+            int min,
+            int max) {
         NoiseSettings settings = this.noiseGeneratorSettings.value().noiseSettings();
         int cellWidth = settings.getCellWidth();
         int cellHeight = settings.getCellHeight();
@@ -293,6 +317,8 @@ public class ChaosPlainsChunkGenerator extends ChaosChunkGeneratorWrapper {
         ChunkPos chunkPos = access.getPos();
         int minX = chunkPos.getMinBlockX();
         int minZ = chunkPos.getMinBlockZ();
+        // Vanilla structure terrain_adaptation (beard_thin from village JSON) via Beardifier.
+        Beardifier beardifier = Beardifier.forStructuresInChunk(structureManager, chunkPos);
         ChaosPlainsTerrainWarp terrainWarp = this.warper.get();
         ChaosPlainsNoiseInterpolator interpolator =
                 new ChaosPlainsNoiseInterpolator(
@@ -342,7 +368,12 @@ public class ChaosPlainsChunkGenerator extends ChaosChunkGeneratorWrapper {
                                 int worldZ = minZ + cellZ * cellWidth + widthZ;
                                 int localZ = worldZ & 15;
                                 double widthFractionZ = (double) widthZ / (double) cellWidth;
-                                double noiseVal = interpolator.updateZ(widthFractionZ);
+                                double noiseVal =
+                                        interpolator.updateZ(widthFractionZ)
+                                                + beardifier.compute(
+                                                        new DensityFunction.SinglePointContext(
+                                                                worldX, blockY, worldZ))
+                                                + this.sampleMicroBump(random, worldX, worldZ);
                                 BlockState state = this.generateBaseState(noiseVal, blockY);
 
                                 if (state != Blocks.AIR.defaultBlockState()) {
@@ -369,10 +400,46 @@ public class ChaosPlainsChunkGenerator extends ChaosChunkGeneratorWrapper {
     }
 
     /**
-     * Stone below the surface, air above — same as Twilight Forest. Water is not flooded in here
-     * (sea level 63 would turn every hill valley and cave into an ocean); surface lakes use biome features.
+     * Soft 1.7-style micro-topography on flats: gentle ±1 block patches, not salt-and-pepper.
+     * Longish wavelength + soft clamp so hills stay clean and flats aren't noisy.
+     */
+    private double sampleMicroBump(RandomState random, int blockX, int blockZ) {
+        ImprovedNoise noise = this.getMicroBumpNoise(random);
+        // ~12–16 block patches (one octave only — a fine overlay looked harsh).
+        double n = noise.noise(blockX * 0.085D, 0.0D, blockZ * 0.085D);
+        // tanh keeps extremes near ±1 block instead of spiking 2–3 high.
+        double heightBlocks = Math.tanh(n * 1.2D) * 0.75D;
+        return heightBlocks * 7.0D;
+    }
+
+    private ImprovedNoise getMicroBumpNoise(RandomState random) {
+        int owner = System.identityHashCode(random);
+        if (this.microBumpNoise == null || this.microBumpOwner != owner) {
+            RandomSource source =
+                    random
+                            .getOrCreateRandomFactory(
+                                    ResourceLocation.fromNamespaceAndPath(
+                                            "chaospersists", "plains_micro_bump"))
+                            .fromHashOf("init");
+            this.microBumpNoise = new ImprovedNoise(source);
+            this.microBumpOwner = owner;
+        }
+        return this.microBumpNoise;
+    }
+
+    /**
+     * Match 1.7/1.12 {@code ChunkProviderChaos3}: stone where density &gt; 0, otherwise water
+     * below sea level and air above. With plains hills sitting mostly above Y 63, valleys become
+     * the large winding lakes/rivers from Village Mania — not WorldGenLakes ponds.
      */
     private BlockState generateBaseState(double noiseVal, double level) {
-        return noiseVal > 0.0D ? this.defaultBlock : Blocks.AIR.defaultBlockState();
+        if (noiseVal > 0.0D) {
+            return this.defaultBlock;
+        }
+        int seaLevel = this.noiseGeneratorSettings.value().seaLevel();
+        if (seaLevel > 0 && level < seaLevel) {
+            return this.defaultFluid;
+        }
+        return Blocks.AIR.defaultBlockState();
     }
 }

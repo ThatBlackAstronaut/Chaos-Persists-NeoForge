@@ -12,6 +12,7 @@ import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.Level.ExplosionInteraction;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -74,6 +75,9 @@ public class BerthaHit extends ThrowableProjectile {
     /**
      * Resolve extended-reach hits on the swing tick. OreSpawn's BerthaHit flew fast enough
      * in 1.7.10 to feel instant; the 1.20.1 port was far slower and added air drag.
+     *
+     * <p>Entity-only along the aim vector: {@link ProjectileUtil#getHitResultOnMoveVector}
+     * also hits blocks, so high/low swings into terrain never reached the target.
      */
     public boolean tryHitAlongPath() {
         Entity owner = this.getOwner();
@@ -87,22 +91,44 @@ public class BerthaHit extends ThrowableProjectile {
             return false;
         }
 
-        int maxSteps = (int) Math.ceil(Math.sqrt(this.maxOwnerReachDistanceSq()) / speed) + 2;
-        for (int step = 0; step < maxSteps; step++) {
-            if (this.distanceToSqr(owner) > this.maxOwnerReachDistanceSq()) {
-                return false;
-            }
+        double maxReach = Math.sqrt(this.maxOwnerReachDistanceSq());
+        Vec3 start = this.position();
+        Vec3 end = start.add(motion.normalize().scale(maxReach));
+        AABB searchBox = this.getBoundingBox().expandTowards(end.subtract(start)).inflate(1.0D);
 
-            HitResult hit = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
-            if (hit.getType() != HitResult.Type.MISS) {
-                this.onHit(hit);
+        EntityHitResult entityHit =
+                ProjectileUtil.getEntityHitResult(
+                        this.level(), this, start, end, searchBox, this::canHitEntity);
+        if (entityHit != null) {
+            Entity target = entityHit.getEntity();
+            if (target != null
+                    && this.distanceToSqr(owner) <= this.maxOwnerReachDistanceSq()
+                    && owner.distanceToSqr(target) <= this.maxOwnerReachDistanceSq()) {
+                this.onHit(entityHit);
                 return true;
             }
-
-            this.setPos(this.getX() + motion.x, this.getY() + motion.y, this.getZ() + motion.z);
         }
-
         return false;
+    }
+
+    /**
+     * Re-aim after {@code moveTo} using the shooter's head look (pitch included). Body yaw alone
+     * made high/low swings fly sideways instead of at the target.
+     */
+    public void aimFromShooter(LivingEntity shooter, double speedMul) {
+        float yaw = shooter.getYHeadRot();
+        float pitch = shooter.getXRot();
+        this.setYRot(yaw);
+        this.setXRot(pitch);
+        float f = 0.4f;
+        float yawRad = yaw * Mth.DEG_TO_RAD;
+        float pitchRad = pitch * Mth.DEG_TO_RAD;
+        double mx = -Mth.sin(yawRad) * Mth.cos(pitchRad) * f;
+        double mz = Mth.cos(yawRad) * Mth.cos(pitchRad) * f;
+        double my = -Mth.sin(pitchRad) * f;
+        this.shoot(mx, my, mz, THROW_SPEED, 0.0f);
+        Vec3 dm = this.getDeltaMovement();
+        this.setDeltaMovement(dm.x * speedMul, dm.y * speedMul, dm.z * speedMul);
     }
 
     @Override

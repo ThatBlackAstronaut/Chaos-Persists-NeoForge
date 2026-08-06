@@ -29,9 +29,13 @@ public class OreUranium extends Block {
     private int glowcount = 0;
 
     public OreUranium() {
+        this(SoundType.STONE);
+    }
+
+    public OreUranium(SoundType sound) {
         super(Block.Properties.of()
                 .strength(10.0f, 1.0f)
-                .sound(SoundType.STONE)
+                .sound(sound)
                 .requiresCorrectToolForDrops()
                 .randomTicks());
         this.glowing = false;

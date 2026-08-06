@@ -2,6 +2,7 @@ package com.astryxion.chaospersists.entity;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
+import com.astryxion.chaospersists.world.dimension.teleporter.CrystalTeleporter;
 import com.astryxion.chaospersists.world.dimension.teleporter.UtopiaTeleporter;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -87,7 +88,7 @@ public class Termite extends EntityAnt {
             var2 = ItemStack.EMPTY;
         }
         if (!var2.isEmpty()) {
-            player.displayClientMessage(Component.literal("Empty your hand!"), false);
+            player.displayClientMessage(Component.literal("Empty your hand!"), true);
             return InteractionResult.FAIL;
         }
         if (serverPlayer.server == null) {
@@ -97,13 +98,13 @@ public class Termite extends EntityAnt {
         if (!player.level().dimension().equals(crystalKey)) {
             for (int i = 0; i < player.getInventory().items.size(); ++i) {
                 if (!player.getInventory().items.get(i).isEmpty()) {
-                    player.displayClientMessage(Component.literal("Empty your inventory!"), false);
+                    player.displayClientMessage(Component.literal("Empty your inventory!"), true);
                     return InteractionResult.FAIL;
                 }
             }
             for (int i = 0; i < player.getInventory().armor.size(); ++i) {
                 if (!player.getInventory().armor.get(i).isEmpty()) {
-                    player.displayClientMessage(Component.literal("Take off your armor!"), false);
+                    player.displayClientMessage(Component.literal("Take off your armor!"), true);
                     return InteractionResult.FAIL;
                 }
             }
@@ -111,7 +112,7 @@ public class Termite extends EntityAnt {
             if (world == null) {
                 return InteractionResult.FAIL;
             }
-            serverPlayer.changeDimension(world, new UtopiaTeleporter(serverPlayer.getX(), serverPlayer.getZ()));
+            serverPlayer.changeDimension(world, new CrystalTeleporter(serverPlayer.getX(), serverPlayer.getZ()));
         } else {
             ServerLevel world = serverPlayer.server.getLevel(Level.OVERWORLD);
             if (world == null) {

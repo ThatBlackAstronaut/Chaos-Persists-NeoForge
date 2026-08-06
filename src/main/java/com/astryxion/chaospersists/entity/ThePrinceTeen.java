@@ -699,6 +699,11 @@ public class ThePrinceTeen extends TamableAnimal {
     }
 
     @Override
+    public boolean fireImmune() {
+        return true;
+    }
+
+    @Override
     public int getArmorValue() {
         return 18;
     }
@@ -1565,7 +1570,8 @@ public class ThePrinceTeen extends TamableAnimal {
                     spawnTamingParticles(true);
                     this.level().broadcastEntityEvent(this, (byte) 6);
                     this.setThePrinceTeenFire(0);
-                    par1EntityPlayer.sendSystemMessage(Component.literal("Fireballs extinguished."));
+                    par1EntityPlayer.displayClientMessage(
+                            Component.literal("Fireballs extinguished."), true);
                 }
                 if (!par1EntityPlayer.getAbilities().instabuild) {
                     var2.shrink(1);
@@ -1582,7 +1588,8 @@ public class ThePrinceTeen extends TamableAnimal {
                     spawnTamingParticles(true);
                     this.level().broadcastEntityEvent(this, (byte) 6);
                     this.setThePrinceTeenFire(1);
-                    par1EntityPlayer.sendSystemMessage(Component.literal("Fireballs lit!"));
+                    par1EntityPlayer.displayClientMessage(
+                            Component.literal("Fireballs lit!"), true);
                 }
                 if (!par1EntityPlayer.getAbilities().instabuild) {
                     var2.shrink(1);

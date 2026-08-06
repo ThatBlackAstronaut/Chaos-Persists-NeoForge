@@ -66,6 +66,7 @@ public class EmperorScorpion extends Monster {
     public EmperorScorpion(EntityType<? extends EmperorScorpion> type, Level level) {
         super(type, level);
         this.moveControl = new ChaosChaseMoveControl(this);
+        this.setMaxUpStep(1.0F);
         this.xpReward = 200;
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();

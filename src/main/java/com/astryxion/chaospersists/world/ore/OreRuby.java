@@ -18,13 +18,17 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 public class OreRuby extends Block {
 
     public OreRuby() {
-        this(0);
+        this(SoundType.STONE);
     }
 
     public OreRuby(int i) {
+        this(SoundType.STONE);
+    }
+
+    public OreRuby(SoundType sound) {
         super(Block.Properties.of()
                 .strength(10.0f, 4.0f)
-                .sound(SoundType.STONE)
+                .sound(sound)
                 .requiresCorrectToolForDrops());
     }
 

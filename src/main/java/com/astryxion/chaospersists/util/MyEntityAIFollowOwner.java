@@ -3,11 +3,11 @@ package com.astryxion.chaospersists.util;
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.entity.Girlfriend;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.Level;
+
 public class MyEntityAIFollowOwner extends Goal {
     private final TamableAnimal thePet;
     private LivingEntity theOwner;
@@ -105,15 +105,22 @@ public class MyEntityAIFollowOwner extends Goal {
             return;
         }
         if (this.theOwner.level() != this.thePet.level()) {
-            RoyalPetFollowHelper.tryFollowTeleport(this.thePet, this.theOwner);
+            if (RoyalPetFollowHelper.isRoyalPet(this.thePet)) {
+                RoyalPetFollowHelper.tryFollowTeleport(this.thePet, this.theOwner);
+            } else {
+                RoyalPetFollowHelper.teleportToOwnerOnGround(this.thePet, this.theOwner);
+            }
             return;
         }
         if (--this.field_75343_h <= 0) {
             this.field_75343_h = 10;
-            if (!this.petPathfinder.moveTo(this.theOwner, (double) this.field_75336_f)
-                    && this.thePet.distanceToSqr(this.theOwner) >= 144.0
+            // Vanilla 1.20 FollowOwnerGoal: when >= 12 blocks away, teleport (do not gate on moveTo).
+            // OreSpawn placed pets on solid ground; if owner is flying, use ground under them.
+            if (this.thePet.distanceToSqr(this.theOwner) >= 144.0
                     && !MyUtils.shouldPrinceSkipFollowTeleport(this.thePet, this.theOwner)) {
-                RoyalPetFollowHelper.tryFollowTeleport(this.thePet, this.theOwner);
+                RoyalPetFollowHelper.teleportToOwnerOnGround(this.thePet, this.theOwner);
+            } else {
+                this.petPathfinder.moveTo(this.theOwner, (double) this.field_75336_f);
             }
         }
     }

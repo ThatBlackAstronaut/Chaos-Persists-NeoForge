@@ -84,6 +84,7 @@ public class Godzilla extends Monster {
     public Godzilla(EntityType<? extends Godzilla> type, Level level) {
         super(type, level);
         this.moveControl = new ChaosChaseMoveControl(this);
+        this.setMaxUpStep(1.0F);
         this.xpReward = 10000;
         this.noPhysics = false;
         this.targetSorter = new GenericTargetSorter(this);
@@ -198,7 +199,7 @@ public class Godzilla extends Monster {
             this.lastPlayNicely = pn;
             this.applyGodzillaDimensions();
         }
-        if (!this.onGround()) {
+        if (!this.onGround() && this.jump_timer > 0) {
             this.getNavigation().stop();
         }
     }
@@ -273,7 +274,8 @@ public class Godzilla extends Monster {
         return 1.1f;
     }
 
-    protected void jump() {
+    @Override
+    protected void jumpFromGround() {
         while (this.getYRot() < 0.0f) {
             this.setYRot(this.getYRot() + 360.0f);
         }
@@ -297,6 +299,7 @@ public class Godzilla extends Monster {
                 this.getDeltaMovement().z
                         + (double) f * Math.sin(Math.toRadians(this.getYHeadRot() + 90.0f)));
         this.setOnGround(false);
+        this.jump_timer = Math.max(this.jump_timer, 10);
         this.getNavigation().stop();
     }
 
@@ -316,6 +319,7 @@ public class Godzilla extends Monster {
                 this.getDeltaMovement().y,
                 this.getDeltaMovement().z + d1 * 0.05 * Math.sin(d));
         this.setOnGround(false);
+        this.jump_timer = Math.max(this.jump_timer, 20);
         this.getNavigation().stop();
     }
 

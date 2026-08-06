@@ -2769,13 +2769,15 @@ public class GenericDungeon {
         float curdeg;
         float curx;
         float curz;
+        // 1.7.10 Blocks.snow was the full cube; 1.20 Blocks.SNOW is the thin layer.
+        net.minecraft.world.level.block.Block snowBlock = net.minecraft.world.level.block.Blocks.SNOW_BLOCK;
         float currad = 6.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
             curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
             curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 1, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.SNOW);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 1, (int)((float)cposz + curz + 0.5f), snowBlock);
             this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 2, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.ICE);
-            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 3, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.SNOW);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 3, (int)((float)cposz + curz + 0.5f), snowBlock);
         }
         currad = 5.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
@@ -2787,7 +2789,7 @@ public class GenericDungeon {
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 5.0f) {
             curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
             curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.SNOW);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), snowBlock);
         }
         currad = 3.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 10.0f) {
@@ -2799,7 +2801,7 @@ public class GenericDungeon {
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 15.0f) {
             curx = (float)((double)currad * Math.cos(Math.toRadians(curdeg)));
             curz = (float)((double)currad * Math.sin(Math.toRadians(curdeg)));
-            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), net.minecraft.world.level.block.Blocks.SNOW);
+            this.FastSetBlock(level, (int)((float)cposx + curx + 0.5f), cposy + 5, (int)((float)cposz + curz + 0.5f), snowBlock);
         }
         currad = 1.0f;
         for (curdeg = 0.0f; curdeg < 360.0f; curdeg += 15.0f) {

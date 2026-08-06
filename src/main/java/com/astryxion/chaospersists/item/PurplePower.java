@@ -28,6 +28,9 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.SnowGolem;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.GameRules;
@@ -334,6 +337,18 @@ public class PurplePower extends LivingEntity {
         }
         if (MyUtils.isRoyalty(par1EntityLiving)) {
             return false;
+        }
+        // Princess beams (types 1-3): do not hunt villagers, golems, livestock, or other
+        // non-hostiles (covers Guard Villagers mods). Queen (0) / King (10) stay lethal.
+        if (this.getPurpleType() != 0 && this.getPurpleType() != 10) {
+            if (par1EntityLiving instanceof SnowGolem
+                    || MyUtils.isProtectedCompanion(null, par1EntityLiving)) {
+                return false;
+            }
+            if (!(par1EntityLiving instanceof Enemy)
+                    && !(par1EntityLiving instanceof Monster)) {
+                return false;
+            }
         }
         return true;
     }

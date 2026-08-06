@@ -1726,8 +1726,8 @@ public class Dragon extends TamableAnimal {
                     spawnTamingParticles(true);
                     this.level().broadcastEntityEvent(this, (byte) 6);
                     this.setDragonFire(0);
-                    par1EntityPlayer.sendSystemMessage(
-                            Component.literal("Dragon fireballs extinguished."));
+                    par1EntityPlayer.displayClientMessage(
+                            Component.literal("Dragon fireballs extinguished."), true);
                 }
                 if (!par1EntityPlayer.getAbilities().instabuild) {
                     var2.shrink(1);
@@ -1745,7 +1745,8 @@ public class Dragon extends TamableAnimal {
                     spawnTamingParticles(true);
                     this.level().broadcastEntityEvent(this, (byte) 6);
                     this.setDragonFire(1);
-                    par1EntityPlayer.sendSystemMessage(Component.literal("Dragon fireballs lit!"));
+                    par1EntityPlayer.displayClientMessage(
+                            Component.literal("Dragon fireballs lit!"), true);
                 }
                 if (!par1EntityPlayer.getAbilities().instabuild) {
                     var2.shrink(1);
@@ -1764,8 +1765,8 @@ public class Dragon extends TamableAnimal {
                     spawnTamingParticles(true);
                     this.level().broadcastEntityEvent(this, (byte) 6);
                     this.setDragonFire(2);
-                    par1EntityPlayer.sendSystemMessage(
-                            Component.literal("Dragon fireballs supercharged!"));
+                    par1EntityPlayer.displayClientMessage(
+                            Component.literal("Dragon fireballs supercharged!"), true);
                 }
                 if (!par1EntityPlayer.getAbilities().instabuild) {
                     var2.shrink(1);

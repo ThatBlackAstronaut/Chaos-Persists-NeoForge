@@ -683,6 +683,59 @@ public class AntRobot extends Mob {
         return new Vec3(mx, my, mz);
     }
 
+    /** OreSpawn 1.7.10 ridden hover + terrain climb (server onLivingUpdate when ridden). */
+    private double applyRiddenVerticalPhysics(double my, double horizontalVelocity) {
+        double gh = 2.25;
+        Block bid =
+                this.level()
+                        .getBlockState(
+                                BlockPos.containing(
+                                        this.getX(), this.getY() - gh, this.getZ()))
+                        .getBlock();
+        if (bid != Blocks.AIR && bid != Blocks.WATER && bid != Blocks.LAVA) {
+            my += 0.06;
+            this.setPos(this.getX(), this.getY() + 0.03, this.getZ());
+        } else {
+            my -= 0.02;
+        }
+        double obstruction = 0.0;
+        int scanDepth = 3 + (int) (Math.max(0.0, horizontalVelocity) * 6.0);
+        if (scanDepth > 24) {
+            scanDepth = 24;
+        }
+        for (int k = 1; k < scanDepth; ++k) {
+            for (int i = 1; i < scanDepth * 2; ++i) {
+                for (int j = -90; j <= 90; j += 30) {
+                    double scanDx =
+                            (double) i
+                                    * Math.cos(
+                                            Math.toRadians(this.getYRot() + 90.0f + (float) j));
+                    double scanDz =
+                            (double) i
+                                    * Math.sin(
+                                            Math.toRadians(this.getYRot() + 90.0f + (float) j));
+                    bid =
+                            this.level()
+                                    .getBlockState(
+                                            BlockPos.containing(
+                                                    this.getX() + scanDx,
+                                                    this.getY() - k,
+                                                    this.getZ() + scanDz))
+                                    .getBlock();
+                    if (bid == Blocks.AIR || bid == Blocks.WATER || bid == Blocks.LAVA) {
+                        continue;
+                    }
+                    obstruction += 0.02;
+                }
+            }
+        }
+        my += obstruction * 0.05;
+        if (obstruction != 0.0) {
+            this.setPos(this.getX(), this.getY() + obstruction * 0.05, this.getZ());
+        }
+        return my;
+    }
+
     @Override
     public void travel(Vec3 travelVector) {
         if (!this.isVehicle()) {
@@ -758,10 +811,11 @@ public class AntRobot extends Mob {
             mx = vx;
             mz = vz;
         } else {
-            mx = 0.0;
-            mz = 0.0;
+            mx = dm.x * 0.85;
+            mz = dm.z * 0.85;
         }
-        double my = 0.0;
+        // Player-ridden tick() skips living bounce; apply 1.7.10 climb here on controlling side.
+        double my = this.applyRiddenVerticalPhysics(dm.y, velocity);
         Vec3 motion = this.clampRiddenMotion(mx, my, mz);
         mx = motion.x;
         my = motion.y;
@@ -771,11 +825,7 @@ public class AntRobot extends Mob {
                         || (!this.level().isClientSide && !(rider instanceof Player));
         if (shouldApplyMovement) {
             this.move(MoverType.SELF, new Vec3(mx, my, mz));
-            if (hasDriveInput) {
-                this.setDeltaMovement(mx * 0.98, my * 0.98, mz * 0.98);
-            } else {
-                this.setDeltaMovement(Vec3.ZERO);
-            }
+            this.setDeltaMovement(mx * 0.98, my * 0.98, mz * 0.98);
         } else {
             this.setDeltaMovement(Vec3.ZERO);
         }
@@ -786,18 +836,14 @@ public class AntRobot extends Mob {
     }
 
     private float getSeatForwardOffset() {
-        if (this.hasPlayerRider()) {
-            return -1.25f;
-        }
+        // 1.7 updateRiderPosition: f = -1.25 + cos bob
         return -1.25f + (float) (Math.cos((float) this.rideTicker * 0.33f) * 0.05);
     }
 
     @Override
     public double getPassengersRidingOffset() {
-        if (this.hasPlayerRider()) {
-            return 1.45;
-        }
-        return 1.45 + Math.cos((float) this.rideTicker * 0.19f) * 0.02;
+        // 1.7 getMountedYOffset
+        return 0.55 + Math.cos((float) this.rideTicker * 0.19f) * 0.02;
     }
 
     @Override

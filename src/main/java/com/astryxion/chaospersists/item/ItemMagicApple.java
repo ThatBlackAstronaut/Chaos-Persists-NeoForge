@@ -186,7 +186,12 @@ public class ItemMagicApple extends Item {
         if (var1 == Blocks.DANDELION) {
             return true;
         }
-        if (var1 == Blocks.OAK_LEAVES) {
+        if (var1 == Blocks.OAK_LEAVES
+                || var1 == Blocks.SPRUCE_LEAVES
+                || var1 == Blocks.BIRCH_LEAVES
+                || var1 == Blocks.JUNGLE_LEAVES
+                || var1 == Blocks.ACACIA_LEAVES
+                || var1 == Blocks.DARK_OAK_LEAVES) {
             return true;
         }
         if (var1 == Blocks.SNOW) {
@@ -355,6 +360,11 @@ public class ItemMagicApple extends Item {
     }
 
     public void MakeBigSquareTree(Level world, int x, int y, int z, Block ID, Block leafID, Block stepID, int tree_type, int t_radius, boolean bad_critters, LevelChunk chunk) {
+        // 1.7.10 passed Blocks.log + meta=tree_type; 1.20 needs distinct log/leaf blocks.
+        if (tree_type >= 0) {
+            ID = logBlockForTreeType(tree_type);
+            leafID = leafBlockForTreeType(tree_type, leafID);
+        }
         int i;
         int j;
         int this_height = t_radius + this.rand.nextInt(t_radius);
@@ -653,6 +663,11 @@ public class ItemMagicApple extends Item {
     }
 
     public void MakeBigCircularTree(Level world, int x, int y, int z, Block ID, Block leafID, Block stepID, int tree_type, int t_radius, boolean bad_critters, LevelChunk chunk) {
+        // 1.7.10 passed Blocks.log + meta=tree_type; 1.20 needs distinct log/leaf blocks.
+        if (tree_type >= 0) {
+            ID = logBlockForTreeType(tree_type);
+            leafID = leafBlockForTreeType(tree_type, leafID);
+        }
         int i;
         double dt;
         double rad = t_radius;
@@ -745,12 +760,23 @@ public class ItemMagicApple extends Item {
             if ((stepindex += 15 + (int)(((double)t_radius - rad) * 3.0)) > 360) {
                 stepindex -= 360;
             }
-            if ((rad -= 0.01 * (double)this.rand.nextInt(15)) > 0.0 || !this.isBoringBaseBlock(world, x, y + ++cury, z).booleanValue()) continue;
+            // Always advance height each pass. Decompiled 1.7 used || with ++cury in the
+            // condition; short-circuit skipped the increment until rad hit 0 → flat stump disks.
+            rad -= 0.01D * (double) (1 + this.rand.nextInt(14));
+            ++cury;
+            if (rad > 0.0D || !this.isBoringBaseBlock(world, x, y + cury, z).booleanValue()) {
+                continue;
+            }
             this.FastSetBlock(world, x, y + cury, z, Blocks.DIAMOND_BLOCK, 0, 2, chunk);
         }
     }
 
     public void MakeBigRoundTree(Level world, int inx, int y, int inz, Block ID, Block leafID, Block stepID, int tree_type, int t_radius, LevelChunk chunk) {
+        // 1.7.10 passed Blocks.log + meta=tree_type; 1.20 needs distinct log/leaf blocks.
+        if (tree_type >= 0) {
+            ID = logBlockForTreeType(tree_type);
+            leafID = leafBlockForTreeType(tree_type, leafID);
+        }
         int i;
         double dt;
         float fcurx;
@@ -820,7 +846,12 @@ public class ItemMagicApple extends Item {
                     }
                 }
             }
-            if ((rad -= 0.01 * (double)world.getRandom().nextInt(15)) > 0.0 || !this.isBoringBaseBlock(world, (int)fx, y + ++cury, (int)fz).booleanValue()) continue;
+            // Same height-advance fix as MakeBigCircularTree — without it trees stay 1-block flat disks.
+            rad -= 0.01D * (double) (1 + world.getRandom().nextInt(14));
+            ++cury;
+            if (rad > 0.0D || !this.isBoringBaseBlock(world, (int) fx, y + cury, (int) fz).booleanValue()) {
+                continue;
+            }
             this.FastSetBlock(world, (int)fx, y + cury, (int)fz, Blocks.DIAMOND_BLOCK, 0, 2, chunk);
         }
     }

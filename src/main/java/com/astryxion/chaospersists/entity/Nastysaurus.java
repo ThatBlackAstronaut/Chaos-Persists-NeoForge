@@ -55,6 +55,7 @@ public class Nastysaurus extends Monster {
     public Nastysaurus(EntityType<? extends Nastysaurus> type, Level level) {
         super(type, level);
         this.moveControl = new ChaosChaseMoveControl(this);
+        this.setMaxUpStep(1.0F);
         this.xpReward = 40;
         this.targetSorter = new GenericTargetSorter(this);
         this.renderdata = new RenderInfo();

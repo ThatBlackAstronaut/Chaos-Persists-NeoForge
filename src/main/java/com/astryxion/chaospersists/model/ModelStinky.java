@@ -159,10 +159,19 @@ public class ModelStinky extends EntityModel<Stinky> {
             float headPitch) {
         float newangle;
         int current_activity = entity.getActivity();
-        newangle =
-                (double) limbSwingAmount > 0.1
-                        ? Mth.cos((float) (ageInTicks * 2.3f * this.wingspeed)) * 3.1415927f * 0.4f * limbSwingAmount
-                        : 0.0f;
+        // Activity 2 = flying. Full flap amplitude (OreSpawn f1~1 while moving).
+        // Chaos flight skips travel(), so limbSwingAmount stays near 0 and looked frozen.
+        if (current_activity == 2) {
+            newangle = Mth.cos(ageInTicks * 2.3f * this.wingspeed) * 3.1415927f * 0.4f;
+        } else {
+            newangle =
+                    (double) limbSwingAmount > 0.1
+                            ? Mth.cos(ageInTicks * 2.3f * this.wingspeed)
+                                    * 3.1415927f
+                                    * 0.4f
+                                    * limbSwingAmount
+                            : 0.0f;
+        }
         this.Rwing.zRot = newangle - 0.4f;
         this.Lwing.zRot = -newangle + 0.4f;
         newangle =

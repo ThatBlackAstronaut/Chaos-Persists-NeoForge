@@ -29,9 +29,13 @@ public class OreTitanium extends Block {
     private int glowcount = 0;
 
     public OreTitanium() {
+        this(SoundType.STONE);
+    }
+
+    public OreTitanium(SoundType sound) {
         super(Block.Properties.of()
                 .strength(15.0f, 5.0f)
-                .sound(SoundType.STONE)
+                .sound(sound)
                 .requiresCorrectToolForDrops()
                 .randomTicks());
         this.glowing = false;

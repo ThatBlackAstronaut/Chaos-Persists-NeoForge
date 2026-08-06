@@ -163,11 +163,14 @@ float h3;
                 float hf = 0.0f;
         float newangle = 0.0f;
         int current_activity = entity.getActivity();
-        float flapDrive = limbSwingAmount;
-        if (current_activity == 2 && flapDrive <= 0.1f) {
-            flapDrive = 0.75f;
+        // Activity 2 = flying. Hard flap at full amplitude (1.7 teen/adult pattern).
+        // Do not scale by limbSwingAmount — hovering flight often has tiny walk-swing and looked like gliding.
+        // Relaxed soft flutter only when on the ground (walking/idle).
+        if (current_activity == 2 || entity.getAttacking() != 0) {
+            newangle = Mth.cos(ageInTicks * 2.3f * this.wingspeed) * 3.1415927f * 0.45f;
+        } else {
+            newangle = Mth.cos(ageInTicks * 0.3f * this.wingspeed) * 3.1415927f * 0.04f;
         }
-                newangle = (double)flapDrive > 0.1 || entity.getAttacking() != 0 ? Mth.cos((float)(ageInTicks * 2.3f * this.wingspeed)) * 3.1415927f * 0.4f * flapDrive : Mth.cos((float)(ageInTicks * 0.3f * this.wingspeed)) * 3.1415927f * 0.04f;
         this.Rwing.zRot = newangle - 0.4f;
         this.Rwing2.zRot = newangle - 0.6f;
         this.Rwing3.zRot = newangle - 0.2f;

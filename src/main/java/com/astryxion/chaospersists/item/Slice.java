@@ -40,7 +40,6 @@ import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -142,8 +141,7 @@ public class Slice extends SwordItem {
                 player.getZ() + xzoff * Mth.cos((float) Math.toRadians(player.getYHeadRot())));
         lb.setYRot(player.getYHeadRot());
         lb.setXRot(player.getXRot());
-        Vec3 motion = lb.getDeltaMovement();
-        lb.setDeltaMovement(motion.x * 2.0, motion.y * 2.0, motion.z * 2.0);
+        lb.aimFromShooter(player, 2.0);
         if (!lb.tryHitAlongPath()) {
             player.level().addFreshEntity(lb);
         }

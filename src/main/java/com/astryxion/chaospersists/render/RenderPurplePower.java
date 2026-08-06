@@ -46,11 +46,9 @@ public class RenderPurplePower extends EntityRenderer<PurplePower> {
         poseStack.translate(0.0F, entity.getBbHeight() * 0.5F, 0.0F);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - entityYaw));
 
-        float localScale = this.scale;
-        if (entity.getPurpleType() != 0) {
-            localScale = 0.55f;
-        }
-        poseStack.scale(localScale, localScale, localScale);
+        // Match 1.7.10 actual draw size: RenderPurplePower.preRenderScale was never hooked
+        // via preRenderCallback, so type-based 0.55 / registered 2.75 never applied.
+        poseStack.scale(this.scale, this.scale, this.scale);
 
         float age = entity.tickCount + partialTicks;
         this.model.setupAnim(entity, 0.0F, 0.0F, age, 0.0F, 0.0F);

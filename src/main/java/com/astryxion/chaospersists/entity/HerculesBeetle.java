@@ -59,6 +59,7 @@ public class HerculesBeetle extends Monster {
     public HerculesBeetle(EntityType<? extends HerculesBeetle> type, Level level) {
         super(type, level);
         this.moveControl = new ChaosChaseMoveControl(this);
+        this.setMaxUpStep(1.0F);
         this.xpReward = 200;
         this.targetSorter = new GenericTargetSorter(this);
         this.goalSelector.addGoal(0, new FloatGoal(this));

@@ -18,4 +18,14 @@ public class LegacySkinModel<T extends LivingEntity> extends HumanoidModel<T> {
     public static LayerDefinition createBodyLayer() {
         return LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F), 64, 32);
     }
+
+    /** Matches 1.12 {@code new ModelBiped(0.5F)} for leggings. */
+    public static LayerDefinition createInnerArmorLayer() {
+        return LayerDefinition.create(HumanoidModel.createMesh(new CubeDeformation(0.5F), 0.0F), 64, 32);
+    }
+
+    /** Matches 1.12 {@code new ModelBiped(1.0F)} for helmet/chest/boots. */
+    public static LayerDefinition createOuterArmorLayer() {
+        return LayerDefinition.create(HumanoidModel.createMesh(new CubeDeformation(1.0F), 0.0F), 64, 32);
+    }
 }

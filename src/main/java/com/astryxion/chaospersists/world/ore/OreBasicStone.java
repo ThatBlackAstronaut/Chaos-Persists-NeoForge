@@ -80,7 +80,7 @@ public class OreBasicStone extends Block {
                             pos.getZ() + 0.5 + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.2);
                 }
             }
-            if (this == ChaosPersists.RedAntTroll) {
+            if (this == ChaosPersists.RedAntTroll || this == ChaosPersists.DeepslateRedAntTroll) {
                 int num = 15 + world.getRandom().nextInt(6);
                 for (int i = 0; i < num; ++i) {
                     spawnCreature(
@@ -92,7 +92,7 @@ public class OreBasicStone extends Block {
                             pos.getZ() + 0.5 + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.2);
                 }
             }
-            if (this == ChaosPersists.TermiteTroll) {
+            if (this == ChaosPersists.TermiteTroll || this == ChaosPersists.DeepslateTermiteTroll) {
                 int num = 15 + world.getRandom().nextInt(6);
                 for (int i = 0; i < num; ++i) {
                     spawnCreature(

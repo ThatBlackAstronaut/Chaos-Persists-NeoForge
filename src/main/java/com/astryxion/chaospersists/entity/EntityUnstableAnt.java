@@ -2,6 +2,7 @@ package com.astryxion.chaospersists.entity;
 
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
+import com.astryxion.chaospersists.world.dimension.teleporter.DangerTeleporter;
 import com.astryxion.chaospersists.world.dimension.teleporter.UtopiaTeleporter;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -54,15 +55,17 @@ public class EntityUnstableAnt extends EntityAnt {
         if (serverPlayer.server == null) {
             return InteractionResult.PASS;
         }
-        ResourceKey<Level> targetDim =
-                player.level().dimension().equals(ChaosPersists.getDimensionKey(4))
-                        ? Level.OVERWORLD
-                        : ChaosPersists.getDimensionKey(4);
+        boolean toOverworld = player.level().dimension().equals(ChaosPersists.getDimensionKey(4));
+        ResourceKey<Level> targetDim = toOverworld ? Level.OVERWORLD : ChaosPersists.getDimensionKey(4);
         ServerLevel world = serverPlayer.server.getLevel(targetDim);
         if (world == null) {
             return InteractionResult.FAIL;
         }
-        serverPlayer.changeDimension(world, new UtopiaTeleporter(serverPlayer.getX(), serverPlayer.getZ()));
+        if (toOverworld) {
+            serverPlayer.changeDimension(world, new UtopiaTeleporter(serverPlayer.getX(), serverPlayer.getZ()));
+        } else {
+            serverPlayer.changeDimension(world, new DangerTeleporter(serverPlayer.getX(), serverPlayer.getZ()));
+        }
         return InteractionResult.SUCCESS;
     }
 }

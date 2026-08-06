@@ -96,6 +96,8 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
     private int had_target = 0;
     private int voice = 0;
     private int is_prince = 0;
+    /** True after NBT restore or finalizeSpawn assigned a permanent skin. */
+    private boolean skinInitialized = false;
     private float moveSpeed = 0.3f;
     private int voice_enable = 1;
     public int passenger = 0;
@@ -199,9 +201,6 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
 
     public Boyfriend(EntityType<? extends Boyfriend> type, Level level) {
         super(type, level);
-        this.which_guy = this.getRandom().nextInt(28);
-        this.which_wet_guy = this.getRandom().nextInt(18);
-        this.voice = this.getRandom().nextInt(10);
         this.setOrderedToSit(false);
         this.goalSelector.addGoal(1, new MyEntityAIFollowOwner(this, 1.4f, 12.0f, 1.5f));
         this.goalSelector.addGoal(2, new TemptGoal(this, 1.25, Ingredient.of(Items.COOKED_BEEF), false));
@@ -241,13 +240,11 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.which_guy = this.getRandom().nextInt(28);
-        this.entityData.define(WHICH_GUY, this.which_guy);
+        // Defaults only — randomize in finalizeSpawn so chunk reload does not re-roll skins.
+        this.entityData.define(WHICH_GUY, 0);
         this.wet_count = 0;
-        this.which_wet_guy = this.getRandom().nextInt(18);
-        this.entityData.define(WHICH_WET_GUY, this.which_wet_guy);
-        this.voice = this.getRandom().nextInt(10);
-        this.entityData.define(VOICE, this.voice);
+        this.entityData.define(WHICH_WET_GUY, 0);
+        this.entityData.define(VOICE, 0);
         this.entityData.define(VOICE_ENABLE, this.voice_enable);
         this.entityData.define(IS_PRINCE, this.is_prince);
         this.auto_heal = 200;
@@ -266,21 +263,31 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
         tag.putInt("GirlVoice", this.entityData.get(VOICE));
         tag.putInt("GirlVoiceEnable", this.entityData.get(VOICE_ENABLE));
         tag.putInt("IsPrince", this.entityData.get(IS_PRINCE));
+        tag.putBoolean("GirlSkinInitialized", true);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.which_guy = tag.getInt("GirlType");
-        this.setTameSkin(this.which_guy);
-        this.which_wet_guy = tag.getInt("WetGirlType");
-        this.setWetTameSkin(this.which_wet_guy);
-        this.voice = tag.getInt("GirlVoice");
-        this.entityData.set(VOICE, this.voice);
-        this.voice_enable = tag.getInt("GirlVoiceEnable");
-        this.entityData.set(VOICE_ENABLE, this.voice_enable);
-        this.is_prince = tag.getInt("IsPrince");
-        this.entityData.set(IS_PRINCE, this.is_prince);
+        if (tag.contains("GirlType")) {
+            this.setTameSkin(tag.getInt("GirlType"));
+        }
+        if (tag.contains("WetGirlType")) {
+            this.setWetTameSkin(tag.getInt("WetGirlType"));
+        }
+        if (tag.contains("GirlVoice")) {
+            this.voice = tag.getInt("GirlVoice");
+            this.entityData.set(VOICE, this.voice);
+        }
+        if (tag.contains("GirlVoiceEnable")) {
+            this.voice_enable = tag.getInt("GirlVoiceEnable");
+            this.entityData.set(VOICE_ENABLE, this.voice_enable);
+        }
+        if (tag.contains("IsPrince")) {
+            this.is_prince = tag.getInt("IsPrince");
+            this.entityData.set(IS_PRINCE, this.is_prince);
+        }
+        this.skinInitialized = tag.contains("GirlType") || tag.getBoolean("GirlSkinInitialized");
         if (this.getMainHandItem().is(Items.DIAMOND)) {
             this.setOrderedToSit(true);
         }
@@ -350,10 +357,15 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
         if (this.force_sync <= 0) {
             this.force_sync = 20;
             if (!this.level().isClientSide) {
+                this.ensureSkinInitialized();
+                this.setTameSkin(this.which_guy);
+                this.setWetTameSkin(this.which_wet_guy);
                 this.entityData.set(VOICE, this.voice);
                 this.entityData.set(VOICE_ENABLE, this.voice_enable);
                 this.entityData.set(IS_PRINCE, this.is_prince);
             } else {
+                this.which_guy = this.getTameSkin();
+                this.which_wet_guy = this.getWetTameSkin();
                 this.voice = this.getVoice();
                 this.voice_enable = this.entityData.get(VOICE_ENABLE);
                 this.is_prince = this.entityData.get(IS_PRINCE);
@@ -545,8 +557,10 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
     }
 
     public void setTameSkin(int par1) {
+        this.entityData.set(WHICH_GUY, par1 == 0 ? 1 : 0);
         this.entityData.set(WHICH_GUY, par1);
         this.which_guy = par1;
+        this.skinInitialized = true;
     }
 
     public int getWetTameSkin() {
@@ -554,6 +568,7 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
     }
 
     public void setWetTameSkin(int par1) {
+        this.entityData.set(WHICH_WET_GUY, par1 == 0 ? 1 : 0);
         this.entityData.set(WHICH_WET_GUY, par1);
         this.which_wet_guy = par1;
     }
@@ -1153,6 +1168,18 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
         return super.checkSpawnRules(level, spawnReason);
     }
 
+    /** Assign a permanent random skin once for new spawns (OreSpawn entityInit parity). */
+    private void ensureSkinInitialized() {
+        if (this.skinInitialized || this.level().isClientSide) {
+            return;
+        }
+        this.setTameSkin(this.getRandom().nextInt(28));
+        this.setWetTameSkin(this.getRandom().nextInt(18));
+        this.voice = this.getRandom().nextInt(10);
+        this.entityData.set(VOICE, this.voice);
+        this.skinInitialized = true;
+    }
+
     @Override
     public SpawnGroupData finalizeSpawn(
             ServerLevelAccessor level,
@@ -1160,6 +1187,7 @@ public class Boyfriend extends TamableAnimal implements RangedAttackMob {
             MobSpawnType reason,
             SpawnGroupData spawnData,
             CompoundTag dataTag) {
+        this.ensureSkinInitialized();
         this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double) this.mygetMaxHealth());
         return super.finalizeSpawn(level, difficulty, reason, spawnData, dataTag);
     }

@@ -13,8 +13,8 @@ public class RenderBoyfriend extends HumanoidMobRenderer<Boyfriend, LegacySkinMo
         this.addLayer(
                 new HumanoidArmorLayer<>(
                         this,
-                        new LegacySkinModel<>(LegacySkinModel.createBodyLayer().bakeRoot()),
-                        new LegacySkinModel<>(LegacySkinModel.createBodyLayer().bakeRoot()),
+                        new LegacySkinModel<>(LegacySkinModel.createInnerArmorLayer().bakeRoot()),
+                        new LegacySkinModel<>(LegacySkinModel.createOuterArmorLayer().bakeRoot()),
                         context.getModelManager()));
     }
 

@@ -30,19 +30,23 @@ public final class CommandCrystal {
         }
         ResourceKey<Level> crystalKey = ChaosPersists.getCrystalDimensionKey();
         if (player.level().dimension().equals(crystalKey)) {
-            player.sendSystemMessage(
-                    Component.literal("You are already in the Crystal dimension.").withStyle(ChatFormatting.YELLOW));
+            player.displayClientMessage(
+                    Component.literal("You are already in the Crystal dimension.")
+                            .withStyle(ChatFormatting.YELLOW),
+                    true);
             return 0;
         }
         ServerLevel world = player.server.getLevel(crystalKey);
         if (world == null) {
-            player.sendSystemMessage(
-                    Component.literal("Crystal dimension is not available.").withStyle(ChatFormatting.RED));
+            player.displayClientMessage(
+                    Component.literal("Crystal dimension is not available.").withStyle(ChatFormatting.RED),
+                    true);
             return 0;
         }
         CrystalTeleporter teleporter = new CrystalTeleporter(player.getX(), player.getZ());
         player.changeDimension(world, teleporter);
-        player.sendSystemMessage(Component.literal("Teleported to Crystal.").withStyle(ChatFormatting.GREEN));
+        player.displayClientMessage(
+                Component.literal("Teleported to Crystal.").withStyle(ChatFormatting.GREEN), true);
         return 1;
     }
 }

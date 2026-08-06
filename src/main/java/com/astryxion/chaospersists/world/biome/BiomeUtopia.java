@@ -8,7 +8,8 @@ import net.minecraft.world.level.biome.BiomeSpecialEffects;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 
 /**
- * Utopia plains biome (1.12 {@code BiomeGenUtopianPlains} spawn table + no vanilla trees; trees from {@link com.astryxion.chaospersists.util.UtopiaBigTrees}).
+ * Utopia plains biome (1.12 {@code BiomeGenUtopianPlains} spawn table + no vanilla trees;
+ * giant trees from {@link com.astryxion.chaospersists.util.Trees#SkyTree}/{@link com.astryxion.chaospersists.util.Trees#WindTree}).
  */
 public final class BiomeUtopia {
     private BiomeUtopia() {}

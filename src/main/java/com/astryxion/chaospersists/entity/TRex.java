@@ -54,6 +54,7 @@ public class TRex extends Monster {
     public TRex(EntityType<? extends TRex> type, Level level) {
         super(type, level);
         this.moveControl = new ChaosChaseMoveControl(this);
+        this.setMaxUpStep(1.0F);
         this.xpReward = 150;
         this.targetSorter = new GenericTargetSorter(this);
         this.goalSelector.addGoal(0, new FloatGoal(this));

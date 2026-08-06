@@ -30,19 +30,23 @@ public final class CommandDanger {
         }
         ResourceKey<Level> dangerKey = ChaosPersists.getDangerDimensionKey();
         if (player.level().dimension().equals(dangerKey)) {
-            player.sendSystemMessage(
-                    Component.literal("You are already in the Danger dimension.").withStyle(ChatFormatting.YELLOW));
+            player.displayClientMessage(
+                    Component.literal("You are already in the Danger dimension.")
+                            .withStyle(ChatFormatting.YELLOW),
+                    true);
             return 0;
         }
         ServerLevel world = player.server.getLevel(dangerKey);
         if (world == null) {
-            player.sendSystemMessage(
-                    Component.literal("Danger dimension is not available.").withStyle(ChatFormatting.RED));
+            player.displayClientMessage(
+                    Component.literal("Danger dimension is not available.").withStyle(ChatFormatting.RED),
+                    true);
             return 0;
         }
         DangerTeleporter teleporter = new DangerTeleporter(player.getX(), player.getZ());
         player.changeDimension(world, teleporter);
-        player.sendSystemMessage(Component.literal("Teleported to Danger.").withStyle(ChatFormatting.GREEN));
+        player.displayClientMessage(
+                Component.literal("Teleported to Danger.").withStyle(ChatFormatting.GREEN), true);
         return 1;
     }
 }

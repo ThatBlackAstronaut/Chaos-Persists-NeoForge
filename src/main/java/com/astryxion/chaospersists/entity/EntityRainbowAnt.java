@@ -3,6 +3,7 @@ package com.astryxion.chaospersists.entity;
 import com.astryxion.chaospersists.core.ChaosPersists;
 import com.astryxion.chaospersists.util.MyEntityAIWanderALot;
 import com.astryxion.chaospersists.world.dimension.teleporter.UtopiaTeleporter;
+import com.astryxion.chaospersists.world.dimension.teleporter.VillageTeleporter;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -54,15 +55,17 @@ public class EntityRainbowAnt extends EntityAnt {
         if (serverPlayer.server == null) {
             return InteractionResult.PASS;
         }
-        ResourceKey<Level> targetDim =
-                player.level().dimension().equals(ChaosPersists.getDimensionKey(3))
-                        ? Level.OVERWORLD
-                        : ChaosPersists.getDimensionKey(3);
+        boolean toOverworld = player.level().dimension().equals(ChaosPersists.getDimensionKey(3));
+        ResourceKey<Level> targetDim = toOverworld ? Level.OVERWORLD : ChaosPersists.getDimensionKey(3);
         ServerLevel world = serverPlayer.server.getLevel(targetDim);
         if (world == null) {
             return InteractionResult.FAIL;
         }
-        serverPlayer.changeDimension(world, new UtopiaTeleporter(serverPlayer.getX(), serverPlayer.getZ()));
+        if (toOverworld) {
+            serverPlayer.changeDimension(world, new UtopiaTeleporter(serverPlayer.getX(), serverPlayer.getZ()));
+        } else {
+            serverPlayer.changeDimension(world, new VillageTeleporter(serverPlayer.getX(), serverPlayer.getZ()));
+        }
         return InteractionResult.SUCCESS;
     }
 }

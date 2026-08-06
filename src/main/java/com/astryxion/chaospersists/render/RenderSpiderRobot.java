@@ -21,6 +21,10 @@ public class RenderSpiderRobot extends MobRenderer<SpiderRobot, ModelSpiderRobot
     @Override
     protected void scale(SpiderRobot entity, PoseStack poseStack, float partialTick) {
         poseStack.scale(this.scale, this.scale, this.scale);
+        // LivingEntityRenderer always translates -1.501 after scale(-1,-1,1) for humanoid
+        // models. 1.7/1.12 SpiderRobot used a custom doRender without that offset; cancel
+        // it so the body lines up with passenger seats (Spider Driver on the abdomen).
+        poseStack.translate(0.0F, 1.501F, 0.0F);
     }
 
     @Override

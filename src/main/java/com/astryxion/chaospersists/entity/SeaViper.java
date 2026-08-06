@@ -30,10 +30,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import com.astryxion.chaospersists.util.ChaosHurtByTargetGoal;
+import com.astryxion.chaospersists.util.SurfaceWaterFloat;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -47,7 +47,10 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.tags.TagKey;
+import net.minecraftforge.common.ForgeMod;
 
 public class SeaViper extends Monster {
     private static final EntityDataAccessor<Byte> ATTACKING =
@@ -76,7 +79,8 @@ public class SeaViper extends Monster {
         this.renderdata.ri2 = 0;
         this.renderdata.ri3 = 0;
         this.renderdata.ri4 = 0;
-        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.getNavigation().setCanFloat(true);
+        // Surface skim via SurfaceWaterFloat — FloatGoal hop-jumps with swim speed.
         this.goalSelector.addGoal(1, new MyEntityAIWanderALot(this, 16, 1.0));
         this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 10.0f));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, LivingEntity.class, 8.0f));
@@ -89,7 +93,18 @@ public class SeaViper extends Monster {
                 .add(Attributes.MAX_HEALTH, (double) ChaosPersists.SeaViper_stats.health)
                 .add(Attributes.MOVEMENT_SPEED, (double) 0.35f)
                 .add(Attributes.ATTACK_DAMAGE, (double) ChaosPersists.SeaViper_stats.attack)
-                .add(Attributes.ARMOR, (double) ChaosPersists.SeaViper_stats.defense);
+                .add(Attributes.ARMOR, (double) ChaosPersists.SeaViper_stats.defense)
+                // 1.13+ water travel ignores MOVEMENT_SPEED; Forge swim speed is the only multiplier.
+                .add(ForgeMod.SWIM_SPEED.get(), 4.0D);
+    }
+
+    /**
+     * Forge multiplies liquid jumps by {@link ForgeMod#SWIM_SPEED}; keep vanilla 0.04 upward
+     * so any jump (pathing, etc.) does not become a surface hop.
+     */
+    @Override
+    protected void jumpInLiquid(TagKey<Fluid> fluidTag) {
+        this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.04, 0.0));
     }
 
     @Override
@@ -111,6 +126,12 @@ public class SeaViper extends Monster {
         this.moveSpeed = this.isInWater() ? 0.75f : 0.25f;
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double) this.moveSpeed);
         super.tick();
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        SurfaceWaterFloat.keepOnSurface(this);
     }
 
     public int mygetMaxHealth() {

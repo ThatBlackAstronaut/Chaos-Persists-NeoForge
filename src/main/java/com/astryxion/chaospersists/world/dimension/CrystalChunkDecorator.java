@@ -4,6 +4,7 @@ import com.astryxion.chaospersists.block.BlockCrystalPlant;
 import com.astryxion.chaospersists.block.CrystalMaze;
 import com.astryxion.chaospersists.core.ChaosPersists;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -25,8 +26,12 @@ public final class CrystalChunkDecorator {
         // Undo bad flood passes from earlier builds so trees/flowers can place on grass again.
         clearFloodWater(level, chunkX, chunkZ);
         restoreCrystalSurface(level, chunkX, chunkZ);
+        final int mazeY = 25;
         new CrystalMaze()
-                .buildCrystalMaze(level, chunkX, 25, chunkZ, chunk);
+                .buildCrystalMaze(level, chunkX, mazeY, chunkZ, chunk);
+        // Silent maze writes: mark the Y-band dirty so vanilla batches a section update to
+        // tracking clients. Avoids full ClientboundLevelChunkWithLightPacket (heavy hitch).
+        notifyMazeBlocksChanged(level, chunk, chunkX, mazeY, chunkZ);
         addPinkTourmaline(level, random, chunkX, chunkZ);
         addTigersEye(level, random, chunkX, chunkZ);
         addCrystalTrees(level, random, chunkX, chunkZ);
@@ -34,6 +39,27 @@ public final class CrystalChunkDecorator {
         addCrystalFlowers(level, random, chunkX, chunkZ);
         addRice(level, random, chunkX, chunkZ);
         addQuinoa(level, random, chunkX, chunkZ);
+    }
+
+    /**
+     * Tell {@link net.minecraft.server.level.ChunkHolder} the maze band changed so it emits a
+     * section block-update packet on the next broadcast — cheap vs rebuilding whole-chunk light.
+     */
+    private static void notifyMazeBlocksChanged(
+            Level level, LevelChunk chunk, int chunkX, int mazeY, int chunkZ) {
+        chunk.setUnsaved(true);
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        for (int dx = 0; dx < 16; ++dx) {
+            for (int dz = 0; dz < 16; ++dz) {
+                for (int y = mazeY - 1; y <= mazeY + 3; ++y) {
+                    serverLevel
+                            .getChunkSource()
+                            .blockChanged(new BlockPos(chunkX + dx, y, chunkZ + dz));
+                }
+            }
+        }
     }
 
     private static void addPinkTourmaline(Level level, RandomSource random, int chunkX, int chunkZ) {
@@ -129,10 +155,17 @@ public final class CrystalChunkDecorator {
 
     /** Strip source water placed by earlier flood logic; crystal decoration needs dry grass. */
     private static void clearFloodWater(Level level, int chunkX, int chunkZ) {
+        int minY = level.getMinBuildHeight();
         for (int dx = 0; dx < 16; ++dx) {
             for (int dz = 0; dz < 16; ++dz) {
-                for (int y = level.getMinBuildHeight(); y < level.getMaxBuildHeight(); ++y) {
-                    BlockPos pos = new BlockPos(chunkX + dx, y, chunkZ + dz);
+                int x = chunkX + dx;
+                int z = chunkZ + dz;
+                // Only scan near the surface — a full -64..320 sweep is ~98k checks per chunk and
+                // was hitching crystal explore when deferred decorate ran on many chunks at once.
+                int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+                int from = Math.max(minY, top - 48);
+                for (int y = from; y <= top; ++y) {
+                    BlockPos pos = new BlockPos(x, y, z);
                     if (level.getFluidState(pos).isSource()) {
                         level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
                     }
@@ -152,15 +185,17 @@ public final class CrystalChunkDecorator {
             for (int dz = 0; dz < 16; ++dz) {
                 int x = chunkX + dx;
                 int z = chunkZ + dz;
-                int topY = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
-                BlockPos top = new BlockPos(x, topY, z);
-                BlockState topState = level.getBlockState(top);
-                if (topState.is(crystalStone)) {
-                    level.setBlock(top, grass, 2);
+                // getHeight = first free cell above motion-blocking; surface stone is one below.
+                int freeY = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+                BlockPos surface = new BlockPos(x, freeY - 1, z);
+                BlockState surfaceState = level.getBlockState(surface);
+                if (surfaceState.is(crystalStone)) {
+                    level.setBlock(surface, grass, 2);
                     continue;
                 }
-                if (topState.isAir() && level.getBlockState(top.below()).is(crystalStone)) {
-                    level.setBlock(top, grass, 2);
+                BlockPos free = new BlockPos(x, freeY, z);
+                if (level.getBlockState(free).is(crystalStone)) {
+                    level.setBlock(free, grass, 2);
                 }
             }
         }

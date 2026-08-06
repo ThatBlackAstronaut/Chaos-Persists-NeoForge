@@ -76,39 +76,84 @@ public class Beaver extends Animal {
         super.tick();
     }
 
+    /**
+     * 1.7.10 ate {@code Blocks.log}, OreSpawn tree logs, and also oak fence/gate/sign.
+     * Fences let beavers flood-fill entire villages; restrict to tree logs only (forest balance).
+     */
     public boolean isWood(Block bid) {
-        if (bid.defaultBlockState().is(BlockTags.LOGS)) {
+        if (bid == null) {
+            return false;
+        }
+        BlockState state = bid.defaultBlockState();
+        if (state.is(BlockTags.LOGS)) {
             return true;
         }
-        if (bid == ChaosPersists.MyDT || bid == ChaosPersists.MySkyTreeLog) {
+        return bid == ChaosPersists.MyDT
+                || bid == ChaosPersists.MySkyTreeLog
+                || bid == ChaosPersists.MyCrystalTreeLog;
+    }
+
+    /** True if this log looks like part of a living/natural tree (leaves nearby), not a house beam. */
+    private boolean isTreeLogTarget(BlockPos pos) {
+        BlockState state = this.level().getBlockState(pos);
+        if (!this.isWood(state.getBlock())) {
+            return false;
+        }
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (int dx = -3; dx <= 3; ++dx) {
+            for (int dy = -1; dy <= 6; ++dy) {
+                for (int dz = -3; dz <= 3; ++dz) {
+                    if (dx == 0 && dy == 0 && dz == 0) {
+                        continue;
+                    }
+                    cursor.set(pos.getX() + dx, pos.getY() + dy, pos.getZ() + dz);
+                    if (this.isTreeLeaf(this.level().getBlockState(cursor))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isTreeLeaf(BlockState state) {
+        if (state.is(BlockTags.LEAVES)) {
             return true;
         }
-        return bid == Blocks.OAK_FENCE || bid == Blocks.OAK_FENCE_GATE || bid == Blocks.OAK_SIGN;
+        Block bid = state.getBlock();
+        return bid == ChaosPersists.MyAppleLeaves
+                || bid == ChaosPersists.MyScaryLeaves
+                || bid == ChaosPersists.MyCherryLeaves
+                || bid == ChaosPersists.MyPeachLeaves
+                || bid == ChaosPersists.MyExperienceLeaves
+                || bid == ChaosPersists.MyCrystalLeaves
+                || bid == ChaosPersists.MyCrystalLeaves2
+                || bid == ChaosPersists.MyCrystalLeaves3;
     }
 
     private boolean scan_it(int x, int y, int z, int dx, int dy, int dz) {
         int found = 0;
         for (int i = -dy; i <= dy; ++i) {
             for (int j = -dz; j <= dz; ++j) {
-                Block bid = this.level().getBlockState(new BlockPos(x + dx, y + i, z + j)).getBlock();
-                if (this.isWood(bid)) {
+                BlockPos posA = new BlockPos(x + dx, y + i, z + j);
+                if (this.isTreeLogTarget(posA)) {
                     int d = dx * dx + j * j + i * i;
                     if (d < this.closest) {
                         this.closest = d;
-                        this.tx = x + dx;
-                        this.ty = y + i;
-                        this.tz = z + j;
+                        this.tx = posA.getX();
+                        this.ty = posA.getY();
+                        this.tz = posA.getZ();
                         ++found;
                     }
                 }
-                bid = this.level().getBlockState(new BlockPos(x - dx, y + i, z + j)).getBlock();
-                if (this.isWood(bid)) {
+                BlockPos posB = new BlockPos(x - dx, y + i, z + j);
+                if (this.isTreeLogTarget(posB)) {
                     int d = dx * dx + j * j + i * i;
                     if (d < this.closest) {
                         this.closest = d;
-                        this.tx = x - dx;
-                        this.ty = y + i;
-                        this.tz = z + j;
+                        this.tx = posB.getX();
+                        this.ty = posB.getY();
+                        this.tz = posB.getZ();
                         ++found;
                     }
                 }
@@ -116,25 +161,25 @@ public class Beaver extends Animal {
         }
         for (int i = -dx; i <= dx; ++i) {
             for (int j = -dz; j <= dz; ++j) {
-                Block bid = this.level().getBlockState(new BlockPos(x + i, y + dy, z + j)).getBlock();
-                if (this.isWood(bid)) {
+                BlockPos posA = new BlockPos(x + i, y + dy, z + j);
+                if (this.isTreeLogTarget(posA)) {
                     int d = dy * dy + j * j + i * i;
                     if (d < this.closest) {
                         this.closest = d;
-                        this.tx = x + i;
-                        this.ty = y + dy;
-                        this.tz = z + j;
+                        this.tx = posA.getX();
+                        this.ty = posA.getY();
+                        this.tz = posA.getZ();
                         ++found;
                     }
                 }
-                bid = this.level().getBlockState(new BlockPos(x + i, y - dy, z + j)).getBlock();
-                if (this.isWood(bid)) {
+                BlockPos posB = new BlockPos(x + i, y - dy, z + j);
+                if (this.isTreeLogTarget(posB)) {
                     int d = dy * dy + j * j + i * i;
                     if (d < this.closest) {
                         this.closest = d;
-                        this.tx = x + i;
-                        this.ty = y - dy;
-                        this.tz = z + j;
+                        this.tx = posB.getX();
+                        this.ty = posB.getY();
+                        this.tz = posB.getZ();
                         ++found;
                     }
                 }
@@ -142,25 +187,25 @@ public class Beaver extends Animal {
         }
         for (int i = -dx; i <= dx; ++i) {
             for (int j = -dy; j <= dy; ++j) {
-                Block bid = this.level().getBlockState(new BlockPos(x + i, y + j, z + dz)).getBlock();
-                if (this.isWood(bid)) {
+                BlockPos posA = new BlockPos(x + i, y + j, z + dz);
+                if (this.isTreeLogTarget(posA)) {
                     int d = dz * dz + j * j + i * i;
                     if (d < this.closest) {
                         this.closest = d;
-                        this.tx = x + i;
-                        this.ty = y + j;
-                        this.tz = z + dz;
+                        this.tx = posA.getX();
+                        this.ty = posA.getY();
+                        this.tz = posA.getZ();
                         ++found;
                     }
                 }
-                bid = this.level().getBlockState(new BlockPos(x + i, y + j, z - dz)).getBlock();
-                if (this.isWood(bid)) {
+                BlockPos posB = new BlockPos(x + i, y + j, z - dz);
+                if (this.isTreeLogTarget(posB)) {
                     int d = dz * dz + j * j + i * i;
                     if (d < this.closest) {
                         this.closest = d;
-                        this.tx = x + i;
-                        this.ty = y + j;
-                        this.tz = z - dz;
+                        this.tx = posB.getX();
+                        this.ty = posB.getY();
+                        this.tz = posB.getZ();
                         ++found;
                     }
                 }

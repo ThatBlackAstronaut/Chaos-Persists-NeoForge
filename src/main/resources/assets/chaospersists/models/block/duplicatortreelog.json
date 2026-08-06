@@ -1,1 +1,7 @@
-{"parent":"block/cube_all","textures":{"all":"chaospersists:block/duplicatortreelog"}}
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "minecraft:block/oak_log",
+    "side": "minecraft:block/oak_log"
+  }
+}

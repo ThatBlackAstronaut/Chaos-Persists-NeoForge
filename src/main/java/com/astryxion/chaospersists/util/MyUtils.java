@@ -166,7 +166,7 @@ public class MyUtils {
         if (candidate instanceof WaterAnimal) {
             return true;
         }
-        if (!(attacker instanceof TamableAnimal tame) || !tame.isTame()) {
+        if (attacker == null || !(attacker instanceof TamableAnimal tame) || !tame.isTame()) {
             return false;
         }
         LivingEntity owner = tame.getOwner();
@@ -454,15 +454,34 @@ public class MyUtils {
      * Apply 3-axis flight velocity from chaos AI. In 1.7.10 motionX/Y/Z moved the entity once per tick.
      * On 1.20.1 {@link net.minecraft.world.entity.LivingEntity#travel(Vec3)} also runs before
      * {@code customServerAiStep}; skipping vanilla travel for flagged mobs avoids ~2x flight speed.
+     * <p>
+     * OreSpawn 1.7.10 flyers collide with blocks unless the entity itself enables {@code noClip}
+     * (royals, ghosts). Never force {@code noPhysics} here — that made birds/bees ghost through terrain.
      */
     public static void applyChaosFlightMovement(LivingEntity entity) {
         if (entity.level().isClientSide || entity.isDeadOrDying()) {
             return;
         }
         entity.setNoGravity(true);
-        entity.noPhysics = true;
+        if (!keepsOwnFlightNoPhysics(entity)) {
+            entity.noPhysics = false;
+        }
         CHAOS_FLIGHT_ENTITIES.add(entity);
         entity.move(MoverType.SELF, entity.getDeltaMovement());
+    }
+
+    /** Entities that manage noClip themselves (OreSpawn royals / ghosts). */
+    private static boolean keepsOwnFlightNoPhysics(LivingEntity entity) {
+        return entity instanceof TheKing
+                || entity instanceof TheQueen
+                || entity instanceof ThePrince
+                || entity instanceof ThePrincess
+                || entity instanceof ThePrinceTeen
+                || entity instanceof ThePrinceAdult
+                || entity instanceof Ghost
+                || entity instanceof GhostSkelly
+                || entity instanceof KingHead
+                || entity instanceof QueenHead;
     }
 
     /** Skip vanilla {@code travel()} when chaos flight AI already moved this mob on the server. */
@@ -509,7 +528,7 @@ public class MyUtils {
 
     /**
      * 1.7.10 {@code EntityLiving#faceEntity} parity for melee range only. Do not call while
-     * pathing — assign {@link ChaosChaseMoveControl} in the mob constructor instead.
+     * pathing — {@link ChaosChaseMoveControl} owns body yaw from the path and soft-aims the head.
      */
     public static void faceEntity(LivingEntity mob, Entity target, float maxYawIncrease, float maxPitchIncrease) {
         if (target == null) {

@@ -53,6 +53,7 @@ public class Alosaurus extends Monster {
     public Alosaurus(EntityType<? extends Alosaurus> type, Level level) {
         super(type, level);
         this.moveControl = new ChaosChaseMoveControl(this);
+        this.setMaxUpStep(1.0F);
         this.xpReward = 40;
         this.fireImmune();
         this.targetSorter = new GenericTargetSorter(this);

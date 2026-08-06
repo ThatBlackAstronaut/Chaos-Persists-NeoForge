@@ -328,8 +328,8 @@ public class Spyro extends TamableAnimal {
                 spawnTamingParticles(true);
                 this.level().broadcastEntityEvent(this, (byte) 6);
                 this.setSpyroFire(0);
-                par1EntityPlayer.sendSystemMessage(
-                        Component.literal("Baby Dragon fireballs extinguished."));
+                par1EntityPlayer.displayClientMessage(
+                        Component.literal("Baby Dragon fireballs extinguished."), true);
             }
             if (!par1EntityPlayer.getAbilities().instabuild) {
                 var2.shrink(1);
@@ -373,7 +373,8 @@ public class Spyro extends TamableAnimal {
                 spawnTamingParticles(true);
                 this.level().broadcastEntityEvent(this, (byte) 6);
                 this.setSpyroFire(1);
-                par1EntityPlayer.sendSystemMessage(Component.literal("Baby Dragon fireballs lit!"));
+                par1EntityPlayer.displayClientMessage(
+                        Component.literal("Baby Dragon fireballs lit!"), true);
             }
             if (!par1EntityPlayer.getAbilities().instabuild) {
                 var2.shrink(1);
